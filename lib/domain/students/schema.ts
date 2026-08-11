@@ -7,6 +7,8 @@ import { z } from "zod";
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
+export const studentIdSchema = z.string().uuid("Invalid student ID");
+
 /**
  * Validates that a YYYY-MM-DD string represents a real calendar date.
  * Rejects Feb 30, Apr 31, etc. without UTC reinterpretation issues.
@@ -57,7 +59,7 @@ export const studentCreateSchema = z.object({
 });
 
 export const studentUpdateSchema = z.object({
-  id: z.string().uuid("Invalid student ID"),
+  id: studentIdSchema,
   branch_id: z.string().uuid("Invalid branch ID").optional(),
   first_name: z
     .string()
