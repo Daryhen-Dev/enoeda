@@ -1,5 +1,5 @@
 /**
- * Generated from the configured Supabase project after the U2 migrations.
+ * Generated from the configured Supabase project after the branches_students migration.
  * Regenerate with the Supabase MCP type generator after approved schema changes.
  */
 export type Json =
@@ -16,6 +16,86 @@ export type Database = {
   };
   public: {
     Tables: {
+      branches: {
+        Row: {
+          address: string | null;
+          created_at: string;
+          id: string;
+          is_active: boolean;
+          name: string;
+          phone: string | null;
+          time_zone: string;
+          updated_at: string;
+        };
+        Insert: {
+          address?: string | null;
+          created_at?: string;
+          id?: string;
+          is_active?: boolean;
+          name: string;
+          phone?: string | null;
+          time_zone?: string;
+          updated_at?: string;
+        };
+        Update: {
+          address?: string | null;
+          created_at?: string;
+          id?: string;
+          is_active?: boolean;
+          name?: string;
+          phone?: string | null;
+          time_zone?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      students: {
+        Row: {
+          branch_id: string;
+          created_at: string;
+          date_of_birth: string;
+          email: string;
+          first_name: string;
+          id: string;
+          is_active: boolean;
+          national_id: string;
+          surname: string;
+          updated_at: string;
+        };
+        Insert: {
+          branch_id: string;
+          created_at?: string;
+          date_of_birth: string;
+          email: string;
+          first_name: string;
+          id?: string;
+          is_active?: boolean;
+          national_id: string;
+          surname: string;
+          updated_at?: string;
+        };
+        Update: {
+          branch_id?: string;
+          created_at?: string;
+          date_of_birth?: string;
+          email?: string;
+          first_name?: string;
+          id?: string;
+          is_active?: boolean;
+          national_id?: string;
+          surname?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "students_branch_id_fkey";
+            columns: ["branch_id"];
+            isOneToOne: false;
+            referencedRelation: "branches";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       user_roles: {
         Row: {
           assigned_at: string;
