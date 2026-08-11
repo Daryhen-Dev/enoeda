@@ -19,14 +19,24 @@ vi.mock("@/lib/auth/identity-resolver", () => ({
 // Mock server-only (no-op guard for Node runtime checks)
 vi.mock("server-only", () => ({}));
 
-// Mock the prisma singleton — server-context owns withUser internally,
-// so we mock the prisma.$transaction to intercept RLS claims injection.
+// Mock the Prisma adapter and generated client — server-context constructs
+// the singleton internally, so we mock the dependencies it uses.
 const mockTransaction = vi.fn();
-vi.mock("@/lib/prisma/client", () => ({
-  prisma: {
-    $transaction: (...args: unknown[]) => mockTransaction(...args),
+vi.mock("@prisma/adapter-pg", () => ({
+  PrismaPg: class MockPrismaPg {
+    constructor() {}
   },
 }));
+vi.mock("@/lib/prisma/generated/client", () => ({
+  PrismaClient: class MockPrismaClient {
+    constructor() {}
+    $transaction(...args: unknown[]) {
+      return mockTransaction(...args);
+    }
+  },
+}));
+
+process.env.DATABASE_URL = "postgresql://test:test@localhost:5432/test";
 
 describe("getAuthenticatedContext (RLS executor)", () => {
   beforeEach(() => {
@@ -34,7 +44,7 @@ describe("getAuthenticatedContext (RLS executor)", () => {
   });
 
   it("delegates to the identity resolver — no direct Supabase calls", async () => {
-    const userId = "11111111-2222-3333-4444-555555555555";
+    const userId = "550e8400-e29b-41d4-a716-446655440000";
     mockResolveIdentity.mockResolvedValue({
       ok: true,
       ctx: { userId, roles: ["admin"] },
