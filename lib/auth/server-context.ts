@@ -7,6 +7,9 @@
  * duplicating that logic or accepting caller-supplied user IDs, roles,
  * cookies, or contexts.
  *
+ * The Prisma singleton is constructed HERE and is never exported or accessible
+ * outside this module. Application code must use `withAuthenticatedUser`.
+ *
  * Supabase RLS remains the authorization authority. The raw claims setter
  * (`withUser`) is module-private and never exported.
  *
@@ -20,8 +23,29 @@ import {
   type IdentityResult,
 } from "@/lib/auth/identity-resolver";
 import type { AppRole } from "@/lib/auth/authorize";
-import { prisma } from "@/lib/prisma/client";
-import type { PrismaClient } from "@/lib/prisma/generated/client";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClient } from "@/lib/prisma/generated/client";
+
+// --- Module-private Prisma singleton (never exported) ---
+
+const globalForPrisma = globalThis as unknown as {
+  __prismaClient?: PrismaClient;
+};
+
+function getPrismaClient(): PrismaClient {
+  if (!globalForPrisma.__prismaClient) {
+    const connectionString = process.env.DATABASE_URL;
+    if (!connectionString) {
+      throw new Error(
+        "DATABASE_URL is not set. Add it to .env.local (server secret, never NEXT_PUBLIC)."
+      );
+    }
+
+    const adapter = new PrismaPg({ connectionString });
+    globalForPrisma.__prismaClient = new PrismaClient({ adapter });
+  }
+  return globalForPrisma.__prismaClient;
+}
 
 // --- Re-exported types for downstream consumers ---
 
@@ -92,6 +116,7 @@ async function withUser<T>(
 
   const { userId, roles } = ctx;
   const claims = JSON.stringify({ sub: userId, roles });
+  const prisma = getPrismaClient();
 
   return prisma.$transaction(async (tx) => {
     await tx.$executeRaw`SET LOCAL ROLE authenticated`;
