@@ -43,3 +43,6 @@ next-env.d.ts
 
 # agent metadata
 .atl/
+
+# prisma generated client (reproducible via pnpm db:generate)
+lib/prisma/generated/
