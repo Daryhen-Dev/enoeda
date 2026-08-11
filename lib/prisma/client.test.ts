@@ -1,6 +1,5 @@
 /**
- * Import-policy guard: runtime Prisma deps are only used by allowed modules.
- * Allowed: lib/prisma/client.ts, lib/auth/server-context.ts.
+ * Import-policy guard: runtime Prisma deps are only used by the private executor.
  * Type-only imports from generated Prisma types are always permitted.
  */
 import { describe, expect, it } from "vitest";
@@ -8,7 +7,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 
 const ROOT = path.resolve(__dirname, "../..");
-const ALLOWED = new Set(["lib/prisma/client.ts", "lib/auth/server-context.ts"].map(f => path.join(ROOT, f)));
+const ALLOWED = new Set(["lib/auth/server-context.ts"].map(f => path.join(ROOT, f)));
 const SKIP = /(?:node_modules|\.next|dist|\.git|\.turbo|\.agents|\.kiro|\.atl|__mocks__|generated|\.test\.[jt]sx?$|\.spec\.[jt]sx?$)/;
 const RUNTIME_PRISMA = /(?:(?<!\btype\s)(?:import|export)\s+(?!type\b)[^;]*from\s+['"](?:@prisma\/(?:client|adapter-pg)|@\/lib\/prisma(?:\/(?!generated\/client\/index\.d))?[^'"]*|\.\.?\/[^'"]*prisma(?:\/(?!generated\/client\/index\.d))?[^'"]*)['"]|(?:require|import)\s*\(\s*['"](?:@prisma\/(?:client|adapter-pg)|@\/lib\/prisma|\.\.?\/[^'"]*prisma)[^'"]*['"])/;
 function walk(dir: string): string[] {
@@ -17,9 +16,10 @@ function walk(dir: string): string[] {
   return out;
 }
 describe("Prisma import policy", () => {
-  it("runtime Prisma dependencies are only imported by allowed modules", () => {
+  it("runtime Prisma dependencies are only imported by the private executor", () => {
     const violations: string[] = [];
     for (const file of walk(ROOT)) { if (ALLOWED.has(file)) continue; const source = readFileSync(file, "utf-8"); if (/\b(?:require|import)\s*\(\s*[^'"]/.test(source)) violations.push(`${path.relative(ROOT, file)}: nonliteral runtime loader`); for (const line of source.split("\n")) { if (RUNTIME_PRISMA.test(line) && !/^\s*(?:\/\/|\*)/.test(line)) violations.push(`${path.relative(ROOT, file)}: ${line.trim()}`); } }
     expect(violations, "Unexpected Prisma runtime imports outside allowed modules").toEqual([]);
   });
+  it("keeps client.ts server-only and export-free", () => { const source = readFileSync(path.join(ROOT, "lib/prisma/client.ts"), "utf-8"); expect(source).toContain('import "server-only"'); expect(source.match(/^export\s+/gm) ?? []).toEqual([]); });
 });
