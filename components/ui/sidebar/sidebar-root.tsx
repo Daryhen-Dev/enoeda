@@ -1,5 +1,8 @@
 "use client"
 
+import { createContext, useContext } from "react"
+import type { ReactNode } from "react"
+
 import {
   Sheet,
   SheetContent,
@@ -18,21 +21,36 @@ import {
   type SidebarStyle,
 } from "./types"
 
-const SIDEBAR_WIDTH = "16rem"
-const SIDEBAR_WIDTH_MOBILE = "18rem"
-const SIDEBAR_WIDTH_ICON = "3rem"
+const SidebarStyleContext = createContext<SidebarStyle | null>(null)
 
-function getSidebarStyle(
-  sidebarWidth: string,
+interface SidebarStyleProviderProps {
+  children: ReactNode
+  style: SidebarStyle
+}
+
+export function SidebarStyleProvider({
+  children,
+  style,
+}: SidebarStyleProviderProps) {
+  return (
+    <SidebarStyleContext value={style}>{children}</SidebarStyleContext>
+  )
+}
+
+function useSidebarStyle() {
+  return useContext(SidebarStyleContext)
+}
+
+function composeSidebarStyle(
+  providerStyle: SidebarStyle | null,
   style?: SidebarStyle
-): SidebarStyle {
+): SidebarStyle | undefined {
+  if (providerStyle === null && style === undefined) {
+    return undefined
+  }
+
   return {
-    "--sidebar-width": sidebarWidth,
-    "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
-    "--sidebar-width-icon-floating":
-      "calc(var(--sidebar-width-icon) + var(--spacing) * 4)",
-    "--sidebar-width-icon-floating-with-border":
-      "calc(var(--sidebar-width-icon) + var(--spacing) * 4 + 2px)",
+    ...providerStyle,
     ...style,
   }
 }
@@ -48,6 +66,7 @@ export function Sidebar({
   ...props
 }: SidebarProps) {
   const { isMobile, state, openMobile, setOpenMobile } = useSidebarState()
+  const sidebarStyle = composeSidebarStyle(useSidebarStyle(), style)
 
   if (collapsible === SIDEBAR_COLLAPSIBLES.none) {
     return (
@@ -57,7 +76,7 @@ export function Sidebar({
           "flex h-full w-(--sidebar-width) flex-col bg-sidebar text-sidebar-foreground",
           className
         )}
-        style={getSidebarStyle(SIDEBAR_WIDTH, style)}
+        style={sidebarStyle}
         {...props}
       >
         {children}
@@ -74,7 +93,7 @@ export function Sidebar({
           data-slot="sidebar"
           data-mobile="true"
           className="w-(--sidebar-width) bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
-          style={getSidebarStyle(SIDEBAR_WIDTH_MOBILE, style)}
+          style={sidebarStyle}
           side={side}
         >
           <SheetHeader className="sr-only">
@@ -97,7 +116,7 @@ export function Sidebar({
       data-variant={variant}
       data-side={side}
       data-slot="sidebar"
-      style={getSidebarStyle(SIDEBAR_WIDTH, style)}
+      style={sidebarStyle}
     >
       <div
         data-slot="sidebar-gap"
