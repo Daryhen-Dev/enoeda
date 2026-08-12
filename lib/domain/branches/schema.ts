@@ -1,0 +1,90 @@
+import { z } from "zod";
+
+/**
+ * Branch validation schemas (Zod 4).
+ * Used by server actions for input validation.
+ */
+
+/**
+ * Allowed IANA time zones for Ecuador.
+ * - America/Guayaquil: continental Ecuador (UTC-5)
+ * - Pacific/Galapagos: Galápagos Islands (UTC-6)
+ */
+export const ECUADOR_TIME_ZONES = {
+  CONTINENTAL: "America/Guayaquil",
+  GALAPAGOS: "Pacific/Galapagos",
+} as const;
+
+export type EcuadorTimeZone =
+  (typeof ECUADOR_TIME_ZONES)[keyof typeof ECUADOR_TIME_ZONES];
+
+export const ECUADOR_TIME_ZONE_VALUES = [
+  ECUADOR_TIME_ZONES.CONTINENTAL,
+  ECUADOR_TIME_ZONES.GALAPAGOS,
+] as const;
+
+const timeZoneSchema = z.enum(ECUADOR_TIME_ZONE_VALUES, {
+  error: `Time zone must be one of: ${ECUADOR_TIME_ZONE_VALUES.join(", ")}`,
+});
+
+export const branchIdSchema = z.uuid({ error: "Invalid branch ID" });
+
+export const branchRecordSchema = z.object({
+  id: branchIdSchema,
+  name: z.string(),
+  address: z.string().nullable(),
+  phone: z.string().nullable(),
+  time_zone: timeZoneSchema,
+  is_active: z.boolean(),
+});
+
+export const branchCreateSchema = z.object({
+  name: z
+    .string()
+    .min(1, { error: "Branch name is required" })
+    .max(100, { error: "Branch name must be 100 characters or less" }),
+  address: z
+    .string()
+    .max(255, { error: "Address must be 255 characters or less" })
+    .optional(),
+  phone: z
+    .string()
+    .max(30, { error: "Phone must be 30 characters or less" })
+    .optional(),
+  time_zone: timeZoneSchema.default(ECUADOR_TIME_ZONES.CONTINENTAL),
+  is_active: z.boolean().default(true),
+});
+
+export const branchUpdateSchema = z
+  .object({
+    id: branchIdSchema,
+    name: z
+      .string()
+      .min(1, { error: "Branch name is required" })
+      .max(100, { error: "Branch name must be 100 characters or less" })
+      .optional(),
+    address: z
+      .string()
+      .max(255, { error: "Address must be 255 characters or less" })
+      .nullable()
+      .optional(),
+    phone: z
+      .string()
+      .max(30, { error: "Phone must be 30 characters or less" })
+      .nullable()
+      .optional(),
+    time_zone: timeZoneSchema.optional(),
+    is_active: z.boolean().optional(),
+  })
+  .refine(
+    ({ name, address, phone, time_zone, is_active }) =>
+      name !== undefined ||
+      address !== undefined ||
+      phone !== undefined ||
+      time_zone !== undefined ||
+      is_active !== undefined,
+    { error: "At least one field must be provided" }
+  );
+
+export type BranchCreateInput = z.infer<typeof branchCreateSchema>;
+export type BranchUpdateInput = z.infer<typeof branchUpdateSchema>;
