@@ -88,6 +88,22 @@ export async function listStudents(
   };
 }
 
+export interface ActiveStudentCount {
+  count: number;
+}
+
+export async function getActiveStudentCount(): Promise<
+  ActionResult<ActiveStudentCount>
+> {
+  const result = await withAuthenticatedUser(async (tx) => {
+    return tx.students.count({ where: { is_active: true } });
+  });
+
+  if (!result.success) return result;
+
+  return { success: true, data: { count: result.data } };
+}
+
 export async function getStudentById(
   id: string
 ): Promise<ActionResult<StudentProfile>> {

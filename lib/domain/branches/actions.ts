@@ -158,6 +158,26 @@ export async function listBranches(): Promise<ActionResult<BranchRecord[]>> {
   }
 }
 
+export interface ActiveBranchCount {
+  count: number;
+}
+
+export async function getActiveBranchCount(): Promise<
+  ActionResult<ActiveBranchCount>
+> {
+  try {
+    const result = await withAuthenticatedUser(async (tx) => {
+      return tx.branches.count({ where: { is_active: true } });
+    });
+
+    if (!result.success) return result;
+
+    return { success: true, data: { count: result.data } };
+  } catch {
+    return { success: false, error: "Operation failed" };
+  }
+}
+
 /**
  * Get a single branch by ID. Any authenticated role can read.
  * Identity derived server-side — no client context accepted.
