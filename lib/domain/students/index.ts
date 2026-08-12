@@ -10,6 +10,7 @@ export {
   createStudent,
   deactivateStudent,
   getStudentById,
+  updateStudent,
   type ActionResult,
   type StudentProfile,
 } from "./actions";

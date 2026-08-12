@@ -4,7 +4,9 @@ import { withAuthenticatedUser } from "@/lib/auth/server-context";
 import {
   studentCreateSchema,
   studentIdSchema,
+  studentUpdateSchema,
   type StudentCreateInput,
+  type StudentUpdateInput,
 } from "./schema";
 
 export interface ActionResult<T = unknown> {
@@ -97,6 +99,60 @@ export async function createStudent(
   });
 
   if (!result.success) return result;
+  return { success: true, data: { id: result.data.id } };
+}
+
+export async function updateStudent(
+  input: StudentUpdateInput
+): Promise<ActionResult<{ id: string }>> {
+  const parsed = studentUpdateSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message };
+  }
+
+  const { id, ...editableFields } = parsed.data;
+  const data = {
+    ...(editableFields.branch_id === undefined
+      ? {}
+      : { branch_id: editableFields.branch_id }),
+    ...(editableFields.first_name === undefined
+      ? {}
+      : { first_name: editableFields.first_name }),
+    ...(editableFields.surname === undefined
+      ? {}
+      : { surname: editableFields.surname }),
+    ...(editableFields.national_id === undefined
+      ? {}
+      : { national_id: editableFields.national_id }),
+    ...(editableFields.email === undefined ? {} : { email: editableFields.email }),
+    ...(editableFields.date_of_birth === undefined
+      ? {}
+      : { date_of_birth: new Date(editableFields.date_of_birth) }),
+    ...(editableFields.is_active === undefined
+      ? {}
+      : { is_active: editableFields.is_active }),
+  };
+
+  const result = await withAuthenticatedUser(async (tx) => {
+    const student = await tx.students.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+
+    if (student === null) return null;
+
+    return tx.students.update({
+      where: { id },
+      data,
+      select: { id: true },
+    });
+  });
+
+  if (!result.success) return result;
+  if (result.data === null) {
+    return { success: false, error: "Student not found" };
+  }
+
   return { success: true, data: { id: result.data.id } };
 }
 
