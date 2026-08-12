@@ -8,6 +8,7 @@ export {
 
 export {
   createStudent,
+  deactivateStudent,
   getStudentById,
   type ActionResult,
   type StudentProfile,

@@ -99,3 +99,35 @@ export async function createStudent(
   if (!result.success) return result;
   return { success: true, data: { id: result.data.id } };
 }
+
+export async function deactivateStudent(
+  id: string
+): Promise<ActionResult<{ id: string }>> {
+  const parsed = studentIdSchema.safeParse(id);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message };
+  }
+
+  const result = await withAuthenticatedUser(async (tx) => {
+    const student = await tx.students.findUnique({
+      where: { id },
+      select: { id: true, is_active: true },
+    });
+
+    if (student === null) return null;
+    if (!student.is_active) return { id: student.id };
+
+    return tx.students.update({
+      where: { id },
+      data: { is_active: false },
+      select: { id: true },
+    });
+  });
+
+  if (!result.success) return result;
+  if (result.data === null) {
+    return { success: false, error: "Student not found" };
+  }
+
+  return { success: true, data: { id: result.data.id } };
+}
