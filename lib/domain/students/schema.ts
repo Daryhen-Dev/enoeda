@@ -58,32 +58,44 @@ export const studentCreateSchema = z.object({
   is_active: z.boolean().default(true),
 });
 
-export const studentUpdateSchema = z.object({
-  id: studentIdSchema,
-  branch_id: z.string().uuid("Invalid branch ID").optional(),
-  first_name: z
-    .string()
-    .min(1, "First name is required")
-    .max(100, "First name must be 100 characters or less")
-    .optional(),
-  surname: z
-    .string()
-    .min(1, "Surname is required")
-    .max(100, "Surname must be 100 characters or less")
-    .optional(),
-  national_id: z
-    .string()
-    .min(1, "National ID is required")
-    .max(30, "National ID must be 30 characters or less")
-    .optional(),
-  email: z.string().email("Invalid email address").optional(),
-  date_of_birth: z
-    .string()
-    .regex(DATE_PATTERN, "Date of birth must be YYYY-MM-DD format")
-    .refine(isValidCalendarDate, "Date of birth is not a valid calendar date")
-    .optional(),
-  is_active: z.boolean().optional(),
-});
+export const studentUpdateSchema = z
+  .object({
+    id: studentIdSchema,
+    branch_id: z.string().uuid("Invalid branch ID").optional(),
+    first_name: z
+      .string()
+      .min(1, "First name is required")
+      .max(100, "First name must be 100 characters or less")
+      .optional(),
+    surname: z
+      .string()
+      .min(1, "Surname is required")
+      .max(100, "Surname must be 100 characters or less")
+      .optional(),
+    national_id: z
+      .string()
+      .min(1, "National ID is required")
+      .max(30, "National ID must be 30 characters or less")
+      .optional(),
+    email: z.string().email("Invalid email address").optional(),
+    date_of_birth: z
+      .string()
+      .regex(DATE_PATTERN, "Date of birth must be YYYY-MM-DD format")
+      .refine(isValidCalendarDate, "Date of birth is not a valid calendar date")
+      .optional(),
+    is_active: z.boolean().optional(),
+  })
+  .refine(
+    (data) =>
+      data.branch_id !== undefined ||
+      data.first_name !== undefined ||
+      data.surname !== undefined ||
+      data.national_id !== undefined ||
+      data.email !== undefined ||
+      data.date_of_birth !== undefined ||
+      data.is_active !== undefined,
+    { message: "At least one field must be provided" }
+  );
 
 export type StudentCreateInput = z.infer<typeof studentCreateSchema>;
 export type StudentUpdateInput = z.infer<typeof studentUpdateSchema>;
