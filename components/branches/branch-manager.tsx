@@ -13,6 +13,7 @@ import {
   ECUADOR_TIME_ZONES,
   type EcuadorTimeZone,
 } from "@/lib/domain/branches/schema"
+import { BranchDeactivateDialog } from "@/components/branches/branch-deactivate-dialog"
 import { BranchFormDialog } from "@/components/branches/branch-form-dialog"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
@@ -154,6 +155,7 @@ export function BranchManager({ result }: BranchManagerProps) {
                     <div className="flex items-center gap-2">
                       <Badge variant="secondary">Active</Badge>
                       <BranchFormDialog branch={branch} />
+                      <BranchDeactivateDialog branch={branch} />
                     </div>
                   </CardHeader>
                   <CardContent>
