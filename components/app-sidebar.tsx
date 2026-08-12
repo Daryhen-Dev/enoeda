@@ -33,7 +33,7 @@ const navigationItems = [
     title: "Branches",
     url: "/dashboard/branches",
     icon: BuildingIcon,
-    available: false,
+    available: true,
   },
   {
     title: "Students",
