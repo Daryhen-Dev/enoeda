@@ -39,7 +39,7 @@ const navigationItems = [
     title: "Students",
     url: "/dashboard/students",
     icon: UsersIcon,
-    available: false,
+    available: true,
   },
 ] as const
 
