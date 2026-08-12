@@ -4,8 +4,10 @@ import { withAuthenticatedUser } from "@/lib/auth/server-context";
 import {
   studentCreateSchema,
   studentIdSchema,
+  studentListSchema,
   studentUpdateSchema,
   type StudentCreateInput,
+  type StudentListInput,
   type StudentUpdateInput,
 } from "./schema";
 
@@ -24,6 +26,66 @@ export interface StudentProfile {
   email: string;
   date_of_birth: Date;
   is_active: boolean;
+}
+
+export interface StudentListItem {
+  id: string;
+  branch_id: string;
+  first_name: string;
+  surname: string;
+  is_active: boolean;
+}
+
+export interface StudentListPage {
+  items: StudentListItem[];
+  next_cursor: string | null;
+}
+
+export async function listStudents(
+  input: unknown = {}
+): Promise<ActionResult<StudentListPage>> {
+  const parsed = studentListSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message };
+  }
+
+  const listInput: StudentListInput = parsed.data;
+  const result = await withAuthenticatedUser(async (tx) => {
+    return tx.students.findMany({
+      take: listInput.page_size + 1,
+      where: listInput.include_inactive ? {} : { is_active: true },
+      orderBy: [
+        { surname: "asc" },
+        { first_name: "asc" },
+        { id: "asc" },
+      ],
+      select: {
+        id: true,
+        branch_id: true,
+        first_name: true,
+        surname: true,
+        is_active: true,
+      },
+      ...(listInput.cursor === undefined
+        ? {}
+        : { cursor: { id: listInput.cursor }, skip: 1 }),
+    });
+  });
+
+  if (!result.success) return result;
+
+  const hasExtraItem = result.data.length > listInput.page_size;
+  const items = result.data.slice(0, listInput.page_size);
+  const lastItem = items.at(-1);
+
+  return {
+    success: true,
+    data: {
+      items,
+      next_cursor:
+        hasExtraItem && lastItem !== undefined ? lastItem.id : null,
+    },
+  };
 }
 
 export async function getStudentById(

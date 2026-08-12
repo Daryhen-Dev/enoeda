@@ -58,6 +58,14 @@ export const studentCreateSchema = z.object({
   is_active: z.boolean().default(true),
 });
 
+export const studentListSchema = z
+  .object({
+    cursor: studentIdSchema.optional(),
+    page_size: z.number().int().min(1).max(100).default(25),
+    include_inactive: z.boolean().default(false),
+  })
+  .strict();
+
 export const studentUpdateSchema = z
   .object({
     id: studentIdSchema,
@@ -98,4 +106,5 @@ export const studentUpdateSchema = z
   );
 
 export type StudentCreateInput = z.infer<typeof studentCreateSchema>;
+export type StudentListInput = z.infer<typeof studentListSchema>;
 export type StudentUpdateInput = z.infer<typeof studentUpdateSchema>;
