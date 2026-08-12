@@ -8,6 +8,15 @@ import {
   type ActiveBranchOption,
 } from "@/components/students/student-form-dialog"
 import { Button } from "@/components/ui/button"
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 import { listStudents, type StudentListItem } from "@/lib/domain/students/actions"
 
 const GENERIC_LOAD_ERROR = "Unable to load more students. Please try again."
@@ -107,51 +116,51 @@ export function StudentList({
           No students found.
         </p>
       ) : items.length > 0 ? (
-        <div className="overflow-x-auto rounded-lg border">
-          <table className="w-full text-sm">
-            <caption className="sr-only">Active students</caption>
-            <thead className="bg-muted/50 text-left text-muted-foreground">
-              <tr>
-                <th scope="col" className="px-4 py-3 font-medium">
+        <div className="rounded-lg border">
+          <Table>
+            <TableCaption className="sr-only">Active students</TableCaption>
+            <TableHeader className="bg-muted/50 text-left text-muted-foreground">
+              <TableRow>
+                <TableHead scope="col" className="px-4 py-3">
                   First name
-                </th>
-                <th scope="col" className="px-4 py-3 font-medium">
+                </TableHead>
+                <TableHead scope="col" className="px-4 py-3">
                   Surname
-                </th>
-                <th scope="col" className="px-4 py-3 font-medium">
+                </TableHead>
+                <TableHead scope="col" className="px-4 py-3">
                   Branch ID
-                </th>
-                <th scope="col" className="px-4 py-3 font-medium">
+                </TableHead>
+                <TableHead scope="col" className="px-4 py-3">
                   Status
-                </th>
-                <th scope="col" className="px-4 py-3 font-medium">
+                </TableHead>
+                <TableHead scope="col" className="px-4 py-3">
                   Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody>
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {items.map((student) => (
-                <tr key={student.id} className="border-t hover:bg-muted/50">
-                  <td className="px-4 py-3">{student.first_name}</td>
-                  <td className="px-4 py-3">{student.surname}</td>
-                  <td className="px-4 py-3 font-mono text-xs">
+                <TableRow key={student.id}>
+                  <TableCell className="px-4 py-3">{student.first_name}</TableCell>
+                  <TableCell className="px-4 py-3">{student.surname}</TableCell>
+                  <TableCell className="px-4 py-3 font-mono text-xs">
                     {student.branch_id}
-                  </td>
-                  <td className="px-4 py-3">
+                  </TableCell>
+                  <TableCell className="px-4 py-3">
                     {student.is_active ? "Active" : "Inactive"}
-                  </td>
-                  <td className="px-4 py-3">
+                  </TableCell>
+                  <TableCell className="px-4 py-3">
                     {student.is_active && (
                       <div className="flex flex-wrap gap-2">
                         <StudentFormDialog branches={branches} studentId={student.id} />
                         <StudentDeactivateDialog student={student} />
                       </div>
                     )}
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       ) : null}
 
