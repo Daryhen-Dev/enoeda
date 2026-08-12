@@ -13,6 +13,7 @@ import {
   ECUADOR_TIME_ZONES,
   type EcuadorTimeZone,
 } from "@/lib/domain/branches/schema"
+import { BranchFormDialog } from "@/components/branches/branch-form-dialog"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
@@ -88,13 +89,16 @@ export function BranchManager({ result }: BranchManagerProps) {
       className="flex flex-col gap-4"
       aria-labelledby="branches-title"
     >
-      <header>
-        <h1 id="branches-title" className="text-lg font-semibold">
-          Branches
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Active academy locations
-        </p>
+      <header className="flex items-start justify-between gap-4">
+        <div>
+          <h1 id="branches-title" className="text-lg font-semibold">
+            Branches
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Active academy locations
+          </p>
+        </div>
+        <BranchFormDialog />
       </header>
 
       {result.status === BRANCH_DIRECTORY_STATUS.LOADING && (
@@ -147,7 +151,10 @@ export function BranchManager({ result }: BranchManagerProps) {
                     <h2 className="font-heading text-base leading-snug font-medium">
                       {branch.name}
                     </h2>
-                    <Badge variant="secondary">Active</Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary">Active</Badge>
+                      <BranchFormDialog branch={branch} />
+                    </div>
                   </CardHeader>
                   <CardContent>
                     <dl className="grid gap-3 text-sm">
