@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react"
 
+import { StudentDeactivateDialog } from "@/components/students/student-deactivate-dialog"
 import {
   StudentFormDialog,
   type ActiveBranchOption,
@@ -123,6 +124,9 @@ export function StudentList({
                 <th scope="col" className="px-4 py-3 font-medium">
                   Status
                 </th>
+                <th scope="col" className="px-4 py-3 font-medium">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -135,6 +139,14 @@ export function StudentList({
                   </td>
                   <td className="px-4 py-3">
                     {student.is_active ? "Active" : "Inactive"}
+                  </td>
+                  <td className="px-4 py-3">
+                    {student.is_active && (
+                      <div className="flex flex-wrap gap-2">
+                        <StudentFormDialog branches={branches} studentId={student.id} />
+                        <StudentDeactivateDialog student={student} />
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))}
