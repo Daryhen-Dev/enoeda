@@ -2,6 +2,11 @@
 
 import { useState, useTransition } from "react"
 
+import {
+  StudentFormDialog,
+  type ActiveBranchOption,
+} from "@/components/students/student-form-dialog"
+import { Button } from "@/components/ui/button"
 import { listStudents, type StudentListItem } from "@/lib/domain/students/actions"
 
 const GENERIC_LOAD_ERROR = "Unable to load more students. Please try again."
@@ -15,6 +20,7 @@ interface StudentListProps {
   items: StudentSummary[]
   nextCursor: string | null
   initialError?: string
+  branches: ActiveBranchOption[]
 }
 
 function projectStudent(student: StudentSummary): StudentSummary {
@@ -31,6 +37,7 @@ export function StudentList({
   items: initialItems,
   nextCursor: initialNextCursor,
   initialError,
+  branches,
 }: StudentListProps) {
   const [items, setItems] = useState(() => initialItems.map(projectStudent))
   const [nextCursor, setNextCursor] = useState(initialNextCursor)
@@ -63,13 +70,16 @@ export function StudentList({
 
   return (
     <section aria-labelledby="students-heading" className="flex flex-col gap-4">
-      <div>
-        <h1 id="students-heading" className="text-2xl font-semibold tracking-tight">
-          Students
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Active student records available to your account.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 id="students-heading" className="text-2xl font-semibold tracking-tight">
+            Students
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Active student records available to your account.
+          </p>
+        </div>
+        <StudentFormDialog branches={branches} />
       </div>
 
       {error && (
@@ -135,14 +145,9 @@ export function StudentList({
 
       {nextCursor !== null && (
         <div>
-          <button
-            type="button"
-            onClick={loadMore}
-            disabled={isPending}
-            className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
-          >
+          <Button type="button" onClick={loadMore} disabled={isPending}>
             {isPending ? "Loading..." : "Load more"}
-          </button>
+          </Button>
         </div>
       )}
     </section>
