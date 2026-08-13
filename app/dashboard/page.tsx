@@ -8,25 +8,35 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { getDashboardKpis } from "@/lib/domain/dashboard"
+import {
+  DASHBOARD_OVERVIEW_MESSAGES,
+  formatNumber,
+} from "@/lib/localization/es-ec"
 
 export default async function DashboardOverview() {
   const result = await getDashboardKpis()
   const dashboard = result.success && result.data !== undefined ? result.data : null
   const branchCountLabel =
-    dashboard === null ? "Unavailable" : dashboard.active_branch_count.toLocaleString()
+    dashboard === null
+      ? DASHBOARD_OVERVIEW_MESSAGES.UNAVAILABLE
+      : formatNumber(dashboard.active_branch_count)
   const activeStudentCountLabel =
-    dashboard === null ? "Unavailable" : dashboard.active_student_count.toLocaleString()
+    dashboard === null
+      ? DASHBOARD_OVERVIEW_MESSAGES.UNAVAILABLE
+      : formatNumber(dashboard.active_student_count)
   const inactiveStudentCountLabel =
     dashboard === null
-      ? "Unavailable"
-      : dashboard.inactive_student_count.toLocaleString()
+      ? DASHBOARD_OVERVIEW_MESSAGES.UNAVAILABLE
+      : formatNumber(dashboard.inactive_student_count)
 
   return (
     <div className="flex flex-col gap-4 p-4 md:gap-6 md:p-6">
       <div>
-        <h2 className="text-lg font-semibold">Welcome to Enoeda Academy</h2>
+        <h2 className="text-lg font-semibold">
+          {DASHBOARD_OVERVIEW_MESSAGES.WELCOME}
+        </h2>
         <p className="text-sm text-muted-foreground">
-          Your academy management workspace is ready for you.
+          {DASHBOARD_OVERVIEW_MESSAGES.WORKSPACE_READY}
         </p>
       </div>
 
@@ -35,8 +45,7 @@ export default async function DashboardOverview() {
           role="alert"
           className="rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive"
         >
-          Overview data is temporarily unavailable. You can still open each
-          management area directly.
+          {DASHBOARD_OVERVIEW_MESSAGES.DATA_UNAVAILABLE_ALERT}
         </p>
       )}
 
@@ -52,11 +61,15 @@ export default async function DashboardOverview() {
                   <BuildingIcon className="size-5 text-foreground" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <CardTitle>Branches</CardTitle>
-                  <CardDescription>Active academy locations.</CardDescription>
+                  <CardTitle>{DASHBOARD_OVERVIEW_MESSAGES.BRANCHES}</CardTitle>
+                  <CardDescription>
+                    {DASHBOARD_OVERVIEW_MESSAGES.ACTIVE_BRANCHES_DESCRIPTION}
+                  </CardDescription>
                 </div>
                 <span
-                  aria-label={`${branchCountLabel} active branches`}
+                  aria-label={DASHBOARD_OVERVIEW_MESSAGES.BRANCH_COUNT_ARIA_LABEL(
+                    branchCountLabel,
+                  )}
                   className="text-2xl font-semibold tabular-nums"
                 >
                   {branchCountLabel}
@@ -77,11 +90,17 @@ export default async function DashboardOverview() {
                   <UsersIcon className="size-5 text-foreground" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <CardTitle>Active Students</CardTitle>
-                  <CardDescription>Active student records.</CardDescription>
+                  <CardTitle>
+                    {DASHBOARD_OVERVIEW_MESSAGES.ACTIVE_STUDENTS}
+                  </CardTitle>
+                  <CardDescription>
+                    {DASHBOARD_OVERVIEW_MESSAGES.ACTIVE_STUDENTS_DESCRIPTION}
+                  </CardDescription>
                 </div>
                 <span
-                  aria-label={`${activeStudentCountLabel} active students`}
+                  aria-label={DASHBOARD_OVERVIEW_MESSAGES.ACTIVE_STUDENT_COUNT_ARIA_LABEL(
+                    activeStudentCountLabel,
+                  )}
                   className="text-2xl font-semibold tabular-nums"
                 >
                   {activeStudentCountLabel}
@@ -98,11 +117,17 @@ export default async function DashboardOverview() {
                 <UsersIcon className="size-5 text-muted-foreground" />
               </div>
               <div className="min-w-0 flex-1">
-                <CardTitle>Inactive Students</CardTitle>
-                <CardDescription>Student records marked inactive.</CardDescription>
+                <CardTitle>
+                  {DASHBOARD_OVERVIEW_MESSAGES.INACTIVE_STUDENTS}
+                </CardTitle>
+                <CardDescription>
+                  {DASHBOARD_OVERVIEW_MESSAGES.INACTIVE_STUDENTS_DESCRIPTION}
+                </CardDescription>
               </div>
               <span
-                aria-label={`${inactiveStudentCountLabel} inactive students`}
+                aria-label={DASHBOARD_OVERVIEW_MESSAGES.INACTIVE_STUDENT_COUNT_ARIA_LABEL(
+                  inactiveStudentCountLabel,
+                )}
                 className="text-2xl font-semibold tabular-nums"
               >
                 {inactiveStudentCountLabel}
@@ -114,20 +139,25 @@ export default async function DashboardOverview() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Active students by branch</CardTitle>
+          <CardTitle>
+            {DASHBOARD_OVERVIEW_MESSAGES.ACTIVE_STUDENTS_BY_BRANCH}
+          </CardTitle>
           <CardDescription>
-            Active student records across active academy locations.
+            {DASHBOARD_OVERVIEW_MESSAGES.ACTIVE_STUDENTS_BY_BRANCH_DESCRIPTION}
           </CardDescription>
           {dashboard === null ? (
             <p className="text-sm text-muted-foreground">
-              Branch distribution is unavailable.
+              {DASHBOARD_OVERVIEW_MESSAGES.BRANCH_DISTRIBUTION_UNAVAILABLE}
             </p>
           ) : dashboard.active_students_by_branch.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              No active branches are available.
+              {DASHBOARD_OVERVIEW_MESSAGES.NO_ACTIVE_BRANCHES}
             </p>
           ) : (
-            <ul className="divide-y rounded-lg border" aria-label="Active students by branch">
+            <ul
+              className="divide-y rounded-lg border"
+              aria-label={DASHBOARD_OVERVIEW_MESSAGES.ACTIVE_STUDENTS_BY_BRANCH_LIST_LABEL}
+            >
               {dashboard.active_students_by_branch.map((branch) => (
                 <li
                   key={branch.branch_id}
@@ -135,7 +165,9 @@ export default async function DashboardOverview() {
                 >
                   <span className="font-medium">{branch.branch_name}</span>
                   <span className="tabular-nums text-muted-foreground">
-                    {branch.active_student_count.toLocaleString()} active
+                    {DASHBOARD_OVERVIEW_MESSAGES.ACTIVE_STUDENTS_COUNT(
+                      formatNumber(branch.active_student_count),
+                    )}
                   </span>
                 </li>
               ))}

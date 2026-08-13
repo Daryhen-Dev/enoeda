@@ -24,6 +24,32 @@ export const DASHBOARD_SHELL_MESSAGES = {
   MANAGEMENT: "Administración",
 } as const
 
+export const DASHBOARD_OVERVIEW_MESSAGES = {
+  WELCOME: "Le damos la bienvenida a Enoeda Academy",
+  WORKSPACE_READY: "Su espacio de gestión académica está listo.",
+  DATA_UNAVAILABLE_ALERT:
+    "Los datos del resumen no están disponibles temporalmente. Aún puede abrir cada área de gestión directamente.",
+  UNAVAILABLE: "No disponible",
+  BRANCHES: "Sucursales",
+  ACTIVE_BRANCHES_DESCRIPTION: "Sucursales activas de la academia.",
+  ACTIVE_STUDENTS: "Estudiantes activos",
+  ACTIVE_STUDENTS_DESCRIPTION: "Registros de estudiantes activos.",
+  INACTIVE_STUDENTS: "Estudiantes inactivos",
+  INACTIVE_STUDENTS_DESCRIPTION: "Registros de estudiantes marcados como inactivos.",
+  ACTIVE_STUDENTS_BY_BRANCH: "Estudiantes activos por sucursal",
+  ACTIVE_STUDENTS_BY_BRANCH_DESCRIPTION:
+    "Registros de estudiantes activos en las sucursales activas de la academia.",
+  BRANCH_DISTRIBUTION_UNAVAILABLE:
+    "La distribución por sucursal no está disponible.",
+  NO_ACTIVE_BRANCHES: "No hay sucursales activas disponibles.",
+  ACTIVE_STUDENTS_BY_BRANCH_LIST_LABEL: "Estudiantes activos por sucursal",
+  BRANCH_COUNT_ARIA_LABEL: (count: string) => `${count} sucursales activas`,
+  ACTIVE_STUDENT_COUNT_ARIA_LABEL: (count: string) => `${count} estudiantes activos`,
+  INACTIVE_STUDENT_COUNT_ARIA_LABEL: (count: string) =>
+    `${count} estudiantes inactivos`,
+  ACTIVE_STUDENTS_COUNT: (count: string) => `${count} activos`,
+} as const
+
 export const STUDENT_DIRECTORY_MESSAGES = {
   INITIAL_LOAD_FAILURE: "No se pudieron cargar los estudiantes. Inténtelo nuevamente.",
   LOAD_MORE_FAILURE: "No se pudieron cargar más estudiantes. Inténtelo nuevamente.",
