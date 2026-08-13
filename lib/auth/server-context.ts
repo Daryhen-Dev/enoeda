@@ -23,6 +23,7 @@ import {
   type IdentityResult,
 } from "@/lib/auth/identity-resolver";
 import type { AppRole } from "@/lib/auth/authorize";
+import { COMMON_MESSAGES } from "@/lib/localization/es-ec";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@/lib/prisma/generated/client";
 
@@ -174,8 +175,8 @@ export async function withAuthenticatedUser<T>(
   if (!authResult.ok) {
     const message =
       authResult.reason === "unauthenticated"
-        ? "Authentication required"
-        : "Insufficient permissions";
+        ? COMMON_MESSAGES.AUTHENTICATION_REQUIRED
+        : COMMON_MESSAGES.INSUFFICIENT_PERMISSIONS;
     return { success: false, error: message };
   }
 
@@ -190,6 +191,6 @@ export async function withAuthenticatedUser<T>(
     return { success: true, data };
   } catch {
     // Do not expose raw PostgreSQL errors to callers
-    return { success: false, error: "An unexpected error occurred" };
+    return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
   }
 }
