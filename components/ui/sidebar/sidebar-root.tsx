@@ -10,6 +10,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
+import { SIDEBAR_ACCESSIBILITY_MESSAGES } from "@/lib/localization/es-ec"
 import { cn } from "@/lib/utils"
 
 import { useSidebarState } from "./sidebar-state-provider"
@@ -97,8 +98,10 @@ export function Sidebar({
           side={side}
         >
           <SheetHeader className="sr-only">
-            <SheetTitle>Sidebar</SheetTitle>
-            <SheetDescription>Displays the mobile sidebar.</SheetDescription>
+            <SheetTitle>{SIDEBAR_ACCESSIBILITY_MESSAGES.MOBILE_TITLE}</SheetTitle>
+            <SheetDescription>
+              {SIDEBAR_ACCESSIBILITY_MESSAGES.MOBILE_DESCRIPTION}
+            </SheetDescription>
           </SheetHeader>
           <div className="flex h-full w-full flex-col">{children}</div>
         </SheetContent>
