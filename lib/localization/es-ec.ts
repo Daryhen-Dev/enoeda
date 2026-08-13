@@ -54,6 +54,28 @@ export const BRANCH_MESSAGES = {
   REACTIVATION_NAME_CONFLICT: "No se puede reactivar esta sucursal porque otra sucursal activa ya usa este nombre. Cambie el nombre de una de las sucursales primero.",
 } as const
 
+export const STUDENT_FORM_MESSAGES = {
+  CREATE_TITLE: "Crear estudiante",
+  EDIT_TITLE: "Editar estudiante",
+  SAVE_CHANGES: "Guardar cambios",
+  LOAD_FAILURE: "No se pudo cargar el estudiante.",
+  SAVE_FAILURE: "No se pudo guardar el estudiante.",
+  CREATE_DESCRIPTION: "Agregue un estudiante a una sucursal activa.",
+  EDIT_DESCRIPTION: "Actualice los datos personales y de sucursal de este estudiante.",
+  LOADING_DETAILS: "Cargando datos del estudiante…",
+  DESTRUCTIVE_ALERT_TITLE: "No se pudo guardar el estudiante",
+  ACTIVE_BRANCH_REQUIRED: "Seleccione una sucursal activa.",
+  ACTIVE_BRANCH_PLACEHOLDER: "Seleccione una sucursal activa",
+  EMAIL_REQUIRED: "El correo electrónico es obligatorio.",
+  DATE_OF_BIRTH_REQUIRED: "La fecha de nacimiento es obligatoria.",
+  DATE_OF_BIRTH_INVALID: "Ingrese una fecha de nacimiento válida.",
+  FIRST_NAME_LABEL: "Nombre",
+  SURNAME_LABEL: "Apellido",
+  EMAIL_LABEL: "Correo electrónico",
+  DATE_OF_BIRTH_LABEL: "Fecha de nacimiento",
+  SAVING: "Guardando…",
+} as const
+
 export const STUDENT_MESSAGES = {
   INVALID_ID: "El identificador del estudiante no es válido.",
   INVALID_BRANCH_ID: "El identificador de la sucursal no es válido.",
