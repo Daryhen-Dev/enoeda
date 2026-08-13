@@ -76,7 +76,7 @@ export function BranchDeactivateDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>Deactivate {branch.name}?</AlertDialogTitle>
           <AlertDialogDescription>
-            This branch will no longer be available in the active directory.
+            Deactivation is blocked while active students are assigned to this branch.
           </AlertDialogDescription>
         </AlertDialogHeader>
 
