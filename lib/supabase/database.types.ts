@@ -100,6 +100,7 @@ export type Database = {
         Row: {
           assigned_at: string;
           assigned_by: string | null;
+          branch_id: string | null;
           id: string;
           revoked_at: string | null;
           revoked_by: string | null;
@@ -109,6 +110,7 @@ export type Database = {
         Insert: {
           assigned_at?: string;
           assigned_by?: string | null;
+          branch_id?: string | null;
           id?: string;
           revoked_at?: string | null;
           revoked_by?: string | null;
@@ -118,38 +120,58 @@ export type Database = {
         Update: {
           assigned_at?: string;
           assigned_by?: string | null;
+          branch_id?: string | null;
           id?: string;
           revoked_at?: string | null;
           revoked_by?: string | null;
           role?: Database["public"]["Enums"]["role_enum"];
           user_id?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_branch_id_fkey";
+            columns: ["branch_id"];
+            isOneToOne: false;
+            referencedRelation: "branches";
+            referencedColumns: ["id"];
+          },
+        ];
       };
     };
     Views: Record<string, never>;
     Functions: {
-      current_roles: {
-        Args: never;
-        Returns: Database["public"]["Enums"]["role_enum"][];
-      };
-      grant_role: {
+      assign_branch_admin: {
         Args: {
-          p_role: Database["public"]["Enums"]["role_enum"];
-          p_target_user_id: string;
+          p_target: string;
+          p_branch_id: string;
         };
         Returns: string;
       };
-      revoke_role: {
+      assign_branch_teacher: {
         Args: {
+          p_target: string;
+          p_branch_id: string;
+        };
+        Returns: string;
+      };
+      current_roles: {
+        Args: never;
+        Returns: {
+          role: Database["public"]["Enums"]["role_enum"];
+          branch_id: string | null;
+        }[];
+      };
+      revoke_branch_role: {
+        Args: {
+          p_target: string;
           p_role: Database["public"]["Enums"]["role_enum"];
-          p_target_user_id: string;
+          p_branch_id: string;
         };
         Returns: boolean;
       };
     };
     Enums: {
-      role_enum: "admin" | "teacher";
+      role_enum: "admin" | "owner" | "teacher";
     };
     CompositeTypes: Record<string, never>;
   };
