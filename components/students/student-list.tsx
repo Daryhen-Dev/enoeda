@@ -7,7 +7,14 @@ import {
   StudentFormDialog,
   type ActiveBranchOption,
 } from "@/components/students/student-form-dialog"
+import { StudentReactivateDialog } from "@/components/students/student-reactivate-dialog"
 import { Button } from "@/components/ui/button"
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs"
 import {
   Table,
   TableBody,
@@ -17,63 +24,90 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { listStudents, type StudentListItem } from "@/lib/domain/students/actions"
+import {
+  listStudents,
+  type StudentListInput,
+  type StudentListItem,
+} from "@/lib/domain/students"
 
 const GENERIC_LOAD_ERROR = "Unable to load more students. Please try again."
 
+type StudentStatus = StudentListInput["status"]
 type StudentSummary = Pick<
   StudentListItem,
-  "id" | "first_name" | "surname" | "branch_id" | "is_active"
+  "id" | "first_name" | "surname" | "branch_id"
 >
 
 interface StudentListProps {
-  items: StudentSummary[]
-  nextCursor: string | null
-  initialError?: string
+  activeItems: StudentSummary[]
+  activeNextCursor: string | null
+  activeInitialError?: string
+  inactiveItems: StudentSummary[]
+  inactiveNextCursor: string | null
+  inactiveInitialError?: string
   branches: ActiveBranchOption[]
 }
 
-function projectStudent(student: StudentSummary): StudentSummary {
-  return {
-    id: student.id,
-    first_name: student.first_name,
-    surname: student.surname,
-    branch_id: student.branch_id,
-    is_active: student.is_active,
-  }
-}
-
 export function StudentList({
-  items: initialItems,
-  nextCursor: initialNextCursor,
-  initialError,
+  activeItems: initialActiveItems,
+  activeNextCursor: initialActiveNextCursor,
+  activeInitialError,
+  inactiveItems: initialInactiveItems,
+  inactiveNextCursor: initialInactiveNextCursor,
+  inactiveInitialError,
   branches,
 }: StudentListProps) {
-  const [items, setItems] = useState(() => initialItems.map(projectStudent))
-  const [nextCursor, setNextCursor] = useState(initialNextCursor)
-  const [error, setError] = useState(initialError ?? null)
+  const [selectedTab, setSelectedTab] = useState<StudentStatus>("active")
+  const [activeItems, setActiveItems] = useState(initialActiveItems)
+  const [activeNextCursor, setActiveNextCursor] = useState(
+    initialActiveNextCursor,
+  )
+  const [activeError, setActiveError] = useState(activeInitialError ?? null)
+  const [inactiveItems, setInactiveItems] = useState(initialInactiveItems)
+  const [inactiveNextCursor, setInactiveNextCursor] = useState(
+    initialInactiveNextCursor,
+  )
+  const [inactiveError, setInactiveError] = useState(
+    inactiveInitialError ?? null,
+  )
   const [isPending, startTransition] = useTransition()
 
+  const isActiveTab = selectedTab === "active"
+  const items = isActiveTab ? activeItems : inactiveItems
+  const nextCursor = isActiveTab ? activeNextCursor : inactiveNextCursor
+  const error = isActiveTab ? activeError : inactiveError
+
   function loadMore() {
-    if (nextCursor === null || isPending) return
+    const status = selectedTab
+    const cursor = status === "active" ? activeNextCursor : inactiveNextCursor
+
+    if (cursor === null || isPending) return
 
     startTransition(async () => {
       try {
-        const result = await listStudents({ cursor: nextCursor })
+        const result = await listStudents({ cursor, status })
         const page = result.data
 
         if (!result.success || page === undefined) {
-          setError(GENERIC_LOAD_ERROR)
+          if (status === "active") setActiveError(GENERIC_LOAD_ERROR)
+          else setInactiveError(GENERIC_LOAD_ERROR)
           return
         }
 
-        const loadedItems = page.items.map(projectStudent)
+        const loadedItems = page.items
 
-        setItems((currentItems) => [...currentItems, ...loadedItems])
-        setNextCursor(page.next_cursor)
-        setError(null)
+        if (status === "active") {
+          setActiveItems((currentItems) => [...currentItems, ...loadedItems])
+          setActiveNextCursor(page.next_cursor)
+          setActiveError(null)
+        } else {
+          setInactiveItems((currentItems) => [...currentItems, ...loadedItems])
+          setInactiveNextCursor(page.next_cursor)
+          setInactiveError(null)
+        }
       } catch {
-        setError(GENERIC_LOAD_ERROR)
+        if (status === "active") setActiveError(GENERIC_LOAD_ERROR)
+        else setInactiveError(GENERIC_LOAD_ERROR)
       }
     })
   }
@@ -86,13 +120,26 @@ export function StudentList({
             Students
           </h1>
           <p className="text-sm text-muted-foreground">
-            Active student records available to your account.
+            {isActiveTab
+              ? "Active student records available to your account."
+              : "Inactive student records available to your account."}
           </p>
         </div>
-        <StudentFormDialog branches={branches} />
+        {isActiveTab && <StudentFormDialog branches={branches} />}
       </div>
 
-      {error && (
+      <Tabs
+        value={selectedTab}
+        onValueChange={(value) => {
+          if (value === "active" || value === "inactive") setSelectedTab(value)
+        }}
+      >
+        <TabsList>
+          <TabsTrigger value="active">Active</TabsTrigger>
+          <TabsTrigger value="inactive">History</TabsTrigger>
+        </TabsList>
+        <TabsContent value={selectedTab} className="flex flex-col gap-4">
+          {error && (
         <p
           role="alert"
           className="rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive"
@@ -107,35 +154,27 @@ export function StudentList({
         </p>
       )}
 
-      {items.length === 0 && !initialError ? (
+      {items.length === 0 && !error ? (
         <p
           role="status"
           aria-live="polite"
           className="rounded-lg border border-dashed px-4 py-8 text-center text-sm text-muted-foreground"
         >
-          No students found.
+          No {selectedTab} students found.
         </p>
       ) : items.length > 0 ? (
         <div className="rounded-lg border">
           <Table>
-            <TableCaption className="sr-only">Active students</TableCaption>
+            <TableCaption className="sr-only">
+              {isActiveTab ? "Active students" : "Inactive students"}
+            </TableCaption>
             <TableHeader className="bg-muted/50 text-left text-muted-foreground">
               <TableRow>
-                <TableHead scope="col" className="px-4 py-3">
-                  First name
-                </TableHead>
-                <TableHead scope="col" className="px-4 py-3">
-                  Surname
-                </TableHead>
-                <TableHead scope="col" className="px-4 py-3">
-                  Branch ID
-                </TableHead>
-                <TableHead scope="col" className="px-4 py-3">
-                  Status
-                </TableHead>
-                <TableHead scope="col" className="px-4 py-3">
-                  Actions
-                </TableHead>
+                <TableHead scope="col" className="px-4 py-3">First name</TableHead>
+                <TableHead scope="col" className="px-4 py-3">Surname</TableHead>
+                <TableHead scope="col" className="px-4 py-3">Branch ID</TableHead>
+                <TableHead scope="col" className="px-4 py-3">Status</TableHead>
+                <TableHead scope="col" className="px-4 py-3">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -147,14 +186,25 @@ export function StudentList({
                     {student.branch_id}
                   </TableCell>
                   <TableCell className="px-4 py-3">
-                    {student.is_active ? "Active" : "Inactive"}
+                    {isActiveTab ? "Active" : "Inactive"}
                   </TableCell>
                   <TableCell className="px-4 py-3">
-                    {student.is_active && (
+                    {isActiveTab ? (
                       <div className="flex flex-wrap gap-2">
                         <StudentFormDialog branches={branches} studentId={student.id} />
-                        <StudentDeactivateDialog student={student} />
+                        <StudentDeactivateDialog
+                          student={{
+                            id: student.id,
+                            first_name: student.first_name,
+                            surname: student.surname,
+                          }}
+                        />
                       </div>
+                    ) : (
+                      <StudentReactivateDialog
+                        student={{ id: student.id, branch_id: student.branch_id }}
+                        branches={branches}
+                      />
                     )}
                   </TableCell>
                 </TableRow>
@@ -170,7 +220,9 @@ export function StudentList({
             {isPending ? "Loading..." : "Load more"}
           </Button>
         </div>
-      )}
+          )}
+        </TabsContent>
+      </Tabs>
     </section>
   )
 }
