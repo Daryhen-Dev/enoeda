@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { AlertCircleIcon, LoaderCircleIcon, PowerOffIcon } from "lucide-react"
 
 import { deactivateStudent } from "@/lib/domain/students/actions"
+import { STUDENT_LIFECYCLE_MESSAGES } from "@/lib/localization/es-ec"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import {
   AlertDialog,
@@ -55,14 +56,14 @@ export function StudentDeactivateDialog({
       const result = await deactivateStudent(student.id)
 
       if (!result.success) {
-        setActionError(result.error ?? "Unable to deactivate the student.")
+        setActionError(result.error ?? STUDENT_LIFECYCLE_MESSAGES.DEACTIVATE_FAILURE)
         return
       }
 
       setIsOpen(false)
       router.refresh()
     } catch {
-      setActionError("Unable to deactivate the student.")
+      setActionError(STUDENT_LIFECYCLE_MESSAGES.DEACTIVATE_FAILURE)
     } finally {
       setIsDeactivating(false)
     }
@@ -72,20 +73,22 @@ export function StudentDeactivateDialog({
     <AlertDialog open={isOpen} onOpenChange={handleOpenChange}>
       <AlertDialogTrigger render={<Button variant="destructive" size="sm" />}>
         <PowerOffIcon aria-hidden="true" />
-        Deactivate
+        {STUDENT_LIFECYCLE_MESSAGES.DEACTIVATE_TRIGGER}
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Deactivate {studentName}?</AlertDialogTitle>
+          <AlertDialogTitle>
+            {STUDENT_LIFECYCLE_MESSAGES.DEACTIVATE_CONFIRMATION_TITLE(studentName)}
+          </AlertDialogTitle>
           <AlertDialogDescription>
-            This student will no longer appear in the active student list.
+            {STUDENT_LIFECYCLE_MESSAGES.DEACTIVATE_CONFIRMATION_DESCRIPTION}
           </AlertDialogDescription>
         </AlertDialogHeader>
 
         {actionError && (
           <Alert variant="destructive">
             <AlertCircleIcon />
-            <AlertTitle>Unable to deactivate student</AlertTitle>
+            <AlertTitle>{STUDENT_LIFECYCLE_MESSAGES.DEACTIVATE_ALERT_TITLE}</AlertTitle>
             <AlertDescription>{actionError}</AlertDescription>
           </Alert>
         )}
@@ -97,18 +100,22 @@ export function StudentDeactivateDialog({
             aria-live="polite"
           >
             <LoaderCircleIcon className="size-4 animate-spin" aria-hidden="true" />
-            Deactivating student…
+            {STUDENT_LIFECYCLE_MESSAGES.DEACTIVATING}
           </p>
         )}
 
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isDeactivating}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={isDeactivating}>
+            {STUDENT_LIFECYCLE_MESSAGES.CANCEL}
+          </AlertDialogCancel>
           <AlertDialogAction
             variant="destructive"
             disabled={isDeactivating}
             onClick={handleDeactivate}
           >
-            {isDeactivating ? "Deactivating…" : "Deactivate"}
+            {isDeactivating
+              ? STUDENT_LIFECYCLE_MESSAGES.DEACTIVATING
+              : STUDENT_LIFECYCLE_MESSAGES.DEACTIVATE_TRIGGER}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

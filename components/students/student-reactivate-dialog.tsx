@@ -26,6 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { reactivateStudent } from "@/lib/domain/students"
+import { STUDENT_LIFECYCLE_MESSAGES } from "@/lib/localization/es-ec"
 
 interface ReactivateStudentSummary {
   id: string
@@ -58,7 +59,7 @@ export function StudentReactivateDialog({
 
   async function handleReactivate() {
     if (requiresBranch && !branchId) {
-      setError("Select an active branch to reactivate this student.")
+      setError(STUDENT_LIFECYCLE_MESSAGES.REACTIVATION_BRANCH_REQUIRED)
       return
     }
 
@@ -70,13 +71,13 @@ export function StudentReactivateDialog({
         ...(requiresBranch ? { branch_id: branchId } : {}),
       })
       if (!result.success) {
-        setError(result.error ?? "Unable to reactivate the student.")
+        setError(result.error ?? STUDENT_LIFECYCLE_MESSAGES.REACTIVATE_FAILURE)
         return
       }
       setIsOpen(false)
       router.refresh()
     } catch {
-      setError("Unable to reactivate the student.")
+      setError(STUDENT_LIFECYCLE_MESSAGES.REACTIVATE_FAILURE)
     } finally {
       setIsPending(false)
     }
@@ -84,26 +85,32 @@ export function StudentReactivateDialog({
 
   return (
     <AlertDialog open={isOpen} onOpenChange={setDialogOpen}>
-      <AlertDialogTrigger render={<Button size="sm" variant="outline" />}>Reactivate</AlertDialogTrigger>
+      <AlertDialogTrigger render={<Button size="sm" variant="outline" />}>
+        {STUDENT_LIFECYCLE_MESSAGES.REACTIVATE_TRIGGER}
+      </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Reactivate student?</AlertDialogTitle>
-          <AlertDialogDescription>This student will return to the active list.</AlertDialogDescription>
+          <AlertDialogTitle>{STUDENT_LIFECYCLE_MESSAGES.REACTIVATE_CONFIRMATION_TITLE}</AlertDialogTitle>
+          <AlertDialogDescription>
+            {STUDENT_LIFECYCLE_MESSAGES.REACTIVATE_CONFIRMATION_DESCRIPTION}
+          </AlertDialogDescription>
         </AlertDialogHeader>
         {requiresBranch && (
           <Field>
-            <FieldLabel htmlFor={branchSelectId}>Active branch</FieldLabel>
+            <FieldLabel htmlFor={branchSelectId}>
+              {STUDENT_LIFECYCLE_MESSAGES.ACTIVE_BRANCH_LABEL}
+            </FieldLabel>
             <Select value={branchId} onValueChange={(value) => setBranchId(value ?? "")} disabled={isPending}>
-              <SelectTrigger id={branchSelectId} className="w-full"><SelectValue placeholder="Select an active branch" /></SelectTrigger>
+              <SelectTrigger id={branchSelectId} className="w-full"><SelectValue placeholder={STUDENT_LIFECYCLE_MESSAGES.ACTIVE_BRANCH_PLACEHOLDER} /></SelectTrigger>
               <SelectContent>{branches.map((branch) => <SelectItem key={branch.id} value={branch.id}>{branch.name}</SelectItem>)}</SelectContent>
             </Select>
           </Field>
         )}
         {error && <Alert variant="destructive"><AlertDescription>{error}</AlertDescription></Alert>}
-        {isPending && <p role="status" aria-live="polite" className="text-sm text-muted-foreground">Reactivating student...</p>}
+        {isPending && <p role="status" aria-live="polite" className="text-sm text-muted-foreground">{STUDENT_LIFECYCLE_MESSAGES.REACTIVATING}</p>}
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
-          <AlertDialogAction disabled={isPending} onClick={handleReactivate}>{isPending ? "Reactivating..." : "Reactivate"}</AlertDialogAction>
+          <AlertDialogCancel disabled={isPending}>{STUDENT_LIFECYCLE_MESSAGES.CANCEL}</AlertDialogCancel>
+          <AlertDialogAction disabled={isPending} onClick={handleReactivate}>{isPending ? STUDENT_LIFECYCLE_MESSAGES.REACTIVATING : STUDENT_LIFECYCLE_MESSAGES.REACTIVATE_ACTION}</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

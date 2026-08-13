@@ -76,6 +76,25 @@ export const STUDENT_FORM_MESSAGES = {
   SAVING: "Guardando…",
 } as const
 
+export const STUDENT_LIFECYCLE_MESSAGES = {
+  DEACTIVATE_TRIGGER: "Desactivar",
+  DEACTIVATE_CONFIRMATION_TITLE: (studentName: string) => `¿Desactivar a ${studentName}?`,
+  DEACTIVATE_CONFIRMATION_DESCRIPTION: `Este ${PRODUCT_TERMS.STUDENT.toLowerCase()} dejará de aparecer en la lista de ${PRODUCT_TERMS.STUDENT.toLowerCase()}s activos.`,
+  DEACTIVATE_FAILURE: `No se pudo desactivar el ${PRODUCT_TERMS.STUDENT.toLowerCase()}.`,
+  DEACTIVATE_ALERT_TITLE: `No se pudo desactivar el ${PRODUCT_TERMS.STUDENT.toLowerCase()}`,
+  DEACTIVATING: `Desactivando ${PRODUCT_TERMS.STUDENT.toLowerCase()}…`,
+  REACTIVATE_TRIGGER: "Reactivar",
+  REACTIVATE_CONFIRMATION_TITLE: `¿Reactivar ${PRODUCT_TERMS.STUDENT.toLowerCase()}?`,
+  REACTIVATE_CONFIRMATION_DESCRIPTION: `Este ${PRODUCT_TERMS.STUDENT.toLowerCase()} volverá a la lista de activos.`,
+  REACTIVATION_BRANCH_REQUIRED: `Seleccione una ${PRODUCT_TERMS.BRANCH.toLowerCase()} activa para reactivar este ${PRODUCT_TERMS.STUDENT.toLowerCase()}.`,
+  REACTIVATE_FAILURE: `No se pudo reactivar el ${PRODUCT_TERMS.STUDENT.toLowerCase()}.`,
+  ACTIVE_BRANCH_LABEL: `${PRODUCT_TERMS.BRANCH} activa`,
+  ACTIVE_BRANCH_PLACEHOLDER: `Seleccione una ${PRODUCT_TERMS.BRANCH.toLowerCase()} activa`,
+  REACTIVATING: `Reactivando ${PRODUCT_TERMS.STUDENT.toLowerCase()}…`,
+  REACTIVATE_ACTION: "Reactivar",
+  CANCEL: COMMON_MESSAGES.CANCEL,
+} as const
+
 export const STUDENT_MESSAGES = {
   INVALID_ID: "El identificador del estudiante no es válido.",
   INVALID_BRANCH_ID: "El identificador de la sucursal no es válido.",
