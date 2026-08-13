@@ -7,11 +7,11 @@
  * duplicating that logic or accepting caller-supplied user IDs, roles,
  * cookies, or contexts.
  *
- * The Prisma singleton is constructed HERE and is never exported or accessible
- * outside this module. Application code must use `withAuthenticatedUser`.
+ * The Prisma RLS helper is delegated to `@/lib/prisma/client` which owns the
+ * singleton and the `withUser` function. Application code must use
+ * `withAuthenticatedUser`.
  *
- * Supabase RLS remains the authorization authority. The raw claims setter
- * (`withUser`) is module-private and never exported.
+ * Supabase RLS remains the authorization authority.
  *
  * NEVER import this from middleware.ts or any Edge Runtime entrypoint.
  */
@@ -22,109 +22,19 @@ import {
   getAuthenticatedContext as resolveIdentity,
   type IdentityResult,
 } from "@/lib/auth/identity-resolver";
-import type { AppRole } from "@/lib/auth/authorize";
+import type { AppRole, AppRoleAssignment } from "@/lib/auth/authorize";
 import { COMMON_MESSAGES } from "@/lib/localization/es-ec";
-import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "@/lib/prisma/generated/client";
-
-// --- Module-private Prisma singleton (never exported) ---
-
-const globalForPrisma = globalThis as unknown as {
-  __prismaClient?: PrismaClient;
-};
-
-function getPrismaClient(): PrismaClient {
-  if (!globalForPrisma.__prismaClient) {
-    const connectionString = process.env.DATABASE_URL;
-    if (!connectionString) {
-      throw new Error(
-        "DATABASE_URL is not set. Add it to .env.local (server secret, never NEXT_PUBLIC)."
-      );
-    }
-
-    const adapter = new PrismaPg({ connectionString });
-    globalForPrisma.__prismaClient = new PrismaClient({ adapter });
-  }
-  return globalForPrisma.__prismaClient;
-}
+import { withUser, type TransactionClient } from "@/lib/prisma/client";
 
 // --- Re-exported types for downstream consumers ---
 
 export interface AuthenticatedContext {
   userId: string;
   roles: AppRole[];
+  assignments: AppRoleAssignment[];
 }
 
 export type AuthContextResult = IdentityResult;
-
-// --- Module-private RLS transaction helper ---
-
-/** Allowed user roles for RLS claims injection. */
-const USER_ROLES = {
-  ADMIN: "admin",
-  TEACHER: "teacher",
-} as const;
-
-const USER_ROLE_VALUES: readonly string[] = Object.values(USER_ROLES);
-
-type UserRole = (typeof USER_ROLES)[keyof typeof USER_ROLES];
-
-interface UserContext {
-  /** Supabase auth user id (UUID). */
-  userId: string;
-  /** Roles made available to RLS policies. */
-  roles: readonly UserRole[];
-}
-
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-
-function validateUserContext({ userId, roles }: UserContext): void {
-  if (!UUID_PATTERN.test(userId)) {
-    throw new Error("Invalid userId: expected a UUID.");
-  }
-
-  if (!Array.isArray(roles)) {
-    throw new Error("Invalid roles: expected an array.");
-  }
-
-  if (!roles.every((role) => USER_ROLE_VALUES.includes(role))) {
-    throw new Error('Invalid roles: only "admin" and "teacher" are allowed.');
-  }
-}
-
-/** Transaction client type extracted from Prisma's $transaction callback. */
-type TransactionClient = Parameters<
-  Parameters<PrismaClient["$transaction"]>[0]
->[0];
-
-/**
- * Executes a callback inside an interactive transaction that sets the
- * Postgres session context for RLS evaluation:
- *
- * - `SET LOCAL ROLE authenticated` — assumes the RLS-bound role
- * - `SELECT set_config('request.jwt.claims', ..., true)` — provides auth.uid()
- *   and roles for the transaction only
- *
- * This is MODULE-PRIVATE. External consumers must use `withAuthenticatedUser`,
- * which derives identity from the server session, never from client input.
- */
-async function withUser<T>(
-  ctx: UserContext,
-  fn: (tx: TransactionClient) => Promise<T>
-): Promise<T> {
-  validateUserContext(ctx);
-
-  const { userId, roles } = ctx;
-  const claims = JSON.stringify({ sub: userId, roles });
-  const prisma = getPrismaClient();
-
-  return prisma.$transaction(async (tx) => {
-    await tx.$executeRaw`SET LOCAL ROLE authenticated`;
-    await tx.$executeRaw`SELECT set_config('request.jwt.claims', ${claims}, true);`;
-    return fn(tx);
-  });
-}
 
 // --- Adapter: map IdentityResult to legacy AuthContextResult ---
 
@@ -181,13 +91,12 @@ export async function withAuthenticatedUser<T>(
   }
 
   const { ctx } = authResult;
-  const userContext: UserContext = {
-    userId: ctx.userId,
-    roles: ctx.roles,
-  };
 
   try {
-    const data = await withUser(userContext, (tx) => fn(tx, ctx));
+    const data = await withUser(
+      { userId: ctx.userId, roles: ctx.roles },
+      (tx) => fn(tx, ctx)
+    );
     return { success: true, data };
   } catch {
     // Do not expose raw PostgreSQL errors to callers

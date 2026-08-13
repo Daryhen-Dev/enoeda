@@ -13,7 +13,12 @@
 import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
-import { parseAppRoles, type AppRole } from "@/lib/auth/authorize";
+import {
+  parseRoleAssignments,
+  roleNamesFrom,
+  type AppRole,
+  type AppRoleAssignment,
+} from "@/lib/auth/authorize";
 
 // --- Result types ---
 
@@ -29,6 +34,7 @@ export type IdentityReason =
 export interface AuthenticatedIdentity {
   userId: string;
   roles: AppRole[];
+  assignments: AppRoleAssignment[];
 }
 
 /** Discriminated union result for identity resolution. */
@@ -41,6 +47,10 @@ export type IdentityResult =
 /**
  * Resolves the current authenticated user and their active roles from
  * Supabase Auth session (cookie-based) and the `current_roles()` DB RPC.
+ *
+ * current_roles() now returns TABLE(role role_enum, branch_id uuid) —
+ * composite rows are parsed into AppRoleAssignment[] and role names are
+ * extracted for guard checks.
  *
  * Uses the SAME Supabase client instance for both `auth.getUser()` and
  * the RPC call, ensuring session consistency.
@@ -63,7 +73,7 @@ export async function getAuthenticatedContext(): Promise<IdentityResult> {
     return { ok: false, reason: "unauthenticated" };
   }
 
-  // 2. Fetch active roles from DB via current_roles() RPC
+  // 2. Fetch active roles from DB via current_roles() RPC (composite rows)
   const { data: rolesData, error: rolesError } =
     await supabase.rpc("current_roles");
 
@@ -71,11 +81,13 @@ export async function getAuthenticatedContext(): Promise<IdentityResult> {
     return { ok: false, reason: "no_roles" };
   }
 
-  // 3. Filter to recognized application roles only
-  const roles = parseAppRoles(rolesData);
+  // 3. Parse composite rows into assignments and extract role names
+  const assignments = parseRoleAssignments(rolesData);
+  const roles = roleNamesFrom(assignments);
+
   if (roles.length === 0) {
     return { ok: false, reason: "no_roles" };
   }
 
-  return { ok: true, ctx: { userId: user.id, roles } };
+  return { ok: true, ctx: { userId: user.id, roles, assignments } };
 }

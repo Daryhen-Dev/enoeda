@@ -4,7 +4,8 @@ import {
   isPublicPath,
   findRouteGuard,
   hasRequiredRole,
-  parseAppRoles,
+  parseRoleAssignments,
+  roleNamesFrom,
 } from "@/lib/auth/authorize";
 import { createServerClient } from "@supabase/ssr";
 
@@ -70,13 +71,14 @@ export async function middleware(request: NextRequest) {
     return withRefreshedCookies(NextResponse.redirect(loginUrl), supabaseResponse);
   }
 
-  // Fetch current roles via RPC
-  const { data: roles } = await supabase.rpc("current_roles");
-  const userRoles = parseAppRoles(roles);
+  // Fetch current roles via RPC (composite rows: { role, branch_id })
+  const { data: rolesData } = await supabase.rpc("current_roles");
+  const assignments = parseRoleAssignments(rolesData);
+  const userRoles = roleNamesFrom(assignments);
 
-  // Check role authorization
+  // Check role authorization against persona prefix guard
   if (!hasRequiredRole(userRoles, guard.roles)) {
-    // 403 — user is authenticated but lacks required role
+    // 403 — user is authenticated but lacks required role for this persona
     return withRefreshedCookies(
       new NextResponse("Forbidden", { status: 403 }),
       supabaseResponse

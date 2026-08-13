@@ -1,11 +1,12 @@
 /**
- * U3-A2 Private RLS Executor Tests.
+ * Private RLS Executor Tests (branch-scoped).
  *
  * Proves that:
  * 1. getAuthenticatedContext() delegates to the identity-resolver (no direct Supabase)
  * 2. Unauthenticated and no_roles outcomes are preserved through the adapter
  * 3. withAuthenticatedUser sets RLS claims via the module-private withUser
  * 4. Raw PostgreSQL errors are NOT exposed to callers
+ * 5. AuthenticatedContext carries assignments alongside roles
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
@@ -19,24 +20,11 @@ vi.mock("@/lib/auth/identity-resolver", () => ({
 // Mock server-only (no-op guard for Node runtime checks)
 vi.mock("server-only", () => ({}));
 
-// Mock the Prisma adapter and generated client — server-context constructs
-// the singleton internally, so we mock the dependencies it uses.
-const mockTransaction = vi.fn();
-vi.mock("@prisma/adapter-pg", () => ({
-  PrismaPg: class MockPrismaPg {
-    constructor() {}
-  },
+// Mock the prisma/client module which provides withUser and TransactionClient
+const mockWithUser = vi.fn();
+vi.mock("@/lib/prisma/client", () => ({
+  withUser: (...args: unknown[]) => mockWithUser(...args),
 }));
-vi.mock("@/lib/prisma/generated/client", () => ({
-  PrismaClient: class MockPrismaClient {
-    constructor() {}
-    $transaction(...args: unknown[]) {
-      return mockTransaction(...args);
-    }
-  },
-}));
-
-process.env.DATABASE_URL = "postgresql://test:test@localhost:5432/test";
 
 describe("getAuthenticatedContext (RLS executor)", () => {
   beforeEach(() => {
@@ -47,7 +35,11 @@ describe("getAuthenticatedContext (RLS executor)", () => {
     const userId = "550e8400-e29b-41d4-a716-446655440000";
     mockResolveIdentity.mockResolvedValue({
       ok: true,
-      ctx: { userId, roles: ["admin"] },
+      ctx: {
+        userId,
+        roles: ["admin"],
+        assignments: [{ role: "admin", branchId: "branch-1" }],
+      },
     });
 
     const { getAuthenticatedContext } = await import(
@@ -58,7 +50,11 @@ describe("getAuthenticatedContext (RLS executor)", () => {
     expect(mockResolveIdentity).toHaveBeenCalledTimes(1);
     expect(result).toEqual({
       ok: true,
-      ctx: { userId, roles: ["admin"] },
+      ctx: {
+        userId,
+        roles: ["admin"],
+        assignments: [{ role: "admin", branchId: "branch-1" }],
+      },
     });
   });
 
@@ -88,11 +84,18 @@ describe("getAuthenticatedContext (RLS executor)", () => {
     expect(result).toEqual({ ok: false, reason: "no_roles" });
   });
 
-  it("preserves multi-role context from resolver", async () => {
+  it("preserves multi-role context with assignments from resolver", async () => {
     const userId = "550e8400-e29b-41d4-a716-446655440000";
     mockResolveIdentity.mockResolvedValue({
       ok: true,
-      ctx: { userId, roles: ["admin", "teacher"] },
+      ctx: {
+        userId,
+        roles: ["admin", "teacher"],
+        assignments: [
+          { role: "admin", branchId: "branch-1" },
+          { role: "teacher", branchId: "branch-2" },
+        ],
+      },
     });
 
     const { getAuthenticatedContext } = await import(
@@ -101,7 +104,14 @@ describe("getAuthenticatedContext (RLS executor)", () => {
     const result = await getAuthenticatedContext();
     expect(result).toEqual({
       ok: true,
-      ctx: { userId, roles: ["admin", "teacher"] },
+      ctx: {
+        userId,
+        roles: ["admin", "teacher"],
+        assignments: [
+          { role: "admin", branchId: "branch-1" },
+          { role: "teacher", branchId: "branch-2" },
+        ],
+      },
     });
   });
 });
@@ -123,9 +133,9 @@ describe("withAuthenticatedUser", () => {
     const result = await withAuthenticatedUser(async () => ({ id: "x" }));
     expect(result).toEqual({
       success: false,
-      error: "Authentication required",
+      error: "Debe iniciar sesión para continuar.",
     });
-    expect(mockTransaction).not.toHaveBeenCalled();
+    expect(mockWithUser).not.toHaveBeenCalled();
   });
 
   it("returns permission error when resolver reports no_roles", async () => {
@@ -140,30 +150,26 @@ describe("withAuthenticatedUser", () => {
     const result = await withAuthenticatedUser(async () => ({ id: "x" }));
     expect(result).toEqual({
       success: false,
-      error: "Insufficient permissions",
+      error: "No tiene permisos para realizar esta acción.",
     });
-    expect(mockTransaction).not.toHaveBeenCalled();
+    expect(mockWithUser).not.toHaveBeenCalled();
   });
 
-  it("sets RLS claims with resolver-derived context inside the transaction", async () => {
+  it("delegates to withUser with resolver-derived context", async () => {
     const userId = "550e8400-e29b-41d4-a716-446655440000";
     mockResolveIdentity.mockResolvedValue({
       ok: true,
-      ctx: { userId, roles: ["admin"] },
+      ctx: {
+        userId,
+        roles: ["admin"],
+        assignments: [{ role: "admin", branchId: "branch-1" }],
+      },
     });
 
-    const executeRawCalls: Array<{ strings: string[]; values: unknown[] }> = [];
-    mockTransaction.mockImplementation(
-      async (txFn: (tx: unknown) => Promise<unknown>) => {
-        const mockTx = {
-          $executeRaw: async (
-            strings: TemplateStringsArray,
-            ...values: unknown[]
-          ) => {
-            executeRawCalls.push({ strings: [...strings], values });
-          },
-        };
-        return txFn(mockTx);
+    mockWithUser.mockImplementation(
+      async (_ctx: unknown, fn: (tx: unknown) => Promise<unknown>) => {
+        const mockTx = { $queryRaw: vi.fn() };
+        return fn(mockTx);
       }
     );
 
@@ -176,23 +182,21 @@ describe("withAuthenticatedUser", () => {
     }));
 
     expect(mockResolveIdentity).toHaveBeenCalledTimes(1);
-    expect(mockTransaction).toHaveBeenCalledTimes(1);
-    expect(executeRawCalls[0]).toEqual({
-      strings: ["SET LOCAL ROLE authenticated"],
-      values: [],
-    });
-
-    const claimsCall = executeRawCalls[1];
-    expect(claimsCall.strings.join("?")).toBe(
-      "SELECT set_config('request.jwt.claims', ?, true);"
+    expect(mockWithUser).toHaveBeenCalledTimes(1);
+    expect(mockWithUser).toHaveBeenCalledWith(
+      { userId, roles: ["admin"] },
+      expect.any(Function)
     );
-    expect(JSON.parse(String(claimsCall.values[0]))).toEqual({
-      sub: userId,
-      roles: ["admin"],
-    });
     expect(result).toEqual({
       success: true,
-      data: { id: "test", receivedCtx: { userId, roles: ["admin"] } },
+      data: {
+        id: "test",
+        receivedCtx: {
+          userId,
+          roles: ["admin"],
+          assignments: [{ role: "admin", branchId: "branch-1" }],
+        },
+      },
     });
   });
 
@@ -200,10 +204,14 @@ describe("withAuthenticatedUser", () => {
     const userId = "550e8400-e29b-41d4-a716-446655440000";
     mockResolveIdentity.mockResolvedValue({
       ok: true,
-      ctx: { userId, roles: ["admin"] },
+      ctx: {
+        userId,
+        roles: ["admin"],
+        assignments: [{ role: "admin", branchId: "branch-1" }],
+      },
     });
 
-    mockTransaction.mockImplementation(async () => {
+    mockWithUser.mockImplementation(async () => {
       throw new Error("relation \"public.branches\" does not exist");
     });
 
@@ -213,7 +221,7 @@ describe("withAuthenticatedUser", () => {
     const result = await withAuthenticatedUser(async () => ({ id: "x" }));
     expect(result).toEqual({
       success: false,
-      error: "An unexpected error occurred",
+      error: "Ocurrió un error inesperado.",
     });
   });
 });
