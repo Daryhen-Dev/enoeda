@@ -1,5 +1,6 @@
 "use client"
 
+import { LogoutButton } from "@/components/auth/logout-button"
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { DASHBOARD_SHELL_MESSAGES } from "@/lib/localization/es-ec"
@@ -16,6 +17,9 @@ export function SiteHeader() {
         <h1 className="text-base font-medium">
           {DASHBOARD_SHELL_MESSAGES.OVERVIEW}
         </h1>
+        <div className="ml-auto">
+          <LogoutButton />
+        </div>
       </div>
     </header>
   )
