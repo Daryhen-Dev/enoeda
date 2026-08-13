@@ -2,8 +2,10 @@
 
 import { withAuthenticatedUser } from "@/lib/auth/server-context";
 import {
+  BRANCH_STATUS,
   branchCreateSchema,
   branchIdSchema,
+  branchListSchema,
   branchRecordSchema,
   branchUpdateSchema,
   type BranchCreateInput,
@@ -19,8 +21,14 @@ export interface ActionResult<T = unknown> {
 
 const BRANCH_DEACTIVATION_ACTIVE_STUDENTS_ERROR =
   "Cannot deactivate a branch with active students";
+const BRANCH_NOT_FOUND_ERROR = "Branch not found";
 
 interface BranchDeactivationOutcome {
+  id: string | null;
+  error: string | null;
+}
+
+interface BranchReactivationOutcome {
   id: string | null;
   error: string | null;
 }
@@ -150,14 +158,76 @@ export async function deactivateBranch(
 }
 
 /**
- * List all active branches. Any authenticated role can read.
+ * Reactivate a branch. Admin-only (RLS enforced).
  * Identity derived server-side — no client context accepted.
  */
-export async function listBranches(): Promise<ActionResult<BranchRecord[]>> {
+export async function reactivateBranch(
+  branchId: string
+): Promise<ActionResult<{ id: string }>> {
+  const parsed = branchIdSchema.safeParse(branchId);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message };
+  }
+
+  try {
+    const result = await withAuthenticatedUser(async (tx) => {
+      const branch = await tx.branches.findUnique({
+        where: { id: parsed.data },
+        select: { id: true, is_active: true },
+      });
+
+      if (branch === null) {
+        return {
+          id: null,
+          error: BRANCH_NOT_FOUND_ERROR,
+        } satisfies BranchReactivationOutcome;
+      }
+
+      if (branch.is_active) {
+        return { id: branch.id, error: null } satisfies BranchReactivationOutcome;
+      }
+
+      const reactivatedBranch = await tx.branches.update({
+        where: { id: branch.id },
+        data: { is_active: true },
+        select: { id: true },
+      });
+
+      return {
+        id: reactivatedBranch.id,
+        error: null,
+      } satisfies BranchReactivationOutcome;
+    });
+
+    if (!result.success) return result;
+    if (result.data.id === null) {
+      return { success: false, error: result.data.error ?? "Operation failed" };
+    }
+
+    return { success: true, data: { id: result.data.id } };
+  } catch {
+    return { success: false, error: "Operation failed" };
+  }
+}
+
+/**
+ * List branches by lifecycle status. Any authenticated role can read.
+ * Identity derived server-side — no client context accepted.
+ */
+export async function listBranches(
+  input: unknown = {}
+): Promise<ActionResult<BranchRecord[]>> {
+  const parsed = branchListSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message };
+  }
+
   try {
     const result = await withAuthenticatedUser(async (tx) => {
       return tx.branches.findMany({
-        where: { is_active: true },
+        where: {
+          is_active: parsed.data.status === BRANCH_STATUS.ACTIVE,
+        },
         select: {
           id: true,
           name: true,
