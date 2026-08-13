@@ -31,6 +31,24 @@ export const BRANCH_MESSAGES = {
   REACTIVATION_NAME_CONFLICT: "No se puede reactivar esta sucursal porque otra sucursal activa ya usa este nombre. Cambie el nombre de una de las sucursales primero.",
 } as const
 
+export const STUDENT_MESSAGES = {
+  INVALID_ID: "El identificador del estudiante no es válido.",
+  INVALID_BRANCH_ID: "El identificador de la sucursal no es válido.",
+  FIRST_NAME_REQUIRED: "El nombre es obligatorio.",
+  FIRST_NAME_MAX_LENGTH: "El nombre debe tener como máximo 100 caracteres.",
+  SURNAME_REQUIRED: "El apellido es obligatorio.",
+  SURNAME_MAX_LENGTH: "El apellido debe tener como máximo 100 caracteres.",
+  NATIONAL_ID_REQUIRED: "La cédula es obligatoria.",
+  NATIONAL_ID_MAX_LENGTH: "La cédula debe tener como máximo 30 caracteres.",
+  INVALID_EMAIL: "El correo electrónico no es válido.",
+  DATE_OF_BIRTH_FORMAT: "La fecha de nacimiento debe tener el formato YYYY-MM-DD.",
+  INVALID_DATE_OF_BIRTH: "La fecha de nacimiento no es una fecha válida.",
+  AT_LEAST_ONE_FIELD_REQUIRED: "Debe proporcionar al menos un campo.",
+  NOT_FOUND: "Estudiante no encontrado.",
+  ACTIVE_STUDENT_BRANCH_REQUIRED: "Se requiere una sucursal activa para un estudiante activo.",
+  REACTIVATION_BRANCH_REQUIRED: "Se requiere una sucursal activa para reactivar este estudiante.",
+} as const
+
 const DATE_FORMAT_OPTIONS = {
   dateStyle: "medium",
 } as const satisfies Intl.DateTimeFormatOptions

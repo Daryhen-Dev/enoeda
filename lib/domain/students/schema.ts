@@ -1,3 +1,4 @@
+import { STUDENT_MESSAGES } from "@/lib/localization/es-ec";
 import { z } from "zod";
 
 /**
@@ -7,7 +8,7 @@ import { z } from "zod";
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
-export const studentIdSchema = z.string().uuid("Invalid student ID");
+export const studentIdSchema = z.uuid({ error: STUDENT_MESSAGES.INVALID_ID });
 
 /**
  * Validates that a YYYY-MM-DD string represents a real calendar date.
@@ -37,24 +38,26 @@ function isValidCalendarDate(dateStr: string): boolean {
 }
 
 export const studentCreateSchema = z.object({
-  branch_id: z.string().uuid("Invalid branch ID"),
+  branch_id: z.uuid({ error: STUDENT_MESSAGES.INVALID_BRANCH_ID }),
   first_name: z
     .string()
-    .min(1, "First name is required")
-    .max(100, "First name must be 100 characters or less"),
+    .min(1, { error: STUDENT_MESSAGES.FIRST_NAME_REQUIRED })
+    .max(100, { error: STUDENT_MESSAGES.FIRST_NAME_MAX_LENGTH }),
   surname: z
     .string()
-    .min(1, "Surname is required")
-    .max(100, "Surname must be 100 characters or less"),
+    .min(1, { error: STUDENT_MESSAGES.SURNAME_REQUIRED })
+    .max(100, { error: STUDENT_MESSAGES.SURNAME_MAX_LENGTH }),
   national_id: z
     .string()
-    .min(1, "National ID is required")
-    .max(30, "National ID must be 30 characters or less"),
-  email: z.string().email("Invalid email address"),
+    .min(1, { error: STUDENT_MESSAGES.NATIONAL_ID_REQUIRED })
+    .max(30, { error: STUDENT_MESSAGES.NATIONAL_ID_MAX_LENGTH }),
+  email: z.email({ error: STUDENT_MESSAGES.INVALID_EMAIL }),
   date_of_birth: z
     .string()
-    .regex(DATE_PATTERN, "Date of birth must be YYYY-MM-DD format")
-    .refine(isValidCalendarDate, "Date of birth is not a valid calendar date"),
+    .regex(DATE_PATTERN, { error: STUDENT_MESSAGES.DATE_OF_BIRTH_FORMAT })
+    .refine(isValidCalendarDate, {
+      error: STUDENT_MESSAGES.INVALID_DATE_OF_BIRTH,
+    }),
   is_active: z.boolean().default(true),
 });
 
@@ -79,34 +82,40 @@ export const studentListSchema = z
 export const studentReactivateSchema = z
   .object({
     id: studentIdSchema,
-    branch_id: z.string().uuid("Invalid branch ID").optional(),
+    branch_id: z
+      .uuid({ error: STUDENT_MESSAGES.INVALID_BRANCH_ID })
+      .optional(),
   })
   .strict();
 
 export const studentUpdateSchema = z
   .object({
     id: studentIdSchema,
-    branch_id: z.string().uuid("Invalid branch ID").optional(),
+    branch_id: z
+      .uuid({ error: STUDENT_MESSAGES.INVALID_BRANCH_ID })
+      .optional(),
     first_name: z
       .string()
-      .min(1, "First name is required")
-      .max(100, "First name must be 100 characters or less")
+      .min(1, { error: STUDENT_MESSAGES.FIRST_NAME_REQUIRED })
+      .max(100, { error: STUDENT_MESSAGES.FIRST_NAME_MAX_LENGTH })
       .optional(),
     surname: z
       .string()
-      .min(1, "Surname is required")
-      .max(100, "Surname must be 100 characters or less")
+      .min(1, { error: STUDENT_MESSAGES.SURNAME_REQUIRED })
+      .max(100, { error: STUDENT_MESSAGES.SURNAME_MAX_LENGTH })
       .optional(),
     national_id: z
       .string()
-      .min(1, "National ID is required")
-      .max(30, "National ID must be 30 characters or less")
+      .min(1, { error: STUDENT_MESSAGES.NATIONAL_ID_REQUIRED })
+      .max(30, { error: STUDENT_MESSAGES.NATIONAL_ID_MAX_LENGTH })
       .optional(),
-    email: z.string().email("Invalid email address").optional(),
+    email: z.email({ error: STUDENT_MESSAGES.INVALID_EMAIL }).optional(),
     date_of_birth: z
       .string()
-      .regex(DATE_PATTERN, "Date of birth must be YYYY-MM-DD format")
-      .refine(isValidCalendarDate, "Date of birth is not a valid calendar date")
+      .regex(DATE_PATTERN, { error: STUDENT_MESSAGES.DATE_OF_BIRTH_FORMAT })
+      .refine(isValidCalendarDate, {
+        error: STUDENT_MESSAGES.INVALID_DATE_OF_BIRTH,
+      })
       .optional(),
   })
   .refine(
@@ -117,7 +126,7 @@ export const studentUpdateSchema = z
       data.national_id !== undefined ||
       data.email !== undefined ||
       data.date_of_birth !== undefined,
-    { message: "At least one field must be provided" }
+    { error: STUDENT_MESSAGES.AT_LEAST_ONE_FIELD_REQUIRED }
   );
 
 export type StudentCreateInput = z.infer<typeof studentCreateSchema>;
