@@ -31,6 +31,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  COMMON_MESSAGES,
+  PRODUCT_TERMS,
+  STUDENT_FORM_MESSAGES,
+  STUDENT_MESSAGES,
+} from "@/lib/localization/es-ec"
 
 export interface ActiveBranchOption {
   id: string
@@ -94,8 +100,12 @@ export function StudentFormDialog({
   })
   const isEditing = studentId !== undefined
   const isPending = form.formState.isSubmitting || isLoadingStudent
-  const title = isEditing ? "Edit student" : "Create student"
-  const submitLabel = isEditing ? "Save changes" : "Create student"
+  const title = isEditing
+    ? STUDENT_FORM_MESSAGES.EDIT_TITLE
+    : STUDENT_FORM_MESSAGES.CREATE_TITLE
+  const submitLabel = isEditing
+    ? STUDENT_FORM_MESSAGES.SAVE_CHANGES
+    : COMMON_MESSAGES.CREATE
 
   async function loadStudent() {
     if (studentId === undefined) {
@@ -109,7 +119,7 @@ export function StudentFormDialog({
       const result = await getStudentById(studentId)
 
       if (!result.success || result.data === undefined) {
-        setActionError(result.error ?? "Unable to load the student.")
+        setActionError(result.error ?? STUDENT_FORM_MESSAGES.LOAD_FAILURE)
         return
       }
 
@@ -124,7 +134,7 @@ export function StudentFormDialog({
         date_of_birth: formatDateForInput(result.data.date_of_birth),
       })
     } catch {
-      setActionError("Unable to load the student.")
+      setActionError(STUDENT_FORM_MESSAGES.LOAD_FAILURE)
     } finally {
       setIsLoadingStudent(false)
     }
@@ -157,7 +167,7 @@ export function StudentFormDialog({
         : await createStudent({ ...values, is_active: true })
 
       if (!result.success) {
-        setActionError(result.error ?? "Unable to save the student.")
+        setActionError(result.error ?? STUDENT_FORM_MESSAGES.SAVE_FAILURE)
         return
       }
 
@@ -165,7 +175,7 @@ export function StudentFormDialog({
       setIsOpen(false)
       router.refresh()
     } catch {
-      setActionError("Unable to save the student.")
+      setActionError(STUDENT_FORM_MESSAGES.SAVE_FAILURE)
     }
   }
 
@@ -177,29 +187,29 @@ export function StudentFormDialog({
         render={<Button variant={isEditing ? "outline" : "default"} size="sm" />}
       >
         {isEditing ? <PencilIcon data-icon="inline-start" /> : <PlusIcon data-icon="inline-start" />}
-        {isEditing ? "Edit" : "Create"}
+        {isEditing ? COMMON_MESSAGES.EDIT : COMMON_MESSAGES.CREATE}
       </DialogTrigger>
       <DialogContent showCloseButton={!isPending}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>
             {isEditing
-              ? "Update this student's personal and branch details."
-              : "Add a student to an active branch."}
+              ? STUDENT_FORM_MESSAGES.EDIT_DESCRIPTION
+              : STUDENT_FORM_MESSAGES.CREATE_DESCRIPTION}
           </DialogDescription>
         </DialogHeader>
 
         {isLoadingStudent ? (
           <p className="flex items-center gap-2 text-sm text-muted-foreground" role="status" aria-live="polite">
             <LoaderCircleIcon className="size-4 animate-spin" aria-hidden="true" />
-            Loading student details…
+            {STUDENT_FORM_MESSAGES.LOADING_DETAILS}
           </p>
         ) : (
           <form className="grid gap-4" onSubmit={form.handleSubmit(handleSubmit)}>
             {actionError && (
               <Alert variant="destructive">
                 <AlertCircleIcon />
-                <AlertTitle>Unable to save student</AlertTitle>
+                <AlertTitle>{STUDENT_FORM_MESSAGES.DESTRUCTIVE_ALERT_TITLE}</AlertTitle>
                 <AlertDescription>{actionError}</AlertDescription>
               </Alert>
             )}
@@ -210,11 +220,11 @@ export function StudentFormDialog({
                 name="branch_id"
                 rules={{
                   validate: (value) =>
-                    hasActiveBranch(branches, value) || "Select an active branch",
+                    hasActiveBranch(branches, value) || STUDENT_FORM_MESSAGES.ACTIVE_BRANCH_REQUIRED,
                 }}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={Boolean(fieldState.error)}>
-                    <FieldLabel htmlFor={branchId}>Branch</FieldLabel>
+                    <FieldLabel htmlFor={branchId}>{PRODUCT_TERMS.BRANCH}</FieldLabel>
                     <Select
                       value={field.value}
                       onValueChange={(value) => {
@@ -230,7 +240,7 @@ export function StudentFormDialog({
                         aria-describedby={fieldState.error ? `${branchId}-error` : undefined}
                         aria-invalid={Boolean(fieldState.error)}
                       >
-                        <SelectValue placeholder="Select an active branch" />
+                        <SelectValue placeholder={STUDENT_FORM_MESSAGES.ACTIVE_BRANCH_PLACEHOLDER} />
                       </SelectTrigger>
                       <SelectContent>
                         {branches.map((branch) => (
@@ -246,52 +256,52 @@ export function StudentFormDialog({
               />
 
               <Field data-invalid={Boolean(errors.first_name)}>
-                <FieldLabel htmlFor={firstNameId}>First name</FieldLabel>
+                <FieldLabel htmlFor={firstNameId}>{STUDENT_FORM_MESSAGES.FIRST_NAME_LABEL}</FieldLabel>
                 <Input
                   id={firstNameId}
                   aria-describedby={errors.first_name ? `${firstNameId}-error` : undefined}
                   aria-invalid={Boolean(errors.first_name)}
                   disabled={isPending}
                   {...form.register("first_name", {
-                    required: "First name is required",
-                    maxLength: { value: 100, message: "First name must be 100 characters or less" },
+                    required: STUDENT_MESSAGES.FIRST_NAME_REQUIRED,
+                    maxLength: { value: 100, message: STUDENT_MESSAGES.FIRST_NAME_MAX_LENGTH },
                   })}
                 />
                 <FieldError id={`${firstNameId}-error`} errors={[errors.first_name]} />
               </Field>
 
               <Field data-invalid={Boolean(errors.surname)}>
-                <FieldLabel htmlFor={surnameId}>Surname</FieldLabel>
+                <FieldLabel htmlFor={surnameId}>{STUDENT_FORM_MESSAGES.SURNAME_LABEL}</FieldLabel>
                 <Input
                   id={surnameId}
                   aria-describedby={errors.surname ? `${surnameId}-error` : undefined}
                   aria-invalid={Boolean(errors.surname)}
                   disabled={isPending}
                   {...form.register("surname", {
-                    required: "Surname is required",
-                    maxLength: { value: 100, message: "Surname must be 100 characters or less" },
+                    required: STUDENT_MESSAGES.SURNAME_REQUIRED,
+                    maxLength: { value: 100, message: STUDENT_MESSAGES.SURNAME_MAX_LENGTH },
                   })}
                 />
                 <FieldError id={`${surnameId}-error`} errors={[errors.surname]} />
               </Field>
 
               <Field data-invalid={Boolean(errors.national_id)}>
-                <FieldLabel htmlFor={nationalId}>National ID</FieldLabel>
+                <FieldLabel htmlFor={nationalId}>{PRODUCT_TERMS.NATIONAL_ID}</FieldLabel>
                 <Input
                   id={nationalId}
                   aria-describedby={errors.national_id ? `${nationalId}-error` : undefined}
                   aria-invalid={Boolean(errors.national_id)}
                   disabled={isPending}
                   {...form.register("national_id", {
-                    required: "National ID is required",
-                    maxLength: { value: 30, message: "National ID must be 30 characters or less" },
+                    required: STUDENT_MESSAGES.NATIONAL_ID_REQUIRED,
+                    maxLength: { value: 30, message: STUDENT_MESSAGES.NATIONAL_ID_MAX_LENGTH },
                   })}
                 />
                 <FieldError id={`${nationalId}-error`} errors={[errors.national_id]} />
               </Field>
 
               <Field data-invalid={Boolean(errors.email)}>
-                <FieldLabel htmlFor={emailId}>Email</FieldLabel>
+                <FieldLabel htmlFor={emailId}>{STUDENT_FORM_MESSAGES.EMAIL_LABEL}</FieldLabel>
                 <Input
                   id={emailId}
                   type="email"
@@ -299,15 +309,15 @@ export function StudentFormDialog({
                   aria-invalid={Boolean(errors.email)}
                   disabled={isPending}
                   {...form.register("email", {
-                    required: "Email is required",
-                    pattern: { value: /^\S+@\S+\.\S+$/, message: "Enter a valid email address" },
+                    required: STUDENT_FORM_MESSAGES.EMAIL_REQUIRED,
+                    pattern: { value: /^\S+@\S+\.\S+$/, message: STUDENT_MESSAGES.INVALID_EMAIL },
                   })}
                 />
                 <FieldError id={`${emailId}-error`} errors={[errors.email]} />
               </Field>
 
               <Field data-invalid={Boolean(errors.date_of_birth)}>
-                <FieldLabel htmlFor={dateOfBirthId}>Date of birth</FieldLabel>
+                <FieldLabel htmlFor={dateOfBirthId}>{STUDENT_FORM_MESSAGES.DATE_OF_BIRTH_LABEL}</FieldLabel>
                 <Input
                   id={dateOfBirthId}
                   type="date"
@@ -315,8 +325,8 @@ export function StudentFormDialog({
                   aria-invalid={Boolean(errors.date_of_birth)}
                   disabled={isPending}
                   {...form.register("date_of_birth", {
-                    required: "Date of birth is required",
-                    pattern: { value: /^\d{4}-\d{2}-\d{2}$/, message: "Enter a valid date" },
+                    required: STUDENT_FORM_MESSAGES.DATE_OF_BIRTH_REQUIRED,
+                    pattern: { value: /^\d{4}-\d{2}-\d{2}$/, message: STUDENT_FORM_MESSAGES.DATE_OF_BIRTH_INVALID },
                   })}
                 />
                 <FieldError id={`${dateOfBirthId}-error`} errors={[errors.date_of_birth]} />
@@ -325,10 +335,10 @@ export function StudentFormDialog({
 
             <DialogFooter>
               <DialogClose render={<Button type="button" variant="outline" disabled={isPending} />}>
-                Cancel
+                {COMMON_MESSAGES.CANCEL}
               </DialogClose>
               <Button type="submit" disabled={isPending}>
-                {form.formState.isSubmitting ? "Saving..." : submitLabel}
+                {form.formState.isSubmitting ? STUDENT_FORM_MESSAGES.SAVING : submitLabel}
               </Button>
             </DialogFooter>
           </form>
