@@ -22,6 +22,8 @@ export interface ActionResult<T = unknown> {
 const BRANCH_DEACTIVATION_ACTIVE_STUDENTS_ERROR =
   "Cannot deactivate a branch with active students";
 const BRANCH_NOT_FOUND_ERROR = "Branch not found";
+const BRANCH_REACTIVATION_NAME_CONFLICT_ERROR =
+  "No se puede reactivar esta sucursal porque otra sucursal activa ya usa este nombre. Cambie el nombre de una de las sucursales primero.";
 
 interface BranchDeactivationOutcome {
   id: string | null;
@@ -187,16 +189,27 @@ export async function reactivateBranch(
         return { id: branch.id, error: null } satisfies BranchReactivationOutcome;
       }
 
-      const reactivatedBranch = await tx.branches.update({
-        where: { id: branch.id },
-        data: { is_active: true },
-        select: { id: true },
-      });
+      try {
+        const reactivatedBranch = await tx.branches.update({
+          where: { id: branch.id },
+          data: { is_active: true },
+          select: { id: true },
+        });
 
-      return {
-        id: reactivatedBranch.id,
-        error: null,
-      } satisfies BranchReactivationOutcome;
+        return {
+          id: reactivatedBranch.id,
+          error: null,
+        } satisfies BranchReactivationOutcome;
+      } catch (error) {
+        if (error instanceof Error && error.message.includes("branches_name_uq")) {
+          return {
+            id: null,
+            error: BRANCH_REACTIVATION_NAME_CONFLICT_ERROR,
+          } satisfies BranchReactivationOutcome;
+        }
+
+        throw error;
+      }
     });
 
     if (!result.success) return result;
