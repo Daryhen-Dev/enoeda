@@ -5,8 +5,7 @@ import {
   STUDENT_STATUS,
   type StudentListItem,
 } from "@/lib/domain/students"
-
-const GENERIC_LOAD_ERROR = "Unable to load students. Please try again."
+import { STUDENT_DIRECTORY_MESSAGES } from "@/lib/localization/es-ec"
 
 type StudentSummary = Pick<
   StudentListItem,
@@ -41,10 +40,18 @@ export default async function StudentsPage() {
       <StudentList
         activeItems={activePage?.items.map(toStudentSummary) ?? []}
         activeNextCursor={activePage?.next_cursor ?? null}
-        activeInitialError={activeResult.success ? undefined : GENERIC_LOAD_ERROR}
+        activeInitialError={
+          activeResult.success
+            ? undefined
+            : STUDENT_DIRECTORY_MESSAGES.INITIAL_LOAD_FAILURE
+        }
         inactiveItems={inactivePage?.items.map(toStudentSummary) ?? []}
         inactiveNextCursor={inactivePage?.next_cursor ?? null}
-        inactiveInitialError={inactiveResult.success ? undefined : GENERIC_LOAD_ERROR}
+        inactiveInitialError={
+          inactiveResult.success
+            ? undefined
+            : STUDENT_DIRECTORY_MESSAGES.INITIAL_LOAD_FAILURE
+        }
         branches={branches}
       />
     </main>
