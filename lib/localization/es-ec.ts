@@ -40,6 +40,10 @@ export const STUDENT_DIRECTORY_MESSAGES = {
   LOAD_MORE: "Cargar más",
 } as const
 
+export const BRANCH_DIRECTORY_MESSAGES = {
+  INITIAL_LOAD_FAILURE: "No se pudieron cargar las sucursales. Inténtelo nuevamente.",
+} as const
+
 export const BRANCH_MESSAGES = {
   INVALID_ID: "El identificador de la sucursal no es válido.",
   NAME_REQUIRED: "El nombre de la sucursal es obligatorio.",
