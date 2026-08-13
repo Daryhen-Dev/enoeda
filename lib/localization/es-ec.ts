@@ -17,6 +17,29 @@ export const COMMON_MESSAGES = {
   INSUFFICIENT_PERMISSIONS: "No tiene permisos para realizar esta acción.",
 } as const
 
+export const STUDENT_DIRECTORY_MESSAGES = {
+  INITIAL_LOAD_FAILURE: "No se pudieron cargar los estudiantes. Inténtelo nuevamente.",
+  LOAD_MORE_FAILURE: "No se pudieron cargar más estudiantes. Inténtelo nuevamente.",
+  HEADING: "Estudiantes",
+  ACTIVE_ACCOUNT_DESCRIPTION: "Registros de estudiantes activos disponibles para su cuenta.",
+  INACTIVE_ACCOUNT_DESCRIPTION: "Registros de estudiantes inactivos disponibles para su cuenta.",
+  ACTIVE_TAB: "Activos",
+  HISTORY_TAB: "Historial",
+  PAGINATION_LOADING_STATUS: "Cargando más estudiantes.",
+  ACTIVE_EMPTY_STATE: "No se encontraron estudiantes activos.",
+  INACTIVE_EMPTY_STATE: "No se encontraron estudiantes inactivos.",
+  ACTIVE_TABLE_CAPTION: "Estudiantes activos",
+  INACTIVE_TABLE_CAPTION: "Estudiantes inactivos",
+  FIRST_NAME: "Nombre",
+  SURNAME: "Apellido",
+  BRANCH_ID: "ID de sucursal",
+  STATUS: "Estado",
+  ACTIONS: "Acciones",
+  ACTIVE_STATUS: "Activo",
+  INACTIVE_STATUS: "Inactivo",
+  LOAD_MORE: "Cargar más",
+} as const
+
 export const BRANCH_MESSAGES = {
   INVALID_ID: "El identificador de la sucursal no es válido.",
   NAME_REQUIRED: "El nombre de la sucursal es obligatorio.",
