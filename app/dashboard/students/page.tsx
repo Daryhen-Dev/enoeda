@@ -29,11 +29,12 @@ export default async function StudentsPage() {
   ])
   const activePage = activeResult.success ? activeResult.data : undefined
   const inactivePage = inactiveResult.success ? inactiveResult.data : undefined
-  const branches = branchesResult.success
-    ? branchesResult.data
-        .filter((branch) => branch.is_active)
-        .map((branch) => ({ id: branch.id, name: branch.name }))
-    : []
+  const branches =
+    branchesResult.success && branchesResult.data !== undefined
+      ? branchesResult.data
+          .filter((branch) => branch.is_active)
+          .map((branch) => ({ id: branch.id, name: branch.name }))
+      : []
 
   return (
     <main className="flex flex-col gap-4 p-4 md:gap-6 md:p-6">
