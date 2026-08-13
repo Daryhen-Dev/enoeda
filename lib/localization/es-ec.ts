@@ -22,6 +22,19 @@ export const COMMON_MESSAGES = {
   INSUFFICIENT_PERMISSIONS: "No tiene permisos para realizar esta acción.",
 } as const
 
+export const AUTH_MESSAGES = {
+  LOGIN_TITLE: "Iniciar sesión",
+  LOGIN_DESCRIPTION: "Ingrese sus credenciales para continuar.",
+  EMAIL_LABEL: "Correo electrónico",
+  PASSWORD_LABEL: "Contraseña",
+  LOGIN_ACTION: "Iniciar sesión",
+  LOGIN_PENDING: "Iniciando sesión…",
+  LOGIN_FAILURE: "No se pudo iniciar sesión. Inténtelo nuevamente.",
+  LOGOUT_ACTION: "Cerrar sesión",
+  LOGOUT_PENDING: "Cerrando sesión…",
+  LOGOUT_FAILURE: "No se pudo cerrar sesión. Inténtelo nuevamente.",
+} as const
+
 export const DASHBOARD_SHELL_MESSAGES = {
   OVERVIEW: "Resumen",
   BRANCHES: "Sucursales",
