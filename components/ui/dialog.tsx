@@ -4,6 +4,7 @@ import type { ComponentProps } from "react"
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog"
 
 import { cn } from "@/lib/utils"
+import { DIALOG_ACCESSIBILITY_MESSAGES } from "@/lib/localization/es-ec"
 import { Button } from "@/components/ui/button"
 import { XIcon } from "lucide-react"
 
@@ -74,7 +75,7 @@ function DialogContent({
           >
             <XIcon
             />
-            <span className="sr-only">Close</span>
+            <span className="sr-only">{DIALOG_ACCESSIBILITY_MESSAGES.CLOSE}</span>
           </DialogPrimitive.Close>
         )}
       </DialogPrimitive.Popup>
@@ -114,7 +115,7 @@ function DialogFooter({
       {children}
       {showCloseButton && (
         <DialogPrimitive.Close render={<Button variant="outline" />}>
-          Close
+          {DIALOG_ACCESSIBILITY_MESSAGES.CLOSE}
         </DialogPrimitive.Close>
       )}
     </div>

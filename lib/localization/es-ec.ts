@@ -30,6 +30,10 @@ export const SIDEBAR_ACCESSIBILITY_MESSAGES = {
   MOBILE_DESCRIPTION: "Muestra la barra lateral en dispositivos móviles.",
 } as const
 
+export const DIALOG_ACCESSIBILITY_MESSAGES = {
+  CLOSE: "Cerrar",
+} as const
+
 export const DASHBOARD_OVERVIEW_MESSAGES = {
   WELCOME: "Le damos la bienvenida a Enoeda Academy",
   WORKSPACE_READY: "Su espacio de gestión académica está listo.",
