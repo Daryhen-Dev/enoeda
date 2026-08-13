@@ -5,6 +5,19 @@ import { z } from "zod";
  * Used by server actions for input validation.
  */
 
+export const BRANCH_STATUS = {
+  ACTIVE: "active",
+  INACTIVE: "inactive",
+} as const;
+
+export type BranchStatus =
+  (typeof BRANCH_STATUS)[keyof typeof BRANCH_STATUS];
+
+const BRANCH_STATUS_VALUES = [
+  BRANCH_STATUS.ACTIVE,
+  BRANCH_STATUS.INACTIVE,
+] as const;
+
 /**
  * Allowed IANA time zones for Ecuador.
  * - America/Guayaquil: continental Ecuador (UTC-5)
@@ -28,6 +41,12 @@ const timeZoneSchema = z.enum(ECUADOR_TIME_ZONE_VALUES, {
 });
 
 export const branchIdSchema = z.uuid({ error: "Invalid branch ID" });
+
+export const branchListSchema = z
+  .object({
+    status: z.enum(BRANCH_STATUS_VALUES).default(BRANCH_STATUS.ACTIVE),
+  })
+  .strict();
 
 export const branchRecordSchema = z.object({
   id: branchIdSchema,
@@ -85,4 +104,5 @@ export const branchUpdateSchema = z
   );
 
 export type BranchCreateInput = z.infer<typeof branchCreateSchema>;
+export type BranchListInput = z.infer<typeof branchListSchema>;
 export type BranchUpdateInput = z.infer<typeof branchUpdateSchema>;
