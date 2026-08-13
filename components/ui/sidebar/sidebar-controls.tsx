@@ -4,6 +4,7 @@ import type { ComponentProps } from "react"
 import { PanelLeftIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { SIDEBAR_ACCESSIBILITY_MESSAGES } from "@/lib/localization/es-ec"
 import { cn } from "@/lib/utils"
 
 import { useSidebarState } from "./sidebar-state-provider"
@@ -29,7 +30,7 @@ export function SidebarTrigger({
       {...props}
     >
       <PanelLeftIcon />
-      <span className="sr-only">Toggle Sidebar</span>
+      <span className="sr-only">{SIDEBAR_ACCESSIBILITY_MESSAGES.TOGGLE}</span>
     </Button>
   )
 }
@@ -44,10 +45,10 @@ export function SidebarRail({
     <button
       data-sidebar="rail"
       data-slot="sidebar-rail"
-      aria-label="Toggle Sidebar"
+      aria-label={SIDEBAR_ACCESSIBILITY_MESSAGES.TOGGLE}
       tabIndex={-1}
       onClick={toggleSidebar}
-      title="Toggle Sidebar"
+      title={SIDEBAR_ACCESSIBILITY_MESSAGES.TOGGLE}
       className={cn(
         "absolute inset-y-0 z-20 hidden w-4 transition-all ease-linear group-data-[side=left]:-right-4 group-data-[side=right]:left-0 after:absolute after:inset-y-0 after:inset-s-1/2 after:w-0.5 hover:after:bg-sidebar-border sm:flex ltr:-translate-x-1/2 rtl:-translate-x-1/2",
         "in-data-[side=left]:cursor-w-resize in-data-[side=right]:cursor-e-resize",
