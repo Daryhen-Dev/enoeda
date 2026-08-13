@@ -1,5 +1,10 @@
 export const USER_LOCALE = "es-EC" as const
 
+export const APPLICATION_METADATA_MESSAGES = {
+  TITLE: "Enoeda Academy",
+  DESCRIPTION: "Plataforma de gestión académica.",
+} as const
+
 export const PRODUCT_TERMS = {
   BRANCH: "Sucursal",
   STUDENT: "Estudiante",
