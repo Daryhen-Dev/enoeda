@@ -21,6 +21,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
+import { COMMON_MESSAGES, PRODUCT_TERMS } from "@/lib/localization/es-ec"
 
 interface BranchDeactivateDialogProps {
   branch: Pick<BranchRecord, "id" | "name">
@@ -51,14 +52,18 @@ export function BranchDeactivateDialog({
       const result = await deactivateBranch(branch.id)
 
       if (!result.success) {
-        setActionError(result.error ?? "Unable to deactivate the branch.")
+        setActionError(
+          result.error ?? `No se pudo desactivar la ${PRODUCT_TERMS.BRANCH.toLowerCase()}.`
+        )
         return
       }
 
       setIsOpen(false)
       router.refresh()
     } catch {
-      setActionError("Unable to deactivate the branch.")
+      setActionError(
+        `No se pudo desactivar la ${PRODUCT_TERMS.BRANCH.toLowerCase()}.`
+      )
     } finally {
       setIsDeactivating(false)
     }
@@ -70,20 +75,20 @@ export function BranchDeactivateDialog({
         render={<Button variant="destructive" size="sm" />}
       >
         <PowerOffIcon aria-hidden="true" />
-        Deactivate
+        Desactivar
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Deactivate {branch.name}?</AlertDialogTitle>
+          <AlertDialogTitle>¿Desactivar {branch.name}?</AlertDialogTitle>
           <AlertDialogDescription>
-            Deactivation is blocked while active students are assigned to this branch.
+            No se puede desactivar mientras haya {PRODUCT_TERMS.STUDENT.toLowerCase()}s activos asignados a esta {PRODUCT_TERMS.BRANCH.toLowerCase()}.
           </AlertDialogDescription>
         </AlertDialogHeader>
 
         {actionError && (
           <Alert variant="destructive">
             <AlertCircleIcon />
-            <AlertTitle>Unable to deactivate branch</AlertTitle>
+            <AlertTitle>No se pudo desactivar la {PRODUCT_TERMS.BRANCH.toLowerCase()}</AlertTitle>
             <AlertDescription>{actionError}</AlertDescription>
           </Alert>
         )}
@@ -95,20 +100,20 @@ export function BranchDeactivateDialog({
             aria-live="polite"
           >
             <LoaderCircleIcon className="size-4 animate-spin" aria-hidden="true" />
-            Deactivating branch…
+            Desactivando sucursal…
           </p>
         )}
 
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isDeactivating}>
-            Cancel
+            {COMMON_MESSAGES.CANCEL}
           </AlertDialogCancel>
           <AlertDialogAction
             variant="destructive"
             disabled={isDeactivating}
             onClick={handleDeactivate}
           >
-            {isDeactivating ? "Deactivating…" : "Deactivate"}
+            {isDeactivating ? "Desactivando…" : "Desactivar"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

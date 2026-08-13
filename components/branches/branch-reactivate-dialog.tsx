@@ -21,6 +21,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
+import { COMMON_MESSAGES, PRODUCT_TERMS } from "@/lib/localization/es-ec"
 
 interface BranchReactivateDialogProps {
   branch: Pick<BranchRecord, "id" | "name">
@@ -51,14 +52,18 @@ export function BranchReactivateDialog({
       const result = await reactivateBranch(branch.id)
 
       if (!result.success) {
-        setActionError(result.error ?? "Unable to reactivate the branch.")
+        setActionError(
+          result.error ?? `No se pudo reactivar la ${PRODUCT_TERMS.BRANCH.toLowerCase()}.`
+        )
         return
       }
 
       setIsOpen(false)
       router.refresh()
     } catch {
-      setActionError("Unable to reactivate the branch.")
+      setActionError(
+        `No se pudo reactivar la ${PRODUCT_TERMS.BRANCH.toLowerCase()}.`
+      )
     } finally {
       setIsReactivating(false)
     }
@@ -68,20 +73,20 @@ export function BranchReactivateDialog({
     <AlertDialog open={isOpen} onOpenChange={handleOpenChange}>
       <AlertDialogTrigger render={<Button size="sm" variant="outline" />}>
         <RotateCcwIcon aria-hidden="true" />
-        Reactivate
+        Reactivar
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Reactivate {branch.name}?</AlertDialogTitle>
+          <AlertDialogTitle>¿Reactivar {branch.name}?</AlertDialogTitle>
           <AlertDialogDescription>
-            This branch will return to the active directory.
+            Esta {PRODUCT_TERMS.BRANCH.toLowerCase()} volverá al directorio activo.
           </AlertDialogDescription>
         </AlertDialogHeader>
 
         {actionError && (
           <Alert variant="destructive">
             <AlertCircleIcon />
-            <AlertTitle>Unable to reactivate branch</AlertTitle>
+            <AlertTitle>No se pudo reactivar la {PRODUCT_TERMS.BRANCH.toLowerCase()}</AlertTitle>
             <AlertDescription>{actionError}</AlertDescription>
           </Alert>
         )}
@@ -93,19 +98,19 @@ export function BranchReactivateDialog({
             aria-live="polite"
           >
             <LoaderCircleIcon className="size-4 animate-spin" aria-hidden="true" />
-            Reactivating branch…
+            Reactivando sucursal…
           </p>
         )}
 
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isReactivating}>
-            Cancel
+            {COMMON_MESSAGES.CANCEL}
           </AlertDialogCancel>
           <AlertDialogAction
             disabled={isReactivating}
             onClick={handleReactivate}
           >
-            {isReactivating ? "Reactivating…" : "Reactivate"}
+            {isReactivating ? "Reactivando…" : "Reactivar"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

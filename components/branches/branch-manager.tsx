@@ -27,6 +27,7 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { COMMON_MESSAGES } from "@/lib/localization/es-ec"
 
 export const BRANCH_DIRECTORY_STATUS = {
   LOADING: "loading",
@@ -36,7 +37,7 @@ export const BRANCH_DIRECTORY_STATUS = {
 
 const TIME_ZONE_LABELS = {
   [ECUADOR_TIME_ZONES.CONTINENTAL]:
-    "Continental Ecuador — America/Guayaquil (UTC−5)",
+    "Ecuador continental — America/Guayaquil (UTC−5)",
   [ECUADOR_TIME_ZONES.GALAPAGOS]:
     "Galápagos — Pacific/Galapagos (UTC−6)",
 } as const
@@ -102,22 +103,22 @@ export function BranchManager({
     >
       <header>
         <h1 id="branches-title" className="text-lg font-semibold">
-          Branches
+          Sucursales
         </h1>
         <p className="text-sm text-muted-foreground">
-          Manage academy locations and branch history
+          Administre las ubicaciones de la academia y el historial de sucursales
         </p>
       </header>
 
       <Tabs defaultValue="active">
         <TabsList>
-          <TabsTrigger value="active">Active</TabsTrigger>
-          <TabsTrigger value="history">History</TabsTrigger>
+          <TabsTrigger value="active">Activas</TabsTrigger>
+          <TabsTrigger value="history">Historial</TabsTrigger>
         </TabsList>
 
         <TabsContent value="active" className="space-y-4">
           <div className="flex items-center justify-between gap-4">
-            <p className="text-sm text-muted-foreground">Active academy locations</p>
+            <p className="text-sm text-muted-foreground">Ubicaciones activas de la academia</p>
             <BranchFormDialog />
           </div>
 
@@ -127,9 +128,9 @@ export function BranchManager({
               <EmptyMedia variant="icon">
                 <Building2Icon />
               </EmptyMedia>
-              <EmptyTitle>Loading branches</EmptyTitle>
+              <EmptyTitle>{COMMON_MESSAGES.LOADING}</EmptyTitle>
               <EmptyDescription>
-                Please wait while branch locations are loaded.
+                Espere mientras se cargan las sucursales.
               </EmptyDescription>
             </EmptyHeader>
           </Empty>
@@ -138,7 +139,7 @@ export function BranchManager({
           {activeResult.status === BRANCH_DIRECTORY_STATUS.ERROR && (
           <Alert variant="destructive">
             <AlertCircleIcon />
-            <AlertTitle>Unable to load branches</AlertTitle>
+            <AlertTitle>No se pudieron cargar las sucursales</AlertTitle>
             <AlertDescription>{activeResult.error}</AlertDescription>
           </Alert>
           )}
@@ -150,9 +151,9 @@ export function BranchManager({
               <EmptyMedia variant="icon">
                 <Building2Icon />
               </EmptyMedia>
-              <EmptyTitle>No active branches</EmptyTitle>
+              <EmptyTitle>No hay sucursales activas</EmptyTitle>
               <EmptyDescription>
-                There are no active branch locations to display.
+                No hay ubicaciones de sucursales activas para mostrar.
               </EmptyDescription>
             </EmptyHeader>
           </Empty>
@@ -162,7 +163,7 @@ export function BranchManager({
             activeBranches.length > 0 && (
           <ul
             className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
-            aria-label="Active branches"
+            aria-label="Sucursales activas"
           >
             {activeBranches.map((branch) => (
               <li key={branch.id}>
@@ -172,7 +173,7 @@ export function BranchManager({
                       {branch.name}
                     </h2>
                     <div className="flex items-center gap-2">
-                      <Badge variant="secondary">Active</Badge>
+                      <Badge variant="secondary">Activa</Badge>
                       <BranchFormDialog branch={branch} />
                       <BranchDeactivateDialog branch={branch} />
                     </div>
@@ -180,27 +181,27 @@ export function BranchManager({
                   <CardContent>
                     <dl className="grid gap-3 text-sm">
                       <div>
-                        <dt className="sr-only">Address</dt>
+                        <dt className="sr-only">Dirección</dt>
                         <dd className="flex gap-2 text-muted-foreground">
                           <MapPinIcon
                             className="mt-0.5 size-4 shrink-0"
                             aria-hidden="true"
                           />
-                          {branch.address ?? "Address unavailable"}
+                          {branch.address ?? "Dirección no disponible"}
                         </dd>
                       </div>
                       <div>
-                        <dt className="sr-only">Phone</dt>
+                        <dt className="sr-only">Teléfono</dt>
                         <dd className="flex gap-2 text-muted-foreground">
                           <PhoneIcon
                             className="mt-0.5 size-4 shrink-0"
                             aria-hidden="true"
                           />
-                          {branch.phone ?? "Phone unavailable"}
+                          {branch.phone ?? "Teléfono no disponible"}
                         </dd>
                       </div>
                       <div>
-                        <dt className="sr-only">Time zone</dt>
+                        <dt className="sr-only">Zona horaria</dt>
                         <dd className="flex gap-2 text-muted-foreground">
                           <Clock3Icon
                             className="mt-0.5 size-4 shrink-0"
@@ -219,7 +220,7 @@ export function BranchManager({
         </TabsContent>
 
         <TabsContent value="history" className="space-y-4">
-          <p className="text-sm text-muted-foreground">Inactive branch locations</p>
+          <p className="text-sm text-muted-foreground">Ubicaciones de sucursales inactivas</p>
 
           {historyResult.status === BRANCH_DIRECTORY_STATUS.LOADING && (
           <Empty role="status" aria-live="polite">
@@ -227,9 +228,9 @@ export function BranchManager({
               <EmptyMedia variant="icon">
                 <Building2Icon />
               </EmptyMedia>
-              <EmptyTitle>Loading branches</EmptyTitle>
+              <EmptyTitle>{COMMON_MESSAGES.LOADING}</EmptyTitle>
               <EmptyDescription>
-                Please wait while branch locations are loaded.
+                Espere mientras se cargan las sucursales.
               </EmptyDescription>
             </EmptyHeader>
           </Empty>
@@ -238,7 +239,7 @@ export function BranchManager({
           {historyResult.status === BRANCH_DIRECTORY_STATUS.ERROR && (
           <Alert variant="destructive">
             <AlertCircleIcon />
-            <AlertTitle>Unable to load branches</AlertTitle>
+            <AlertTitle>No se pudieron cargar las sucursales</AlertTitle>
             <AlertDescription>{historyResult.error}</AlertDescription>
           </Alert>
           )}
@@ -250,9 +251,9 @@ export function BranchManager({
               <EmptyMedia variant="icon">
                 <Building2Icon />
               </EmptyMedia>
-              <EmptyTitle>No inactive branches</EmptyTitle>
+              <EmptyTitle>No hay sucursales inactivas</EmptyTitle>
               <EmptyDescription>
-                There are no inactive branch locations in history.
+                No hay ubicaciones de sucursales inactivas en el historial.
               </EmptyDescription>
             </EmptyHeader>
           </Empty>
@@ -262,7 +263,7 @@ export function BranchManager({
             inactiveBranches.length > 0 && (
           <ul
             className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
-            aria-label="Inactive branches"
+            aria-label="Sucursales inactivas"
           >
             {inactiveBranches.map((branch) => (
               <li key={branch.id}>
@@ -272,34 +273,34 @@ export function BranchManager({
                       {branch.name}
                     </h2>
                     <div className="flex items-center gap-2">
-                      <Badge variant="destructive">Inactive</Badge>
+                      <Badge variant="destructive">Inactiva</Badge>
                       <BranchReactivateDialog branch={branch} />
                     </div>
                   </CardHeader>
                   <CardContent>
                     <dl className="grid gap-3 text-sm">
                       <div>
-                        <dt className="sr-only">Address</dt>
+                        <dt className="sr-only">Dirección</dt>
                         <dd className="flex gap-2 text-muted-foreground">
                           <MapPinIcon
                             className="mt-0.5 size-4 shrink-0"
                             aria-hidden="true"
                           />
-                          {branch.address ?? "Address unavailable"}
+                          {branch.address ?? "Dirección no disponible"}
                         </dd>
                       </div>
                       <div>
-                        <dt className="sr-only">Phone</dt>
+                        <dt className="sr-only">Teléfono</dt>
                         <dd className="flex gap-2 text-muted-foreground">
                           <PhoneIcon
                             className="mt-0.5 size-4 shrink-0"
                             aria-hidden="true"
                           />
-                          {branch.phone ?? "Phone unavailable"}
+                          {branch.phone ?? "Teléfono no disponible"}
                         </dd>
                       </div>
                       <div>
-                        <dt className="sr-only">Time zone</dt>
+                        <dt className="sr-only">Zona horaria</dt>
                         <dd className="flex gap-2 text-muted-foreground">
                           <Clock3Icon
                             className="mt-0.5 size-4 shrink-0"

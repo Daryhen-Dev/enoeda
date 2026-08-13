@@ -35,11 +35,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { COMMON_MESSAGES, PRODUCT_TERMS } from "@/lib/localization/es-ec"
 
 const TIME_ZONE_OPTIONS = [
   {
     value: ECUADOR_TIME_ZONES.CONTINENTAL,
-    label: "Continental Ecuador — America/Guayaquil (UTC−5)",
+    label: "Ecuador continental — America/Guayaquil (UTC−5)",
   },
   {
     value: ECUADOR_TIME_ZONES.GALAPAGOS,
@@ -90,8 +91,10 @@ export function BranchFormDialog({ branch }: BranchFormDialogProps) {
     mode: "onBlur",
   })
   const isEditing = branch !== undefined
-  const title = isEditing ? "Edit branch" : "Create branch"
-  const submitLabel = isEditing ? "Save changes" : "Create branch"
+  const title = isEditing
+    ? `${COMMON_MESSAGES.EDIT} ${PRODUCT_TERMS.BRANCH.toLowerCase()}`
+    : `${COMMON_MESSAGES.CREATE} ${PRODUCT_TERMS.BRANCH.toLowerCase()}`
+  const submitLabel = isEditing ? "Guardar cambios" : title
 
   function handleOpenChange(nextIsOpen: boolean) {
     if (form.formState.isSubmitting) {
@@ -123,7 +126,9 @@ export function BranchFormDialog({ branch }: BranchFormDialogProps) {
           })
 
       if (!result.success) {
-        setActionError(result.error ?? "Unable to save the branch.")
+        setActionError(
+          result.error ?? `No se pudo guardar la ${PRODUCT_TERMS.BRANCH.toLowerCase()}.`
+        )
         return
       }
 
@@ -131,7 +136,9 @@ export function BranchFormDialog({ branch }: BranchFormDialogProps) {
       setIsOpen(false)
       router.refresh()
     } catch {
-      setActionError("Unable to save the branch.")
+      setActionError(
+        `No se pudo guardar la ${PRODUCT_TERMS.BRANCH.toLowerCase()}.`
+      )
     }
   }
 
@@ -145,15 +152,15 @@ export function BranchFormDialog({ branch }: BranchFormDialogProps) {
         }
       >
         {isEditing ? <PencilIcon data-icon="inline-start" /> : <PlusIcon data-icon="inline-start" />}
-        {isEditing ? "Edit" : "Create branch"}
+        {isEditing ? COMMON_MESSAGES.EDIT : title}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>
             {isEditing
-              ? "Update this branch's location and contact details."
-              : "Add a new academy location to the directory."}
+              ? "Actualice la ubicación y los datos de contacto de esta sucursal."
+              : "Agregue una nueva ubicación de la academia al directorio."}
           </DialogDescription>
         </DialogHeader>
 
@@ -161,24 +168,24 @@ export function BranchFormDialog({ branch }: BranchFormDialogProps) {
           {actionError && (
             <Alert variant="destructive">
               <AlertCircleIcon />
-              <AlertTitle>Unable to save branch</AlertTitle>
+              <AlertTitle>No se pudo guardar la sucursal</AlertTitle>
               <AlertDescription>{actionError}</AlertDescription>
             </Alert>
           )}
 
           <FieldGroup>
             <Field data-invalid={Boolean(errors.name)}>
-              <FieldLabel htmlFor={nameId}>Name</FieldLabel>
+              <FieldLabel htmlFor={nameId}>Nombre</FieldLabel>
               <Input
                 id={nameId}
                 aria-describedby={errors.name ? `${nameId}-error` : undefined}
                 aria-invalid={Boolean(errors.name)}
                 disabled={isSubmitting}
                 {...form.register("name", {
-                  required: "Branch name is required",
+                  required: "El nombre de la sucursal es obligatorio",
                   maxLength: {
                     value: 100,
-                    message: "Branch name must be 100 characters or less",
+                    message: "El nombre de la sucursal debe tener máximo 100 caracteres",
                   },
                 })}
               />
@@ -186,7 +193,7 @@ export function BranchFormDialog({ branch }: BranchFormDialogProps) {
             </Field>
 
             <Field data-invalid={Boolean(errors.address)}>
-              <FieldLabel htmlFor={addressId}>Address</FieldLabel>
+              <FieldLabel htmlFor={addressId}>Dirección</FieldLabel>
               <Input
                 id={addressId}
                 aria-describedby={
@@ -197,7 +204,7 @@ export function BranchFormDialog({ branch }: BranchFormDialogProps) {
                 {...form.register("address", {
                   maxLength: {
                     value: 255,
-                    message: "Address must be 255 characters or less",
+                    message: "La dirección debe tener máximo 255 caracteres",
                   },
                 })}
               />
@@ -208,7 +215,7 @@ export function BranchFormDialog({ branch }: BranchFormDialogProps) {
             </Field>
 
             <Field data-invalid={Boolean(errors.phone)}>
-              <FieldLabel htmlFor={phoneId}>Phone</FieldLabel>
+              <FieldLabel htmlFor={phoneId}>Teléfono</FieldLabel>
               <Input
                 id={phoneId}
                 aria-describedby={errors.phone ? `${phoneId}-error` : undefined}
@@ -217,7 +224,7 @@ export function BranchFormDialog({ branch }: BranchFormDialogProps) {
                 {...form.register("phone", {
                   maxLength: {
                     value: 30,
-                    message: "Phone must be 30 characters or less",
+                    message: "El teléfono debe tener máximo 30 caracteres",
                   },
                 })}
               />
@@ -227,10 +234,10 @@ export function BranchFormDialog({ branch }: BranchFormDialogProps) {
             <Controller
               control={form.control}
               name="time_zone"
-              rules={{ required: "Time zone is required" }}
+              rules={{ required: "La zona horaria es obligatoria" }}
               render={({ field, fieldState }) => (
                 <Field data-invalid={Boolean(fieldState.error)}>
-                  <FieldLabel htmlFor={timeZoneId}>Time zone</FieldLabel>
+                  <FieldLabel htmlFor={timeZoneId}>Zona horaria</FieldLabel>
                   <Select
                     value={field.value}
                     onValueChange={(value) => {
@@ -248,7 +255,7 @@ export function BranchFormDialog({ branch }: BranchFormDialogProps) {
                       }
                       aria-invalid={Boolean(fieldState.error)}
                     >
-                      <SelectValue placeholder="Select a time zone" />
+                      <SelectValue placeholder="Seleccione una zona horaria" />
                     </SelectTrigger>
                     <SelectContent>
                       {TIME_ZONE_OPTIONS.map((timeZone) => (
@@ -271,10 +278,10 @@ export function BranchFormDialog({ branch }: BranchFormDialogProps) {
             <DialogClose
               render={<Button type="button" variant="outline" disabled={isSubmitting} />}
             >
-              Cancel
+              {COMMON_MESSAGES.CANCEL}
             </DialogClose>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Saving..." : submitLabel}
+              {isSubmitting ? "Guardando…" : submitLabel}
             </Button>
           </DialogFooter>
         </form>
