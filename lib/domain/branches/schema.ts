@@ -74,15 +74,13 @@ export const branchUpdateSchema = z
       .nullable()
       .optional(),
     time_zone: timeZoneSchema.optional(),
-    is_active: z.boolean().optional(),
   })
   .refine(
-    ({ name, address, phone, time_zone, is_active }) =>
+    ({ name, address, phone, time_zone }) =>
       name !== undefined ||
       address !== undefined ||
       phone !== undefined ||
-      time_zone !== undefined ||
-      is_active !== undefined,
+      time_zone !== undefined,
     { error: "At least one field must be provided" }
   );
 

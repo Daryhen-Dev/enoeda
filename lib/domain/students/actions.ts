@@ -20,6 +20,17 @@ export interface ActionResult<T = unknown> {
   error?: string;
 }
 
+const STUDENT_NOT_FOUND_ERROR = "Student not found";
+const ACTIVE_STUDENT_BRANCH_ERROR =
+  "An active branch is required for an active student";
+const REACTIVATION_BRANCH_ERROR =
+  "An active branch is required to reactivate this student";
+
+interface StudentMutationOutcome {
+  id: string | null;
+  error: string | null;
+}
+
 export interface StudentProfile {
   id: string;
   branch_id: string;
@@ -167,7 +178,21 @@ export async function createStudent(
   }
 
   const result = await withAuthenticatedUser(async (tx) => {
-    return tx.students.create({
+    if (parsed.data.is_active) {
+      const branch = await tx.branches.findUnique({
+        where: { id: parsed.data.branch_id },
+        select: { id: true, is_active: true },
+      });
+
+      if (branch === null || !branch.is_active) {
+        return {
+          id: null,
+          error: ACTIVE_STUDENT_BRANCH_ERROR,
+        } satisfies StudentMutationOutcome;
+      }
+    }
+
+    const student = await tx.students.create({
       data: {
         branch_id: parsed.data.branch_id,
         first_name: parsed.data.first_name,
@@ -179,9 +204,15 @@ export async function createStudent(
       },
       select: { id: true },
     });
+
+    return { id: student.id, error: null } satisfies StudentMutationOutcome;
   });
 
   if (!result.success) return result;
+  if (result.data.id === null) {
+    return { success: false, error: result.data.error ?? "Operation failed" };
+  }
+
   return { success: true, data: { id: result.data.id } };
 }
 
@@ -216,21 +247,45 @@ export async function updateStudent(
   const result = await withAuthenticatedUser(async (tx) => {
     const student = await tx.students.findUnique({
       where: { id },
-      select: { id: true },
+      select: { id: true, is_active: true },
     });
 
-    if (student === null) return null;
+    if (student === null) {
+      return {
+        id: null,
+        error: STUDENT_NOT_FOUND_ERROR,
+      } satisfies StudentMutationOutcome;
+    }
 
-    return tx.students.update({
+    if (student.is_active && editableFields.branch_id !== undefined) {
+      const branch = await tx.branches.findUnique({
+        where: { id: editableFields.branch_id },
+        select: { id: true, is_active: true },
+      });
+
+      if (branch === null || !branch.is_active) {
+        return {
+          id: null,
+          error: ACTIVE_STUDENT_BRANCH_ERROR,
+        } satisfies StudentMutationOutcome;
+      }
+    }
+
+    const updatedStudent = await tx.students.update({
       where: { id },
       data,
       select: { id: true },
     });
+
+    return {
+      id: updatedStudent.id,
+      error: null,
+    } satisfies StudentMutationOutcome;
   });
 
   if (!result.success) return result;
-  if (result.data === null) {
-    return { success: false, error: "Student not found" };
+  if (result.data.id === null) {
+    return { success: false, error: result.data.error ?? "Operation failed" };
   }
 
   return { success: true, data: { id: result.data.id } };
@@ -269,14 +324,6 @@ export async function deactivateStudent(
 }
 
 
-const REACTIVATION_BRANCH_ERROR =
-  "An active branch is required to reactivate this student";
-
-interface ReactivationOutcome {
-  id: string | null;
-  error: string | null;
-}
-
 export async function reactivateStudent(
   input: StudentReactivateInput
 ): Promise<ActionResult<{ id: string }>> {
@@ -292,10 +339,26 @@ export async function reactivateStudent(
     });
 
     if (student === null) {
-      return { id: null, error: "Student not found" } satisfies ReactivationOutcome;
+      return {
+        id: null,
+        error: STUDENT_NOT_FOUND_ERROR,
+      } satisfies StudentMutationOutcome;
     }
+
     if (student.is_active) {
-      return { id: student.id, error: null } satisfies ReactivationOutcome;
+      const branch = await tx.branches.findUnique({
+        where: { id: student.branch_id },
+        select: { id: true, is_active: true },
+      });
+
+      if (branch === null || !branch.is_active) {
+        return {
+          id: null,
+          error: ACTIVE_STUDENT_BRANCH_ERROR,
+        } satisfies StudentMutationOutcome;
+      }
+
+      return { id: student.id, error: null } satisfies StudentMutationOutcome;
     }
 
     const branchId = parsed.data.branch_id ?? student.branch_id;
@@ -308,7 +371,7 @@ export async function reactivateStudent(
       return {
         id: null,
         error: REACTIVATION_BRANCH_ERROR,
-      } satisfies ReactivationOutcome;
+      } satisfies StudentMutationOutcome;
     }
 
     const reactivatedStudent = await tx.students.update({
@@ -320,7 +383,10 @@ export async function reactivateStudent(
       select: { id: true },
     });
 
-    return { id: reactivatedStudent.id, error: null } satisfies ReactivationOutcome;
+    return {
+      id: reactivatedStudent.id,
+      error: null,
+    } satisfies StudentMutationOutcome;
   });
 
   if (!result.success) return result;

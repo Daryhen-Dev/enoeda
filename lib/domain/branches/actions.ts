@@ -17,6 +17,14 @@ export interface ActionResult<T = unknown> {
   error?: string;
 }
 
+const BRANCH_DEACTIVATION_ACTIVE_STUDENTS_ERROR =
+  "Cannot deactivate a branch with active students";
+
+interface BranchDeactivationOutcome {
+  id: string | null;
+  error: string | null;
+}
+
 /** Public branch type exposed by list/get actions. */
 export interface BranchRecord {
   id: string;
@@ -110,14 +118,31 @@ export async function deactivateBranch(
 
   try {
     const result = await withAuthenticatedUser(async (tx) => {
-      return tx.branches.update({
+      const activeStudentCount = await tx.students.count({
+        where: { branch_id: parsed.data, is_active: true },
+      });
+
+      if (activeStudentCount > 0) {
+        return {
+          id: null,
+          error: BRANCH_DEACTIVATION_ACTIVE_STUDENTS_ERROR,
+        } satisfies BranchDeactivationOutcome;
+      }
+
+      const branch = await tx.branches.update({
         where: { id: parsed.data },
         data: { is_active: false },
         select: { id: true },
       });
+
+      return { id: branch.id, error: null } satisfies BranchDeactivationOutcome;
     });
 
     if (!result.success) return result;
+    if (result.data.id === null) {
+      return { success: false, error: result.data.error ?? "Operation failed" };
+    }
+
     return { success: true, data: { id: result.data.id } };
   } catch {
     return { success: false, error: "Operation failed" };
