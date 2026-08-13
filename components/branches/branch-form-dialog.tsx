@@ -123,6 +123,7 @@ export function BranchFormDialog({ branch }: BranchFormDialogProps) {
             address: toOptionalValue(values.address),
             phone: toOptionalValue(values.phone),
             time_zone: values.time_zone,
+            is_active: true,
           })
 
       if (!result.success) {

@@ -500,21 +500,25 @@ model webauthn_credentials {
   @@schema("auth")
 }
 
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model user_roles {
   id                                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   user_id                             String    @db.Uuid
   role                                role_enum
+  branch_id                           String?   @db.Uuid
   assigned_by                         String?   @db.Uuid
   assigned_at                         DateTime  @default(now()) @db.Timestamptz(6)
   revoked_by                          String?   @db.Uuid
   revoked_at                          DateTime? @db.Timestamptz(6)
+  branches                            branches? @relation(fields: [branch_id], references: [id], onUpdate: NoAction)
   users_user_roles_assigned_byTousers users?    @relation("user_roles_assigned_byTousers", fields: [assigned_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
   users_user_roles_revoked_byTousers  users?    @relation("user_roles_revoked_byTousers", fields: [revoked_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
   users_user_roles_user_idTousers     users     @relation("user_roles_user_idTousers", fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
-  @@unique([user_id, role], map: "user_roles_active_uq", where: raw("(revoked_at IS NULL)"))
+  @@unique([user_id, role, branch_id], map: "user_roles_active_uq", where: raw("(revoked_at IS NULL)"))
   @@index([user_id])
+  @@index([branch_id])
   @@schema("public")
 }
 
@@ -523,15 +527,16 @@ model user_roles {
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 /// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
 model branches {
-  id         String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id         String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name       String
   address    String?
   phone      String?
-  time_zone  String     @default("America/Guayaquil")
-  is_active  Boolean    @default(true)
-  created_at DateTime   @default(now()) @db.Timestamptz(6)
-  updated_at DateTime   @default(now()) @db.Timestamptz(6)
+  time_zone  String       @default("America/Guayaquil")
+  is_active  Boolean      @default(true)
+  created_at DateTime     @default(now()) @db.Timestamptz(6)
+  updated_at DateTime     @default(now()) @db.Timestamptz(6)
   students   students[]
+  user_roles user_roles[]
 
   @@schema("public")
 }
@@ -628,6 +633,7 @@ enum one_time_token_type {
 
 enum role_enum {
   admin
+  owner
   teacher
 
   @@schema("public")
