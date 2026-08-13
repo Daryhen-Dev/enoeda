@@ -5,6 +5,7 @@ import {
 } from "@/components/branches/branch-manager"
 import { listBranches } from "@/lib/domain/branches/actions"
 import { BRANCH_STATUS } from "@/lib/domain/branches/schema"
+import { BRANCH_DIRECTORY_MESSAGES } from "@/lib/localization/es-ec"
 
 function toDirectoryResult(
   result: Awaited<ReturnType<typeof listBranches>>
@@ -13,7 +14,7 @@ function toDirectoryResult(
     ? { status: BRANCH_DIRECTORY_STATUS.READY, branches: result.data ?? [] }
     : {
         status: BRANCH_DIRECTORY_STATUS.ERROR,
-        error: result.error ?? "Unable to load branches. Please try again later.",
+        error: result.error ?? BRANCH_DIRECTORY_MESSAGES.INITIAL_LOAD_FAILURE,
       }
 }
 
