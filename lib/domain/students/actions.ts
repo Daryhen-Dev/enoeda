@@ -1,6 +1,7 @@
 "use server";
 
 import { withAuthenticatedUser } from "@/lib/auth/server-context";
+import { COMMON_MESSAGES, STUDENT_MESSAGES } from "@/lib/localization/es-ec";
 import {
   STUDENT_STATUS,
   studentCreateSchema,
@@ -20,11 +21,12 @@ export interface ActionResult<T = unknown> {
   error?: string;
 }
 
-const STUDENT_NOT_FOUND_ERROR = "Student not found";
+const STUDENT_NOT_FOUND_ERROR = STUDENT_MESSAGES.NOT_FOUND;
 const ACTIVE_STUDENT_BRANCH_ERROR =
-  "An active branch is required for an active student";
+  STUDENT_MESSAGES.ACTIVE_STUDENT_BRANCH_REQUIRED;
 const REACTIVATION_BRANCH_ERROR =
-  "An active branch is required to reactivate this student";
+  STUDENT_MESSAGES.REACTIVATION_BRANCH_REQUIRED;
+const OPERATION_FAILED_ERROR = COMMON_MESSAGES.UNEXPECTED_ERROR;
 
 interface StudentMutationOutcome {
   id: string | null;
@@ -146,7 +148,7 @@ export async function getStudentById(
 
   if (!result.success) return result;
   if (result.data === null) {
-    return { success: false, error: "Student not found" };
+    return { success: false, error: STUDENT_NOT_FOUND_ERROR };
   }
 
   return {
@@ -210,7 +212,10 @@ export async function createStudent(
 
   if (!result.success) return result;
   if (result.data.id === null) {
-    return { success: false, error: result.data.error ?? "Operation failed" };
+    return {
+      success: false,
+      error: result.data.error ?? OPERATION_FAILED_ERROR,
+    };
   }
 
   return { success: true, data: { id: result.data.id } };
@@ -285,7 +290,10 @@ export async function updateStudent(
 
   if (!result.success) return result;
   if (result.data.id === null) {
-    return { success: false, error: result.data.error ?? "Operation failed" };
+    return {
+      success: false,
+      error: result.data.error ?? OPERATION_FAILED_ERROR,
+    };
   }
 
   return { success: true, data: { id: result.data.id } };
@@ -317,7 +325,7 @@ export async function deactivateStudent(
 
   if (!result.success) return result;
   if (result.data === null) {
-    return { success: false, error: "Student not found" };
+    return { success: false, error: STUDENT_NOT_FOUND_ERROR };
   }
 
   return { success: true, data: { id: result.data.id } };
@@ -391,7 +399,10 @@ export async function reactivateStudent(
 
   if (!result.success) return result;
   if (result.data.id === null) {
-    return { success: false, error: result.data.error ?? "Operation failed" };
+    return {
+      success: false,
+      error: result.data.error ?? OPERATION_FAILED_ERROR,
+    };
   }
 
   return { success: true, data: { id: result.data.id } };
