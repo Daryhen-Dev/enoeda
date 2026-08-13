@@ -1,6 +1,7 @@
 "use server";
 
 import { withAuthenticatedUser } from "@/lib/auth/server-context";
+import { BRANCH_MESSAGES, COMMON_MESSAGES } from "@/lib/localization/es-ec";
 import {
   BRANCH_STATUS,
   branchCreateSchema,
@@ -18,12 +19,6 @@ export interface ActionResult<T = unknown> {
   data?: T;
   error?: string;
 }
-
-const BRANCH_DEACTIVATION_ACTIVE_STUDENTS_ERROR =
-  "Cannot deactivate a branch with active students";
-const BRANCH_NOT_FOUND_ERROR = "Branch not found";
-const BRANCH_REACTIVATION_NAME_CONFLICT_ERROR =
-  "No se puede reactivar esta sucursal porque otra sucursal activa ya usa este nombre. Cambie el nombre de una de las sucursales primero.";
 
 interface BranchDeactivationOutcome {
   id: string | null;
@@ -75,9 +70,9 @@ export async function createBranch(
     return { success: true, data: { id: result.data.id } };
   } catch (error) {
     if (error instanceof Error && error.message.includes("branches_name_uq")) {
-      return { success: false, error: "A branch with this name already exists" };
+      return { success: false, error: BRANCH_MESSAGES.NAME_ALREADY_EXISTS };
     }
-    return { success: false, error: "Operation failed" };
+    return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
   }
 }
 
@@ -108,9 +103,9 @@ export async function updateBranch(
     return { success: true, data: { id: result.data.id } };
   } catch (error) {
     if (error instanceof Error && error.message.includes("branches_name_uq")) {
-      return { success: false, error: "A branch with this name already exists" };
+      return { success: false, error: BRANCH_MESSAGES.NAME_ALREADY_EXISTS };
     }
-    return { success: false, error: "Operation failed" };
+    return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
   }
 }
 
@@ -135,7 +130,7 @@ export async function deactivateBranch(
       if (activeStudentCount > 0) {
         return {
           id: null,
-          error: BRANCH_DEACTIVATION_ACTIVE_STUDENTS_ERROR,
+          error: BRANCH_MESSAGES.CANNOT_DEACTIVATE_WITH_ACTIVE_STUDENTS,
         } satisfies BranchDeactivationOutcome;
       }
 
@@ -150,12 +145,12 @@ export async function deactivateBranch(
 
     if (!result.success) return result;
     if (result.data.id === null) {
-      return { success: false, error: result.data.error ?? "Operation failed" };
+      return { success: false, error: result.data.error ?? COMMON_MESSAGES.UNEXPECTED_ERROR };
     }
 
     return { success: true, data: { id: result.data.id } };
   } catch {
-    return { success: false, error: "Operation failed" };
+    return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
   }
 }
 
@@ -181,7 +176,7 @@ export async function reactivateBranch(
       if (branch === null) {
         return {
           id: null,
-          error: BRANCH_NOT_FOUND_ERROR,
+          error: BRANCH_MESSAGES.NOT_FOUND,
         } satisfies BranchReactivationOutcome;
       }
 
@@ -204,7 +199,7 @@ export async function reactivateBranch(
         if (error instanceof Error && error.message.includes("branches_name_uq")) {
           return {
             id: null,
-            error: BRANCH_REACTIVATION_NAME_CONFLICT_ERROR,
+            error: BRANCH_MESSAGES.REACTIVATION_NAME_CONFLICT,
           } satisfies BranchReactivationOutcome;
         }
 
@@ -214,12 +209,12 @@ export async function reactivateBranch(
 
     if (!result.success) return result;
     if (result.data.id === null) {
-      return { success: false, error: result.data.error ?? "Operation failed" };
+      return { success: false, error: result.data.error ?? COMMON_MESSAGES.UNEXPECTED_ERROR };
     }
 
     return { success: true, data: { id: result.data.id } };
   } catch {
-    return { success: false, error: "Operation failed" };
+    return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
   }
 }
 
@@ -257,12 +252,12 @@ export async function listBranches(
 
     const records = branchRecordSchema.array().safeParse(result.data);
     if (!records.success) {
-      return { success: false, error: "Operation failed" };
+      return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
     }
 
     return { success: true, data: records.data };
   } catch {
-    return { success: false, error: "Operation failed" };
+    return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
   }
 }
 
@@ -282,7 +277,7 @@ export async function getActiveBranchCount(): Promise<
 
     return { success: true, data: { count: result.data } };
   } catch {
-    return { success: false, error: "Operation failed" };
+    return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
   }
 }
 
@@ -317,11 +312,11 @@ export async function getBranch(
 
     const record = branchRecordSchema.nullable().safeParse(result.data);
     if (!record.success) {
-      return { success: false, error: "Operation failed" };
+      return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
     }
 
     return { success: true, data: record.data };
   } catch {
-    return { success: false, error: "Operation failed" };
+    return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
   }
 }
