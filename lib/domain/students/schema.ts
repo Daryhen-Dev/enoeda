@@ -58,11 +58,28 @@ export const studentCreateSchema = z.object({
   is_active: z.boolean().default(true),
 });
 
+export const STUDENT_STATUS = {
+  ACTIVE: "active",
+  INACTIVE: "inactive",
+} as const;
+
+export type StudentStatus =
+  (typeof STUDENT_STATUS)[keyof typeof STUDENT_STATUS];
+
 export const studentListSchema = z
   .object({
     cursor: studentIdSchema.optional(),
     page_size: z.number().int().min(1).max(100).default(25),
-    include_inactive: z.boolean().default(false),
+    status: z
+      .enum([STUDENT_STATUS.ACTIVE, STUDENT_STATUS.INACTIVE])
+      .default(STUDENT_STATUS.ACTIVE),
+  })
+  .strict();
+
+export const studentReactivateSchema = z
+  .object({
+    id: studentIdSchema,
+    branch_id: z.string().uuid("Invalid branch ID").optional(),
   })
   .strict();
 
@@ -91,7 +108,6 @@ export const studentUpdateSchema = z
       .regex(DATE_PATTERN, "Date of birth must be YYYY-MM-DD format")
       .refine(isValidCalendarDate, "Date of birth is not a valid calendar date")
       .optional(),
-    is_active: z.boolean().optional(),
   })
   .refine(
     (data) =>
@@ -100,11 +116,11 @@ export const studentUpdateSchema = z
       data.surname !== undefined ||
       data.national_id !== undefined ||
       data.email !== undefined ||
-      data.date_of_birth !== undefined ||
-      data.is_active !== undefined,
+      data.date_of_birth !== undefined,
     { message: "At least one field must be provided" }
   );
 
 export type StudentCreateInput = z.infer<typeof studentCreateSchema>;
 export type StudentListInput = z.infer<typeof studentListSchema>;
+export type StudentReactivateInput = z.infer<typeof studentReactivateSchema>;
 export type StudentUpdateInput = z.infer<typeof studentUpdateSchema>;
