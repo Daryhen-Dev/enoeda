@@ -17,6 +17,13 @@ export const COMMON_MESSAGES = {
   INSUFFICIENT_PERMISSIONS: "No tiene permisos para realizar esta acción.",
 } as const
 
+export const DASHBOARD_SHELL_MESSAGES = {
+  OVERVIEW: "Resumen",
+  BRANCHES: "Sucursales",
+  STUDENTS: "Estudiantes",
+  MANAGEMENT: "Administración",
+} as const
+
 export const STUDENT_DIRECTORY_MESSAGES = {
   INITIAL_LOAD_FAILURE: "No se pudieron cargar los estudiantes. Inténtelo nuevamente.",
   LOAD_MORE_FAILURE: "No se pudieron cargar más estudiantes. Inténtelo nuevamente.",

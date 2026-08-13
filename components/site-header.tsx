@@ -2,6 +2,7 @@
 
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
+import { DASHBOARD_SHELL_MESSAGES } from "@/lib/localization/es-ec"
 
 export function SiteHeader() {
   return (
@@ -12,7 +13,9 @@ export function SiteHeader() {
           orientation="vertical"
           className="mx-2 h-4 data-vertical:self-auto"
         />
-        <h1 className="text-base font-medium">Overview</h1>
+        <h1 className="text-base font-medium">
+          {DASHBOARD_SHELL_MESSAGES.OVERVIEW}
+        </h1>
       </div>
     </header>
   )

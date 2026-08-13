@@ -21,22 +21,23 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
+import { DASHBOARD_SHELL_MESSAGES } from "@/lib/localization/es-ec"
 
 const navigationItems = [
   {
-    title: "Overview",
+    title: DASHBOARD_SHELL_MESSAGES.OVERVIEW,
     url: "/dashboard",
     icon: LayoutDashboardIcon,
     available: true,
   },
   {
-    title: "Branches",
+    title: DASHBOARD_SHELL_MESSAGES.BRANCHES,
     url: "/dashboard/branches",
     icon: BuildingIcon,
     available: true,
   },
   {
-    title: "Students",
+    title: DASHBOARD_SHELL_MESSAGES.STUDENTS,
     url: "/dashboard/students",
     icon: UsersIcon,
     available: true,
@@ -71,7 +72,9 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Management</SidebarGroupLabel>
+          <SidebarGroupLabel>
+            {DASHBOARD_SHELL_MESSAGES.MANAGEMENT}
+          </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {navigationItems.map((item) => {
