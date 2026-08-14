@@ -2,6 +2,7 @@
 
 import { useId, useState } from "react"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 
 import type { ActiveBranchOption } from "@/components/students/student-form-dialog"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -26,7 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { reactivateStudent } from "@/lib/domain/students"
-import { STUDENT_LIFECYCLE_MESSAGES } from "@/lib/localization/es-ec"
+import { STUDENT_LIFECYCLE_MESSAGES, TOAST_MESSAGES } from "@/lib/localization/es-ec"
 
 interface ReactivateStudentSummary {
   id: string
@@ -75,6 +76,7 @@ export function StudentReactivateDialog({
         return
       }
       setIsOpen(false)
+      toast.success(TOAST_MESSAGES.STUDENT_REACTIVATED)
       router.refresh()
     } catch {
       setError(STUDENT_LIFECYCLE_MESSAGES.REACTIVATE_FAILURE)

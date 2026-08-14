@@ -3,9 +3,10 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { AlertCircleIcon, LoaderCircleIcon, PowerOffIcon } from "lucide-react"
+import { toast } from "sonner"
 
 import { deactivateStudent } from "@/lib/domain/students/actions"
-import { STUDENT_LIFECYCLE_MESSAGES } from "@/lib/localization/es-ec"
+import { STUDENT_LIFECYCLE_MESSAGES, TOAST_MESSAGES } from "@/lib/localization/es-ec"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import {
   AlertDialog,
@@ -61,6 +62,7 @@ export function StudentDeactivateDialog({
       }
 
       setIsOpen(false)
+      toast.success(TOAST_MESSAGES.STUDENT_DEACTIVATED)
       router.refresh()
     } catch {
       setActionError(STUDENT_LIFECYCLE_MESSAGES.DEACTIVATE_FAILURE)

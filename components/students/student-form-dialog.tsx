@@ -4,6 +4,7 @@ import { useId, useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { useRouter } from "next/navigation"
 import { AlertCircleIcon, LoaderCircleIcon, PencilIcon, PlusIcon } from "lucide-react"
+import { toast } from "sonner"
 
 import {
   createStudent,
@@ -13,15 +14,15 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet"
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import {
@@ -36,6 +37,7 @@ import {
   PRODUCT_TERMS,
   STUDENT_FORM_MESSAGES,
   STUDENT_MESSAGES,
+  TOAST_MESSAGES,
 } from "@/lib/localization/es-ec"
 
 export interface ActiveBranchOption {
@@ -173,6 +175,9 @@ export function StudentFormDialog({
 
       form.reset(getDefaultValues())
       setIsOpen(false)
+      toast.success(
+        isEditing ? TOAST_MESSAGES.STUDENT_UPDATED : TOAST_MESSAGES.STUDENT_CREATED
+      )
       router.refresh()
     } catch {
       setActionError(STUDENT_FORM_MESSAGES.SAVE_FAILURE)
@@ -182,22 +187,22 @@ export function StudentFormDialog({
   const { errors } = form.formState
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogTrigger
+    <Sheet open={isOpen} onOpenChange={handleOpenChange}>
+      <SheetTrigger
         render={<Button variant={isEditing ? "outline" : "default"} size="sm" />}
       >
         {isEditing ? <PencilIcon data-icon="inline-start" /> : <PlusIcon data-icon="inline-start" />}
         {isEditing ? COMMON_MESSAGES.EDIT : COMMON_MESSAGES.CREATE}
-      </DialogTrigger>
-      <DialogContent showCloseButton={!isPending}>
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>
+      </SheetTrigger>
+      <SheetContent side="right" size="content" showCloseButton={!isPending}>
+        <SheetHeader>
+          <SheetTitle>{title}</SheetTitle>
+          <SheetDescription>
             {isEditing
               ? STUDENT_FORM_MESSAGES.EDIT_DESCRIPTION
               : STUDENT_FORM_MESSAGES.CREATE_DESCRIPTION}
-          </DialogDescription>
-        </DialogHeader>
+          </SheetDescription>
+        </SheetHeader>
 
         {isLoadingStudent ? (
           <p className="flex items-center gap-2 text-sm text-muted-foreground" role="status" aria-live="polite">
@@ -205,7 +210,10 @@ export function StudentFormDialog({
             {STUDENT_FORM_MESSAGES.LOADING_DETAILS}
           </p>
         ) : (
-          <form className="grid gap-4" onSubmit={form.handleSubmit(handleSubmit)}>
+          <form
+            className="flex flex-1 flex-col gap-4 overflow-y-auto px-4"
+            onSubmit={form.handleSubmit(handleSubmit)}
+          >
             {actionError && (
               <Alert variant="destructive">
                 <AlertCircleIcon />
@@ -333,17 +341,17 @@ export function StudentFormDialog({
               </Field>
             </FieldGroup>
 
-            <DialogFooter>
-              <DialogClose render={<Button type="button" variant="outline" disabled={isPending} />}>
+            <SheetFooter>
+              <SheetClose render={<Button type="button" variant="outline" disabled={isPending} />}>
                 {COMMON_MESSAGES.CANCEL}
-              </DialogClose>
+              </SheetClose>
               <Button type="submit" disabled={isPending}>
                 {form.formState.isSubmitting ? STUDENT_FORM_MESSAGES.SAVING : submitLabel}
               </Button>
-            </DialogFooter>
+            </SheetFooter>
           </form>
         )}
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   )
 }
