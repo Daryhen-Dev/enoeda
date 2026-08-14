@@ -1,6 +1,5 @@
 "use client"
 
-import { LogoutButton } from "@/components/auth/logout-button"
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { OWNER_MESSAGES } from "@/lib/localization/es-ec"
@@ -17,9 +16,6 @@ export function OwnerHeader() {
         <h1 className="text-base font-medium">
           {OWNER_MESSAGES.CONTROL_PLANE}
         </h1>
-        <div className="ml-auto">
-          <LogoutButton />
-        </div>
       </div>
     </header>
   )

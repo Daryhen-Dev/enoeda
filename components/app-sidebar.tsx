@@ -10,9 +10,11 @@ import {
   UsersIcon,
 } from "lucide-react"
 
+import { LogoutButton } from "@/components/auth/logout-button"
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -135,6 +137,13 @@ export function AppSidebar({ isAdmin = false, ...props }: AppSidebarProps) {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <LogoutButton />
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
     </Sidebar>
   )
 }
