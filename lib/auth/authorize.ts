@@ -1,12 +1,29 @@
-import { createClient } from "@/lib/supabase/server";
+/**
+ * Pure authorization utilities — Edge-safe, no I/O, no server imports.
+ *
+ * This module defines application roles, route guards, and pure predicate
+ * functions. It is safe to import from middleware (Edge Runtime) and from
+ * any server or client module that needs role constants or path checks.
+ *
+ * Server-only role fetching (I/O) lives in `lib/auth/server-roles.ts` and
+ * `lib/auth/identity-resolver.ts` — never re-add `createClient` or any
+ * network call here.
+ */
 
 /** Application roles matching the database role_enum type. */
 export const APP_ROLES = {
   ADMIN: "admin",
   TEACHER: "teacher",
+  OWNER: "owner",
 } as const;
 
 export type AppRole = (typeof APP_ROLES)[keyof typeof APP_ROLES];
+
+/** Branch-scoped role assignment from current_roles() composite rows. */
+export interface AppRoleAssignment {
+  role: AppRole;
+  branchId: string | null;
+}
 
 export const AUTHORIZATION_REASONS = {
   UNAUTHENTICATED: "unauthenticated",
@@ -25,8 +42,13 @@ export interface RouteGuard {
   roles: AppRole[];
 }
 
-/** Dashboard routes require at least one active role. */
+/**
+ * Route guards enforce persona separation:
+ * - /owner → owner only (control plane)
+ * - /dashboard → admin|teacher only (operational plane, owner excluded)
+ */
 export const ROUTE_GUARDS: RouteGuard[] = [
+  { pathPrefix: "/owner", roles: [APP_ROLES.OWNER] },
   { pathPrefix: "/dashboard", roles: [APP_ROLES.ADMIN, APP_ROLES.TEACHER] },
 ];
 
@@ -47,9 +69,35 @@ function isAppRole(value: unknown): value is AppRole {
   return typeof value === "string" && APP_ROLE_VALUES.some((role) => role === value);
 }
 
-/** Parse only role values declared by the application. */
+/** Parse only role values declared by the application (flat string array). */
 export function parseAppRoles(value: unknown): AppRole[] {
   return Array.isArray(value) ? value.filter(isAppRole) : [];
+}
+
+/**
+ * Parse composite RPC rows from current_roles() into AppRoleAssignment[].
+ * Expected shape: Array<{ role: string; branch_id: string | null }>
+ * Filters out unrecognized roles.
+ */
+export function parseRoleAssignments(value: unknown): AppRoleAssignment[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter(
+      (row): row is { role: string; branch_id: string | null } =>
+        typeof row === "object" &&
+        row !== null &&
+        "role" in row &&
+        isAppRole((row as Record<string, unknown>).role)
+    )
+    .map((row) => ({
+      role: row.role as AppRole,
+      branchId: row.branch_id ?? null,
+    }));
+}
+
+/** Extract unique role names from assignments. */
+export function roleNamesFrom(assignments: AppRoleAssignment[]): AppRole[] {
+  return [...new Set(assignments.map((a) => a.role))];
 }
 
 /** Check if a path is public (no auth required). */
@@ -70,58 +118,4 @@ export function hasRequiredRole(
   return requiredRoles.some((role) => userRoles.includes(role));
 }
 
-/**
- * Fetch current user's active roles from DB via public.current_roles() RPC.
- * Returns empty array if not authenticated or on error.
- */
-export async function fetchCurrentRoles(): Promise<AppRole[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase.rpc("current_roles");
-  if (error || !data) return [];
-  return parseAppRoles(data);
-}
 
-/** Authorization result for middleware use. */
-export interface AuthorizationResult {
-  authorized: boolean;
-  reason?: AuthorizationReason;
-  roles: AppRole[];
-}
-
-/** Authorize a request against route guards (for protected paths). */
-export async function authorizeRequest(
-  pathname: string
-): Promise<AuthorizationResult> {
-  const guard = findRouteGuard(pathname);
-  if (!guard) return { authorized: true, roles: [] };
-
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return {
-      authorized: false,
-      reason: AUTHORIZATION_REASONS.UNAUTHENTICATED,
-      roles: [],
-    };
-  }
-
-  const roles = await fetchCurrentRoles();
-  if (roles.length === 0) {
-    return {
-      authorized: false,
-      reason: AUTHORIZATION_REASONS.NO_ROLES,
-      roles: [],
-    };
-  }
-  if (!hasRequiredRole(roles, guard.roles)) {
-    return {
-      authorized: false,
-      reason: AUTHORIZATION_REASONS.UNAUTHORIZED,
-      roles,
-    };
-  }
-
-  return { authorized: true, roles };
-}

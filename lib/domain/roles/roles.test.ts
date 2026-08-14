@@ -2,12 +2,16 @@
  * U2 Integration Tests: Roles + Audit
  * Validates: role authority, DML denial defense, audit-spoof defense, 403 paths.
  */
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
+
+vi.mock("server-only", () => ({}));
+
 import {
   hasRequiredRole,
   isPublicPath,
   findRouteGuard,
 } from "@/lib/auth/authorize";
+import { fetchCurrentRoles, fetchRoleAssignments } from "@/lib/auth/server-roles";
 
 describe("U2 Roles — Role Authority", () => {
   it("admin role grants access to dashboard", () => {
@@ -45,7 +49,7 @@ describe("U2 Roles — DML Denial Defense", () => {
     }
   });
 
-  it("authorization only exposes read-only operations", async () => {
+  it("authorize module has no server I/O (Edge-safe, no createClient)", async () => {
     const authorizeModule = await import("@/lib/auth/authorize");
     const mod = authorizeModule as unknown as Record<string, unknown>;
     const functions = Object.keys(mod).filter(
@@ -53,7 +57,7 @@ describe("U2 Roles — DML Denial Defense", () => {
     );
     const allowed = [
       "isPublicPath", "findRouteGuard", "hasRequiredRole", "parseAppRoles",
-      "fetchCurrentRoles", "authorizeRequest",
+      "parseRoleAssignments", "roleNamesFrom",
     ];
     for (const fn of functions) {
       expect(allowed.includes(fn), `Unexpected export: ${fn}`).toBe(true);
@@ -62,14 +66,12 @@ describe("U2 Roles — DML Denial Defense", () => {
 });
 
 describe("U2 Roles — Audit Spoof Defense", () => {
-  it("fetchCurrentRoles does not accept a user_id parameter", async () => {
-    const { fetchCurrentRoles } = await import("@/lib/auth/authorize");
+  it("fetchCurrentRoles does not accept a user_id parameter", () => {
     expect(fetchCurrentRoles.length).toBe(0);
   });
 
-  it("authorizeRequest does not accept a user_id override", async () => {
-    const { authorizeRequest } = await import("@/lib/auth/authorize");
-    expect(authorizeRequest.length).toBe(1);
+  it("fetchRoleAssignments does not accept a user_id parameter", () => {
+    expect(fetchRoleAssignments.length).toBe(0);
   });
 });
 

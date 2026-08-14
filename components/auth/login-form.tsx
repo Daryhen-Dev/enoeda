@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import type { SafeRedirect } from "@/lib/auth/redirect"
 import { AUTH_MESSAGES } from "@/lib/localization/es-ec"
-import { createBrowserClient } from "@/lib/supabase"
+import { createClient as createBrowserClient } from "@/lib/supabase/client"
 
 interface LoginFormProps {
   redirectTo: SafeRedirect
