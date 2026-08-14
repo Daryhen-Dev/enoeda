@@ -4,6 +4,7 @@ import { useId, useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { useRouter } from "next/navigation"
 import { AlertCircleIcon, PencilIcon, PlusIcon } from "lucide-react"
+import { toast } from "sonner"
 
 import {
   createBranch,
@@ -17,15 +18,15 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet"
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import {
@@ -35,7 +36,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { COMMON_MESSAGES, PRODUCT_TERMS } from "@/lib/localization/es-ec"
+import { COMMON_MESSAGES, PRODUCT_TERMS, TOAST_MESSAGES } from "@/lib/localization/es-ec"
 
 const TIME_ZONE_OPTIONS = [
   {
@@ -135,6 +136,11 @@ export function BranchFormDialog({ branch }: BranchFormDialogProps) {
 
       form.reset(getDefaultValues(branch))
       setIsOpen(false)
+      toast.success(
+        isEditing
+          ? TOAST_MESSAGES.BRANCH_UPDATED
+          : TOAST_MESSAGES.BRANCH_CREATED
+      )
       router.refresh()
     } catch {
       setActionError(
@@ -146,26 +152,29 @@ export function BranchFormDialog({ branch }: BranchFormDialogProps) {
   const { errors, isSubmitting } = form.formState
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogTrigger
+    <Sheet open={isOpen} onOpenChange={handleOpenChange}>
+      <SheetTrigger
         render={
           <Button variant={isEditing ? "outline" : "default"} size="sm" />
         }
       >
         {isEditing ? <PencilIcon data-icon="inline-start" /> : <PlusIcon data-icon="inline-start" />}
         {isEditing ? COMMON_MESSAGES.EDIT : title}
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>
+      </SheetTrigger>
+      <SheetContent side="right" size="content">
+        <SheetHeader>
+          <SheetTitle>{title}</SheetTitle>
+          <SheetDescription>
             {isEditing
               ? "Actualice la ubicación y los datos de contacto de esta sucursal."
               : "Agregue una nueva ubicación de la academia al directorio."}
-          </DialogDescription>
-        </DialogHeader>
+          </SheetDescription>
+        </SheetHeader>
 
-        <form className="grid gap-4" onSubmit={form.handleSubmit(handleSubmit)}>
+        <form
+          className="flex flex-1 flex-col gap-4 overflow-y-auto px-4"
+          onSubmit={form.handleSubmit(handleSubmit)}
+        >
           {actionError && (
             <Alert variant="destructive">
               <AlertCircleIcon />
@@ -275,18 +284,18 @@ export function BranchFormDialog({ branch }: BranchFormDialogProps) {
             />
           </FieldGroup>
 
-          <DialogFooter>
-            <DialogClose
+          <SheetFooter>
+            <SheetClose
               render={<Button type="button" variant="outline" disabled={isSubmitting} />}
             >
               {COMMON_MESSAGES.CANCEL}
-            </DialogClose>
+            </SheetClose>
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? "Guardando…" : submitLabel}
             </Button>
-          </DialogFooter>
+          </SheetFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   )
 }

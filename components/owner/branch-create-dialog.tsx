@@ -4,21 +4,21 @@ import { useState, useTransition } from "react"
 import type { FormEvent } from "react"
 import { useRouter } from "next/navigation"
 import { PlusIcon } from "lucide-react"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet"
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { createBranch } from "@/lib/domain/branches/actions"
-import { OWNER_MESSAGES, COMMON_MESSAGES } from "@/lib/localization/es-ec"
+import { OWNER_MESSAGES, COMMON_MESSAGES, TOAST_MESSAGES } from "@/lib/localization/es-ec"
 
 export function BranchCreateDialog() {
   const router = useRouter()
@@ -49,6 +49,7 @@ export function BranchCreateDialog() {
       if (result.success) {
         setOpen(false)
         resetForm()
+        toast.success(TOAST_MESSAGES.BRANCH_CREATED)
         router.refresh()
       } else {
         setError(result.error ?? COMMON_MESSAGES.UNEXPECTED_ERROR)
@@ -57,27 +58,30 @@ export function BranchCreateDialog() {
   }
 
   return (
-    <Dialog
+    <Sheet
       open={open}
       onOpenChange={(nextOpen) => {
         setOpen(nextOpen)
         if (!nextOpen) resetForm()
       }}
     >
-      <DialogTrigger render={<Button variant="default" size="default" />}>
+      <SheetTrigger render={<Button variant="default" size="default" />}>
         <PlusIcon data-icon="inline-start" />
         {OWNER_MESSAGES.CREATE_BRANCH}
-      </DialogTrigger>
-      <DialogContent>
-        <form onSubmit={handleSubmit}>
-          <DialogHeader>
-            <DialogTitle>{OWNER_MESSAGES.CREATE_BRANCH_TITLE}</DialogTitle>
-            <DialogDescription>
-              {OWNER_MESSAGES.CREATE_BRANCH_DESCRIPTION}
-            </DialogDescription>
-          </DialogHeader>
+      </SheetTrigger>
+      <SheetContent side="right" size="content">
+        <SheetHeader>
+          <SheetTitle>{OWNER_MESSAGES.CREATE_BRANCH_TITLE}</SheetTitle>
+          <SheetDescription>
+            {OWNER_MESSAGES.CREATE_BRANCH_DESCRIPTION}
+          </SheetDescription>
+        </SheetHeader>
 
-          <FieldGroup className="mt-4">
+        <form
+          onSubmit={handleSubmit}
+          className="flex flex-1 flex-col gap-4 overflow-y-auto px-4"
+        >
+          <FieldGroup>
             <Field data-invalid={Boolean(error)}>
               <FieldLabel htmlFor="new-branch-name">
                 {OWNER_MESSAGES.BRANCH_NAME}
@@ -115,13 +119,11 @@ export function BranchCreateDialog() {
             {error && <FieldError>{error}</FieldError>}
           </FieldGroup>
 
-          <DialogFooter className="mt-4">
-            <Button type="submit" disabled={isPending || !name}>
-              {isPending ? COMMON_MESSAGES.LOADING : COMMON_MESSAGES.CREATE}
-            </Button>
-          </DialogFooter>
+          <Button type="submit" disabled={isPending || !name} className="self-start">
+            {isPending ? COMMON_MESSAGES.LOADING : COMMON_MESSAGES.CREATE}
+          </Button>
         </form>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   )
 }

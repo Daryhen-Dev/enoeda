@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { AlertCircleIcon, LoaderCircleIcon, RotateCcwIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 
 import {
   reactivateBranch,
@@ -21,7 +22,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
-import { COMMON_MESSAGES, PRODUCT_TERMS } from "@/lib/localization/es-ec"
+import { COMMON_MESSAGES, PRODUCT_TERMS, TOAST_MESSAGES } from "@/lib/localization/es-ec"
 
 interface BranchReactivateDialogProps {
   branch: Pick<BranchRecord, "id" | "name">
@@ -59,6 +60,7 @@ export function BranchReactivateDialog({
       }
 
       setIsOpen(false)
+      toast.success(TOAST_MESSAGES.BRANCH_REACTIVATED)
       router.refresh()
     } catch {
       setActionError(

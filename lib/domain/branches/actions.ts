@@ -30,6 +30,11 @@ interface BranchReactivationOutcome {
   error: string | null;
 }
 
+interface BranchDeletionOutcome {
+  deleted: boolean;
+  error: string | null;
+}
+
 /** Public branch type exposed by list/get actions. */
 export interface BranchRecord {
   id: string;
@@ -214,6 +219,72 @@ export async function reactivateBranch(
 
     return { success: true, data: { id: result.data.id } };
   } catch {
+    return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
+  }
+}
+
+/**
+ * Permanently delete a branch. Owner-only (RLS enforced).
+ * Only allowed when the branch has no students (any status) and no
+ * active admin/teacher assignments — checked proactively so the caller
+ * gets a clear message instead of a raw foreign-key error. The database
+ * FK constraints (ON DELETE RESTRICT) remain the final safety net.
+ * Identity derived server-side — no client context accepted.
+ */
+export async function deleteBranch(
+  branchId: string
+): Promise<ActionResult<{ deleted: true }>> {
+  const parsed = branchIdSchema.safeParse(branchId);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message };
+  }
+
+  try {
+    const result = await withAuthenticatedUser(async (tx) => {
+      const studentCount = await tx.students.count({
+        where: { branch_id: parsed.data },
+      });
+
+      if (studentCount > 0) {
+        return {
+          deleted: false,
+          error: BRANCH_MESSAGES.CANNOT_DELETE_WITH_STUDENTS,
+        } satisfies BranchDeletionOutcome;
+      }
+
+      const staffCount = await tx.user_roles.count({
+        where: { branch_id: parsed.data, revoked_at: null },
+      });
+
+      if (staffCount > 0) {
+        return {
+          deleted: false,
+          error: BRANCH_MESSAGES.CANNOT_DELETE_WITH_STAFF,
+        } satisfies BranchDeletionOutcome;
+      }
+
+      await tx.branches.delete({ where: { id: parsed.data } });
+
+      return { deleted: true, error: null } satisfies BranchDeletionOutcome;
+    });
+
+    if (!result.success) return result;
+    if (!result.data.deleted) {
+      return {
+        success: false,
+        error: result.data.error ?? COMMON_MESSAGES.UNEXPECTED_ERROR,
+      };
+    }
+
+    return { success: true, data: { deleted: true } };
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      (error.message.includes("students_branch_id_fkey") ||
+        error.message.includes("user_roles_branch_id_fkey"))
+    ) {
+      return { success: false, error: BRANCH_MESSAGES.CANNOT_DELETE_WITH_STUDENTS };
+    }
     return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
   }
 }

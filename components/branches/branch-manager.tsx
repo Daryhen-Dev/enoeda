@@ -119,7 +119,6 @@ export function BranchManager({
         <TabsContent value="active" className="space-y-4">
           <div className="flex items-center justify-between gap-4">
             <p className="text-sm text-muted-foreground">Ubicaciones activas de la academia</p>
-            <BranchFormDialog />
           </div>
 
           {activeResult.status === BRANCH_DIRECTORY_STATUS.LOADING && (

@@ -64,12 +64,7 @@ export default async function AdminsPage({ params }: AdminsPageProps) {
           {OWNER_MESSAGES.BRANCHES}
         </Link>
         {" / "}
-        <Link
-          href={`/owner/branches/${id}`}
-          className="text-primary underline-offset-4 hover:underline"
-        >
-          {branchResult.data.name}
-        </Link>
+        {branchResult.data.name}
         {" / "}
         {OWNER_MESSAGES.ADMINS_TITLE}
       </nav>
