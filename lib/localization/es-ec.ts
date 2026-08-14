@@ -9,6 +9,8 @@ export const PRODUCT_TERMS = {
   BRANCH: "Sucursal",
   STUDENT: "Estudiante",
   NATIONAL_ID: "Cédula",
+  DISCIPLINE: "Disciplina",
+  DISCIPLINES: "Disciplinas",
 } as const
 
 export const COMMON_MESSAGES = {
@@ -42,6 +44,10 @@ export const TOAST_MESSAGES = {
   STUDENT_DEACTIVATED: "Estudiante desactivado correctamente.",
   STUDENT_REACTIVATED: "Estudiante reactivado correctamente.",
   PASSWORD_CHANGED: "Contraseña actualizada correctamente.",
+  DISCIPLINE_CREATED: "Disciplina creada correctamente.",
+  STUDENT_ENROLLED: "Estudiante inscripto correctamente.",
+  ENROLLMENT_SUSPENDED: "Inscripción suspendida.",
+  ENROLLMENT_REACTIVATED: "Inscripción reactivada.",
 } as const
 
 export const AUTH_MESSAGES = {
@@ -263,6 +269,9 @@ export const OWNER_MESSAGES = {
   LOAD_FAILURE: "No se pudieron cargar los datos.",
   OVERVIEW_DESCRIPTION: "Resumen general de sucursales y administradores.",
   BRANCH_DETAIL_DESCRIPTION: "Administre los detalles de esta sucursal.",
+  DISCIPLINES: "Disciplinas",
+  DISCIPLINES_DESCRIPTION: "Gestioná el catálogo de disciplinas.",
+  CREATE_DISCIPLINE: "Crear disciplina",
 } as const
 
 /** Shared messages for owner/admin account-creation flows. */
@@ -315,4 +324,48 @@ export const TEACHER_MANAGEMENT_MESSAGES = {
   REVOKE_CONFIRMATION_DESCRIPTION: "El usuario perderá acceso de profesor a esta sucursal.",
   REVOKE_ERROR: "No se pudo revocar el acceso.",
   REVOKING: "Revocando…",
+} as const
+
+
+export const DISCIPLINE_MESSAGES = {
+  INVALID_ID: "Identificador de disciplina inválido.",
+  NAME_REQUIRED: "El nombre es obligatorio.",
+  NAME_MAX_LENGTH: "El nombre no puede superar 100 caracteres.",
+  CODE_REQUIRED: "El código es obligatorio.",
+  CODE_MAX_LENGTH: "El código no puede superar 50 caracteres.",
+  CODE_FORMAT: "El código solo admite minúsculas, números y guiones.",
+  NAME_ALREADY_EXISTS: "Ya existe una disciplina con ese nombre.",
+  CODE_ALREADY_EXISTS: "Ya existe una disciplina con ese código.",
+  NOT_FOUND: "Disciplina no encontrada.",
+  LOAD_FAILURE: "No se pudieron cargar las disciplinas.",
+} as const
+
+export const DISCIPLINE_FORM_MESSAGES = {
+  CREATE_TITLE: "Crear disciplina",
+  CREATE_DESCRIPTION: "Agregá una nueva disciplina al catálogo.",
+  NAME_LABEL: "Nombre",
+  CODE_LABEL: "Código",
+} as const
+
+export const ENROLLMENT_MESSAGES = {
+  MIN_ONE_DISCIPLINE: "Seleccioná al menos una disciplina.",
+  DATE_FORMAT: "La fecha debe tener formato AAAA-MM-DD.",
+  INVALID_DATE: "La fecha de inscripción no es válida.",
+  DATE_NOT_FUTURE: "La fecha de inscripción no puede ser futura.",
+  ENROLLED_LABEL: "Inscripto el",
+  SUSPENDED_LABEL: "Suspendido",
+  ACTIVE_LABEL: "Activo",
+  SUSPEND_ACTION: "Suspender",
+  REACTIVATE_ACTION: "Reactivar",
+  DISCIPLINES_LABEL: "Disciplinas",
+  ENROLLED_AT_LABEL: "Fecha de inscripción",
+  HISTORY_TITLE: "Historial de inscripciones",
+  EVENT_ENROLLED: "Inscripción",
+  EVENT_SUSPENDED: "Suspensión",
+  EVENT_REACTIVATED: "Reactivación",
+  NO_DISCIPLINES: "Sin disciplinas activas.",
+  ALREADY_ACTIVE: "La inscripción ya está activa.",
+  ALREADY_SUSPENDED: "La inscripción ya está suspendida.",
+  NOT_FOUND: "Inscripción no encontrada.",
+  ALREADY_ENROLLED: "El estudiante ya está inscripto en esta disciplina.",
 } as const
