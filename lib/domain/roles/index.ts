@@ -2,14 +2,19 @@ export {
   assignBranchAdmin,
   assignBranchTeacher,
   revokeBranchRole,
+  createBranchAdmin,
+  createBranchTeacher,
   listBranchStaff,
   type ActionResult,
   type StaffAssignment,
+  type CreatedAccountCredentials,
 } from "./actions";
 export {
   assignBranchAdminSchema,
   assignBranchTeacherSchema,
   revokeBranchRoleSchema,
+  createBranchAdminSchema,
+  createBranchTeacherSchema,
   grantRoleSchema,
   revokeRoleSchema,
   isGrantableRole,
@@ -19,6 +24,8 @@ export {
   type AssignBranchAdminInput,
   type AssignBranchTeacherInput,
   type RevokeBranchRoleInput,
+  type CreateBranchAdminInput,
+  type CreateBranchTeacherInput,
   type GrantRoleInput,
   type RevokeRoleInput,
 } from "./schema";

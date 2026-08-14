@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 
 import {
   AlertDialog,
@@ -36,6 +37,7 @@ import {
   COMMON_MESSAGES,
   formatDate,
   TEACHER_MANAGEMENT_MESSAGES,
+  TOAST_MESSAGES,
 } from "@/lib/localization/es-ec"
 
 interface StaffListProps {
@@ -111,6 +113,7 @@ function RevokeTeacherDialog({
       })
       if (result.success) {
         setError(null)
+        toast.success(TOAST_MESSAGES.TEACHER_REVOKED)
         router.refresh()
       } else {
         setError(result.error ?? COMMON_MESSAGES.UNEXPECTED_ERROR)

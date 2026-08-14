@@ -12,6 +12,7 @@ export const ROLE_MESSAGES = {
   INVALID_TARGET_USER_ID: "El identificador del usuario destino no es válido.",
   INVALID_BRANCH_ID: "El identificador de la sucursal no es válido.",
   INVALID_ROLE: "El rol debe ser admin o teacher.",
+  INVALID_EMAIL: "El correo electrónico no es válido.",
 } as const;
 
 // --- Branch-scoped schemas ---
@@ -38,6 +39,23 @@ export const revokeBranchRoleSchema = z.object({
 export type AssignBranchAdminInput = z.infer<typeof assignBranchAdminSchema>;
 export type AssignBranchTeacherInput = z.infer<typeof assignBranchTeacherSchema>;
 export type RevokeBranchRoleInput = z.infer<typeof revokeBranchRoleSchema>;
+
+// --- Account creation schemas (owner-only, admin-of-branch-only) ---
+
+/** Owner creates a new Auth account and assigns it as branch admin. */
+export const createBranchAdminSchema = z.object({
+  email: z.email({ error: ROLE_MESSAGES.INVALID_EMAIL }),
+  branchId: z.string().uuid({ message: ROLE_MESSAGES.INVALID_BRANCH_ID }),
+});
+
+/** Branch admin creates a new Auth account and assigns it as teacher in their own branch. */
+export const createBranchTeacherSchema = z.object({
+  email: z.email({ error: ROLE_MESSAGES.INVALID_EMAIL }),
+  branchId: z.string().uuid({ message: ROLE_MESSAGES.INVALID_BRANCH_ID }),
+});
+
+export type CreateBranchAdminInput = z.infer<typeof createBranchAdminSchema>;
+export type CreateBranchTeacherInput = z.infer<typeof createBranchTeacherSchema>;
 
 // --- Legacy flat schemas (kept for reference; RPCs dropped in migration) ---
 
