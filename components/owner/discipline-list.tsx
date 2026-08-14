@@ -16,7 +16,10 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import type { DisciplineRecord } from "@/lib/domain/disciplines/actions"
-import { OWNER_MESSAGES } from "@/lib/localization/es-ec"
+import {
+  DISCIPLINE_FORM_MESSAGES,
+  OWNER_MESSAGES,
+} from "@/lib/localization/es-ec"
 
 interface DisciplineListProps {
   disciplines: DisciplineRecord[]
@@ -40,8 +43,8 @@ export function DisciplineList({ disciplines }: DisciplineListProps) {
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>{OWNER_MESSAGES.BRANCH_NAME}</TableHead>
-          <TableHead>{DISCIPLINE_CODE_LABEL}</TableHead>
+          <TableHead>{DISCIPLINE_FORM_MESSAGES.NAME_LABEL}</TableHead>
+          <TableHead>{DISCIPLINE_FORM_MESSAGES.CODE_LABEL}</TableHead>
           <TableHead>{OWNER_MESSAGES.BRANCH_STATUS}</TableHead>
         </TableRow>
       </TableHeader>
@@ -67,5 +70,3 @@ export function DisciplineList({ disciplines }: DisciplineListProps) {
     </Table>
   )
 }
-
-const DISCIPLINE_CODE_LABEL = "Código"
