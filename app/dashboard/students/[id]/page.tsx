@@ -47,10 +47,14 @@ export default async function StudentDetailPage({ params }: StudentDetailPagePro
   return (
     <main className="flex flex-col gap-6 p-4 md:p-6">
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon-sm" asChild>
-          <Link href="/dashboard/students" aria-label="Back to students">
-            <ArrowLeftIcon />
-          </Link>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          render={
+            <Link href="/dashboard/students" aria-label="Back to students" />
+          }
+        >
+          <ArrowLeftIcon />
         </Button>
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
