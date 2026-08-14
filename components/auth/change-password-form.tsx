@@ -2,18 +2,13 @@
 
 import { useState, type FormEvent } from "react"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
-import { parseRoleAssignments, roleNamesFrom } from "@/lib/auth/authorize"
-import { getSafeRedirect, type SafeRedirect } from "@/lib/auth/redirect"
-import { AUTH_MESSAGES } from "@/lib/localization/es-ec"
-import { createClient as createBrowserClient } from "@/lib/supabase/client"
+import { changeOwnPassword } from "@/lib/auth/change-password"
+import { CHANGE_PASSWORD_MESSAGES, TOAST_MESSAGES } from "@/lib/localization/es-ec"
 
-interface LoginFormProps {
-  redirectTo: SafeRedirect
-}
-
-export function LoginForm({ redirectTo }: LoginFormProps) {
+export function ChangePasswordForm() {
   const router = useRouter()
   const [isPending, setIsPending] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -24,68 +19,55 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
     setErrorMessage(null)
 
     const formData = new FormData(event.currentTarget)
-    const email = formData.get("email")
-    const password = formData.get("password")
+    const newPassword = formData.get("newPassword")
+    const confirmPassword = formData.get("confirmPassword")
 
-    if (typeof email !== "string" || typeof password !== "string") {
-      setErrorMessage(AUTH_MESSAGES.LOGIN_FAILURE)
+    if (typeof newPassword !== "string" || typeof confirmPassword !== "string") {
+      setErrorMessage(CHANGE_PASSWORD_MESSAGES.FAILURE)
       setIsPending(false)
       return
     }
 
-    try {
-      const supabase = createBrowserClient()
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
+    const result = await changeOwnPassword({ newPassword, confirmPassword })
 
-      if (error) {
-        setErrorMessage(AUTH_MESSAGES.LOGIN_FAILURE)
-        return
-      }
-
-      // Resolve the authenticated persona so owner lands on /owner while
-      // admin/teacher land on /dashboard, instead of the pre-auth default.
-      const { data: rolesData } = await supabase.rpc("current_roles")
-      const roles = roleNamesFrom(parseRoleAssignments(rolesData))
-      const personaRedirect = getSafeRedirect(redirectTo, roles)
-
-      router.replace(personaRedirect)
-      router.refresh()
-    } catch {
-      setErrorMessage(AUTH_MESSAGES.LOGIN_FAILURE)
-    } finally {
+    if (!result.success) {
+      setErrorMessage(result.error ?? CHANGE_PASSWORD_MESSAGES.FAILURE)
       setIsPending(false)
+      return
     }
+
+    toast.success(TOAST_MESSAGES.PASSWORD_CHANGED)
+    router.refresh()
   }
 
   return (
     <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
       <div className="space-y-2">
-        <label className="text-sm font-medium" htmlFor="email">
-          {AUTH_MESSAGES.EMAIL_LABEL}
+        <label className="text-sm font-medium" htmlFor="newPassword">
+          {CHANGE_PASSWORD_MESSAGES.NEW_PASSWORD_LABEL}
         </label>
         <input
-          autoComplete="email"
+          autoComplete="new-password"
           className="flex h-9 w-full rounded-lg border bg-transparent px-3 py-1 text-sm shadow-xs outline-none transition-[color,box-shadow] placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
           disabled={isPending}
-          id="email"
-          name="email"
+          id="newPassword"
+          minLength={8}
+          name="newPassword"
           required
-          type="email"
+          type="password"
         />
       </div>
       <div className="space-y-2">
-        <label className="text-sm font-medium" htmlFor="password">
-          {AUTH_MESSAGES.PASSWORD_LABEL}
+        <label className="text-sm font-medium" htmlFor="confirmPassword">
+          {CHANGE_PASSWORD_MESSAGES.CONFIRM_PASSWORD_LABEL}
         </label>
         <input
-          autoComplete="current-password"
+          autoComplete="new-password"
           className="flex h-9 w-full rounded-lg border bg-transparent px-3 py-1 text-sm shadow-xs outline-none transition-[color,box-shadow] placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
           disabled={isPending}
-          id="password"
-          name="password"
+          id="confirmPassword"
+          minLength={8}
+          name="confirmPassword"
           required
           type="password"
         />
@@ -96,7 +78,9 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
         </p>
       ) : null}
       <Button aria-busy={isPending} className="w-full" disabled={isPending} type="submit">
-        {isPending ? AUTH_MESSAGES.LOGIN_PENDING : AUTH_MESSAGES.LOGIN_ACTION}
+        {isPending
+          ? CHANGE_PASSWORD_MESSAGES.SUBMITTING
+          : CHANGE_PASSWORD_MESSAGES.SUBMIT_ACTION}
       </Button>
     </form>
   )

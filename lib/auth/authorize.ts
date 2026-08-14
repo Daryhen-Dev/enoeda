@@ -52,6 +52,9 @@ export const ROUTE_GUARDS: RouteGuard[] = [
   { pathPrefix: "/dashboard", roles: [APP_ROLES.ADMIN, APP_ROLES.TEACHER] },
 ];
 
+/** Forced password-change screen for accounts created by owner/admin. */
+export const CHANGE_PASSWORD_PATH = "/change-password" as const;
+
 /** Paths that are always public — no authentication required. */
 export const PUBLIC_PATHS = [
   "/login",

@@ -1,5 +1,9 @@
 import { redirect } from "next/navigation"
 
-export default function Home() {
-  redirect("/dashboard")
+import { getPersonaHome } from "@/lib/auth/redirect"
+import { fetchCurrentRoles } from "@/lib/auth/server-roles"
+
+export default async function Home() {
+  const roles = await fetchCurrentRoles()
+  redirect(getPersonaHome(roles))
 }
