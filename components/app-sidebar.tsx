@@ -23,7 +23,15 @@ import {
 } from "@/components/ui/sidebar"
 import { DASHBOARD_SHELL_MESSAGES } from "@/lib/localization/es-ec"
 
-const navigationItems = [
+interface NavigationItem {
+  title: string
+  url: string
+  icon: typeof LayoutDashboardIcon
+  available: boolean
+  adminOnly?: boolean
+}
+
+const navigationItems: NavigationItem[] = [
   {
     title: DASHBOARD_SHELL_MESSAGES.OVERVIEW,
     url: "/dashboard",
@@ -42,9 +50,14 @@ const navigationItems = [
     icon: UsersIcon,
     available: true,
   },
-] as const
-
-type NavigationItem = (typeof navigationItems)[number]
+  {
+    title: DASHBOARD_SHELL_MESSAGES.STAFF,
+    url: "/dashboard/staff",
+    icon: ShieldIcon,
+    available: true,
+    adminOnly: true,
+  },
+]
 
 function isNavigationItemActive(item: NavigationItem, pathname: string) {
   return item.url === "/dashboard"
@@ -52,8 +65,16 @@ function isNavigationItemActive(item: NavigationItem, pathname: string) {
     : pathname.startsWith(item.url)
 }
 
-export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
+interface AppSidebarProps extends ComponentProps<typeof Sidebar> {
+  isAdmin?: boolean
+}
+
+export function AppSidebar({ isAdmin = false, ...props }: AppSidebarProps) {
   const pathname = usePathname()
+
+  const visibleItems = navigationItems.filter(
+    (item) => !item.adminOnly || isAdmin
+  )
 
   return (
     <Sidebar collapsible="offcanvas" {...props}>
@@ -77,7 +98,7 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navigationItems.map((item) => {
+              {visibleItems.map((item) => {
                 const Icon = item.icon
                 const isActive = isNavigationItemActive(item, pathname)
 
