@@ -22,6 +22,28 @@ export const COMMON_MESSAGES = {
   INSUFFICIENT_PERMISSIONS: "No tiene permisos para realizar esta acción.",
 } as const
 
+/**
+ * App-wide success-toast copy (top-right, sonner). Every create/save/
+ * assign/revoke action confirms success with one of these instead of a
+ * silent refresh.
+ */
+export const TOAST_MESSAGES = {
+  BRANCH_CREATED: "Sucursal creada correctamente.",
+  BRANCH_UPDATED: "Sucursal actualizada correctamente.",
+  BRANCH_DEACTIVATED: "Sucursal desactivada correctamente.",
+  BRANCH_REACTIVATED: "Sucursal reactivada correctamente.",
+  BRANCH_DELETED: "Sucursal eliminada correctamente.",
+  ADMIN_ACCOUNT_CREATED: "Cuenta de administrador creada correctamente.",
+  ADMIN_REVOKED: "Acceso de administrador revocado correctamente.",
+  TEACHER_ACCOUNT_CREATED: "Cuenta de profesor creada correctamente.",
+  TEACHER_REVOKED: "Acceso de profesor revocado correctamente.",
+  STUDENT_CREATED: "Estudiante creado correctamente.",
+  STUDENT_UPDATED: "Estudiante actualizado correctamente.",
+  STUDENT_DEACTIVATED: "Estudiante desactivado correctamente.",
+  STUDENT_REACTIVATED: "Estudiante reactivado correctamente.",
+  PASSWORD_CHANGED: "Contraseña actualizada correctamente.",
+} as const
+
 export const AUTH_MESSAGES = {
   LOGIN_TITLE: "Iniciar sesión",
   LOGIN_DESCRIPTION: "Ingrese sus credenciales para continuar.",
@@ -116,6 +138,8 @@ export const BRANCH_MESSAGES = {
   AT_LEAST_ONE_FIELD_REQUIRED: "Debe proporcionar al menos un campo.",
   NAME_ALREADY_EXISTS: "Ya existe una sucursal con este nombre.",
   CANNOT_DEACTIVATE_WITH_ACTIVE_STUDENTS: "No se puede desactivar una sucursal con estudiantes activos.",
+  CANNOT_DELETE_WITH_STUDENTS: "No se puede eliminar una sucursal con estudiantes registrados.",
+  CANNOT_DELETE_WITH_STAFF: "No se puede eliminar una sucursal con administradores o profesores asignados.",
   NOT_FOUND: "Sucursal no encontrada.",
   REACTIVATION_NAME_CONFLICT: "No se puede reactivar esta sucursal porque otra sucursal activa ya usa este nombre. Cambie el nombre de una de las sucursales primero.",
 } as const
@@ -219,6 +243,10 @@ export const OWNER_MESSAGES = {
   DEACTIVATE_ERROR: "No se pudo desactivar la sucursal.",
   REACTIVATE_ACTION: "Reactivar",
   REACTIVATE_ERROR: "No se pudo reactivar la sucursal.",
+  DELETE_ACTION: "Eliminar",
+  DELETE_CONFIRMATION_TITLE: "¿Eliminar esta sucursal?",
+  DELETE_CONFIRMATION_DESCRIPTION: "Esta acción no se puede revertir. Solo puede eliminar sucursales sin estudiantes ni personal asignado.",
+  DELETE_ERROR: "No se pudo eliminar la sucursal.",
   ADMINS_TITLE: "Administradores",
   ADMINS_DESCRIPTION: "Asigne o revoque el rol de administrador en esta sucursal.",
   ADMINS_EMPTY: "Sin administradores",
@@ -235,6 +263,37 @@ export const OWNER_MESSAGES = {
   LOAD_FAILURE: "No se pudieron cargar los datos.",
   OVERVIEW_DESCRIPTION: "Resumen general de sucursales y administradores.",
   BRANCH_DETAIL_DESCRIPTION: "Administre los detalles de esta sucursal.",
+} as const
+
+/** Shared messages for owner/admin account-creation flows. */
+export const ROLE_CREATION_MESSAGES = {
+  EMAIL_ALREADY_EXISTS: "Ya existe una cuenta con este correo electrónico.",
+  CREATE_ACCOUNT_ACTION: "Crear cuenta",
+  CREATING_ACCOUNT: "Creando cuenta…",
+  EMAIL_LABEL: "Correo electrónico",
+  EMAIL_PLACEHOLDER: "usuario@ejemplo.com",
+  CREDENTIALS_DIALOG_TITLE: "Cuenta creada",
+  CREDENTIALS_DIALOG_DESCRIPTION:
+    "Copie estas credenciales y entréguelas de forma segura a la persona. No se mostrarán de nuevo. Deberá cambiar la contraseña en su primer inicio de sesión.",
+  CREDENTIALS_EMAIL_LABEL: "Correo electrónico",
+  CREDENTIALS_PASSWORD_LABEL: "Contraseña temporal",
+  COPY_ACTION: "Copiar",
+  COPIED_ACTION: "Copiado",
+  CLOSE_ACTION: "Cerrar",
+} as const
+
+/** Forced password-change screen shown to accounts created by owner/admin. */
+export const CHANGE_PASSWORD_MESSAGES = {
+  PAGE_TITLE: "Cambiar contraseña",
+  PAGE_DESCRIPTION:
+    "Por seguridad, debe establecer una nueva contraseña antes de continuar.",
+  NEW_PASSWORD_LABEL: "Nueva contraseña",
+  CONFIRM_PASSWORD_LABEL: "Confirmar contraseña",
+  MIN_LENGTH_ERROR: "La contraseña debe tener al menos 8 caracteres.",
+  MISMATCH_ERROR: "Las contraseñas no coinciden.",
+  SUBMIT_ACTION: "Guardar y continuar",
+  SUBMITTING: "Guardando…",
+  FAILURE: "No se pudo actualizar la contraseña. Inténtelo nuevamente.",
 } as const
 
 export const TEACHER_MANAGEMENT_MESSAGES = {
