@@ -6,6 +6,7 @@ import { StudentDeactivateDialog } from "@/components/students/student-deactivat
 import {
   StudentFormDialog,
   type ActiveBranchOption,
+  type DisciplineOption,
 } from "@/components/students/student-form-dialog"
 import { StudentReactivateDialog } from "@/components/students/student-reactivate-dialog"
 import { Button } from "@/components/ui/button"
@@ -48,6 +49,7 @@ interface StudentListProps {
   inactiveNextCursor: string | null
   inactiveInitialError?: string
   branches: ActiveBranchOption[]
+  disciplines?: DisciplineOption[]
 }
 
 export function StudentList({
@@ -58,6 +60,7 @@ export function StudentList({
   inactiveNextCursor: initialInactiveNextCursor,
   inactiveInitialError,
   branches,
+  disciplines,
 }: StudentListProps) {
   const [selectedTab, setSelectedTab] = useState<StudentStatus>("active")
   const [activeItems, setActiveItems] = useState(initialActiveItems)
@@ -127,7 +130,7 @@ export function StudentList({
               : STUDENT_DIRECTORY_MESSAGES.INACTIVE_ACCOUNT_DESCRIPTION}
           </p>
         </div>
-        {isActiveTab && <StudentFormDialog branches={branches} />}
+        {isActiveTab && <StudentFormDialog branches={branches} disciplines={disciplines} />}
       </div>
 
       <Tabs

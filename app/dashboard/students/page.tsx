@@ -1,5 +1,6 @@
 import { StudentList } from "@/components/students/student-list"
 import { listBranches } from "@/lib/domain/branches/actions"
+import { listDisciplines } from "@/lib/domain/disciplines/actions"
 import {
   listStudents,
   STUDENT_STATUS,
@@ -22,10 +23,11 @@ function toStudentSummary({
 }
 
 export default async function StudentsPage() {
-  const [activeResult, inactiveResult, branchesResult] = await Promise.all([
+  const [activeResult, inactiveResult, branchesResult, disciplinesResult] = await Promise.all([
     listStudents({ status: STUDENT_STATUS.ACTIVE }),
     listStudents({ status: STUDENT_STATUS.INACTIVE }),
     listBranches(),
+    listDisciplines(),
   ])
   const activePage = activeResult.success ? activeResult.data : undefined
   const inactivePage = inactiveResult.success ? inactiveResult.data : undefined
@@ -34,6 +36,10 @@ export default async function StudentsPage() {
       ? branchesResult.data
           .filter((branch) => branch.is_active)
           .map((branch) => ({ id: branch.id, name: branch.name }))
+      : []
+  const disciplines =
+    disciplinesResult.success && disciplinesResult.data !== undefined
+      ? disciplinesResult.data.map((d) => ({ id: d.id, name: d.name }))
       : []
 
   return (
@@ -54,6 +60,7 @@ export default async function StudentsPage() {
             : STUDENT_DIRECTORY_MESSAGES.INITIAL_LOAD_FAILURE
         }
         branches={branches}
+        disciplines={disciplines}
       />
     </main>
   )
