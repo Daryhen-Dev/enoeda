@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useTransition } from "react"
+import Link from "next/link"
 
 import { StudentDeactivateDialog } from "@/components/students/student-deactivate-dialog"
 import {
@@ -203,7 +204,15 @@ export function StudentList({
             <TableBody>
               {items.map((student) => (
                 <TableRow key={student.id}>
-                  <TableCell className="px-4 py-3">{student.first_name}</TableCell>
+                  <TableCell className="px-4 py-3">
+                    <Link
+                      href={`/dashboard/students/${student.id}`}
+                      className="text-primary underline-offset-4 hover:underline"
+                      aria-label={`${STUDENT_DIRECTORY_MESSAGES.VIEW_DETAILS}: ${student.first_name} ${student.surname}`}
+                    >
+                      {student.first_name}
+                    </Link>
+                  </TableCell>
                   <TableCell className="px-4 py-3">{student.surname}</TableCell>
                   <TableCell className="px-4 py-3 font-mono text-xs">
                     {student.branch_id}

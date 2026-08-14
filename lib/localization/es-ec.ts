@@ -124,6 +124,7 @@ export const STUDENT_DIRECTORY_MESSAGES = {
   SURNAME: "Apellido",
   BRANCH_ID: "ID de sucursal",
   STATUS: "Estado",
+  VIEW_DETAILS: "Ver detalle",
   ACTIONS: "Acciones",
   ACTIVE_STATUS: "Activo",
   INACTIVE_STATUS: "Inactivo",
