@@ -6,6 +6,7 @@ import {
   STUDENT_STATUS,
   type StudentListItem,
 } from "@/lib/domain/students"
+import { getAuthenticatedContext } from "@/lib/auth/server-context"
 import { STUDENT_DIRECTORY_MESSAGES } from "@/lib/localization/es-ec"
 
 type StudentSummary = Pick<
@@ -23,20 +24,46 @@ function toStudentSummary({
 }
 
 export default async function StudentsPage() {
-  const [activeResult, inactiveResult, branchesResult, disciplinesResult] = await Promise.all([
+  const [activeResult, inactiveResult, branchesResult, disciplinesResult, authResult] = await Promise.all([
     listStudents({ status: STUDENT_STATUS.ACTIVE }),
     listStudents({ status: STUDENT_STATUS.INACTIVE }),
     listBranches(),
     listDisciplines(),
+    getAuthenticatedContext(),
   ])
   const activePage = activeResult.success ? activeResult.data : undefined
   const inactivePage = inactiveResult.success ? inactiveResult.data : undefined
-  const branches =
+
+  // Derive teacher-only context for branch locking (D6/A5)
+  const isTeacherOnly =
+    authResult.ok &&
+    authResult.ctx.roles.includes("teacher") &&
+    !authResult.ctx.roles.some((r) => r === "admin" || r === "owner")
+
+  const teacherBranchIds = isTeacherOnly && authResult.ok
+    ? authResult.ctx.assignments
+        .filter((a) => a.role === "teacher" && a.branchId)
+        .map((a) => a.branchId!)
+    : []
+
+  const allBranches =
     branchesResult.success && branchesResult.data !== undefined
       ? branchesResult.data
           .filter((branch) => branch.is_active)
           .map((branch) => ({ id: branch.id, name: branch.name }))
       : []
+
+  // Teacher sees only their branches; admin/owner sees all
+  const branches = isTeacherOnly
+    ? allBranches.filter((b) => teacherBranchIds.includes(b.id))
+    : allBranches
+
+  // Lock branch when teacher has exactly one branch
+  const lockedBranchId =
+    isTeacherOnly && teacherBranchIds.length === 1
+      ? teacherBranchIds[0]
+      : undefined
+
   const disciplines =
     disciplinesResult.success && disciplinesResult.data !== undefined
       ? disciplinesResult.data.map((d) => ({ id: d.id, name: d.name }))
@@ -61,6 +88,7 @@ export default async function StudentsPage() {
         }
         branches={branches}
         disciplines={disciplines}
+        lockedBranchId={lockedBranchId}
       />
     </main>
   )

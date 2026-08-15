@@ -167,7 +167,9 @@ export async function getStudentById(
 }
 
 /**
- * Create a new student. Admin-only (RLS enforced).
+ * Create a new student. Admin or Teacher (RLS enforced).
+ * Teacher restricted to their own branch via app-layer check (A6)
+ * as defense-in-depth on top of RLS WITH CHECK.
  * Identity derived server-side via withAuthenticatedUser.
  * Transaction failures are intentionally redacted by the executor.
  */
@@ -179,7 +181,24 @@ export async function createStudent(
     return { success: false, error: parsed.error.issues[0].message };
   }
 
-  const result = await withAuthenticatedUser(async (tx) => {
+  const result = await withAuthenticatedUser(async (tx, ctx) => {
+    // A6: Teacher-only branch check (defense-in-depth)
+    const isTeacher = ctx.roles.includes("teacher");
+    const isAdminOrOwner = ctx.roles.some(
+      (r) => r === "admin" || r === "owner"
+    );
+    if (isTeacher && !isAdminOrOwner) {
+      const teacherBranchIds = ctx.assignments
+        .filter((a) => a.role === "teacher" && a.branchId)
+        .map((a) => a.branchId);
+      if (!teacherBranchIds.includes(parsed.data.branch_id)) {
+        return {
+          id: null,
+          error: COMMON_MESSAGES.INSUFFICIENT_PERMISSIONS,
+        } satisfies StudentMutationOutcome;
+      }
+    }
+
     if (parsed.data.is_active) {
       const branch = await tx.branches.findUnique({
         where: { id: parsed.data.branch_id },

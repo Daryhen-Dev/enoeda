@@ -68,6 +68,7 @@ interface StudentFormDialogProps {
   branches: ActiveBranchOption[]
   disciplines?: DisciplineOption[]
   studentId?: string
+  lockedBranchId?: string
 }
 
 function getTodayString(): string {
@@ -107,6 +108,7 @@ export function StudentFormDialog({
   branches,
   disciplines = [],
   studentId,
+  lockedBranchId,
 }: StudentFormDialogProps) {
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
@@ -120,7 +122,10 @@ export function StudentFormDialog({
   const dateOfBirthId = useId()
   const enrolledAtId = useId()
   const form = useForm<StudentFormValues>({
-    defaultValues: getDefaultValues(),
+    defaultValues: {
+      ...getDefaultValues(),
+      branch_id: lockedBranchId ?? "",
+    },
     mode: "onBlur",
   })
   const isEditing = studentId !== undefined
@@ -174,7 +179,10 @@ export function StudentFormDialog({
 
     setIsOpen(nextIsOpen)
     setActionError(null)
-    form.reset(getDefaultValues())
+    form.reset({
+      ...getDefaultValues(),
+      branch_id: lockedBranchId ?? "",
+    })
 
     if (nextIsOpen && isEditing) {
       void loadStudent()
@@ -275,31 +283,40 @@ export function StudentFormDialog({
                 render={({ field, fieldState }) => (
                   <Field data-invalid={Boolean(fieldState.error)}>
                     <FieldLabel htmlFor={branchId}>{PRODUCT_TERMS.BRANCH}</FieldLabel>
-                    <Select
-                      value={field.value}
-                      onValueChange={(value) => {
-                        if (value) {
-                          field.onChange(value)
-                        }
-                      }}
-                      disabled={isPending}
-                    >
-                      <SelectTrigger
+                    {lockedBranchId && !isEditing ? (
+                      <Input
                         id={branchId}
-                        className="w-full"
-                        aria-describedby={fieldState.error ? `${branchId}-error` : undefined}
-                        aria-invalid={Boolean(fieldState.error)}
+                        value={branches.find((b) => b.id === lockedBranchId)?.name ?? lockedBranchId}
+                        disabled
+                        readOnly
+                      />
+                    ) : (
+                      <Select
+                        value={field.value}
+                        onValueChange={(value) => {
+                          if (value) {
+                            field.onChange(value)
+                          }
+                        }}
+                        disabled={isPending}
                       >
-                        <SelectValue placeholder={STUDENT_FORM_MESSAGES.ACTIVE_BRANCH_PLACEHOLDER} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {branches.map((branch) => (
-                          <SelectItem key={branch.id} value={branch.id}>
-                            {branch.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                        <SelectTrigger
+                          id={branchId}
+                          className="w-full"
+                          aria-describedby={fieldState.error ? `${branchId}-error` : undefined}
+                          aria-invalid={Boolean(fieldState.error)}
+                        >
+                          <SelectValue placeholder={STUDENT_FORM_MESSAGES.ACTIVE_BRANCH_PLACEHOLDER} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {branches.map((branch) => (
+                            <SelectItem key={branch.id} value={branch.id}>
+                              {branch.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
                     <FieldError id={`${branchId}-error`} errors={[fieldState.error]} />
                   </Field>
                 )}

@@ -51,6 +51,7 @@ interface StudentListProps {
   inactiveInitialError?: string
   branches: ActiveBranchOption[]
   disciplines?: DisciplineOption[]
+  lockedBranchId?: string
 }
 
 export function StudentList({
@@ -62,6 +63,7 @@ export function StudentList({
   inactiveInitialError,
   branches,
   disciplines,
+  lockedBranchId,
 }: StudentListProps) {
   const [selectedTab, setSelectedTab] = useState<StudentStatus>("active")
   const [activeItems, setActiveItems] = useState(initialActiveItems)
@@ -131,7 +133,7 @@ export function StudentList({
               : STUDENT_DIRECTORY_MESSAGES.INACTIVE_ACCOUNT_DESCRIPTION}
           </p>
         </div>
-        {isActiveTab && <StudentFormDialog branches={branches} disciplines={disciplines} />}
+        {isActiveTab && <StudentFormDialog branches={branches} disciplines={disciplines} lockedBranchId={lockedBranchId} />}
       </div>
 
       <Tabs
