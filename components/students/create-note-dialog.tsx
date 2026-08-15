@@ -46,6 +46,9 @@ interface DisciplineOption {
   name: string
 }
 
+/** Sentinel value for the "no discipline / general" option — Select items cannot use an empty string value. */
+const NO_DISCIPLINE_VALUE = "__none__"
+
 interface CreateNoteDialogProps {
   studentId: string
   disciplines: DisciplineOption[]
@@ -76,7 +79,10 @@ export function CreateNoteDialog({
     startTransition(async () => {
       const result = await createNote({
         student_id: studentId,
-        discipline_id: disciplineId || null,
+        discipline_id:
+          disciplineId && disciplineId !== NO_DISCIPLINE_VALUE
+            ? disciplineId
+            : null,
         category: category as NoteCategory,
         content,
       })
@@ -143,7 +149,7 @@ export function CreateNoteDialog({
                   />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">
+                  <SelectItem value={NO_DISCIPLINE_VALUE}>
                     {NOTES_MESSAGES.DISCIPLINE_PLACEHOLDER}
                   </SelectItem>
                   {disciplines.map((d) => (
