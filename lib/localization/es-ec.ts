@@ -429,3 +429,37 @@ export const ENROLLMENT_MESSAGES = {
   NOT_FOUND: "Inscripción no encontrada.",
   ALREADY_ENROLLED: "El estudiante ya está inscripto en esta disciplina.",
 } as const
+
+
+export const ATTENDANCE_MESSAGES = {
+  INVALID_CLASS_ID: "El identificador de la clase no es válido.",
+  INVALID_STUDENT_ID: "El identificador del estudiante no es válido.",
+  INVALID_DATE: "La fecha de la sesión no es válida.",
+  MIN_ONE_RECORD: "Debe incluir al menos un registro de asistencia.",
+  OBSERVATION_MAX: "La observación no puede superar los 500 caracteres.",
+  INVALID_SESSION: "La sesión no es válida o no corresponde al día indicado.",
+  FUTURE_SESSION: "No se puede registrar asistencia para una sesión futura.",
+  SESSION_SUSPENDED: "No se puede registrar asistencia para una sesión suspendida.",
+  INELIGIBLE_STUDENT: "Uno o más estudiantes no están inscriptos en esta sesión.",
+  CORRECTION_WINDOW_EXCEEDED: "Solo se puede corregir la asistencia dentro de los 7 días posteriores a la sesión.",
+  CAPTURE_WINDOW_EXCEEDED: "No se puede registrar asistencia para sesiones con más de 30 días de antigüedad.",
+  LOAD_FAILURE: "No se pudo cargar la asistencia.",
+} as const
+
+export const ATTENDANCE_FORM_MESSAGES = {
+  TITLE: "Asistencia",
+  DESCRIPTION: "Registre la asistencia de los estudiantes para esta sesión.",
+  PRESENT_LABEL: "Presente",
+  OBSERVATION_LABEL: "Observación",
+  OBSERVATION_PLACEHOLDER: "Nota opcional (máx. 500 caracteres)",
+  SUBMIT: "Guardar asistencia",
+  SAVING: "Guardando…",
+  EMPTY_ELIGIBLE: "No hay estudiantes inscriptos para esta sesión.",
+  SUSPENDED_NOTE: "La sesión está suspendida. No se puede registrar asistencia.",
+  TAKE_ATTENDANCE: "Tomar asistencia",
+  STATS_LABEL: "Asistencia",
+} as const
+
+export const ATTENDANCE_TOAST = {
+  SAVED: "Asistencia registrada correctamente.",
+} as const

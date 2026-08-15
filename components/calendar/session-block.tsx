@@ -3,6 +3,7 @@
 import { AlertTriangleIcon, UserIcon } from "lucide-react";
 
 import type { SessionView } from "@/lib/domain/classes/actions";
+import { AttendanceSheetDialog } from "@/components/attendance/attendance-sheet-dialog";
 import { CALENDAR_MESSAGES } from "@/lib/localization/es-ec";
 
 interface SessionBlockProps {
@@ -104,6 +105,13 @@ export function SessionBlock({ session, compact = false }: SessionBlockProps) {
             <span className="text-[10px]">{CALENDAR_MESSAGES.NO_TEACHER}</span>
           </span>
         )}
+      </div>
+      <div className="mt-1">
+        <AttendanceSheetDialog
+          scheduledClassId={session.scheduled_class_id}
+          sessionDate={session.session_date}
+          disabled={isSuspended}
+        />
       </div>
     </div>
   );
