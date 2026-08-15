@@ -558,6 +558,8 @@ model students {
   branches            branches              @relation(fields: [branch_id], references: [id], onUpdate: NoAction)
   student_disciplines student_disciplines[]
   attendance          attendance[]
+  student_progress    student_progress[]
+  student_notes       student_notes[]
 
   @@index([branch_id])
   @@index([email])
@@ -574,6 +576,9 @@ model disciplines {
   updated_at          DateTime              @default(now()) @db.Timestamptz(6)
   student_disciplines student_disciplines[]
   scheduled_classes   scheduled_classes[]
+  discipline_levels   discipline_levels[]
+  student_progress    student_progress[]
+  student_notes       student_notes[]
 
   @@schema("public")
 }
@@ -674,6 +679,64 @@ model attendance {
   @@index([student_id])
   @@index([session_date])
   @@index([scheduled_class_id, session_date])
+  @@schema("public")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model discipline_levels {
+  id                         String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  discipline_id              String             @db.Uuid
+  name                       String
+  color                      String?
+  sort_order                 Int
+  required_attended_sessions Int                @default(0)
+  created_at                 DateTime           @default(now()) @db.Timestamptz(6)
+  updated_at                 DateTime           @default(now()) @db.Timestamptz(6)
+  disciplines                disciplines        @relation(fields: [discipline_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  student_progress           student_progress[]
+
+  @@unique([discipline_id, sort_order], map: "discipline_levels_discipline_sort_uq")
+  @@index([discipline_id])
+  @@schema("public")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model student_progress {
+  id                String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  student_id        String            @db.Uuid
+  discipline_id     String            @db.Uuid
+  level_id          String            @db.Uuid
+  promoted_at       DateTime          @default(dbgenerated("CURRENT_DATE")) @db.Date
+  observations      String?
+  created_by        String            @db.Uuid
+  created_at        DateTime          @default(now()) @db.Timestamptz(6)
+  students          students          @relation(fields: [student_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  disciplines       disciplines       @relation(fields: [discipline_id], references: [id], onUpdate: NoAction)
+  discipline_levels discipline_levels @relation(fields: [level_id], references: [id], onUpdate: NoAction)
+
+  @@index([student_id, discipline_id, promoted_at(sort: Desc)])
+  @@index([level_id])
+  @@schema("public")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model student_notes {
+  id            String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  student_id    String       @db.Uuid
+  discipline_id String?      @db.Uuid
+  category      String
+  content       String
+  is_completed  Boolean      @default(false)
+  completed_at  DateTime?    @db.Timestamptz(6)
+  completed_by  String?      @db.Uuid
+  created_by    String       @db.Uuid
+  created_at    DateTime     @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime     @default(now()) @db.Timestamptz(6)
+  students      students     @relation(fields: [student_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  disciplines   disciplines? @relation(fields: [discipline_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
+
+  @@index([student_id, discipline_id])
+  @@index([student_id, is_completed])
   @@schema("public")
 }
 
