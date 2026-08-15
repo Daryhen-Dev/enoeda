@@ -557,6 +557,7 @@ model students {
   updated_at          DateTime              @default(now()) @db.Timestamptz(6)
   branches            branches              @relation(fields: [branch_id], references: [id], onUpdate: NoAction)
   student_disciplines student_disciplines[]
+  attendance          attendance[]
 
   @@index([branch_id])
   @@index([email])
@@ -626,6 +627,7 @@ model scheduled_classes {
   branches           branches         @relation(fields: [branch_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   disciplines        disciplines      @relation(fields: [discipline_id], references: [id], onUpdate: NoAction)
   class_sessions     class_sessions[]
+  attendance         attendance[]
 
   @@index([branch_id])
   @@index([discipline_id])
@@ -650,6 +652,28 @@ model class_sessions {
   @@index([scheduled_class_id])
   @@index([status, session_date])
   @@index([assigned_teacher_id])
+  @@schema("public")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model attendance {
+  id                 String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  scheduled_class_id String            @db.Uuid
+  session_date       DateTime          @db.Date
+  student_id         String            @db.Uuid
+  attended           Boolean
+  observation        String?
+  marked_by          String            @db.Uuid
+  created_at         DateTime          @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime          @default(now()) @db.Timestamptz(6)
+  scheduled_classes  scheduled_classes @relation(fields: [scheduled_class_id], references: [id], onUpdate: NoAction)
+  students           students          @relation(fields: [student_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([scheduled_class_id, session_date, student_id], map: "attendance_session_student_uq")
+  @@index([scheduled_class_id])
+  @@index([student_id])
+  @@index([session_date])
+  @@index([scheduled_class_id, session_date])
   @@schema("public")
 }
 
