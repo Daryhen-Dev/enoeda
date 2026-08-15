@@ -8,9 +8,15 @@ import {
   getEnrollmentHistory,
 } from "@/lib/domain/disciplines/actions"
 import { getAttendanceStats } from "@/lib/domain/attendance/actions"
+import { listProgress, listNotes } from "@/lib/domain/progress/actions"
+import { getLevels } from "@/lib/domain/levels/actions"
 import { StudentDisciplinePanel } from "@/components/students/student-discipline-panel"
 import { EnrollmentHistory } from "@/components/students/enrollment-history"
 import { AttendanceStatsBadge } from "@/components/attendance/attendance-stats-badge"
+import { StudentProgressPanel } from "@/components/students/student-progress-panel"
+import { PromoteStudentDialog } from "@/components/students/promote-student-dialog"
+import { StudentNotesPanel } from "@/components/students/student-notes-panel"
+import { CreateNoteDialog } from "@/components/students/create-note-dialog"
 import { getAuthenticatedContext } from "@/lib/auth/server-context"
 import { Button } from "@/components/ui/button"
 import { ATTENDANCE_FORM_MESSAGES } from "@/lib/localization/es-ec"
@@ -63,6 +69,33 @@ export default async function StudentDetailPage({ params }: StudentDetailPagePro
         result.success && result.data
           ? result.data
           : { present: 0, total: 0, percentage: 0 },
+    }
+  })
+
+  // Fetch progress and notes data
+  const [progressResult, notesResult] = await Promise.all([
+    listProgress({ student_id: id }),
+    listNotes({ student_id: id }),
+  ])
+
+  const progressData =
+    progressResult.success && progressResult.data ? progressResult.data : []
+  const notesData =
+    notesResult.success && notesResult.data ? notesResult.data : []
+
+  // Fetch levels for each active discipline (needed for promotion dialog)
+  const levelsResults = await Promise.all(
+    activeEnrollments.map((enrollment) =>
+      getLevels({ discipline_id: enrollment.discipline_id })
+    )
+  )
+
+  const activeDisciplineLevels = activeEnrollments.map((enrollment, index) => {
+    const result = levelsResults[index]
+    return {
+      disciplineId: enrollment.discipline_id,
+      disciplineName: enrollment.discipline_name,
+      levels: result.success && result.data ? result.data : [],
     }
   })
 
@@ -119,6 +152,44 @@ export default async function StudentDetailPage({ params }: StudentDetailPagePro
       )}
 
       <EnrollmentHistory events={history} />
+
+      {/* Progress panel + promotion dialogs */}
+      {progressData.length > 0 || canManage ? (
+        <div className="flex flex-col gap-3">
+          <StudentProgressPanel progress={progressData} canPromote={canManage} />
+          {canManage && activeDisciplineLevels.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {activeDisciplineLevels.map(({ disciplineId, disciplineName, levels: dLevels }) => (
+                dLevels.length > 0 && (
+                  <PromoteStudentDialog
+                    key={disciplineId}
+                    studentId={id}
+                    disciplineId={disciplineId}
+                    disciplineName={disciplineName}
+                    levels={dLevels}
+                  />
+                )
+              ))}
+            </div>
+          )}
+        </div>
+      ) : null}
+
+      {/* Notes panel */}
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <StudentNotesPanel notes={notesData} />
+        </div>
+        {canManage && (
+          <CreateNoteDialog
+            studentId={id}
+            disciplines={activeEnrollments.map((e) => ({
+              id: e.discipline_id,
+              name: e.discipline_name,
+            }))}
+          />
+        )}
+      </div>
     </main>
   )
 }
