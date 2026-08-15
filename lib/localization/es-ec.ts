@@ -359,10 +359,28 @@ export const CALENDAR_MESSAGES = {
   FILTER_DISCIPLINES: "Filtrar por disciplina",
   NO_TEACHER: "Sin profesor",
   SUBSTITUTE: "Sustituto",
+  NO_BRANCH_CONTEXT: "No se encontró una sucursal asociada a su cuenta.",
+  LOAD_FAILURE: "No se pudo cargar el calendario.",
 } as const
+
+export const WEEKDAY_LABELS = [
+  "Lunes",
+  "Martes",
+  "Miércoles",
+  "Jueves",
+  "Viernes",
+  "Sábado",
+  "Domingo",
+] as const
 
 export const CLASS_MESSAGES = {
   OVERLAP: "Ya existe una clase en ese horario para esta sucursal y día.",
+  CREATE_DESCRIPTION: "Agregue una clase recurrente al horario semanal.",
+  DISCIPLINE_LABEL: "Disciplina",
+  DISCIPLINE_PLACEHOLDER: "Seleccionar…",
+  DAY_LABEL: "Día",
+  START_TIME_LABEL: "Hora de inicio",
+  DAY_PREFIX: "Día",
   SESSION_DATE_REQUIRED: "La fecha de la sesión es obligatoria.",
   CREATE_TITLE: "Crear clase recurrente",
   CREATED: "Clase creada correctamente.",
@@ -370,6 +388,7 @@ export const CLASS_MESSAGES = {
 } as const
 
 export const SUSPENSION_MESSAGES = {
+  CATEGORY_LABEL: "Categoría",
   CATEGORY_FERIADO: "Feriado",
   CATEGORY_EVENTO: "Evento",
   CATEGORY_EMERGENCIA: "Emergencia",

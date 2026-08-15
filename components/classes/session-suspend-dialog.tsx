@@ -15,6 +15,13 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { suspendSession } from "@/lib/domain/classes/actions";
 import {
   COMMON_MESSAGES,
@@ -99,19 +106,26 @@ export function SessionSuspendDialog({
         >
           <FieldGroup>
             <Field>
-              <FieldLabel htmlFor="suspend-category">Categoría</FieldLabel>
-              <select
-                id="suspend-category"
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs"
+              <FieldLabel htmlFor="suspend-category">
+                {SUSPENSION_MESSAGES.CATEGORY_LABEL}
+              </FieldLabel>
+              <Select
                 value={category}
-                onChange={(e) => setCategory(e.target.value)}
+                onValueChange={(value) => {
+                  if (value) setCategory(value);
+                }}
               >
-                {CATEGORIES.map((c) => (
-                  <option key={c.value} value={c.value}>
-                    {c.label}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger id="suspend-category" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CATEGORIES.map((c) => (
+                    <SelectItem key={c.value} value={c.value}>
+                      {c.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </Field>
             <Field data-invalid={isOtro && !reason}>
               <FieldLabel htmlFor="suspend-reason">

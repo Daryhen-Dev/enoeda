@@ -1,7 +1,11 @@
+import { AlertCircleIcon } from "lucide-react";
+
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { getSessionsForRange } from "@/lib/domain/classes/actions";
 import { CalendarHeader } from "@/components/calendar/calendar-header";
 import { CalendarMonthView } from "@/components/calendar/calendar-month-view";
 import { CalendarWeekView } from "@/components/calendar/calendar-week-view";
+import { fetchRoleAssignments } from "@/lib/auth/server-roles";
 import { CALENDAR_MESSAGES } from "@/lib/localization/es-ec";
 
 interface CalendarPageProps {
@@ -13,6 +17,30 @@ interface CalendarPageProps {
 }
 
 export default async function CalendarPage({ searchParams }: CalendarPageProps) {
+  // Resolve the caller's own branch from their role assignments — owner
+  // sees the first branch they administer/teach; admin/teacher are scoped
+  // to their single branch assignment (mirrors app/dashboard/staff/page.tsx).
+  const assignments = await fetchRoleAssignments();
+  const branchAssignment = assignments.find(
+    (a) => a.role === "admin" || a.role === "teacher"
+  );
+
+  if (!branchAssignment || !branchAssignment.branchId) {
+    return (
+      <div className="flex flex-1 flex-col gap-4 p-4">
+        <Alert variant="destructive">
+          <AlertCircleIcon />
+          <AlertTitle>{CALENDAR_MESSAGES.PAGE_TITLE}</AlertTitle>
+          <AlertDescription>
+            {CALENDAR_MESSAGES.NO_BRANCH_CONTEXT}
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  const branchId = branchAssignment.branchId;
+
   const params = await searchParams;
   const view = params.view === "week" ? "week" : "month";
   const today = new Date();
@@ -50,9 +78,6 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
   const disciplineIds = params.disciplines
     ? params.disciplines.split(",").filter(Boolean)
     : undefined;
-
-  // TODO: branch_id should come from user context; placeholder for now
-  const branchId = "placeholder-branch-id";
 
   const result = await getSessionsForRange({
     branch_id: branchId,

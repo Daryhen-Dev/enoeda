@@ -17,10 +17,18 @@ import {
 } from "@/components/ui/sheet";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { createScheduledClass } from "@/lib/domain/classes/actions";
 import {
   CLASS_MESSAGES,
   COMMON_MESSAGES,
+  WEEKDAY_LABELS,
 } from "@/lib/localization/es-ec";
 
 interface ScheduledClassCreateDialogProps {
@@ -28,15 +36,7 @@ interface ScheduledClassCreateDialogProps {
   disciplines: Array<{ id: string; name: string }>;
 }
 
-const WEEKDAYS = [
-  { value: 0, label: "Lunes" },
-  { value: 1, label: "Martes" },
-  { value: 2, label: "Miércoles" },
-  { value: 3, label: "Jueves" },
-  { value: 4, label: "Viernes" },
-  { value: 5, label: "Sábado" },
-  { value: 6, label: "Domingo" },
-];
+const WEEKDAYS = WEEKDAY_LABELS.map((label, value) => ({ value, label }));
 
 export function ScheduledClassCreateDialog({
   branchId,
@@ -93,7 +93,7 @@ export function ScheduledClassCreateDialog({
         <SheetHeader>
           <SheetTitle>{CLASS_MESSAGES.CREATE_TITLE}</SheetTitle>
           <SheetDescription>
-            Agregue una clase recurrente al horario semanal.
+            {CLASS_MESSAGES.CREATE_DESCRIPTION}
           </SheetDescription>
         </SheetHeader>
 
@@ -103,39 +103,51 @@ export function ScheduledClassCreateDialog({
         >
           <FieldGroup>
             <Field>
-              <FieldLabel htmlFor="class-discipline">Disciplina</FieldLabel>
-              <select
-                id="class-discipline"
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs"
+              <FieldLabel htmlFor="class-discipline">
+                {CLASS_MESSAGES.DISCIPLINE_LABEL}
+              </FieldLabel>
+              <Select
                 value={disciplineId}
-                onChange={(e) => setDisciplineId(e.target.value)}
-                required
+                onValueChange={(value) => {
+                  if (value) setDisciplineId(value);
+                }}
               >
-                <option value="">Seleccionar…</option>
-                {disciplines.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.name}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger id="class-discipline" className="w-full">
+                  <SelectValue placeholder={CLASS_MESSAGES.DISCIPLINE_PLACEHOLDER} />
+                </SelectTrigger>
+                <SelectContent>
+                  {disciplines.map((d) => (
+                    <SelectItem key={d.id} value={d.id}>
+                      {d.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </Field>
             <Field>
-              <FieldLabel htmlFor="class-day">Día</FieldLabel>
-              <select
-                id="class-day"
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs"
+              <FieldLabel htmlFor="class-day">{CLASS_MESSAGES.DAY_LABEL}</FieldLabel>
+              <Select
                 value={dayOfWeek}
-                onChange={(e) => setDayOfWeek(e.target.value)}
+                onValueChange={(value) => {
+                  if (value) setDayOfWeek(value);
+                }}
               >
-                {WEEKDAYS.map((d) => (
-                  <option key={d.value} value={d.value}>
-                    {d.label}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger id="class-day" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {WEEKDAYS.map((d) => (
+                    <SelectItem key={d.value} value={String(d.value)}>
+                      {d.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </Field>
             <Field>
-              <FieldLabel htmlFor="class-time">Hora de inicio</FieldLabel>
+              <FieldLabel htmlFor="class-time">
+                {CLASS_MESSAGES.START_TIME_LABEL}
+              </FieldLabel>
               <Input
                 id="class-time"
                 type="time"

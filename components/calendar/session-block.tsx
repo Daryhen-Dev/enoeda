@@ -18,21 +18,21 @@ function getDisciplineColors(code: string): { bg: string; text: string; border: 
   switch (code) {
     case "karate":
       return {
-        bg: "bg-blue-100 dark:bg-blue-950",
-        text: "text-blue-800 dark:text-blue-200",
-        border: "border-blue-300 dark:border-blue-700",
+        bg: "bg-blue-100",
+        text: "text-blue-800",
+        border: "border-blue-300",
       };
     case "kickboxing":
       return {
-        bg: "bg-red-100 dark:bg-red-950",
-        text: "text-red-800 dark:text-red-200",
-        border: "border-red-300 dark:border-red-700",
+        bg: "bg-red-100",
+        text: "text-red-800",
+        border: "border-red-300",
       };
     default:
       return {
-        bg: "bg-gray-100 dark:bg-gray-900",
-        text: "text-gray-800 dark:text-gray-200",
-        border: "border-gray-300 dark:border-gray-700",
+        bg: "bg-gray-100",
+        text: "text-gray-800",
+        border: "border-gray-300",
       };
   }
 }
@@ -60,12 +60,12 @@ export function SessionBlock({ session, compact = false }: SessionBlockProps) {
         <span className="font-medium">{session.start_time}</span>{" "}
         {session.discipline_name.slice(0, 3)}
         {isSuspended && session.suspension_category && (
-          <span className="ml-0.5 rounded bg-amber-200 px-0.5 text-[10px] dark:bg-amber-800">
+          <span className="ml-0.5 rounded bg-amber-200 px-0.5 text-[10px]">
             {session.suspension_category}
           </span>
         )}
         {isSubstitute && (
-          <span className="ml-0.5 rounded bg-purple-200 px-0.5 text-[10px] dark:bg-purple-800">
+          <span className="ml-0.5 rounded bg-purple-200 px-0.5 text-[10px]">
             {CALENDAR_MESSAGES.SUBSTITUTE.slice(0, 3)}
           </span>
         )}
@@ -85,7 +85,7 @@ export function SessionBlock({ session, compact = false }: SessionBlockProps) {
           {session.start_time}–{session.end_time}
         </span>
         {isSuspended && session.suspension_category && (
-          <span className="rounded bg-amber-200 px-1 text-[10px] font-medium dark:bg-amber-800">
+          <span className="rounded bg-amber-200 px-1 text-[10px] font-medium">
             {session.suspension_category}
           </span>
         )}
@@ -93,7 +93,7 @@ export function SessionBlock({ session, compact = false }: SessionBlockProps) {
       <div className="flex items-center gap-1">
         <span>{session.discipline_name}</span>
         {isSubstitute && (
-          <span className="rounded bg-purple-200 px-1 text-[10px] dark:bg-purple-800">
+          <span className="rounded bg-purple-200 px-1 text-[10px]">
             <UserIcon className="mr-0.5 inline size-3" />
             {CALENDAR_MESSAGES.SUBSTITUTE}
           </span>

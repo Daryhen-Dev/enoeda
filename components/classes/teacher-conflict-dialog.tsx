@@ -13,11 +13,13 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import type { AssignTeacherResult, ConflictingAssignment } from "@/lib/domain/classes/actions";
+import type { ConflictingAssignment } from "@/lib/domain/classes/actions";
 import { assignTeacher } from "@/lib/domain/classes/actions";
 import {
+  CLASS_MESSAGES,
   COMMON_MESSAGES,
   TEACHER_CONFLICT_MESSAGES,
+  WEEKDAY_LABELS,
 } from "@/lib/localization/es-ec";
 
 interface TeacherConflictDialogProps {
@@ -81,7 +83,7 @@ export function TeacherConflictDialog({
             {conflicts.map((conflict) => (
               <li
                 key={`${conflict.class_id}-${conflict.session_date ?? ""}`}
-                className="rounded-md border border-amber-200 bg-amber-50 p-2 text-sm dark:border-amber-800 dark:bg-amber-950"
+                className="rounded-md border border-amber-200 bg-amber-50 p-2 text-sm"
               >
                 <span className="font-medium">{conflict.class_name}</span>
                 <span className="text-muted-foreground">
@@ -89,7 +91,7 @@ export function TeacherConflictDialog({
                   {conflict.branch_name}
                 </span>
                 <div className="text-xs text-muted-foreground">
-                  Día {conflict.day_of_week}, {conflict.start_time}
+                  {CLASS_MESSAGES.DAY_PREFIX} {WEEKDAY_LABELS[conflict.day_of_week]}, {conflict.start_time}
                   {conflict.session_date && ` (${conflict.session_date})`}
                 </div>
               </li>
