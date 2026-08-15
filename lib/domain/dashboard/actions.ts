@@ -1,6 +1,7 @@
 "use server";
 
 import { withAuthenticatedUser } from "@/lib/auth/server-context";
+import { countOverdueStudents } from "@/lib/domain/payments/queries";
 
 interface ActionSuccess<T> {
   success: true;
@@ -25,12 +26,13 @@ export interface DashboardKpis {
   active_student_count: number;
   inactive_student_count: number;
   active_students_by_branch: ActiveStudentsByBranch[];
+  overdue_student_count: number;
 }
 
 export async function getDashboardKpis(): Promise<ActionResult<DashboardKpis>> {
   try {
     const result = await withAuthenticatedUser(async (tx) => {
-      const [branches, activeStudentCount, inactiveStudentCount, activeStudentsByBranch] =
+      const [branches, activeStudentCount, inactiveStudentCount, activeStudentsByBranch, overdueCount] =
         await Promise.all([
           tx.branches.findMany({
             where: { is_active: true },
@@ -44,6 +46,7 @@ export async function getDashboardKpis(): Promise<ActionResult<DashboardKpis>> {
             where: { is_active: true },
             _count: { _all: true },
           }),
+          countOverdueStudents(tx),
         ]);
       const activeCountByBranch = new Map(
         activeStudentsByBranch.map((branch) => [
@@ -61,6 +64,7 @@ export async function getDashboardKpis(): Promise<ActionResult<DashboardKpis>> {
           branch_name: branch.name,
           active_student_count: activeCountByBranch.get(branch.id) ?? 0,
         })),
+        overdue_student_count: overdueCount,
       };
     });
 
