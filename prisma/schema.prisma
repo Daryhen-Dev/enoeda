@@ -527,16 +527,17 @@ model user_roles {
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 /// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
 model branches {
-  id         String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name       String
-  address    String?
-  phone      String?
-  time_zone  String       @default("America/Guayaquil")
-  is_active  Boolean      @default(true)
-  created_at DateTime     @default(now()) @db.Timestamptz(6)
-  updated_at DateTime     @default(now()) @db.Timestamptz(6)
-  students   students[]
-  user_roles user_roles[]
+  id                String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name              String
+  address           String?
+  phone             String?
+  time_zone         String              @default("America/Guayaquil")
+  is_active         Boolean             @default(true)
+  created_at        DateTime            @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime            @default(now()) @db.Timestamptz(6)
+  students          students[]
+  user_roles        user_roles[]
+  scheduled_classes scheduled_classes[]
 
   @@schema("public")
 }
@@ -571,6 +572,7 @@ model disciplines {
   created_at          DateTime              @default(now()) @db.Timestamptz(6)
   updated_at          DateTime              @default(now()) @db.Timestamptz(6)
   student_disciplines student_disciplines[]
+  scheduled_classes   scheduled_classes[]
 
   @@schema("public")
 }
@@ -606,6 +608,48 @@ model discipline_events {
   student_disciplines   student_disciplines @relation(fields: [student_discipline_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([student_discipline_id])
+  @@schema("public")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model scheduled_classes {
+  id                 String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  branch_id          String           @db.Uuid
+  discipline_id      String           @db.Uuid
+  default_teacher_id String?          @db.Uuid
+  day_of_week        Int              @db.SmallInt
+  start_time         DateTime         @db.Time(6)
+  end_time           DateTime?        @db.Time(6)
+  is_active          Boolean          @default(true)
+  created_at         DateTime         @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime         @default(now()) @db.Timestamptz(6)
+  branches           branches         @relation(fields: [branch_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  disciplines        disciplines      @relation(fields: [discipline_id], references: [id], onUpdate: NoAction)
+  class_sessions     class_sessions[]
+
+  @@index([branch_id])
+  @@index([discipline_id])
+  @@index([default_teacher_id])
+  @@schema("public")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model class_sessions {
+  id                  String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  scheduled_class_id  String            @db.Uuid
+  session_date        DateTime          @db.Date
+  assigned_teacher_id String?           @db.Uuid
+  status              String            @default("scheduled")
+  suspension_category String?
+  suspension_reason   String?
+  created_at          DateTime          @default(now()) @db.Timestamptz(6)
+  updated_at          DateTime          @default(now()) @db.Timestamptz(6)
+  scheduled_classes   scheduled_classes @relation(fields: [scheduled_class_id], references: [id], onUpdate: NoAction)
+
+  @@unique([scheduled_class_id, session_date], map: "class_sessions_pair_uq")
+  @@index([scheduled_class_id])
+  @@index([status, session_date])
+  @@index([assigned_teacher_id])
   @@schema("public")
 }
 
