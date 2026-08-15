@@ -1,6 +1,8 @@
 "use client"
 
+import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import {
   Empty,
   EmptyDescription,
@@ -18,8 +20,10 @@ import {
 import type { DisciplineRecord } from "@/lib/domain/disciplines/actions"
 import {
   DISCIPLINE_FORM_MESSAGES,
+  LEVEL_MESSAGES,
   OWNER_MESSAGES,
 } from "@/lib/localization/es-ec"
+import { LayersIcon } from "lucide-react"
 
 interface DisciplineListProps {
   disciplines: DisciplineRecord[]
@@ -46,6 +50,7 @@ export function DisciplineList({ disciplines }: DisciplineListProps) {
           <TableHead>{DISCIPLINE_FORM_MESSAGES.NAME_LABEL}</TableHead>
           <TableHead>{DISCIPLINE_FORM_MESSAGES.CODE_LABEL}</TableHead>
           <TableHead>{OWNER_MESSAGES.BRANCH_STATUS}</TableHead>
+          <TableHead />
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -63,6 +68,18 @@ export function DisciplineList({ disciplines }: DisciplineListProps) {
                   ? OWNER_MESSAGES.STATUS_ACTIVE
                   : OWNER_MESSAGES.STATUS_INACTIVE}
               </Badge>
+            </TableCell>
+            <TableCell>
+              <Button
+                variant="ghost"
+                size="sm"
+                render={
+                  <Link href={`/owner/disciplines/${discipline.id}/levels`} />
+                }
+              >
+                <LayersIcon className="size-4" />
+                {LEVEL_MESSAGES.MANAGE_LEVELS}
+              </Button>
             </TableCell>
           </TableRow>
         ))}
