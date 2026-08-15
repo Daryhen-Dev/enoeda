@@ -69,6 +69,7 @@ export const DASHBOARD_SHELL_MESSAGES = {
   STUDENTS: "Estudiantes",
   STAFF: "Personal",
   MANAGEMENT: "Administración",
+  CALENDAR: "Calendario",
 } as const
 
 export const SIDEBAR_ACCESSIBILITY_MESSAGES = {
@@ -346,6 +347,45 @@ export const DISCIPLINE_FORM_MESSAGES = {
   CREATE_DESCRIPTION: "Agregá una nueva disciplina al catálogo.",
   NAME_LABEL: "Nombre",
   CODE_LABEL: "Código",
+} as const
+
+export const CALENDAR_MESSAGES = {
+  PAGE_TITLE: "Calendario",
+  MONTH_VIEW: "Mensual",
+  WEEK_VIEW: "Semanal",
+  TODAY: "Hoy",
+  PREV: "Anterior",
+  NEXT: "Siguiente",
+  FILTER_DISCIPLINES: "Filtrar por disciplina",
+  NO_TEACHER: "Sin profesor",
+  SUBSTITUTE: "Sustituto",
+} as const
+
+export const CLASS_MESSAGES = {
+  OVERLAP: "Ya existe una clase en ese horario para esta sucursal y día.",
+  SESSION_DATE_REQUIRED: "La fecha de la sesión es obligatoria.",
+  CREATE_TITLE: "Crear clase recurrente",
+  CREATED: "Clase creada correctamente.",
+  DEACTIVATED: "Clase desactivada.",
+} as const
+
+export const SUSPENSION_MESSAGES = {
+  CATEGORY_FERIADO: "Feriado",
+  CATEGORY_EVENTO: "Evento",
+  CATEGORY_EMERGENCIA: "Emergencia",
+  CATEGORY_OTRO: "Otro",
+  REASON_LABEL: "Motivo",
+  REASON_REQUIRED_OTRO: "El motivo es obligatorio cuando la categoría es «Otro».",
+  SUSPEND_TITLE: "Suspender sesión",
+  SUSPENDED: "Sesión suspendida.",
+  REINSTATED: "Sesión reactivada.",
+} as const
+
+export const TEACHER_CONFLICT_MESSAGES = {
+  WARNING: "Este profesor ya está asignado a otra clase el mismo día y horario. Si continúa, esa clase quedará sin profesor asignado.",
+  CONFIRM: "Confirmar y continuar",
+  AFFECTED_TITLE: "Clases que quedarán sin profesor",
+  ASSIGNED: "Profesor asignado correctamente.",
 } as const
 
 export const ENROLLMENT_MESSAGES = {
