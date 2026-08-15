@@ -5,6 +5,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
   BuildingIcon,
+  CalendarDaysIcon,
   LayoutDashboardIcon,
   ShieldIcon,
   UsersIcon,
@@ -58,6 +59,12 @@ const navigationItems: NavigationItem[] = [
     icon: ShieldIcon,
     available: true,
     adminOnly: true,
+  },
+  {
+    title: DASHBOARD_SHELL_MESSAGES.CALENDAR,
+    url: "/dashboard/calendar",
+    icon: CalendarDaysIcon,
+    available: true,
   },
 ]
 
