@@ -10,6 +10,7 @@ import {
 import { getAttendanceStats } from "@/lib/domain/attendance/actions"
 import { listProgress, listNotes } from "@/lib/domain/progress/actions"
 import { getLevels } from "@/lib/domain/levels/actions"
+import { getStudentPayments } from "@/lib/domain/payments/actions"
 import { StudentDisciplinePanel } from "@/components/students/student-discipline-panel"
 import { EnrollmentHistory } from "@/components/students/enrollment-history"
 import { AttendanceStatsBadge } from "@/components/attendance/attendance-stats-badge"
@@ -17,9 +18,12 @@ import { StudentProgressPanel } from "@/components/students/student-progress-pan
 import { PromoteStudentDialog } from "@/components/students/promote-student-dialog"
 import { StudentNotesPanel } from "@/components/students/student-notes-panel"
 import { CreateNoteDialog } from "@/components/students/create-note-dialog"
+import { StudentPaymentHistory } from "@/components/payments/student-payment-history"
+import { RegisterMonthlyPaymentDialog } from "@/components/payments/register-monthly-payment-dialog"
+import { RegisterClassPaymentDialog } from "@/components/payments/register-class-payment-dialog"
 import { getAuthenticatedContext } from "@/lib/auth/server-context"
 import { Button } from "@/components/ui/button"
-import { ATTENDANCE_FORM_MESSAGES } from "@/lib/localization/es-ec"
+import { ATTENDANCE_FORM_MESSAGES, PAYMENT_MESSAGES } from "@/lib/localization/es-ec"
 
 interface StudentDetailPageProps {
   params: Promise<{ id: string }>
@@ -73,15 +77,20 @@ export default async function StudentDetailPage({ params }: StudentDetailPagePro
   })
 
   // Fetch progress and notes data
-  const [progressResult, notesResult] = await Promise.all([
+  const [progressResult, notesResult, paymentsResult] = await Promise.all([
     listProgress({ student_id: id }),
     listNotes({ student_id: id }),
+    getStudentPayments({ student_id: id }),
   ])
 
   const progressData =
     progressResult.success && progressResult.data ? progressResult.data : []
   const notesData =
     notesResult.success && notesResult.data ? notesResult.data : []
+  const paymentsData =
+    paymentsResult.success && paymentsResult.data
+      ? paymentsResult.data
+      : { monthly: [], perClass: [] }
 
   // Fetch levels for each active discipline (needed for promotion dialog)
   const levelsResults = await Promise.all(
@@ -188,6 +197,33 @@ export default async function StudentDetailPage({ params }: StudentDetailPagePro
               name: e.discipline_name,
             }))}
           />
+        )}
+      </div>
+
+      {/* Payments panel */}
+      <div className="flex flex-col gap-3">
+        <h2 className="text-sm font-medium text-muted-foreground">
+          {PAYMENT_MESSAGES.HISTORY_TITLE}
+        </h2>
+        <StudentPaymentHistory
+          monthly={paymentsData.monthly}
+          perClass={paymentsData.perClass}
+        />
+        {canManage && activeEnrollments.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {activeEnrollments.map((enrollment) => (
+              <RegisterMonthlyPaymentDialog
+                key={`monthly-${enrollment.id}`}
+                studentDisciplineId={enrollment.id}
+              />
+            ))}
+            {activeEnrollments.map((enrollment) => (
+              <RegisterClassPaymentDialog
+                key={`class-${enrollment.id}`}
+                studentDisciplineId={enrollment.id}
+              />
+            ))}
+          </div>
         )}
       </div>
     </main>

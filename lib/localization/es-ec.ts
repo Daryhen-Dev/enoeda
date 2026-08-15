@@ -54,6 +54,9 @@ export const TOAST_MESSAGES = {
   NOTE_CREATED: "Nota creada correctamente.",
   NOTE_COMPLETED: "Nota completada.",
   NOTE_REOPENED: "Nota reabierta.",
+  MONTHLY_PAYMENT_REGISTERED: "Pago mensual registrado correctamente.",
+  CLASS_PAYMENT_REGISTERED: "Pago por clase registrado correctamente.",
+  CLASS_PRICE_UPDATED: "Precio por clase actualizado.",
 } as const
 
 export const AUTH_MESSAGES = {
@@ -112,6 +115,9 @@ export const DASHBOARD_OVERVIEW_MESSAGES = {
   INACTIVE_STUDENT_COUNT_ARIA_LABEL: (count: string) =>
     `${count} estudiantes inactivos`,
   ACTIVE_STUDENTS_COUNT: (count: string) => `${count} activos`,
+  OVERDUE_STUDENTS: "Morosos",
+  OVERDUE_STUDENTS_DESCRIPTION: "Estudiantes con pagos vencidos.",
+  OVERDUE_STUDENT_COUNT_ARIA_LABEL: (count: string) => `${count} estudiantes morosos`,
 } as const
 
 export const STUDENT_DIRECTORY_MESSAGES = {
@@ -552,4 +558,56 @@ export const ATTENDANCE_FORM_MESSAGES = {
 
 export const ATTENDANCE_TOAST = {
   SAVED: "Asistencia registrada correctamente.",
+} as const
+
+export const PAYMENT_MESSAGES = {
+  ENROLLMENT_NOT_FOUND: "Inscripción no encontrada.",
+  CLASS_PRICE_NOT_SET: "El precio por clase no está configurado para esta disciplina.",
+  REGISTER_MONTHLY_TITLE: "Registrar pago mensual",
+  REGISTER_MONTHLY_DESCRIPTION: "Registre un pago mensual o por bloque de meses.",
+  REGISTER_CLASS_TITLE: "Registrar pago por clase",
+  REGISTER_CLASS_DESCRIPTION: "Cobre el valor de una clase individual.",
+  CONFIGURE_PRICE_TITLE: "Configurar precio por clase",
+  CONFIGURE_PRICE_DESCRIPTION: "Establezca o elimine el precio por clase de esta disciplina.",
+  AMOUNT_LABEL: "Monto",
+  MONTHS_LABEL: "Meses cubiertos",
+  MONTHS_PLACEHOLDER: "Seleccionar…",
+  NOTE_LABEL: "Nota",
+  NOTE_PLACEHOLDER: "Nota opcional (máx. 500 caracteres)",
+  PAYMENT_DATE_LABEL: "Fecha de pago",
+  CLASS_DATE_LABEL: "Fecha de clase",
+  PRICE_LABEL: "Precio por clase",
+  PRICE_PLACEHOLDER: "Dejar vacío para desactivar",
+  DISCIPLINE_LABEL: "Disciplina",
+  DISCIPLINE_PLACEHOLDER: "Seleccionar disciplina…",
+  STUDENT_LABEL: "Estudiante",
+  SUCCESS_MONTHLY: "Pago mensual registrado correctamente.",
+  SUCCESS_CLASS: "Pago por clase registrado correctamente.",
+  SUCCESS_PRICE: "Precio actualizado correctamente.",
+  HISTORY_TITLE: "Historial de pagos",
+  TYPE_MONTHLY: "Mensual",
+  TYPE_CLASS: "Por clase",
+  NO_PAYMENTS: "Sin pagos registrados.",
+  PERIOD_LABEL: "Período",
+  SAVING: "Guardando…",
+  REGISTER_ACTION: "Registrar",
+  CHARGE_CLASS: "Cobrar clase",
+} as const
+
+export const OVERDUE_MESSAGES = {
+  CARD_TITLE: "Morosos",
+  CARD_DESCRIPTION: "Estudiantes con pagos vencidos.",
+  LIST_TITLE: "Estudiantes morosos",
+  LIST_DESCRIPTION: "Estudiantes con fecha de vencimiento superada.",
+  STUDENT_NAME: "Estudiante",
+  DISCIPLINE: "Disciplina",
+  DUE_DATE: "Fecha de vencimiento",
+  EMPTY_STATE: "No hay estudiantes morosos.",
+  COUNT_ARIA_LABEL: (count: string) => `${count} estudiantes morosos`,
+  PAGE_TITLE: "Pagos",
+  PAGE_DESCRIPTION: "Gestión de pagos y morosidad.",
+  PRICING_SECTION_TITLE: "Configuración de precios por clase",
+  PRICING_SECTION_DESCRIPTION: "Establezca el precio por clase individual de cada disciplina.",
+  CURRENT_PRICE: "Precio actual",
+  NO_PRICE: "Sin precio",
 } as const

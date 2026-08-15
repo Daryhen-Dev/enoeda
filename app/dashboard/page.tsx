@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { BuildingIcon, UsersIcon } from "lucide-react"
+import { BuildingIcon, UsersIcon, AlertTriangleIcon } from "lucide-react"
 
 import {
   Card,
@@ -28,6 +28,10 @@ export default async function DashboardOverview() {
     dashboard === null
       ? DASHBOARD_OVERVIEW_MESSAGES.UNAVAILABLE
       : formatNumber(dashboard.inactive_student_count)
+  const overdueCountLabel =
+    dashboard === null
+      ? DASHBOARD_OVERVIEW_MESSAGES.UNAVAILABLE
+      : formatNumber(dashboard.overdue_student_count)
 
   return (
     <div className="flex flex-col gap-4 p-4 md:gap-6 md:p-6">
@@ -135,6 +139,37 @@ export default async function DashboardOverview() {
             </div>
           </CardHeader>
         </Card>
+
+        <Link
+          href="/dashboard/payments"
+          className="rounded-lg outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+        >
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="flex size-10 items-center justify-center rounded-lg bg-muted">
+                  <AlertTriangleIcon className="size-5 text-foreground" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <CardTitle>
+                    {DASHBOARD_OVERVIEW_MESSAGES.OVERDUE_STUDENTS}
+                  </CardTitle>
+                  <CardDescription>
+                    {DASHBOARD_OVERVIEW_MESSAGES.OVERDUE_STUDENTS_DESCRIPTION}
+                  </CardDescription>
+                </div>
+                <span
+                  aria-label={DASHBOARD_OVERVIEW_MESSAGES.OVERDUE_STUDENT_COUNT_ARIA_LABEL(
+                    overdueCountLabel,
+                  )}
+                  className="text-2xl font-semibold tabular-nums"
+                >
+                  {overdueCountLabel}
+                </span>
+              </div>
+            </CardHeader>
+          </Card>
+        </Link>
       </div>
 
       <Card>
