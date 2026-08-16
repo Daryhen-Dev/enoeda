@@ -669,17 +669,18 @@ model scheduled_classes {
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model one_time_classes {
-  id            String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  branch_id     String      @db.Uuid
-  discipline_id String      @db.Uuid
-  teacher_id    String?     @db.Uuid
-  class_date    DateTime    @db.Date
-  start_time    DateTime    @db.Time(6)
-  end_time      DateTime?   @db.Time(6)
-  created_at    DateTime    @default(now()) @db.Timestamptz(6)
-  updated_at    DateTime    @default(now()) @db.Timestamptz(6)
-  branches      branches    @relation(fields: [branch_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  disciplines   disciplines @relation(fields: [discipline_id], references: [id], onUpdate: NoAction)
+  id            String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  branch_id     String       @db.Uuid
+  discipline_id String       @db.Uuid
+  teacher_id    String?      @db.Uuid
+  class_date    DateTime     @db.Date
+  start_time    DateTime     @db.Time(6)
+  end_time      DateTime?    @db.Time(6)
+  created_at    DateTime     @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime     @default(now()) @db.Timestamptz(6)
+  branches      branches     @relation(fields: [branch_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  disciplines   disciplines  @relation(fields: [discipline_id], references: [id], onUpdate: NoAction)
+  attendance    attendance[]
 
   @@index([branch_id])
   @@index([discipline_id])
@@ -708,10 +709,12 @@ model class_sessions {
   @@schema("public")
 }
 
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model attendance {
   id                 String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  scheduled_class_id String            @db.Uuid
+  scheduled_class_id String?           @db.Uuid
+  one_time_class_id  String?           @db.Uuid
   session_date       DateTime          @db.Date
   student_id         String            @db.Uuid
   attended           Boolean
@@ -719,11 +722,15 @@ model attendance {
   marked_by          String            @db.Uuid
   created_at         DateTime          @default(now()) @db.Timestamptz(6)
   updated_at         DateTime          @default(now()) @db.Timestamptz(6)
-  scheduled_classes  scheduled_classes @relation(fields: [scheduled_class_id], references: [id], onUpdate: NoAction)
-  students           students          @relation(fields: [student_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  scheduled_classes  scheduled_classes? @relation(fields: [scheduled_class_id], references: [id], onUpdate: NoAction)
+  one_time_classes   one_time_classes?  @relation(fields: [one_time_class_id], references: [id], onUpdate: NoAction)
+  students           students           @relation(fields: [student_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
-  @@unique([scheduled_class_id, session_date, student_id], map: "attendance_session_student_uq")
+  // Uniqueness is enforced in the DB via two PARTIAL unique indexes
+  // (attendance_scheduled_session_student_uq, attendance_one_time_student_uq)
+  // — not representable in Prisma; the migration is the source of truth.
   @@index([scheduled_class_id])
+  @@index([one_time_class_id])
   @@index([student_id])
   @@index([session_date])
   @@index([scheduled_class_id, session_date])
