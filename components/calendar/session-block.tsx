@@ -125,26 +125,31 @@ export function SessionBlock({
           </span>
         )}
       </div>
-      {/* Attendance and teacher-reassignment operate on scheduled_classes
-          rows; one-time classes live in a separate table and don't
-          support them yet. */}
-      {!isOneTime && (
-        <div className="mt-1 flex flex-wrap gap-1">
+      <div className="mt-1 flex flex-wrap gap-1">
+        {isOneTime ? (
           <AttendanceSheetDialog
-            scheduledClassId={session.scheduled_class_id}
+            oneTimeClassId={session.scheduled_class_id}
             sessionDate={session.session_date}
             disabled={isSuspended}
           />
-          {canManage && (
-            <TeacherAssignDialog
+        ) : (
+          <>
+            <AttendanceSheetDialog
               scheduledClassId={session.scheduled_class_id}
               sessionDate={session.session_date}
-              teachers={teachers}
-              currentTeacherId={session.teacher_id}
+              disabled={isSuspended}
             />
-          )}
-        </div>
-      )}
+            {canManage && (
+              <TeacherAssignDialog
+                scheduledClassId={session.scheduled_class_id}
+                sessionDate={session.session_date}
+                teachers={teachers}
+                currentTeacherId={session.teacher_id}
+              />
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }

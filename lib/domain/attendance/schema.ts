@@ -26,13 +26,21 @@ function isValidCalendarDate(dateStr: string): boolean {
   return day <= daysInMonth;
 }
 
+/**
+ * Both attendance entry points accept EITHER a recurring scheduled_class_id
+ * (with its own session_date) OR a one_time_class_id (whose date is fixed
+ * at creation — no separate session_date needed). Exactly one must be
+ * provided, mirroring the DB's XOR CHECK constraint.
+ */
 export const takeAttendanceSchema = z
   .object({
-    scheduled_class_id: z.uuid({ error: ATTENDANCE_MESSAGES.INVALID_CLASS_ID }),
+    scheduled_class_id: z.uuid({ error: ATTENDANCE_MESSAGES.INVALID_CLASS_ID }).optional(),
+    one_time_class_id: z.uuid({ error: ATTENDANCE_MESSAGES.INVALID_CLASS_ID }).optional(),
     session_date: z
       .string()
       .regex(DATE_PATTERN, { error: ATTENDANCE_MESSAGES.INVALID_DATE })
-      .refine(isValidCalendarDate, { error: ATTENDANCE_MESSAGES.INVALID_DATE }),
+      .refine(isValidCalendarDate, { error: ATTENDANCE_MESSAGES.INVALID_DATE })
+      .optional(),
     records: z
       .array(
         z.object({
@@ -46,17 +54,33 @@ export const takeAttendanceSchema = z
       )
       .min(1, { error: ATTENDANCE_MESSAGES.MIN_ONE_RECORD }),
   })
-  .strict();
+  .refine(
+    (d) => Boolean(d.scheduled_class_id) !== Boolean(d.one_time_class_id),
+    { error: ATTENDANCE_MESSAGES.INVALID_CLASS_ID, path: ["scheduled_class_id"] }
+  )
+  .refine((d) => !d.scheduled_class_id || Boolean(d.session_date), {
+    error: ATTENDANCE_MESSAGES.INVALID_DATE,
+    path: ["session_date"],
+  });
 
 export const attendanceForSessionSchema = z
   .object({
-    scheduled_class_id: z.uuid({ error: ATTENDANCE_MESSAGES.INVALID_CLASS_ID }),
+    scheduled_class_id: z.uuid({ error: ATTENDANCE_MESSAGES.INVALID_CLASS_ID }).optional(),
+    one_time_class_id: z.uuid({ error: ATTENDANCE_MESSAGES.INVALID_CLASS_ID }).optional(),
     session_date: z
       .string()
       .regex(DATE_PATTERN, { error: ATTENDANCE_MESSAGES.INVALID_DATE })
-      .refine(isValidCalendarDate, { error: ATTENDANCE_MESSAGES.INVALID_DATE }),
+      .refine(isValidCalendarDate, { error: ATTENDANCE_MESSAGES.INVALID_DATE })
+      .optional(),
   })
-  .strict();
+  .refine(
+    (d) => Boolean(d.scheduled_class_id) !== Boolean(d.one_time_class_id),
+    { error: ATTENDANCE_MESSAGES.INVALID_CLASS_ID, path: ["scheduled_class_id"] }
+  )
+  .refine((d) => !d.scheduled_class_id || Boolean(d.session_date), {
+    error: ATTENDANCE_MESSAGES.INVALID_DATE,
+    path: ["session_date"],
+  });
 
 export const attendanceStatsSchema = z
   .object({

@@ -21,15 +21,24 @@ import {
   COMMON_MESSAGES,
 } from "@/lib/localization/es-ec"
 
-interface AttendanceSheetDialogProps {
-  scheduledClassId: string
-  sessionDate: string
-  disabled?: boolean
-}
+type AttendanceSheetDialogProps =
+  | {
+      scheduledClassId: string
+      sessionDate: string
+      oneTimeClassId?: undefined
+      disabled?: boolean
+    }
+  | {
+      scheduledClassId?: undefined
+      sessionDate: string
+      oneTimeClassId: string
+      disabled?: boolean
+    }
 
 export function AttendanceSheetDialog({
   scheduledClassId,
   sessionDate,
+  oneTimeClassId,
   disabled = false,
 }: AttendanceSheetDialogProps) {
   const [isOpen, setIsOpen] = useState(false)
@@ -45,10 +54,11 @@ export function AttendanceSheetDialog({
       setLoadError(null)
 
       try {
-        const result = await getAttendanceForSession({
-          scheduled_class_id: scheduledClassId,
-          session_date: sessionDate,
-        })
+        const result = await getAttendanceForSession(
+          scheduledClassId
+            ? { scheduled_class_id: scheduledClassId, session_date: sessionDate }
+            : { one_time_class_id: oneTimeClassId }
+        )
 
         if (!result.success || !result.data) {
           setLoadError(result.error ?? ATTENDANCE_MESSAGES.LOAD_FAILURE)
@@ -102,6 +112,7 @@ export function AttendanceSheetDialog({
           ) : (
             <AttendanceSheet
               scheduledClassId={scheduledClassId}
+              oneTimeClassId={oneTimeClassId}
               sessionDate={sessionDate}
               students={students}
               onSuccess={() => setIsOpen(false)}

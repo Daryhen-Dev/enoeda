@@ -16,7 +16,8 @@ import {
 } from "@/lib/localization/es-ec"
 
 interface AttendanceSheetProps {
-  scheduledClassId: string
+  scheduledClassId?: string
+  oneTimeClassId?: string
   sessionDate: string
   students: EligibleStudentAttendance[]
   onSuccess?: () => void
@@ -30,6 +31,7 @@ interface AttendanceRecord {
 
 export function AttendanceSheet({
   scheduledClassId,
+  oneTimeClassId,
   sessionDate,
   students,
   onSuccess,
@@ -60,8 +62,9 @@ export function AttendanceSheet({
 
     try {
       const result = await takeAttendance({
-        scheduled_class_id: scheduledClassId,
-        session_date: sessionDate,
+        ...(scheduledClassId
+          ? { scheduled_class_id: scheduledClassId, session_date: sessionDate }
+          : { one_time_class_id: oneTimeClassId }),
         records: records.map((r) => ({
           student_id: r.student_id,
           attended: r.attended,

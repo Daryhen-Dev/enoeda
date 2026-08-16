@@ -32,6 +32,7 @@ export interface ActionResult<T = unknown> {
 // --- View types ---
 
 export interface SessionView {
+  /** id of the scheduled_classes row, OR the one_time_classes row when is_one_time=true. */
   scheduled_class_id: string;
   session_date: string;
   discipline_id: string;

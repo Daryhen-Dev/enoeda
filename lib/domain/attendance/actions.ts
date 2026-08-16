@@ -60,61 +60,87 @@ export async function takeAttendance(
     return { success: false, error: parsed.error.issues[0].message };
   }
 
-  const { scheduled_class_id, session_date, records } = parsed.data;
-  const sessionDate = new Date(session_date + "T00:00:00");
+  const { scheduled_class_id, one_time_class_id, records } = parsed.data;
 
   // Step 2
   const result = await withAuthenticatedUser(async (tx, ctx) => {
-    // Step 3: Class lookup
-    const cls = await tx.scheduled_classes.findUnique({
-      where: { id: scheduled_class_id },
-      select: {
-        id: true,
-        branch_id: true,
-        discipline_id: true,
-        day_of_week: true,
-        is_active: true,
-      },
-    });
+    let branchId: string;
+    let disciplineId: string;
+    let sessionDate: Date;
 
-    if (cls === null) {
-      return { count: -1, error: ATTENDANCE_MESSAGES.INVALID_SESSION };
+    if (scheduled_class_id) {
+      const session_date = parsed.data.session_date!;
+      sessionDate = new Date(session_date + "T00:00:00");
+
+      // Step 3: Class lookup
+      const cls = await tx.scheduled_classes.findUnique({
+        where: { id: scheduled_class_id },
+        select: {
+          branch_id: true,
+          discipline_id: true,
+          day_of_week: true,
+          is_active: true,
+        },
+      });
+
+      if (cls === null) {
+        return { count: -1, error: ATTENDANCE_MESSAGES.INVALID_SESSION };
+      }
+
+      // Step 4: Weekday integrity
+      const expectedDay = jsToIsoDayOfWeek(sessionDate.getDay());
+      if (expectedDay !== cls.day_of_week) {
+        return { count: -1, error: ATTENDANCE_MESSAGES.INVALID_SESSION };
+      }
+
+      // Step 5: Suspension check (only recurring classes can be suspended)
+      const sessionOverride = await tx.class_sessions.findUnique({
+        where: {
+          scheduled_class_id_session_date: {
+            scheduled_class_id,
+            session_date: sessionDate,
+          },
+        },
+        select: { status: true },
+      });
+
+      if (sessionOverride?.status === "suspended") {
+        return { count: -1, error: ATTENDANCE_MESSAGES.SESSION_SUSPENDED };
+      }
+
+      branchId = cls.branch_id;
+      disciplineId = cls.discipline_id;
+    } else {
+      // One-time (recovery) class — its date is fixed at creation, no
+      // weekday/suspension checks apply.
+      const otc = await tx.one_time_classes.findUnique({
+        where: { id: one_time_class_id! },
+        select: { branch_id: true, discipline_id: true, class_date: true },
+      });
+
+      if (otc === null) {
+        return { count: -1, error: ATTENDANCE_MESSAGES.INVALID_SESSION };
+      }
+
+      branchId = otc.branch_id;
+      disciplineId = otc.discipline_id;
+      sessionDate = new Date(otc.class_date);
+      sessionDate.setHours(0, 0, 0, 0);
     }
 
-    // Step 4: Weekday integrity
-    const expectedDay = jsToIsoDayOfWeek(sessionDate.getDay());
-    if (expectedDay !== cls.day_of_week) {
-      return { count: -1, error: ATTENDANCE_MESSAGES.INVALID_SESSION };
-    }
-
-    // Future date guard
+    // Future date guard (applies to both kinds)
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     if (sessionDate > today) {
       return { count: -1, error: ATTENDANCE_MESSAGES.FUTURE_SESSION };
     }
 
-    // Step 5: Suspension check
-    const sessionOverride = await tx.class_sessions.findUnique({
-      where: {
-        scheduled_class_id_session_date: {
-          scheduled_class_id,
-          session_date: sessionDate,
-        },
-      },
-      select: { status: true },
-    });
-
-    if (sessionOverride?.status === "suspended") {
-      return { count: -1, error: ATTENDANCE_MESSAGES.SESSION_SUSPENDED };
-    }
-
     // Step 6: Resolve eligible students (A7 rule)
     // enrolled_at <= session_date AND (is_active OR suspended_at >= session_date)
     const eligibleEnrollments = await tx.student_disciplines.findMany({
       where: {
-        discipline_id: cls.discipline_id,
-        students: { branch_id: cls.branch_id },
+        discipline_id: disciplineId,
+        students: { branch_id: branchId },
         enrolled_at: { lte: sessionDate },
         OR: [
           { is_active: true },
@@ -138,11 +164,16 @@ export async function takeAttendance(
     // Step 8: Load existing attendance
     const recordIds = records.map((r) => r.student_id);
     const existingRecords = await tx.attendance.findMany({
-      where: {
-        scheduled_class_id,
-        session_date: sessionDate,
-        student_id: { in: recordIds },
-      },
+      where: scheduled_class_id
+        ? {
+            scheduled_class_id,
+            session_date: sessionDate,
+            student_id: { in: recordIds },
+          }
+        : {
+            one_time_class_id,
+            student_id: { in: recordIds },
+          },
       select: { student_id: true },
     });
 
@@ -171,30 +202,41 @@ export async function takeAttendance(
       }
     }
 
-    // Step 10: Upsert loop
+    // Step 10: Find-then-write loop. A plain upsert on a compound key is
+    // not usable here: uniqueness is enforced via two PARTIAL unique
+    // indexes (one per class kind, see migration
+    // 20260824000000_attendance_for_one_time_classes.sql), which Prisma
+    // cannot express as a `where` compound-unique input.
     for (const record of records) {
-      await tx.attendance.upsert({
-        where: {
-          scheduled_class_id_session_date_student_id: {
-            scheduled_class_id,
+      const existing = await tx.attendance.findFirst({
+        where: scheduled_class_id
+          ? { scheduled_class_id, session_date: sessionDate, student_id: record.student_id }
+          : { one_time_class_id, student_id: record.student_id },
+        select: { id: true },
+      });
+
+      if (existing) {
+        await tx.attendance.update({
+          where: { id: existing.id },
+          data: {
+            attended: record.attended,
+            observation: record.observation ?? null,
+            marked_by: ctx.userId,
+          },
+        });
+      } else {
+        await tx.attendance.create({
+          data: {
+            scheduled_class_id: scheduled_class_id ?? null,
+            one_time_class_id: one_time_class_id ?? null,
             session_date: sessionDate,
             student_id: record.student_id,
+            attended: record.attended,
+            observation: record.observation ?? null,
+            marked_by: ctx.userId,
           },
-        },
-        create: {
-          scheduled_class_id,
-          session_date: sessionDate,
-          student_id: record.student_id,
-          attended: record.attended,
-          observation: record.observation ?? null,
-          marked_by: ctx.userId,
-        },
-        update: {
-          attended: record.attended,
-          observation: record.observation ?? null,
-          marked_by: ctx.userId,
-        },
-      });
+        });
+      }
     }
 
     // Step 11
@@ -221,36 +263,49 @@ export async function getAttendanceForSession(
     return { success: false, error: parsed.error.issues[0].message };
   }
 
-  const { scheduled_class_id, session_date } = parsed.data;
-  const sessionDate = new Date(session_date + "T00:00:00");
+  const { scheduled_class_id, one_time_class_id } = parsed.data;
 
   const result = await withAuthenticatedUser(async (tx) => {
-    // Class lookup
-    const cls = await tx.scheduled_classes.findUnique({
-      where: { id: scheduled_class_id },
-      select: {
-        id: true,
-        branch_id: true,
-        discipline_id: true,
-        day_of_week: true,
-      },
-    });
+    let branchId: string;
+    let disciplineId: string;
+    let sessionDate: Date;
 
-    if (cls === null) {
-      return null;
-    }
+    if (scheduled_class_id) {
+      const session_date = parsed.data.session_date!;
+      sessionDate = new Date(session_date + "T00:00:00");
 
-    // Weekday integrity
-    const expectedDay = jsToIsoDayOfWeek(sessionDate.getDay());
-    if (expectedDay !== cls.day_of_week) {
-      return null;
+      const cls = await tx.scheduled_classes.findUnique({
+        where: { id: scheduled_class_id },
+        select: { branch_id: true, discipline_id: true, day_of_week: true },
+      });
+
+      if (cls === null) return null;
+
+      // Weekday integrity
+      const expectedDay = jsToIsoDayOfWeek(sessionDate.getDay());
+      if (expectedDay !== cls.day_of_week) return null;
+
+      branchId = cls.branch_id;
+      disciplineId = cls.discipline_id;
+    } else {
+      const otc = await tx.one_time_classes.findUnique({
+        where: { id: one_time_class_id! },
+        select: { branch_id: true, discipline_id: true, class_date: true },
+      });
+
+      if (otc === null) return null;
+
+      branchId = otc.branch_id;
+      disciplineId = otc.discipline_id;
+      sessionDate = new Date(otc.class_date);
+      sessionDate.setHours(0, 0, 0, 0);
     }
 
     // Resolve eligible students (A7)
     const eligibleEnrollments = await tx.student_disciplines.findMany({
       where: {
-        discipline_id: cls.discipline_id,
-        students: { branch_id: cls.branch_id },
+        discipline_id: disciplineId,
+        students: { branch_id: branchId },
         enrolled_at: { lte: sessionDate },
         OR: [
           { is_active: true },
@@ -268,11 +323,16 @@ export async function getAttendanceForSession(
     // Load existing attendance
     const studentIds = eligibleEnrollments.map((e) => e.student_id);
     const existingAttendance = await tx.attendance.findMany({
-      where: {
-        scheduled_class_id,
-        session_date: sessionDate,
-        student_id: { in: studentIds },
-      },
+      where: scheduled_class_id
+        ? {
+            scheduled_class_id,
+            session_date: sessionDate,
+            student_id: { in: studentIds },
+          }
+        : {
+            one_time_class_id,
+            student_id: { in: studentIds },
+          },
       select: {
         student_id: true,
         attended: true,
@@ -335,9 +395,12 @@ export async function getAttendanceStats(
       where.session_date = sessionDateFilter;
     }
 
-    // Discipline filter via scheduled_classes relation
+    // Discipline filter — matches either class kind's discipline_id
     if (discipline_id) {
-      where.scheduled_classes = { discipline_id };
+      where.OR = [
+        { scheduled_classes: { discipline_id } },
+        { one_time_classes: { discipline_id } },
+      ];
     }
 
     const total = await tx.attendance.count({ where });
