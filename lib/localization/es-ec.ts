@@ -403,10 +403,12 @@ export const WEEKDAY_LABELS = [
 
 export const CLASS_MESSAGES = {
   OVERLAP: "Ya existe una clase en ese horario para esta sucursal y día.",
-  CREATE_DESCRIPTION: "Agregue una clase recurrente al horario semanal.",
+  CREATE_DESCRIPTION:
+    "Agregue una clase recurrente al horario semanal. Puede seleccionar varios días para crearlas todas de una vez.",
   DISCIPLINE_LABEL: "Disciplina",
   DISCIPLINE_PLACEHOLDER: "Seleccionar…",
   DAY_LABEL: "Día",
+  DAYS_LABEL: "Días de la semana",
   START_TIME_LABEL: "Hora de inicio",
   TEACHER_LABEL: "Profesor",
   NO_TEACHER_OPTION: "Sin profesor asignado",
@@ -414,6 +416,12 @@ export const CLASS_MESSAGES = {
   SESSION_DATE_REQUIRED: "La fecha de la sesión es obligatoria.",
   CREATE_TITLE: "Crear clase recurrente",
   CREATED: "Clase creada correctamente.",
+  CREATED_BATCH: (count: number) =>
+    count === 1
+      ? "Se creó 1 clase correctamente."
+      : `Se crearon ${count} clases correctamente.`,
+  PARTIAL_FAILURE_TITLE:
+    "Algunos días no se pudieron crear por conflicto de horario:",
   DEACTIVATED: "Clase desactivada.",
 } as const
 

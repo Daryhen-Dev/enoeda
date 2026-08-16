@@ -26,11 +26,29 @@ export const createScheduledClassSchema = z.object({
   start_time: z.string().regex(/^\d{2}:\d{2}$/),
 });
 
+/**
+ * Batch variant of createScheduledClassSchema: same class (discipline,
+ * teacher, time) repeated across multiple weekdays in one submission, so
+ * the admin can build a whole week's schedule without repeating the
+ * create action per day.
+ */
+export const createScheduledClassBatchSchema = z.object({
+  branch_id: z.uuid(),
+  discipline_id: z.uuid(),
+  default_teacher_id: z.uuid().nullable().optional(),
+  days_of_week: z.array(z.number().int().min(0).max(6)).min(1),
+  start_time: z.string().regex(/^\d{2}:\d{2}$/),
+});
+
 export const updateScheduledClassSchema = createScheduledClassSchema
   .partial()
   .extend({
     id: z.uuid(),
   });
+
+export type CreateScheduledClassBatchInput = z.infer<
+  typeof createScheduledClassBatchSchema
+>;
 
 export const deactivateScheduledClassSchema = z.object({
   id: z.uuid(),

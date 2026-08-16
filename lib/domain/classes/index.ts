@@ -1,5 +1,6 @@
 export {
   assignTeacherSchema,
+  createScheduledClassBatchSchema,
   createScheduledClassSchema,
   deactivateScheduledClassSchema,
   getSessionsForRangeSchema,
@@ -9,6 +10,7 @@ export {
   suspensionCategoryEnum,
   updateScheduledClassSchema,
   type AssignTeacherInput,
+  type CreateScheduledClassBatchInput,
   type CreateScheduledClassInput,
   type DeactivateScheduledClassInput,
   type GetSessionsForRangeInput,
@@ -22,6 +24,7 @@ export {
 export {
   assignTeacher,
   createScheduledClass,
+  createScheduledClassBatch,
   deactivateScheduledClass,
   getSessionsForRange,
   getSuspensionReport,
@@ -31,6 +34,7 @@ export {
   type ActionResult,
   type AssignTeacherResult,
   type ConflictingAssignment,
+  type CreateScheduledClassBatchResult,
   type SessionView,
   type SuspensionReportRow,
 } from "./actions";

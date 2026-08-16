@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/sheet";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -24,7 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { createScheduledClass } from "@/lib/domain/classes/actions";
+import { createScheduledClassBatch } from "@/lib/domain/classes/actions";
 import {
   CLASS_MESSAGES,
   COMMON_MESSAGES,
@@ -50,39 +51,69 @@ export function ScheduledClassCreateDialog({
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [disciplineId, setDisciplineId] = useState("");
-  const [dayOfWeek, setDayOfWeek] = useState("0");
+  const [daysOfWeek, setDaysOfWeek] = useState<number[]>([]);
   const [startTime, setStartTime] = useState("09:00");
   const [teacherId, setTeacherId] = useState(NO_TEACHER_VALUE);
   const [error, setError] = useState<string | null>(null);
+  const [partialFailures, setPartialFailures] = useState<
+    Array<{ day_of_week: number; error: string }>
+  >([]);
   const [isPending, startTransition] = useTransition();
 
   function resetForm() {
     setDisciplineId("");
-    setDayOfWeek("0");
+    setDaysOfWeek([]);
     setStartTime("09:00");
     setTeacherId(NO_TEACHER_VALUE);
     setError(null);
+    setPartialFailures([]);
+  }
+
+  function toggleDay(day: number, checked: boolean) {
+    setDaysOfWeek((prev) =>
+      checked ? [...prev, day].sort((a, b) => a - b) : prev.filter((d) => d !== day)
+    );
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (daysOfWeek.length === 0) return;
     startTransition(async () => {
-      const result = await createScheduledClass({
+      const result = await createScheduledClassBatch({
         branch_id: branchId,
         discipline_id: disciplineId,
         default_teacher_id:
           teacherId === NO_TEACHER_VALUE ? null : teacherId,
-        day_of_week: Number(dayOfWeek),
+        days_of_week: daysOfWeek,
         start_time: startTime,
       });
-      if (result.success) {
+
+      if (!result.success || !result.data) {
+        setError(result.error ?? COMMON_MESSAGES.UNEXPECTED_ERROR);
+        return;
+      }
+
+      const { created, failed } = result.data;
+
+      if (failed.length === 0) {
         setOpen(false);
         resetForm();
-        toast.success(CLASS_MESSAGES.CREATED);
+        toast.success(
+          created.length > 1
+            ? CLASS_MESSAGES.CREATED_BATCH(created.length)
+            : CLASS_MESSAGES.CREATED
+        );
         router.refresh();
-      } else {
-        setError(result.error ?? COMMON_MESSAGES.UNEXPECTED_ERROR);
+        return;
       }
+
+      // Partial success: some days created, some conflicted — keep the
+      // dialog open and show exactly what happened per day so the admin
+      // stays in control of the outcome.
+      setPartialFailures(failed);
+      setError(null);
+      toast.success(CLASS_MESSAGES.CREATED_BATCH(created.length));
+      router.refresh();
     });
   }
 
@@ -134,24 +165,26 @@ export function ScheduledClassCreateDialog({
               </Select>
             </Field>
             <Field>
-              <FieldLabel htmlFor="class-day">{CLASS_MESSAGES.DAY_LABEL}</FieldLabel>
-              <Select
-                value={dayOfWeek}
-                onValueChange={(value) => {
-                  if (value) setDayOfWeek(value);
-                }}
+              <FieldLabel>{CLASS_MESSAGES.DAYS_LABEL}</FieldLabel>
+              <div
+                className="flex flex-col gap-2"
+                role="group"
+                aria-label={CLASS_MESSAGES.DAYS_LABEL}
               >
-                <SelectTrigger id="class-day" className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {WEEKDAYS.map((d) => (
-                    <SelectItem key={d.value} value={String(d.value)}>
-                      {d.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                {WEEKDAYS.map((d) => (
+                  <label
+                    key={d.value}
+                    className="flex items-center gap-2 text-sm"
+                  >
+                    <Checkbox
+                      checked={daysOfWeek.includes(d.value)}
+                      onCheckedChange={(checked) => toggleDay(d.value, Boolean(checked))}
+                      disabled={isPending}
+                    />
+                    {d.label}
+                  </label>
+                ))}
+              </div>
             </Field>
             <Field>
               <FieldLabel htmlFor="class-time">
@@ -195,11 +228,27 @@ export function ScheduledClassCreateDialog({
               </Select>
             </Field>
             {error && <FieldError>{error}</FieldError>}
+
+            {partialFailures.length > 0 && (
+              <div
+                role="alert"
+                className="rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+              >
+                <p className="font-medium">{CLASS_MESSAGES.PARTIAL_FAILURE_TITLE}</p>
+                <ul className="mt-1 list-inside list-disc">
+                  {partialFailures.map((f) => (
+                    <li key={f.day_of_week}>
+                      {WEEKDAY_LABELS[f.day_of_week]}: {f.error}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </FieldGroup>
 
           <Button
             type="submit"
-            disabled={isPending || !disciplineId}
+            disabled={isPending || !disciplineId || daysOfWeek.length === 0}
             className="self-start"
           >
             {isPending ? COMMON_MESSAGES.LOADING : COMMON_MESSAGES.CREATE}

@@ -10,6 +10,7 @@ import {
 } from "@/lib/localization/es-ec";
 import {
   assignTeacherSchema,
+  createScheduledClassBatchSchema,
   createScheduledClassSchema,
   deactivateScheduledClassSchema,
   getSessionsForRangeSchema,
@@ -238,6 +239,73 @@ export async function createScheduledClass(
     }
     return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
   }
+}
+
+export interface CreateScheduledClassBatchResult {
+  created: Array<{ day_of_week: number; id: string }>;
+  failed: Array<{ day_of_week: number; error: string }>;
+}
+
+/**
+ * Create the same recurring class (discipline, teacher, time) across
+ * several weekdays in one submission. Lets the admin build a whole
+ * week's schedule at once instead of repeating createScheduledClass per
+ * day. Each day is attempted independently — a scheduling conflict
+ * (overlap) on one day does NOT roll back the others; the caller sees
+ * exactly which days succeeded and which failed, keeping full control
+ * over the outcome. Owner/Admin-branch via RLS.
+ */
+export async function createScheduledClassBatch(
+  input: unknown
+): Promise<ActionResult<CreateScheduledClassBatchResult>> {
+  const parsed = createScheduledClassBatchSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message };
+  }
+
+  const { branch_id, discipline_id, default_teacher_id, days_of_week, start_time } =
+    parsed.data;
+
+  const created: CreateScheduledClassBatchResult["created"] = [];
+  const failed: CreateScheduledClassBatchResult["failed"] = [];
+
+  for (const day_of_week of days_of_week) {
+    try {
+      const result = await withAuthenticatedUser(async (tx) => {
+        return tx.scheduled_classes.create({
+          data: {
+            branch_id,
+            discipline_id,
+            default_teacher_id: default_teacher_id ?? null,
+            day_of_week,
+            start_time: new Date(`1970-01-01T${start_time}:00`),
+          },
+          select: { id: true },
+        });
+      });
+
+      if (!result.success) {
+        failed.push({ day_of_week, error: result.error });
+        continue;
+      }
+      created.push({ day_of_week, id: result.data.id });
+    } catch (error) {
+      const message =
+        error instanceof Error && error.message.includes("scheduled_classes_no_overlap")
+          ? CLASS_MESSAGES.OVERLAP
+          : COMMON_MESSAGES.UNEXPECTED_ERROR;
+      failed.push({ day_of_week, error: message });
+    }
+  }
+
+  if (created.length === 0) {
+    return {
+      success: false,
+      error: failed[0]?.error ?? COMMON_MESSAGES.UNEXPECTED_ERROR,
+    };
+  }
+
+  return { success: true, data: { created, failed } };
 }
 
 /**
