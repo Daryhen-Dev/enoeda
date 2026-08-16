@@ -382,9 +382,16 @@ export async function getAttendanceStats(
   const { student_id, discipline_id, from, to } = parsed.data;
 
   const result = await withAuthenticatedUser(async (tx) => {
-    // Build where clause
+    // Build where clause. Deliberately excludes one_time_classes
+    // (recovery/makeup class) attendance — by product decision, those
+    // sessions do NOT count toward the student's regular attendance
+    // stats or the minimum-hours promotion requirement (see
+    // getPromotionReadiness in lib/domain/progress/actions.ts, which
+    // achieves the same exclusion naturally via its scheduled_classes
+    // relation filter).
     const where: Record<string, unknown> = {
       student_id,
+      scheduled_class_id: { not: null },
     };
 
     // Date range filter
@@ -395,12 +402,9 @@ export async function getAttendanceStats(
       where.session_date = sessionDateFilter;
     }
 
-    // Discipline filter — matches either class kind's discipline_id
+    // Discipline filter via scheduled_classes relation
     if (discipline_id) {
-      where.OR = [
-        { scheduled_classes: { discipline_id } },
-        { one_time_classes: { discipline_id } },
-      ];
+      where.scheduled_classes = { discipline_id };
     }
 
     const total = await tx.attendance.count({ where });
