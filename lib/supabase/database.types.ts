@@ -96,6 +96,36 @@ export type Database = {
           },
         ];
       };
+      user_profiles: {
+        Row: {
+          created_at: string;
+          date_of_birth: string;
+          first_name: string;
+          phone: string | null;
+          surname: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          date_of_birth: string;
+          first_name: string;
+          phone?: string | null;
+          surname: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          date_of_birth?: string;
+          first_name?: string;
+          phone?: string | null;
+          surname?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       user_roles: {
         Row: {
           assigned_at: string;
@@ -160,6 +190,15 @@ export type Database = {
           role: Database["public"]["Enums"]["role_enum"];
           branch_id: string | null;
         }[];
+      };
+      ensure_own_user_profile: {
+        Args: {
+          p_date_of_birth: string;
+          p_first_name: string;
+          p_phone: string;
+          p_surname: string;
+        };
+        Returns: Database["public"]["Tables"]["user_profiles"]["Row"];
       };
       revoke_branch_role: {
         Args: {
