@@ -13,6 +13,13 @@ export const ROLE_MESSAGES = {
   INVALID_BRANCH_ID: "El identificador de la sucursal no es válido.",
   INVALID_ROLE: "El rol debe ser admin o teacher.",
   INVALID_EMAIL: "El correo electrónico no es válido.",
+  FIRST_NAME_REQUIRED: "El nombre es obligatorio.",
+  FIRST_NAME_MAX_LENGTH: "El nombre debe tener como máximo 100 caracteres.",
+  SURNAME_REQUIRED: "El apellido es obligatorio.",
+  SURNAME_MAX_LENGTH: "El apellido debe tener como máximo 100 caracteres.",
+  PHONE_MAX_LENGTH: "El teléfono debe tener como máximo 30 caracteres.",
+  DATE_OF_BIRTH_FORMAT: "La fecha de nacimiento debe tener el formato YYYY-MM-DD.",
+  INVALID_DATE_OF_BIRTH: "La fecha de nacimiento no es una fecha válida.",
 } as const;
 
 // --- Branch-scoped schemas ---
@@ -48,10 +55,46 @@ export const createBranchAdminSchema = z.object({
   branchId: z.string().uuid({ message: ROLE_MESSAGES.INVALID_BRANCH_ID }),
 });
 
-/** Branch admin creates a new Auth account and assigns it as teacher in their own branch. */
+const TEACHER_PROFILE_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+function isValidCalendarDateForTeacher(dateStr: string): boolean {
+  const [yearStr, monthStr, dayStr] = dateStr.split("-");
+  const year = Number(yearStr);
+  const month = Number(monthStr);
+  const day = Number(dayStr);
+  if (month < 1 || month > 12) return false;
+  if (day < 1) return false;
+  if (year < 1900 || year > 2100) return false;
+  const daysInMonth = new Date(year, month, 0).getDate();
+  return day <= daysInMonth;
+}
+
+/**
+ * Branch admin creates a new Auth account and assigns it as teacher in
+ * their own branch, together with the teacher's identity profile — the
+ * teacher is never treated as just an email address.
+ */
 export const createBranchTeacherSchema = z.object({
   email: z.email({ error: ROLE_MESSAGES.INVALID_EMAIL }),
   branchId: z.string().uuid({ message: ROLE_MESSAGES.INVALID_BRANCH_ID }),
+  first_name: z
+    .string()
+    .min(1, { error: ROLE_MESSAGES.FIRST_NAME_REQUIRED })
+    .max(100, { error: ROLE_MESSAGES.FIRST_NAME_MAX_LENGTH }),
+  surname: z
+    .string()
+    .min(1, { error: ROLE_MESSAGES.SURNAME_REQUIRED })
+    .max(100, { error: ROLE_MESSAGES.SURNAME_MAX_LENGTH }),
+  phone: z
+    .string()
+    .max(30, { error: ROLE_MESSAGES.PHONE_MAX_LENGTH })
+    .optional(),
+  date_of_birth: z
+    .string()
+    .regex(TEACHER_PROFILE_DATE_PATTERN, { error: ROLE_MESSAGES.DATE_OF_BIRTH_FORMAT })
+    .refine(isValidCalendarDateForTeacher, {
+      error: ROLE_MESSAGES.INVALID_DATE_OF_BIRTH,
+    }),
 });
 
 /** List teacher accounts for a branch (for teacher-picker UI). */

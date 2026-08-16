@@ -6,7 +6,7 @@ import { SessionBlock } from "./session-block";
 interface CalendarWeekViewProps {
   sessions: SessionView[];
   baseDate: string;
-  teachers?: Array<{ id: string; email: string }>;
+  teachers?: Array<{ id: string; name: string }>;
   canManage?: boolean;
 }
 

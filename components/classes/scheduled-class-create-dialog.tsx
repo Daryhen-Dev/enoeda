@@ -34,7 +34,7 @@ import {
 interface ScheduledClassCreateDialogProps {
   branchId: string;
   disciplines: Array<{ id: string; name: string }>;
-  teachers: Array<{ id: string; email: string }>;
+  teachers: Array<{ id: string; name: string }>;
 }
 
 const WEEKDAYS = WEEKDAY_LABELS.map((label, value) => ({ value, label }));
@@ -174,6 +174,10 @@ export function ScheduledClassCreateDialog({
                 onValueChange={(value) => {
                   if (value) setTeacherId(value);
                 }}
+                items={[
+                  { value: NO_TEACHER_VALUE, label: CLASS_MESSAGES.NO_TEACHER_OPTION },
+                  ...teachers.map((t) => ({ value: t.id, label: t.name })),
+                ]}
               >
                 <SelectTrigger id="class-teacher" className="w-full">
                   <SelectValue />
@@ -184,7 +188,7 @@ export function ScheduledClassCreateDialog({
                   </SelectItem>
                   {teachers.map((t) => (
                     <SelectItem key={t.id} value={t.id}>
-                      {t.email}
+                      {t.name}
                     </SelectItem>
                   ))}
                 </SelectContent>

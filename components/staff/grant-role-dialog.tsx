@@ -40,6 +40,10 @@ export function GrantRoleDialog({ branchId }: AssignTeacherDialogProps) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [email, setEmail] = useState("")
+  const [firstName, setFirstName] = useState("")
+  const [surname, setSurname] = useState("")
+  const [phone, setPhone] = useState("")
+  const [dateOfBirth, setDateOfBirth] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
   const [createdCredentials, setCreatedCredentials] =
@@ -47,13 +51,24 @@ export function GrantRoleDialog({ branchId }: AssignTeacherDialogProps) {
 
   function resetForm() {
     setEmail("")
+    setFirstName("")
+    setSurname("")
+    setPhone("")
+    setDateOfBirth("")
     setError(null)
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     startTransition(async () => {
-      const result = await createBranchTeacher({ email, branchId })
+      const result = await createBranchTeacher({
+        email,
+        branchId,
+        first_name: firstName,
+        surname,
+        phone: phone || undefined,
+        date_of_birth: dateOfBirth,
+      })
       if (result.success && result.data) {
         setOpen(false)
         resetForm()
@@ -93,6 +108,53 @@ export function GrantRoleDialog({ branchId }: AssignTeacherDialogProps) {
             className="flex flex-1 flex-col gap-4 overflow-y-auto px-4"
           >
             <FieldGroup>
+              <Field>
+                <FieldLabel htmlFor="teacher-first-name">
+                  {ROLE_CREATION_MESSAGES.FIRST_NAME_LABEL}
+                </FieldLabel>
+                <Input
+                  id="teacher-first-name"
+                  type="text"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  required
+                />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="teacher-surname">
+                  {ROLE_CREATION_MESSAGES.SURNAME_LABEL}
+                </FieldLabel>
+                <Input
+                  id="teacher-surname"
+                  type="text"
+                  value={surname}
+                  onChange={(e) => setSurname(e.target.value)}
+                  required
+                />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="teacher-phone">
+                  {ROLE_CREATION_MESSAGES.PHONE_LABEL}
+                </FieldLabel>
+                <Input
+                  id="teacher-phone"
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="teacher-date-of-birth">
+                  {ROLE_CREATION_MESSAGES.DATE_OF_BIRTH_LABEL}
+                </FieldLabel>
+                <Input
+                  id="teacher-date-of-birth"
+                  type="date"
+                  value={dateOfBirth}
+                  onChange={(e) => setDateOfBirth(e.target.value)}
+                  required
+                />
+              </Field>
               <Field data-invalid={Boolean(error)}>
                 <FieldLabel htmlFor="teacher-email">
                   {ROLE_CREATION_MESSAGES.EMAIL_LABEL}
@@ -113,7 +175,13 @@ export function GrantRoleDialog({ branchId }: AssignTeacherDialogProps) {
               )}
             </FieldGroup>
 
-            <Button type="submit" disabled={isPending || !email} className="self-start">
+            <Button
+              type="submit"
+              disabled={
+                isPending || !email || !firstName || !surname || !dateOfBirth
+              }
+              className="self-start"
+            >
               {isPending
                 ? ROLE_CREATION_MESSAGES.CREATING_ACCOUNT
                 : ROLE_CREATION_MESSAGES.CREATE_ACCOUNT_ACTION}

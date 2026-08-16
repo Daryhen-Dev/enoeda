@@ -34,7 +34,7 @@ import {
 interface TeacherAssignDialogProps {
   scheduledClassId: string;
   sessionDate: string;
-  teachers: Array<{ id: string; email: string }>;
+  teachers: Array<{ id: string; name: string }>;
   currentTeacherId: string | null;
 }
 
@@ -126,6 +126,7 @@ export function TeacherAssignDialog({
                   onValueChange={(value) => {
                     if (value) setTeacherId(value);
                   }}
+                  items={teachers.map((t) => ({ value: t.id, label: t.name }))}
                 >
                   <SelectTrigger id="session-teacher" className="w-full">
                     <SelectValue
@@ -135,7 +136,7 @@ export function TeacherAssignDialog({
                   <SelectContent>
                     {teachers.map((t) => (
                       <SelectItem key={t.id} value={t.id}>
-                        {t.email}
+                        {t.name}
                       </SelectItem>
                     ))}
                   </SelectContent>

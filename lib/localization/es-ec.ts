@@ -295,6 +295,10 @@ export const ROLE_CREATION_MESSAGES = {
   CREATING_ACCOUNT: "Creando cuenta…",
   EMAIL_LABEL: "Correo electrónico",
   EMAIL_PLACEHOLDER: "usuario@ejemplo.com",
+  FIRST_NAME_LABEL: "Nombre",
+  SURNAME_LABEL: "Apellido",
+  PHONE_LABEL: "Teléfono",
+  DATE_OF_BIRTH_LABEL: "Fecha de nacimiento",
   CREDENTIALS_DIALOG_TITLE: "Cuenta creada",
   CREDENTIALS_DIALOG_DESCRIPTION:
     "Copie estas credenciales y entréguelas de forma segura a la persona. No se mostrarán de nuevo. Deberá cambiar la contraseña en su primer inicio de sesión.",
@@ -303,6 +307,18 @@ export const ROLE_CREATION_MESSAGES = {
   COPY_ACTION: "Copiar",
   COPIED_ACTION: "Copiado",
   CLOSE_ACTION: "Cerrar",
+} as const
+
+export const TEACHER_PROFILE_MESSAGES = {
+  INVALID_EMAIL: "El correo electrónico no es válido.",
+  INVALID_BRANCH_ID: "El identificador de la sucursal no es válido.",
+  FIRST_NAME_REQUIRED: "El nombre es obligatorio.",
+  FIRST_NAME_MAX_LENGTH: "El nombre debe tener como máximo 100 caracteres.",
+  SURNAME_REQUIRED: "El apellido es obligatorio.",
+  SURNAME_MAX_LENGTH: "El apellido debe tener como máximo 100 caracteres.",
+  PHONE_MAX_LENGTH: "El teléfono debe tener como máximo 30 caracteres.",
+  DATE_OF_BIRTH_FORMAT: "La fecha de nacimiento debe tener el formato YYYY-MM-DD.",
+  INVALID_DATE_OF_BIRTH: "La fecha de nacimiento no es una fecha válida.",
 } as const
 
 /** Forced password-change screen shown to accounts created by owner/admin. */

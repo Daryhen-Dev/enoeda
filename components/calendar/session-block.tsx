@@ -10,7 +10,7 @@ import { CALENDAR_MESSAGES } from "@/lib/localization/es-ec";
 interface SessionBlockProps {
   session: SessionView;
   compact?: boolean;
-  teachers?: Array<{ id: string; email: string }>;
+  teachers?: Array<{ id: string; name: string }>;
   canManage?: boolean;
 }
 

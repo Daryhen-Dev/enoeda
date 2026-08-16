@@ -5,6 +5,7 @@ import { randomBytes } from "node:crypto";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getAuthenticatedContext } from "@/lib/auth/identity-resolver";
+import { withAuthenticatedUser } from "@/lib/auth/server-context";
 import { COMMON_MESSAGES, ROLE_CREATION_MESSAGES } from "@/lib/localization/es-ec";
 import type { AppRole } from "@/lib/auth/authorize";
 import {
@@ -199,9 +200,13 @@ export async function createBranchAdmin(
 
 /**
  * Branch admin creates a brand-new Auth account (never self-registered)
- * and assigns it as teacher within the admin's own branch. Authorization
+ * and assigns it as teacher within the admin's own branch, together with
+ * the teacher's identity profile (name/phone/date of birth) — a teacher
+ * is never represented by just an email address. Authorization
  * (admin-of-this-branch) is enforced twice: once here before account
- * creation, and again by the `assign_branch_teacher` RPC guard.
+ * creation, and again by the `assign_branch_teacher` RPC guard. If the
+ * role assignment or profile insert fails, the created Auth account is
+ * rolled back (deleted) so no orphaned account is left behind.
  */
 export async function createBranchTeacher(
   input: CreateBranchTeacherInput
@@ -256,6 +261,34 @@ export async function createBranchTeacher(
     return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
   }
 
+  const profileResult = await withAuthenticatedUser(async (tx) => {
+    return tx.teacher_profiles.create({
+      data: {
+        user_id: created.user.id,
+        branch_id: parsed.data.branchId,
+        first_name: parsed.data.first_name,
+        surname: parsed.data.surname,
+        phone: parsed.data.phone ?? null,
+        date_of_birth: new Date(parsed.data.date_of_birth),
+      },
+      select: { user_id: true },
+    });
+  });
+
+  if (!profileResult.success) {
+    try {
+      await supabase.rpc("revoke_branch_role", {
+        p_target: created.user.id,
+        p_role: "teacher",
+        p_branch_id: parsed.data.branchId,
+      });
+    } catch {
+      // Best-effort rollback; the account delete below is the final safety net.
+    }
+    await admin.auth.admin.deleteUser(created.user.id).catch(() => undefined);
+    return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
+  }
+
   return {
     success: true,
     data: { email: parsed.data.email, temporaryPassword },
@@ -290,13 +323,14 @@ export async function listBranchStaff(): Promise<ActionResult<StaffAssignment[]>
 
 export interface TeacherOption {
   id: string;
-  email: string;
+  name: string;
 }
 
 /**
- * List teacher accounts assigned to a branch, with resolved email, for use
- * in teacher-picker UI (class creation / assignment). Admin-of-branch only —
- * mirrors the authorization check in `createBranchTeacher`.
+ * List teacher accounts assigned to a branch, with their real name (never
+ * email — a teacher is identified by their profile, not their login), for
+ * use in teacher-picker UI (class creation / assignment). Admin-of-branch
+ * only — mirrors the authorization check in `createBranchTeacher`.
  */
 export async function listBranchTeacherOptions(
   input: unknown
@@ -317,25 +351,20 @@ export async function listBranchTeacherOptions(
     return { success: false, error: COMMON_MESSAGES.INSUFFICIENT_PERMISSIONS };
   }
 
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("user_roles")
-    .select("user_id")
-    .eq("role", "teacher")
-    .eq("branch_id", parsed.data.branchId)
-    .is("revoked_at", null);
+  const result = await withAuthenticatedUser(async (tx) => {
+    return tx.teacher_profiles.findMany({
+      where: { branch_id: parsed.data.branchId },
+      select: { user_id: true, first_name: true, surname: true },
+      orderBy: { first_name: "asc" },
+    });
+  });
 
-  if (error) {
-    return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
-  }
+  if (!result.success) return result;
 
-  const admin = createAdminClient();
-  const teachers = await Promise.all(
-    (data ?? []).map(async (row) => {
-      const { data: userData } = await admin.auth.admin.getUserById(row.user_id);
-      return { id: row.user_id, email: userData?.user?.email ?? row.user_id };
-    })
-  );
+  const teachers: TeacherOption[] = result.data.map((row) => ({
+    id: row.user_id,
+    name: `${row.first_name} ${row.surname}`,
+  }));
 
   return { success: true, data: teachers };
 }
