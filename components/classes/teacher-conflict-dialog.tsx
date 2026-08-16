@@ -30,6 +30,8 @@ interface TeacherConflictDialogProps {
   scheduledClassId: string;
   sessionDate?: string;
   teacherId: string;
+  /** Called after a successful forced assignment, in addition to closing this dialog. */
+  onAssigned?: () => void;
 }
 
 export function TeacherConflictDialog({
@@ -40,6 +42,7 @@ export function TeacherConflictDialog({
   scheduledClassId,
   sessionDate,
   teacherId,
+  onAssigned,
 }: TeacherConflictDialogProps) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -58,6 +61,7 @@ export function TeacherConflictDialog({
       if (result.success && result.data?.success) {
         onOpenChange(false);
         toast.success(TEACHER_CONFLICT_MESSAGES.ASSIGNED);
+        onAssigned?.();
         router.refresh();
       } else {
         setError(result.error ?? COMMON_MESSAGES.UNEXPECTED_ERROR);

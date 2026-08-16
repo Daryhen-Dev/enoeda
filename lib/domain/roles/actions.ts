@@ -13,6 +13,7 @@ import {
   revokeBranchRoleSchema,
   createBranchAdminSchema,
   createBranchTeacherSchema,
+  listBranchTeacherOptionsSchema,
   type AssignBranchAdminInput,
   type AssignBranchTeacherInput,
   type RevokeBranchRoleInput,
@@ -285,6 +286,58 @@ export async function listBranchStaff(): Promise<ActionResult<StaffAssignment[]>
   }
 
   return { success: true, data: (data ?? []) as StaffAssignment[] };
+}
+
+export interface TeacherOption {
+  id: string;
+  email: string;
+}
+
+/**
+ * List teacher accounts assigned to a branch, with resolved email, for use
+ * in teacher-picker UI (class creation / assignment). Admin-of-branch only —
+ * mirrors the authorization check in `createBranchTeacher`.
+ */
+export async function listBranchTeacherOptions(
+  input: unknown
+): Promise<ActionResult<TeacherOption[]>> {
+  const parsed = listBranchTeacherOptionsSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message };
+  }
+
+  const identity = await getAuthenticatedContext();
+  if (!identity.ok) {
+    return { success: false, error: COMMON_MESSAGES.AUTHENTICATION_REQUIRED };
+  }
+  const isAdminOfBranch = identity.ctx.assignments.some(
+    (a) => a.role === "admin" && a.branchId === parsed.data.branchId
+  );
+  if (!isAdminOfBranch) {
+    return { success: false, error: COMMON_MESSAGES.INSUFFICIENT_PERMISSIONS };
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("user_roles")
+    .select("user_id")
+    .eq("role", "teacher")
+    .eq("branch_id", parsed.data.branchId)
+    .is("revoked_at", null);
+
+  if (error) {
+    return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
+  }
+
+  const admin = createAdminClient();
+  const teachers = await Promise.all(
+    (data ?? []).map(async (row) => {
+      const { data: userData } = await admin.auth.admin.getUserById(row.user_id);
+      return { id: row.user_id, email: userData?.user?.email ?? row.user_id };
+    })
+  );
+
+  return { success: true, data: teachers };
 }
 
 

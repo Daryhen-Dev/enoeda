@@ -54,8 +54,14 @@ export const createBranchTeacherSchema = z.object({
   branchId: z.string().uuid({ message: ROLE_MESSAGES.INVALID_BRANCH_ID }),
 });
 
+/** List teacher accounts for a branch (for teacher-picker UI). */
+export const listBranchTeacherOptionsSchema = z.object({
+  branchId: z.string().uuid({ message: ROLE_MESSAGES.INVALID_BRANCH_ID }),
+});
+
 export type CreateBranchAdminInput = z.infer<typeof createBranchAdminSchema>;
 export type CreateBranchTeacherInput = z.infer<typeof createBranchTeacherSchema>;
+export type ListBranchTeacherOptionsInput = z.infer<typeof listBranchTeacherOptionsSchema>;
 
 // --- Legacy flat schemas (kept for reference; RPCs dropped in migration) ---
 

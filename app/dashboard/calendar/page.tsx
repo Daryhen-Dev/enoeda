@@ -2,9 +2,12 @@ import { AlertCircleIcon } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { getSessionsForRange } from "@/lib/domain/classes/actions";
+import { listDisciplines } from "@/lib/domain/disciplines/actions";
+import { listBranchTeacherOptions } from "@/lib/domain/roles/actions";
 import { CalendarHeader } from "@/components/calendar/calendar-header";
 import { CalendarMonthView } from "@/components/calendar/calendar-month-view";
 import { CalendarWeekView } from "@/components/calendar/calendar-week-view";
+import { ScheduledClassCreateDialog } from "@/components/classes/scheduled-class-create-dialog";
 import { fetchRoleAssignments } from "@/lib/auth/server-roles";
 import { CALENDAR_MESSAGES } from "@/lib/localization/es-ec";
 
@@ -40,6 +43,7 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
   }
 
   const branchId = branchAssignment.branchId;
+  const canManage = branchAssignment.role === "admin";
 
   const params = await searchParams;
   const view = params.view === "week" ? "week" : "month";
@@ -79,18 +83,35 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
     ? params.disciplines.split(",").filter(Boolean)
     : undefined;
 
-  const result = await getSessionsForRange({
-    branch_id: branchId,
-    start_date: startStr,
-    end_date: endStr,
-    discipline_ids: disciplineIds,
-  });
+  const [sessionsResult, disciplinesResult, teachersResult] = await Promise.all([
+    getSessionsForRange({
+      branch_id: branchId,
+      start_date: startStr,
+      end_date: endStr,
+      discipline_ids: disciplineIds,
+    }),
+    canManage ? listDisciplines() : Promise.resolve({ success: true, data: [] }),
+    canManage
+      ? listBranchTeacherOptions({ branchId })
+      : Promise.resolve({ success: true, data: [] }),
+  ]);
 
-  const sessions = result.success ? (result.data ?? []) : [];
+  const sessions = sessionsResult.success ? (sessionsResult.data ?? []) : [];
+  const disciplines = disciplinesResult.success ? (disciplinesResult.data ?? []) : [];
+  const teachers = teachersResult.success ? (teachersResult.data ?? []) : [];
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4">
-      <h1 className="text-2xl font-semibold">{CALENDAR_MESSAGES.PAGE_TITLE}</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold">{CALENDAR_MESSAGES.PAGE_TITLE}</h1>
+        {canManage && (
+          <ScheduledClassCreateDialog
+            branchId={branchId}
+            disciplines={disciplines}
+            teachers={teachers}
+          />
+        )}
+      </div>
       <CalendarHeader
         currentView={view}
         baseDate={baseDate.toISOString().split("T")[0]}
@@ -104,6 +125,8 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
         <CalendarWeekView
           sessions={sessions}
           baseDate={startStr}
+          teachers={teachers}
+          canManage={canManage}
         />
       )}
     </div>

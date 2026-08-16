@@ -392,6 +392,8 @@ export const CLASS_MESSAGES = {
   DISCIPLINE_PLACEHOLDER: "Seleccionar…",
   DAY_LABEL: "Día",
   START_TIME_LABEL: "Hora de inicio",
+  TEACHER_LABEL: "Profesor",
+  NO_TEACHER_OPTION: "Sin profesor asignado",
   DAY_PREFIX: "Día",
   SESSION_DATE_REQUIRED: "La fecha de la sesión es obligatoria.",
   CREATE_TITLE: "Crear clase recurrente",
@@ -417,6 +419,11 @@ export const TEACHER_CONFLICT_MESSAGES = {
   CONFIRM: "Confirmar y continuar",
   AFFECTED_TITLE: "Clases que quedarán sin profesor",
   ASSIGNED: "Profesor asignado correctamente.",
+  ASSIGN_ACTION: "Asignar profesor",
+  ASSIGN_TITLE: "Asignar profesor a la sesión",
+  ASSIGN_DESCRIPTION: "Seleccione el profesor que dará esta clase en la fecha indicada.",
+  TEACHER_LABEL: "Profesor",
+  TEACHER_PLACEHOLDER: "Seleccionar…",
 } as const
 
 export const ENROLLMENT_MESSAGES = {

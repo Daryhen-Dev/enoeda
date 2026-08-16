@@ -4,11 +4,14 @@ import { AlertTriangleIcon, UserIcon } from "lucide-react";
 
 import type { SessionView } from "@/lib/domain/classes/actions";
 import { AttendanceSheetDialog } from "@/components/attendance/attendance-sheet-dialog";
+import { TeacherAssignDialog } from "@/components/classes/teacher-assign-dialog";
 import { CALENDAR_MESSAGES } from "@/lib/localization/es-ec";
 
 interface SessionBlockProps {
   session: SessionView;
   compact?: boolean;
+  teachers?: Array<{ id: string; email: string }>;
+  canManage?: boolean;
 }
 
 /**
@@ -38,7 +41,12 @@ function getDisciplineColors(code: string): { bg: string; text: string; border: 
   }
 }
 
-export function SessionBlock({ session, compact = false }: SessionBlockProps) {
+export function SessionBlock({
+  session,
+  compact = false,
+  teachers = [],
+  canManage = false,
+}: SessionBlockProps) {
   const colors = getDisciplineColors(session.discipline_code);
   const isSuspended = session.status === "suspended";
   const hasNoTeacher = !session.teacher_id;
@@ -106,12 +114,20 @@ export function SessionBlock({ session, compact = false }: SessionBlockProps) {
           </span>
         )}
       </div>
-      <div className="mt-1">
+      <div className="mt-1 flex flex-wrap gap-1">
         <AttendanceSheetDialog
           scheduledClassId={session.scheduled_class_id}
           sessionDate={session.session_date}
           disabled={isSuspended}
         />
+        {canManage && (
+          <TeacherAssignDialog
+            scheduledClassId={session.scheduled_class_id}
+            sessionDate={session.session_date}
+            teachers={teachers}
+            currentTeacherId={session.teacher_id}
+          />
+        )}
       </div>
     </div>
   );

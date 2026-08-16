@@ -34,19 +34,25 @@ import {
 interface ScheduledClassCreateDialogProps {
   branchId: string;
   disciplines: Array<{ id: string; name: string }>;
+  teachers: Array<{ id: string; email: string }>;
 }
 
 const WEEKDAYS = WEEKDAY_LABELS.map((label, value) => ({ value, label }));
 
+/** Sentinel value for the "no teacher yet" option — Select items cannot use an empty string value. */
+const NO_TEACHER_VALUE = "__none__";
+
 export function ScheduledClassCreateDialog({
   branchId,
   disciplines,
+  teachers,
 }: ScheduledClassCreateDialogProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [disciplineId, setDisciplineId] = useState("");
   const [dayOfWeek, setDayOfWeek] = useState("0");
   const [startTime, setStartTime] = useState("09:00");
+  const [teacherId, setTeacherId] = useState(NO_TEACHER_VALUE);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -54,6 +60,7 @@ export function ScheduledClassCreateDialog({
     setDisciplineId("");
     setDayOfWeek("0");
     setStartTime("09:00");
+    setTeacherId(NO_TEACHER_VALUE);
     setError(null);
   }
 
@@ -63,6 +70,8 @@ export function ScheduledClassCreateDialog({
       const result = await createScheduledClass({
         branch_id: branchId,
         discipline_id: disciplineId,
+        default_teacher_id:
+          teacherId === NO_TEACHER_VALUE ? null : teacherId,
         day_of_week: Number(dayOfWeek),
         start_time: startTime,
       });
@@ -155,6 +164,31 @@ export function ScheduledClassCreateDialog({
                 onChange={(e) => setStartTime(e.target.value)}
                 required
               />
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="class-teacher">
+                {CLASS_MESSAGES.TEACHER_LABEL}
+              </FieldLabel>
+              <Select
+                value={teacherId}
+                onValueChange={(value) => {
+                  if (value) setTeacherId(value);
+                }}
+              >
+                <SelectTrigger id="class-teacher" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NO_TEACHER_VALUE}>
+                    {CLASS_MESSAGES.NO_TEACHER_OPTION}
+                  </SelectItem>
+                  {teachers.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.email}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </Field>
             {error && <FieldError>{error}</FieldError>}
           </FieldGroup>

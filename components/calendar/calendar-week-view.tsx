@@ -6,11 +6,18 @@ import { SessionBlock } from "./session-block";
 interface CalendarWeekViewProps {
   sessions: SessionView[];
   baseDate: string;
+  teachers?: Array<{ id: string; email: string }>;
+  canManage?: boolean;
 }
 
 const WEEKDAY_LABELS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 
-export function CalendarWeekView({ sessions, baseDate }: CalendarWeekViewProps) {
+export function CalendarWeekView({
+  sessions,
+  baseDate,
+  teachers = [],
+  canManage = false,
+}: CalendarWeekViewProps) {
   // baseDate is the Monday of the week
   const start = new Date(baseDate);
   const days: Date[] = [];
@@ -56,6 +63,8 @@ export function CalendarWeekView({ sessions, baseDate }: CalendarWeekViewProps) 
                 <SessionBlock
                   key={`${session.scheduled_class_id}-${session.session_date}`}
                   session={session}
+                  teachers={teachers}
+                  canManage={canManage}
                 />
               ))}
             </div>
