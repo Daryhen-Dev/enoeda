@@ -40,6 +40,18 @@ export const createScheduledClassBatchSchema = z.object({
   start_time: z.string().regex(/^\d{2}:\d{2}$/),
 });
 
+/**
+ * A single-occurrence class on a specific date — outside the weekly
+ * recurring pattern (e.g. an extra class held once this month only).
+ */
+export const createOneTimeClassSchema = z.object({
+  branch_id: z.uuid(),
+  discipline_id: z.uuid(),
+  teacher_id: z.uuid().nullable().optional(),
+  class_date: z.string().date(),
+  start_time: z.string().regex(/^\d{2}:\d{2}$/),
+});
+
 export const updateScheduledClassSchema = createScheduledClassSchema
   .partial()
   .extend({
@@ -49,6 +61,7 @@ export const updateScheduledClassSchema = createScheduledClassSchema
 export type CreateScheduledClassBatchInput = z.infer<
   typeof createScheduledClassBatchSchema
 >;
+export type CreateOneTimeClassInput = z.infer<typeof createOneTimeClassSchema>;
 
 export const deactivateScheduledClassSchema = z.object({
   id: z.uuid(),

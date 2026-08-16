@@ -1,5 +1,6 @@
 export {
   assignTeacherSchema,
+  createOneTimeClassSchema,
   createScheduledClassBatchSchema,
   createScheduledClassSchema,
   deactivateScheduledClassSchema,
@@ -10,6 +11,7 @@ export {
   suspensionCategoryEnum,
   updateScheduledClassSchema,
   type AssignTeacherInput,
+  type CreateOneTimeClassInput,
   type CreateScheduledClassBatchInput,
   type CreateScheduledClassInput,
   type DeactivateScheduledClassInput,
@@ -23,6 +25,7 @@ export {
 
 export {
   assignTeacher,
+  createOneTimeClass,
   createScheduledClass,
   createScheduledClassBatch,
   deactivateScheduledClass,

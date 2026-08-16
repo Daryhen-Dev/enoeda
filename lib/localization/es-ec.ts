@@ -403,6 +403,8 @@ export const WEEKDAY_LABELS = [
 
 export const CLASS_MESSAGES = {
   OVERLAP: "Ya existe una clase en ese horario para esta sucursal y día.",
+  OVERLAP_ON_DAY: (dayLabel: string) =>
+    `Ya existe una clase en ese horario el día ${dayLabel}.`,
   CREATE_DESCRIPTION:
     "Agregue una clase recurrente al horario semanal. Puede seleccionar varios días para crearlas todas de una vez.",
   DISCIPLINE_LABEL: "Disciplina",
@@ -423,6 +425,16 @@ export const CLASS_MESSAGES = {
   PARTIAL_FAILURE_TITLE:
     "Algunos días no se pudieron crear por conflicto de horario:",
   DEACTIVATED: "Clase desactivada.",
+} as const
+
+export const ONE_TIME_CLASS_MESSAGES = {
+  CREATE_TITLE: "Crear clase única",
+  CREATE_DESCRIPTION:
+    "Agregue una clase para una sola fecha, fuera del horario semanal recurrente.",
+  DATE_LABEL: "Fecha",
+  CREATED: "Clase única creada correctamente.",
+  ONE_TIME_BADGE: "Única",
+  OVERLAP: "Ya existe una clase en ese horario en esa fecha.",
 } as const
 
 export const SUSPENSION_MESSAGES = {

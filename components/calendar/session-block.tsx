@@ -5,7 +5,7 @@ import { AlertTriangleIcon, UserIcon } from "lucide-react";
 import type { SessionView } from "@/lib/domain/classes/actions";
 import { AttendanceSheetDialog } from "@/components/attendance/attendance-sheet-dialog";
 import { TeacherAssignDialog } from "@/components/classes/teacher-assign-dialog";
-import { CALENDAR_MESSAGES } from "@/lib/localization/es-ec";
+import { CALENDAR_MESSAGES, ONE_TIME_CLASS_MESSAGES } from "@/lib/localization/es-ec";
 
 interface SessionBlockProps {
   session: SessionView;
@@ -51,6 +51,7 @@ export function SessionBlock({
   const isSuspended = session.status === "suspended";
   const hasNoTeacher = !session.teacher_id;
   const isSubstitute = session.is_substitute;
+  const isOneTime = session.is_one_time;
 
   const baseClasses = `rounded border px-1.5 py-0.5 text-xs ${colors.bg} ${colors.text}`;
 
@@ -76,6 +77,11 @@ export function SessionBlock({
         {isSubstitute && (
           <span className="ml-0.5 rounded bg-purple-200 px-0.5 text-[10px]">
             {CALENDAR_MESSAGES.SUBSTITUTE.slice(0, 3)}
+          </span>
+        )}
+        {isOneTime && (
+          <span className="ml-0.5 rounded bg-sky-200 px-0.5 text-[10px]">
+            {ONE_TIME_CLASS_MESSAGES.ONE_TIME_BADGE.slice(0, 3)}
           </span>
         )}
         {hasNoTeacher && (
@@ -107,6 +113,11 @@ export function SessionBlock({
             {CALENDAR_MESSAGES.SUBSTITUTE}
           </span>
         )}
+        {isOneTime && (
+          <span className="rounded bg-sky-200 px-1 text-[10px]">
+            {ONE_TIME_CLASS_MESSAGES.ONE_TIME_BADGE}
+          </span>
+        )}
         {hasNoTeacher && (
           <span className="flex items-center gap-0.5 text-amber-600">
             <AlertTriangleIcon className="size-3" />
@@ -114,21 +125,26 @@ export function SessionBlock({
           </span>
         )}
       </div>
-      <div className="mt-1 flex flex-wrap gap-1">
-        <AttendanceSheetDialog
-          scheduledClassId={session.scheduled_class_id}
-          sessionDate={session.session_date}
-          disabled={isSuspended}
-        />
-        {canManage && (
-          <TeacherAssignDialog
+      {/* Attendance and teacher-reassignment operate on scheduled_classes
+          rows; one-time classes live in a separate table and don't
+          support them yet. */}
+      {!isOneTime && (
+        <div className="mt-1 flex flex-wrap gap-1">
+          <AttendanceSheetDialog
             scheduledClassId={session.scheduled_class_id}
             sessionDate={session.session_date}
-            teachers={teachers}
-            currentTeacherId={session.teacher_id}
+            disabled={isSuspended}
           />
-        )}
-      </div>
+          {canManage && (
+            <TeacherAssignDialog
+              scheduledClassId={session.scheduled_class_id}
+              sessionDate={session.session_date}
+              teachers={teachers}
+              currentTeacherId={session.teacher_id}
+            />
+          )}
+        </div>
+      )}
     </div>
   );
 }

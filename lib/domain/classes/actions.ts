@@ -7,9 +7,11 @@ import {
   COMMON_MESSAGES,
   SUSPENSION_MESSAGES,
   TEACHER_CONFLICT_MESSAGES,
+  WEEKDAY_LABELS,
 } from "@/lib/localization/es-ec";
 import {
   assignTeacherSchema,
+  createOneTimeClassSchema,
   createScheduledClassBatchSchema,
   createScheduledClassSchema,
   deactivateScheduledClassSchema,
@@ -19,6 +21,7 @@ import {
   suspendSessionSchema,
   updateScheduledClassSchema,
 } from "./schema";
+import { ONE_TIME_CLASS_MESSAGES } from "@/lib/localization/es-ec";
 
 export interface ActionResult<T = unknown> {
   success: boolean;
@@ -41,6 +44,8 @@ export interface SessionView {
   suspension_category: string | null;
   suspension_reason: string | null;
   is_substitute: boolean;
+  /** true when this session comes from one_time_classes, not a recurring template. */
+  is_one_time: boolean;
 }
 
 export interface ConflictingAssignment {
@@ -292,7 +297,7 @@ export async function createScheduledClassBatch(
     } catch (error) {
       const message =
         error instanceof Error && error.message.includes("scheduled_classes_no_overlap")
-          ? CLASS_MESSAGES.OVERLAP
+          ? CLASS_MESSAGES.OVERLAP_ON_DAY(WEEKDAY_LABELS[day_of_week])
           : COMMON_MESSAGES.UNEXPECTED_ERROR;
       failed.push({ day_of_week, error: message });
     }
@@ -306,6 +311,81 @@ export async function createScheduledClassBatch(
   }
 
   return { success: true, data: { created, failed } };
+}
+
+/**
+ * Create a single-occurrence class on a specific date, outside the
+ * weekly recurring pattern (e.g. an extra class held once this month).
+ * Rejects (never writes) when the date/time already has a class:
+ * - a recurring scheduled_classes template covering that weekday+time, or
+ * - another one_time_classes row on the same branch/date/time
+ * (the second case is enforced by the DB EXCLUDE constraint; the first
+ * is checked here since one_time_classes has no relationship to
+ * scheduled_classes). Owner/Admin-branch via RLS.
+ */
+export async function createOneTimeClass(
+  input: unknown
+): Promise<ActionResult<{ id: string }>> {
+  const parsed = createOneTimeClassSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message };
+  }
+
+  const { branch_id, discipline_id, teacher_id, class_date, start_time } = parsed.data;
+
+  try {
+    const result = await withAuthenticatedUser(async (tx) => {
+      // Reject up front if a recurring class already covers this
+      // weekday+time slot for the branch — never write in that case.
+      const classDate = new Date(class_date);
+      const isoDay = jsToIsoDayOfWeek(classDate.getDay());
+      const [targetH, targetM] = start_time.split(":").map(Number);
+      const targetStart = targetH * 60 + targetM;
+      const targetEnd = targetStart + 60;
+
+      const recurringOnSameDay = await tx.scheduled_classes.findMany({
+        where: { branch_id, day_of_week: isoDay, is_active: true },
+        select: { start_time: true },
+      });
+
+      const hasRecurringConflict = recurringOnSameDay.some((cls) => {
+        const clsTime = formatTime(cls.start_time);
+        const [clsH, clsM] = clsTime.split(":").map(Number);
+        const clsStart = clsH * 60 + clsM;
+        const clsEnd = clsStart + 60;
+        return targetStart < clsEnd && targetEnd > clsStart;
+      });
+
+      if (hasRecurringConflict) {
+        return { id: null, error: ONE_TIME_CLASS_MESSAGES.OVERLAP };
+      }
+
+      const created = await tx.one_time_classes.create({
+        data: {
+          branch_id,
+          discipline_id,
+          teacher_id: teacher_id ?? null,
+          class_date: classDate,
+          start_time: new Date(`1970-01-01T${start_time}:00`),
+        },
+        select: { id: true },
+      });
+
+      return { id: created.id, error: null };
+    });
+
+    if (!result.success) return result;
+    if (result.data.id === null) {
+      return { success: false, error: result.data.error ?? COMMON_MESSAGES.UNEXPECTED_ERROR };
+    }
+
+    return { success: true, data: { id: result.data.id } };
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("one_time_classes_no_overlap")) {
+      return { success: false, error: ONE_TIME_CLASS_MESSAGES.OVERLAP };
+    }
+    return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
+  }
 }
 
 /**
@@ -441,6 +521,7 @@ export async function getSessionsForRange(
               suspension_category: null,
               suspension_reason: null,
               is_substitute: false,
+              is_one_time: false,
             });
           }
         }
@@ -479,7 +560,40 @@ export async function getSessionsForRange(
         }
       }
 
-      // 5. Sort by date + start_time
+      // 5. Fetch one-time classes in range and merge them in
+      const oneTimeClasses = await tx.one_time_classes.findMany({
+        where: {
+          branch_id,
+          class_date: { gte: new Date(start_date), lte: new Date(end_date) },
+          ...(discipline_ids && discipline_ids.length > 0
+            ? { discipline_id: { in: discipline_ids } }
+            : {}),
+        },
+        include: {
+          disciplines: { select: { id: true, name: true, code: true } },
+        },
+      });
+
+      for (const otc of oneTimeClasses) {
+        const timeStr = formatTime(otc.start_time);
+        sessions.push({
+          scheduled_class_id: otc.id,
+          session_date: otc.class_date.toISOString().split("T")[0],
+          discipline_id: otc.disciplines.id,
+          discipline_name: otc.disciplines.name,
+          discipline_code: otc.disciplines.code,
+          start_time: timeStr,
+          end_time: addOneHour(timeStr),
+          teacher_id: otc.teacher_id,
+          status: "scheduled",
+          suspension_category: null,
+          suspension_reason: null,
+          is_substitute: false,
+          is_one_time: true,
+        });
+      }
+
+      // 6. Sort by date + start_time
       sessions.sort((a, b) => {
         const dateCompare = a.session_date.localeCompare(b.session_date);
         if (dateCompare !== 0) return dateCompare;

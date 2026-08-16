@@ -8,6 +8,7 @@ import { CalendarHeader } from "@/components/calendar/calendar-header";
 import { CalendarMonthView } from "@/components/calendar/calendar-month-view";
 import { CalendarWeekView } from "@/components/calendar/calendar-week-view";
 import { ScheduledClassCreateDialog } from "@/components/classes/scheduled-class-create-dialog";
+import { OneTimeClassCreateDialog } from "@/components/classes/one-time-class-create-dialog";
 import { fetchRoleAssignments } from "@/lib/auth/server-roles";
 import { CALENDAR_MESSAGES } from "@/lib/localization/es-ec";
 
@@ -105,11 +106,18 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">{CALENDAR_MESSAGES.PAGE_TITLE}</h1>
         {canManage && (
-          <ScheduledClassCreateDialog
-            branchId={branchId}
-            disciplines={disciplines}
-            teachers={teachers}
-          />
+          <div className="flex gap-2">
+            <OneTimeClassCreateDialog
+              branchId={branchId}
+              disciplines={disciplines}
+              teachers={teachers}
+            />
+            <ScheduledClassCreateDialog
+              branchId={branchId}
+              disciplines={disciplines}
+              teachers={teachers}
+            />
+          </div>
         )}
       </div>
       <CalendarHeader
