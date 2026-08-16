@@ -49,34 +49,20 @@ export type RevokeBranchRoleInput = z.infer<typeof revokeBranchRoleSchema>;
 
 // --- Account creation schemas (owner-only, admin-of-branch-only) ---
 
-/** Owner creates a new Auth account and assigns it as branch admin. */
-export const createBranchAdminSchema = z.object({
-  email: z.email({ error: ROLE_MESSAGES.INVALID_EMAIL }),
-  branchId: z.string().uuid({ message: ROLE_MESSAGES.INVALID_BRANCH_ID }),
-});
+const PROFILE_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
-const TEACHER_PROFILE_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
-
-function isValidCalendarDateForTeacher(dateStr: string): boolean {
+function isValidCalendarDate(dateStr: string): boolean {
   const [yearStr, monthStr, dayStr] = dateStr.split("-");
   const year = Number(yearStr);
   const month = Number(monthStr);
   const day = Number(dayStr);
-  if (month < 1 || month > 12) return false;
-  if (day < 1) return false;
-  if (year < 1900 || year > 2100) return false;
-  const daysInMonth = new Date(year, month, 0).getDate();
-  return day <= daysInMonth;
+  if (month < 1 || month > 12 || day < 1 || year < 1900 || year > 2100) {
+    return false;
+  }
+  return day <= new Date(year, month, 0).getDate();
 }
 
-/**
- * Branch admin creates a new Auth account and assigns it as teacher in
- * their own branch, together with the teacher's identity profile — the
- * teacher is never treated as just an email address.
- */
-export const createBranchTeacherSchema = z.object({
-  email: z.email({ error: ROLE_MESSAGES.INVALID_EMAIL }),
-  branchId: z.string().uuid({ message: ROLE_MESSAGES.INVALID_BRANCH_ID }),
+const accountProfileSchema = z.object({
   first_name: z
     .string()
     .min(1, { error: ROLE_MESSAGES.FIRST_NAME_REQUIRED })
@@ -91,11 +77,30 @@ export const createBranchTeacherSchema = z.object({
     .optional(),
   date_of_birth: z
     .string()
-    .regex(TEACHER_PROFILE_DATE_PATTERN, { error: ROLE_MESSAGES.DATE_OF_BIRTH_FORMAT })
-    .refine(isValidCalendarDateForTeacher, {
+    .regex(PROFILE_DATE_PATTERN, { error: ROLE_MESSAGES.DATE_OF_BIRTH_FORMAT })
+    .refine(isValidCalendarDate, {
       error: ROLE_MESSAGES.INVALID_DATE_OF_BIRTH,
     }),
 });
+
+/** Owner creates a new Auth account, canonical profile, and branch admin role. */
+export const createBranchAdminSchema = z
+  .object({
+    email: z.email({ error: ROLE_MESSAGES.INVALID_EMAIL }),
+    branchId: z.string().uuid({ message: ROLE_MESSAGES.INVALID_BRANCH_ID }),
+  })
+  .extend(accountProfileSchema.shape);
+
+/**
+ * Branch admin creates a new Auth account and assigns it as teacher in
+ * their own branch, together with canonical identity and roster data.
+ */
+export const createBranchTeacherSchema = z
+  .object({
+    email: z.email({ error: ROLE_MESSAGES.INVALID_EMAIL }),
+    branchId: z.string().uuid({ message: ROLE_MESSAGES.INVALID_BRANCH_ID }),
+  })
+  .extend(accountProfileSchema.shape);
 
 /** List teacher accounts for a branch (for teacher-picker UI). */
 export const listBranchTeacherOptionsSchema = z.object({

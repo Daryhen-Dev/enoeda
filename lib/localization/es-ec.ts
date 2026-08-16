@@ -44,6 +44,8 @@ export const TOAST_MESSAGES = {
   STUDENT_DEACTIVATED: "Estudiante desactivado correctamente.",
   STUDENT_REACTIVATED: "Estudiante reactivado correctamente.",
   PASSWORD_CHANGED: "Contraseña actualizada correctamente.",
+  PROFILE_CREATED: "Perfil creado correctamente.",
+  PROFILE_UPDATED: "Perfil actualizado correctamente.",
   DISCIPLINE_CREATED: "Disciplina creada correctamente.",
   STUDENT_ENROLLED: "Estudiante inscripto correctamente.",
   ENROLLMENT_SUSPENDED: "Inscripción suspendida.",
@@ -79,6 +81,8 @@ export const DASHBOARD_SHELL_MESSAGES = {
   STAFF: "Personal",
   MANAGEMENT: "Administración",
   CALENDAR: "Calendario",
+  PROFILE: "Mi perfil",
+  PROFILE_NAME_UNAVAILABLE: "Perfil pendiente",
 } as const
 
 export const SIDEBAR_ACCESSIBILITY_MESSAGES = {
@@ -273,12 +277,13 @@ export const OWNER_MESSAGES = {
   ADMINS_EMPTY_DESCRIPTION: "Asigne un administrador a esta sucursal.",
   ASSIGN_ADMIN: "Asignar administrador",
   ASSIGN_ADMIN_TITLE: "Asignar administrador",
-  ASSIGN_ADMIN_DESCRIPTION: "Ingrese el UUID del usuario que será administrador de esta sucursal.",
+  ASSIGN_ADMIN_DESCRIPTION: "Cree una cuenta de administrador y complete sus datos personales.",
   REVOKE_ACTION: "Revocar",
   REVOKE_ADMIN_TITLE: "¿Revocar acceso de administrador?",
   REVOKE_ADMIN_DESCRIPTION: "El usuario perderá acceso de administrador a esta sucursal.",
   REVOKE_ERROR: "No se pudo revocar el acceso.",
-  USER_ID: "ID de usuario",
+  NAME: "Nombre",
+  PROFILE_UNAVAILABLE: "Perfil pendiente",
   ASSIGNED_AT: "Asignado",
   LOAD_FAILURE: "No se pudieron cargar los datos.",
   OVERVIEW_DESCRIPTION: "Resumen general de sucursales y administradores.",
@@ -341,7 +346,8 @@ export const TEACHER_MANAGEMENT_MESSAGES = {
   NO_BRANCH_CONTEXT: "No se encontró una sucursal asociada a su cuenta de administrador.",
   LOAD_FAILURE: "No se pudieron cargar los profesores.",
   EMPTY_STATE: "Sin profesores",
-  USER_ID_LABEL: "ID de usuario",
+  NAME_LABEL: "Nombre",
+  PROFILE_UNAVAILABLE: "Perfil pendiente",
   ASSIGNED_AT_LABEL: "Asignado",
   ACTIONS_LABEL: "Acciones",
   ASSIGN_ACTION: "Asignar profesor",
@@ -653,4 +659,14 @@ export const OVERDUE_MESSAGES = {
   PRICING_SECTION_DESCRIPTION: "Establezca el precio por clase individual de cada disciplina.",
   CURRENT_PRICE: "Precio actual",
   NO_PRICE: "Sin precio",
+} as const
+
+
+export const PROFILE_MESSAGES = {
+  PAGE_TITLE: "Mi perfil",
+  PAGE_DESCRIPTION: "Actualice sus datos personales.",
+  SETUP_DESCRIPTION: "Complete sus datos personales para continuar.",
+  COMPLETE_SETUP: "Completar perfil",
+  SAVING: "Guardando…",
+  LOAD_FAILURE: "No se pudo cargar su perfil. Inténtelo nuevamente.",
 } as const

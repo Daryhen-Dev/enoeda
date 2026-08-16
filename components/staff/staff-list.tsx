@@ -66,7 +66,7 @@ export function StaffList({ assignments, branchId }: StaffListProps) {
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>{TEACHER_MANAGEMENT_MESSAGES.USER_ID_LABEL}</TableHead>
+          <TableHead>{TEACHER_MANAGEMENT_MESSAGES.NAME_LABEL}</TableHead>
           <TableHead>{TEACHER_MANAGEMENT_MESSAGES.ASSIGNED_AT_LABEL}</TableHead>
           <TableHead>{TEACHER_MANAGEMENT_MESSAGES.ACTIONS_LABEL}</TableHead>
         </TableRow>
@@ -74,8 +74,8 @@ export function StaffList({ assignments, branchId }: StaffListProps) {
       <TableBody>
         {assignments.map((assignment) => (
           <TableRow key={assignment.user_id}>
-            <TableCell className="font-mono text-xs">
-              {assignment.user_id}
+            <TableCell>
+              {assignment.display_name ?? TEACHER_MANAGEMENT_MESSAGES.PROFILE_UNAVAILABLE}
             </TableCell>
             <TableCell>
               {formatDate(new Date(assignment.assigned_at))}
