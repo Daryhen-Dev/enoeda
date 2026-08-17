@@ -34,17 +34,30 @@ export default async function DashboardLayout({
 
   // Extract unique branch IDs from assignments for SiteHeader switcher
   // Layout does NOT resolve ?branch — pages handle that individually
-  const branches: { id: string; name: string }[] = (() => {
+  // Resolve actual branch names from DB (never show UUIDs)
+  const branches: { id: string; name: string }[] = await (async () => {
     if (!identityResult.ok) return []
     const seen = new Set<string>()
-    const result: { id: string; name: string }[] = []
+    const ids: string[] = []
     for (const a of identityResult.ctx.assignments) {
       if (a.branchId && !seen.has(a.branchId)) {
         seen.add(a.branchId)
-        result.push({ id: a.branchId, name: a.branchId })
+        ids.push(a.branchId)
       }
     }
-    return result
+    if (ids.length === 0) return []
+
+    const { listBranches } = await import("@/lib/domain/branches/actions")
+    const branchesResult = await listBranches()
+    if (!branchesResult.success || !branchesResult.data) {
+      return ids.map((id) => ({ id, name: id }))
+    }
+    const nameMap = new Map(
+      branchesResult.data
+        .filter((b) => b.is_active)
+        .map((b) => [b.id, b.name])
+    )
+    return ids.map((id) => ({ id, name: nameMap.get(id) ?? id }))
   })()
 
   return (

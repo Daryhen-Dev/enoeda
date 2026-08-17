@@ -17,8 +17,16 @@ const { mockGetAuthenticatedContext } = vi.hoisted(() => ({
   mockGetAuthenticatedContext: vi.fn(),
 }));
 
+const { mockWithAuthenticatedUser } = vi.hoisted(() => ({
+  mockWithAuthenticatedUser: vi.fn(),
+}));
+
 vi.mock("@/lib/auth/identity-resolver", () => ({
   getAuthenticatedContext: mockGetAuthenticatedContext,
+}));
+
+vi.mock("@/lib/auth/server-context", () => ({
+  withAuthenticatedUser: mockWithAuthenticatedUser,
 }));
 
 vi.mock("server-only", () => ({}));
@@ -32,6 +40,11 @@ const BRANCH_C = "cccccccc-1111-2222-3333-444444444444";
 describe("resolveBranchContext", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Default: branch name resolution returns names based on IDs
+    mockWithAuthenticatedUser.mockImplementation(async (fn: Function) => ({
+      success: true,
+      data: [],
+    }));
   });
 
   it("returns error when unauthenticated", async () => {
@@ -148,12 +161,23 @@ describe("resolveBranchContext", () => {
       },
     });
 
+    mockWithAuthenticatedUser.mockResolvedValue({
+      success: true,
+      data: [
+        { id: BRANCH_A, name: "Sucursal A" },
+        { id: BRANCH_B, name: "Sucursal B" },
+      ],
+    });
+
     const result = await resolveBranchContext(BRANCH_C);
     expect(result.type).toBe("selector");
     if (result.type === "selector") {
       expect(result.branches).toHaveLength(2);
       expect(result.branches.map((b) => b.id)).toContain(BRANCH_A);
       expect(result.branches.map((b) => b.id)).toContain(BRANCH_B);
+      // Names must be actual names, not UUIDs
+      expect(result.branches.map((b) => b.name)).toContain("Sucursal A");
+      expect(result.branches.map((b) => b.name)).toContain("Sucursal B");
     }
   });
 
@@ -168,6 +192,14 @@ describe("resolveBranchContext", () => {
           { role: "admin", branchId: BRANCH_B },
         ],
       },
+    });
+
+    mockWithAuthenticatedUser.mockResolvedValue({
+      success: true,
+      data: [
+        { id: BRANCH_A, name: "Centro" },
+        { id: BRANCH_B, name: "Norte" },
+      ],
     });
 
     const result = await resolveBranchContext(undefined);

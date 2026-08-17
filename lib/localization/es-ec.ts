@@ -96,6 +96,7 @@ export const DIALOG_ACCESSIBILITY_MESSAGES = {
 } as const
 
 export const DASHBOARD_OVERVIEW_MESSAGES = {
+  NO_BRANCH_CONTEXT: "No tiene una sucursal activa asignada. Contacte al administrador.",
   WELCOME: "Le damos la bienvenida a Enoeda Academy",
   WORKSPACE_READY: "Su espacio de gestión académica está listo.",
   DATA_UNAVAILABLE_ALERT:
@@ -125,6 +126,8 @@ export const DASHBOARD_OVERVIEW_MESSAGES = {
 } as const
 
 export const STUDENT_DIRECTORY_MESSAGES = {
+  PAGE_TITLE: "Estudiantes",
+  NO_BRANCH_CONTEXT: "No tiene una sucursal activa asignada. Contacte al administrador.",
   INITIAL_LOAD_FAILURE: "No se pudieron cargar los estudiantes. Inténtelo nuevamente.",
   LOAD_MORE_FAILURE: "No se pudieron cargar más estudiantes. Inténtelo nuevamente.",
   HEADING: "Estudiantes",
@@ -362,6 +365,10 @@ export const TEACHER_MANAGEMENT_MESSAGES = {
   REVOKE_CONFIRMATION_DESCRIPTION: "El usuario perderá acceso de profesor a esta sucursal.",
   REVOKE_ERROR: "No se pudo revocar el acceso.",
   REVOKING: "Revocando…",
+  SELF_ENABLE_ACTION: "También soy profesor",
+  SELF_ENABLE_ENABLING: "Activando…",
+  SELF_ENABLE_SUCCESS: "Ahora también es profesor en esta sucursal.",
+  SELF_ADMIN_ROLE_LABEL: "Administrador",
 } as const
 
 
@@ -650,6 +657,7 @@ export const PAYMENT_MESSAGES = {
 } as const
 
 export const OVERDUE_MESSAGES = {
+  NO_BRANCH_CONTEXT: "No tiene una sucursal activa asignada. Contacte al administrador.",
   CARD_TITLE: "Morosos",
   CARD_DESCRIPTION: "Estudiantes con pagos vencidos.",
   LIST_TITLE: "Estudiantes morosos",

@@ -32,6 +32,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { revokeBranchRole } from "@/lib/domain/roles/actions"
+import { enableSelfAsTeacher } from "@/lib/domain/roles/actions"
 import type { StaffAssignment } from "@/lib/domain/roles/actions"
 import {
   COMMON_MESSAGES,
@@ -43,13 +44,14 @@ import {
 interface StaffListProps {
   assignments: StaffAssignment[]
   branchId: string
+  canSelfEnable?: boolean
 }
 
 /**
  * Admin-scoped teacher list — shows teachers in the admin's own branch.
  */
-export function StaffList({ assignments, branchId }: StaffListProps) {
-  if (assignments.length === 0) {
+export function StaffList({ assignments, branchId, canSelfEnable }: StaffListProps) {
+  if (assignments.length === 0 && !canSelfEnable) {
     return (
       <Empty>
         <EmptyHeader>
@@ -63,33 +65,40 @@ export function StaffList({ assignments, branchId }: StaffListProps) {
   }
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>{TEACHER_MANAGEMENT_MESSAGES.NAME_LABEL}</TableHead>
-          <TableHead>{TEACHER_MANAGEMENT_MESSAGES.ASSIGNED_AT_LABEL}</TableHead>
-          <TableHead>{TEACHER_MANAGEMENT_MESSAGES.ACTIONS_LABEL}</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {assignments.map((assignment) => (
-          <TableRow key={assignment.user_id}>
-            <TableCell>
-              {assignment.display_name ?? TEACHER_MANAGEMENT_MESSAGES.PROFILE_UNAVAILABLE}
-            </TableCell>
-            <TableCell>
-              {formatDate(new Date(assignment.assigned_at))}
-            </TableCell>
-            <TableCell>
-              <RevokeTeacherDialog
-                userId={assignment.user_id}
-                branchId={branchId}
-              />
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+    <div className="flex flex-col gap-4">
+      {canSelfEnable && (
+        <SelfEnableTeacherButton branchId={branchId} />
+      )}
+      {assignments.length > 0 && (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>{TEACHER_MANAGEMENT_MESSAGES.NAME_LABEL}</TableHead>
+              <TableHead>{TEACHER_MANAGEMENT_MESSAGES.ASSIGNED_AT_LABEL}</TableHead>
+              <TableHead>{TEACHER_MANAGEMENT_MESSAGES.ACTIONS_LABEL}</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {assignments.map((assignment) => (
+              <TableRow key={assignment.user_id}>
+                <TableCell>
+                  {assignment.display_name ?? TEACHER_MANAGEMENT_MESSAGES.PROFILE_UNAVAILABLE}
+                </TableCell>
+                <TableCell>
+                  {formatDate(new Date(assignment.assigned_at))}
+                </TableCell>
+                <TableCell>
+                  <RevokeTeacherDialog
+                    userId={assignment.user_id}
+                    branchId={branchId}
+                  />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
+    </div>
   )
 }
 
@@ -159,5 +168,35 @@ function RevokeTeacherDialog({
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+  )
+}
+
+function SelfEnableTeacherButton({ branchId }: { branchId: string }) {
+  const router = useRouter()
+  const [isPending, startTransition] = useTransition()
+
+  function handleSelfEnable() {
+    startTransition(async () => {
+      const result = await enableSelfAsTeacher({ branchId })
+      if (result.success) {
+        toast.success(TEACHER_MANAGEMENT_MESSAGES.SELF_ENABLE_SUCCESS)
+        router.refresh()
+      } else {
+        toast.error(result.error ?? COMMON_MESSAGES.UNEXPECTED_ERROR)
+      }
+    })
+  }
+
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      disabled={isPending}
+      onClick={handleSelfEnable}
+    >
+      {isPending
+        ? TEACHER_MANAGEMENT_MESSAGES.SELF_ENABLE_ENABLING
+        : TEACHER_MANAGEMENT_MESSAGES.SELF_ENABLE_ACTION}
+    </Button>
   )
 }

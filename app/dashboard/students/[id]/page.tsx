@@ -1,7 +1,9 @@
-import { notFound } from "next/navigation"
-import { ArrowLeftIcon } from "lucide-react"
+import { notFound, redirect } from "next/navigation"
+import { AlertCircleIcon, ArrowLeftIcon } from "lucide-react"
 import Link from "next/link"
 
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { BranchSelector } from "@/components/branch/branch-selector"
 import { getStudentById } from "@/lib/domain/students/actions"
 import {
   getStudentDisciplines,
@@ -21,24 +23,71 @@ import { CreateNoteDialog } from "@/components/students/create-note-dialog"
 import { StudentPaymentHistory } from "@/components/payments/student-payment-history"
 import { RegisterMonthlyPaymentDialog } from "@/components/payments/register-monthly-payment-dialog"
 import { RegisterClassPaymentDialog } from "@/components/payments/register-class-payment-dialog"
-import { getAuthenticatedContext } from "@/lib/auth/server-context"
+import { resolveBranchContext } from "@/lib/auth/branch-context"
 import { Button } from "@/components/ui/button"
-import { ATTENDANCE_FORM_MESSAGES, PAYMENT_MESSAGES } from "@/lib/localization/es-ec"
+import {
+  ATTENDANCE_FORM_MESSAGES,
+  PAYMENT_MESSAGES,
+  STUDENT_DIRECTORY_MESSAGES,
+} from "@/lib/localization/es-ec"
 
 interface StudentDetailPageProps {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ branch?: string; [key: string]: string | undefined }>
 }
 
-export default async function StudentDetailPage({ params }: StudentDetailPageProps) {
+export default async function StudentDetailPage({
+  params,
+  searchParams,
+}: StudentDetailPageProps) {
   const { id } = await params
+  const search = await searchParams
 
-  const [studentResult, disciplinesResult, historyResult, authResult] =
-    await Promise.all([
-      getStudentById(id),
-      getStudentDisciplines({ student_id: id }),
-      getEnrollmentHistory({ student_id: id }),
-      getAuthenticatedContext(),
-    ])
+  // Page-level branch context resolution (never in layout)
+  const branchResult = await resolveBranchContext(search.branch)
+
+  if (branchResult.type === "error") {
+    return (
+      <main className="flex flex-col gap-6 p-4 md:p-6">
+        <Alert variant="destructive">
+          <AlertCircleIcon />
+          <AlertTitle>{STUDENT_DIRECTORY_MESSAGES.PAGE_TITLE}</AlertTitle>
+          <AlertDescription>
+            {STUDENT_DIRECTORY_MESSAGES.NO_BRANCH_CONTEXT}
+          </AlertDescription>
+        </Alert>
+      </main>
+    )
+  }
+
+  if (branchResult.type === "redirect") {
+    const redirectParams = new URLSearchParams()
+    for (const [key, value] of Object.entries(search)) {
+      if (key !== "branch" && value) redirectParams.set(key, value)
+    }
+    redirectParams.set("branch", branchResult.branchId)
+    redirect(`/dashboard/students/${id}?${redirectParams.toString()}`)
+  }
+
+  if (branchResult.type === "selector") {
+    const { branch: _, ...otherParams } = search
+    return (
+      <BranchSelector
+        branches={branchResult.branches}
+        currentPath={`/dashboard/students/${id}`}
+        currentParams={otherParams as Record<string, string>}
+      />
+    )
+  }
+
+  // Valid branch — proceed with scoped data
+  const canManage = branchResult.canManage
+
+  const [studentResult, disciplinesResult, historyResult] = await Promise.all([
+    getStudentById(id),
+    getStudentDisciplines({ student_id: id }),
+    getEnrollmentHistory({ student_id: id }),
+  ])
 
   if (!studentResult.success || !studentResult.data) {
     notFound()
@@ -51,11 +100,6 @@ export default async function StudentDetailPage({ params }: StudentDetailPagePro
       : []
   const history =
     historyResult.success && historyResult.data ? historyResult.data : []
-
-  // admin/owner can manage enrollments
-  const canManage =
-    authResult.ok &&
-    authResult.ctx.roles.some((r) => r === "owner" || r === "admin")
 
   // Fetch per-discipline attendance stats for active enrollments
   const activeEnrollments = enrollments.filter((e) => e.is_active)

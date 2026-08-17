@@ -15,6 +15,7 @@
 import "server-only";
 
 import { getAuthenticatedContext } from "@/lib/auth/identity-resolver";
+import { withAuthenticatedUser } from "@/lib/auth/server-context";
 import type { AppRoleAssignment } from "@/lib/auth/authorize";
 
 // --- Result types ---
@@ -96,9 +97,19 @@ export async function resolveBranchContext(
     };
   }
 
-  // No match → selector (branch names resolved later by caller or via DB)
+  // No match → selector (resolve actual branch names from DB)
+  const namesResult = await withAuthenticatedUser(async (tx) => {
+    return tx.branches.findMany({
+      where: { id: { in: branchIds }, is_active: true },
+      select: { id: true, name: true },
+    });
+  });
+
+  const branchNames = namesResult.success ? namesResult.data : [];
+  const nameMap = new Map(branchNames.map((b) => [b.id, b.name]));
+
   return {
     type: "selector",
-    branches: branchIds.map((id) => ({ id, name: id })),
+    branches: branchIds.map((id) => ({ id, name: nameMap.get(id) ?? id })),
   };
 }

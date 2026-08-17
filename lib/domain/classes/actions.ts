@@ -132,8 +132,8 @@ async function detectTeacherConflicts(
   teacherId: string,
   isoDay: number,
   startTime: string,
-  excludeClassId?: string,
-  branchId?: string
+  excludeClassId: string | undefined,
+  branchId: string
 ): Promise<ConflictingAssignment[]> {
   const conflicts: ConflictingAssignment[] = [];
 
@@ -142,14 +142,14 @@ async function detectTeacherConflicts(
   const targetStart = targetH * 60 + targetM;
   const targetEnd = targetStart + 60; // 1 hour
 
-  // Check recurring scheduled_classes (scoped to branch when provided)
+  // Check recurring scheduled_classes (scoped to branch)
   const recurringConflicts = await tx.scheduled_classes.findMany({
     where: {
       default_teacher_id: teacherId,
       day_of_week: isoDay,
       is_active: true,
       ...(excludeClassId ? { id: { not: excludeClassId } } : {}),
-      ...(branchId ? { branch_id: branchId } : {}),
+      branch_id: branchId,
     },
     include: {
       branches: { select: { name: true } },
@@ -176,7 +176,7 @@ async function detectTeacherConflicts(
     }
   }
 
-  // Check session-level overrides (scoped to branch when provided)
+  // Check session-level overrides (scoped to branch)
   const sessionConflicts = await tx.class_sessions.findMany({
     where: {
       assigned_teacher_id: teacherId,
@@ -185,7 +185,7 @@ async function detectTeacherConflicts(
         day_of_week: isoDay,
         is_active: true,
         ...(excludeClassId ? { id: { not: excludeClassId } } : {}),
-        ...(branchId ? { branch_id: branchId } : {}),
+        branch_id: branchId,
       },
     },
     include: {

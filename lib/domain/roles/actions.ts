@@ -303,15 +303,23 @@ export async function createBranchTeacher(
 /**
  * List staff assignments authorized by user_roles RLS, then resolve canonical
  * display names through the service client. Missing profiles remain unnamed.
+ * Scoped to a specific branch when branchId is provided.
  */
-export async function listBranchStaff(): Promise<ActionResult<StaffAssignment[]>> {
+export async function listBranchStaff(
+  options?: { branchId?: string }
+): Promise<ActionResult<StaffAssignment[]>> {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from("user_roles")
     .select("user_id, role, branch_id, assigned_at")
     .is("revoked_at", null)
-    .neq("role", "owner")
-    .order("assigned_at", { ascending: false });
+    .neq("role", "owner");
+
+  if (options?.branchId) {
+    query = query.eq("branch_id", options.branchId);
+  }
+
+  const { data, error } = await query.order("assigned_at", { ascending: false });
 
   if (error) {
     return {

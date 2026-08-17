@@ -1,19 +1,67 @@
+import { redirect } from "next/navigation"
 import Link from "next/link"
-import { BuildingIcon, UsersIcon, AlertTriangleIcon } from "lucide-react"
+import { AlertCircleIcon, BuildingIcon, UsersIcon, AlertTriangleIcon } from "lucide-react"
 
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import {
   Card,
   CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { BranchSelector } from "@/components/branch/branch-selector"
 import { getDashboardKpis } from "@/lib/domain/dashboard"
+import { resolveBranchContext } from "@/lib/auth/branch-context"
 import {
   DASHBOARD_OVERVIEW_MESSAGES,
   formatNumber,
 } from "@/lib/localization/es-ec"
 
-export default async function DashboardOverview() {
+interface DashboardOverviewProps {
+  searchParams: Promise<{ branch?: string; [key: string]: string | undefined }>
+}
+
+export default async function DashboardOverview({ searchParams }: DashboardOverviewProps) {
+  const params = await searchParams
+
+  // Page-level branch context resolution (never in layout)
+  const branchResult = await resolveBranchContext(params.branch)
+
+  if (branchResult.type === "error") {
+    return (
+      <div className="flex flex-col gap-4 p-4 md:gap-6 md:p-6">
+        <Alert variant="destructive">
+          <AlertCircleIcon />
+          <AlertTitle>{DASHBOARD_OVERVIEW_MESSAGES.WELCOME}</AlertTitle>
+          <AlertDescription>
+            {DASHBOARD_OVERVIEW_MESSAGES.NO_BRANCH_CONTEXT}
+          </AlertDescription>
+        </Alert>
+      </div>
+    )
+  }
+
+  if (branchResult.type === "redirect") {
+    const redirectParams = new URLSearchParams()
+    for (const [key, value] of Object.entries(params)) {
+      if (key !== "branch" && value) redirectParams.set(key, value)
+    }
+    redirectParams.set("branch", branchResult.branchId)
+    redirect(`/dashboard?${redirectParams.toString()}`)
+  }
+
+  if (branchResult.type === "selector") {
+    const { branch: _, ...otherParams } = params
+    return (
+      <BranchSelector
+        branches={branchResult.branches}
+        currentPath="/dashboard"
+        currentParams={otherParams as Record<string, string>}
+      />
+    )
+  }
+
+  // Valid branch — proceed with KPI data
   const result = await getDashboardKpis()
   const dashboard = result.success && result.data !== undefined ? result.data : null
   const branchCountLabel =

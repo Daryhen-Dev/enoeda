@@ -1,7 +1,6 @@
 "use client"
 
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
-import { useCallback } from "react"
 import { BuildingIcon, ChevronDownIcon } from "lucide-react"
 
 import { Separator } from "@/components/ui/separator"
@@ -28,36 +27,31 @@ export function SiteHeader({
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
-  const handleBranchChange = useCallback(
-    (branchId: string) => {
-      const params = new URLSearchParams(searchParams.toString())
-      params.set("branch", branchId)
-      router.replace(`${pathname}?${params.toString()}`)
-    },
-    [router, pathname, searchParams]
-  )
+  const handleBranchChange = (branchId: string) => {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set("branch", branchId)
+    router.replace(`${pathname}?${params.toString()}`)
+  }
 
   const currentBranch = branches?.find((b) => b.id === currentBranchId)
   const showSwitcher = branches && branches.length > 1
 
   return (
     <header className="flex h-(--header-height) shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
-      <div className="flex w-full items-center gap-1 px-4 lg:gap-2 lg:px-6">
-        <SidebarTrigger className="-ml-1" />
-        <Separator
-          orientation="vertical"
-          className="mx-2 h-4 data-vertical:self-auto"
-        />
-        <h1 className="text-base font-medium">
-          {DASHBOARD_SHELL_MESSAGES.OVERVIEW}
-        </h1>
+      <div className="flex w-full flex-col gap-1 px-4 sm:flex-row sm:items-center sm:gap-2 lg:px-6">
+        <div className="flex min-w-0 items-center gap-1 lg:gap-2">
+          <SidebarTrigger className="-ml-1" />
+          <Separator
+            orientation="vertical"
+            className="mx-2 h-4 data-vertical:self-auto"
+          />
+          <h1 className="truncate text-base font-medium">
+            {DASHBOARD_SHELL_MESSAGES.OVERVIEW}
+          </h1>
+        </div>
 
-        {showSwitcher && (
-          <>
-            <Separator
-              orientation="vertical"
-              className="mx-2 h-4 data-vertical:self-auto"
-            />
+        <div className="flex min-w-0 flex-wrap items-center gap-1 sm:ml-auto sm:gap-2">
+          {showSwitcher && (
             <div className="relative">
               <label htmlFor="branch-switcher" className="sr-only">
                 Cambiar sucursal
@@ -67,7 +61,7 @@ export function SiteHeader({
                 value={currentBranchId ?? ""}
                 onChange={(e) => handleBranchChange(e.target.value)}
                 aria-label="Sucursal activa"
-                className="appearance-none rounded-md border bg-background py-1 pl-8 pr-7 text-sm font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="appearance-none truncate rounded-md border bg-background py-1 pl-8 pr-7 text-sm font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 {branches.map((branch) => (
                   <option key={branch.id} value={branch.id}>
@@ -84,25 +78,19 @@ export function SiteHeader({
                 aria-hidden="true"
               />
             </div>
-          </>
-        )}
+          )}
 
-        {!showSwitcher && currentBranch && (
-          <>
-            <Separator
-              orientation="vertical"
-              className="mx-2 h-4 data-vertical:self-auto"
-            />
-            <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
-              <BuildingIcon className="size-3.5" aria-hidden="true" />
-              {currentBranch.name}
+          {!showSwitcher && currentBranch && (
+            <span className="flex items-center gap-1.5 truncate text-sm text-muted-foreground">
+              <BuildingIcon className="size-3.5 shrink-0" aria-hidden="true" />
+              <span className="truncate">{currentBranch.name}</span>
             </span>
-          </>
-        )}
+          )}
 
-        <span className="ml-auto text-sm text-muted-foreground">
-          {displayName}
-        </span>
+          <span className="truncate text-sm text-muted-foreground">
+            {displayName}
+          </span>
+        </div>
       </div>
     </header>
   )

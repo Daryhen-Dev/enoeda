@@ -50,12 +50,21 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
   }
 
   const branchId = branchResult.branchId
-  const result = await listBranchStaff()
+  const result = await listBranchStaff({ branchId })
 
-  // Filter to only teachers in this admin's branch
+  // Staff entries already filtered by branch in query
   const teachers = (result.success ? result.data ?? [] : []).filter(
-    (a) => a.branch_id === branchId && a.role === "teacher"
+    (a) => a.role === "teacher"
   )
+
+  // Get current user ID for self-enable feature
+  const { getAuthenticatedContext } = await import("@/lib/auth/identity-resolver")
+  const identity = await getAuthenticatedContext()
+  const currentUserId = identity.ok ? identity.ctx.userId : undefined
+  // Check if current admin already has a teacher role in this branch
+  const isAlreadyTeacher = identity.ok
+    ? teachers.some((t) => t.user_id === currentUserId)
+    : true
 
   return (
     <div className="flex flex-col gap-4 p-4 md:gap-6 md:p-6">
@@ -85,7 +94,11 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
           </AlertDescription>
         </Alert>
       ) : (
-        <StaffList assignments={teachers} branchId={branchId} />
+        <StaffList
+          assignments={teachers}
+          branchId={branchId}
+          canSelfEnable={branchResult.canManage && !isAlreadyTeacher}
+        />
       )}
     </div>
   )
