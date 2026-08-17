@@ -9,11 +9,14 @@ import { CalendarMonthView } from "@/components/calendar/calendar-month-view";
 import { CalendarWeekView } from "@/components/calendar/calendar-week-view";
 import { ScheduledClassCreateDialog } from "@/components/classes/scheduled-class-create-dialog";
 import { OneTimeClassCreateDialog } from "@/components/classes/one-time-class-create-dialog";
-import { fetchRoleAssignments } from "@/lib/auth/server-roles";
+import { BranchSelector } from "@/components/branch/branch-selector";
+import { resolveBranchContext } from "@/lib/auth/branch-context";
 import { CALENDAR_MESSAGES } from "@/lib/localization/es-ec";
+import { redirect } from "next/navigation";
 
 interface CalendarPageProps {
   searchParams: Promise<{
+    branch?: string;
     disciplines?: string;
     view?: string;
     date?: string;
@@ -21,15 +24,12 @@ interface CalendarPageProps {
 }
 
 export default async function CalendarPage({ searchParams }: CalendarPageProps) {
-  // Resolve the caller's own branch from their role assignments — owner
-  // sees the first branch they administer/teach; admin/teacher are scoped
-  // to their single branch assignment (mirrors app/dashboard/staff/page.tsx).
-  const assignments = await fetchRoleAssignments();
-  const branchAssignment = assignments.find(
-    (a) => a.role === "admin" || a.role === "teacher"
-  );
+  const params = await searchParams;
 
-  if (!branchAssignment || !branchAssignment.branchId) {
+  // Page-level branch context resolution (never in layout)
+  const branchResult = await resolveBranchContext(params.branch);
+
+  if (branchResult.type === "error") {
     return (
       <div className="flex flex-1 flex-col gap-4 p-4">
         <Alert variant="destructive">
@@ -43,10 +43,25 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
     );
   }
 
-  const branchId = branchAssignment.branchId;
-  const canManage = branchAssignment.role === "admin";
+  if (branchResult.type === "redirect") {
+    const redirectParams = new URLSearchParams(params as Record<string, string>);
+    redirectParams.set("branch", branchResult.branchId);
+    redirect(`/dashboard/calendar?${redirectParams.toString()}`);
+  }
 
-  const params = await searchParams;
+  if (branchResult.type === "selector") {
+    const { branch: _, ...otherParams } = params;
+    return (
+      <BranchSelector
+        branches={branchResult.branches}
+        currentPath="/dashboard/calendar"
+        currentParams={otherParams as Record<string, string>}
+      />
+    );
+  }
+
+  const branchId = branchResult.branchId;
+  const canManage = branchResult.canManage;
   const view = params.view === "week" ? "week" : "month";
   const today = new Date();
   const baseDate = params.date ? new Date(params.date) : today;

@@ -1,23 +1,27 @@
 import { AlertCircleIcon, UsersIcon } from "lucide-react"
+import { redirect } from "next/navigation"
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { StaffList } from "@/components/staff/staff-list"
 import { GrantRoleDialog } from "@/components/staff/grant-role-dialog"
+import { BranchSelector } from "@/components/branch/branch-selector"
 import { listBranchStaff } from "@/lib/domain/roles/actions"
-import { fetchRoleAssignments } from "@/lib/auth/server-roles"
+import { resolveBranchContext } from "@/lib/auth/branch-context"
 import { TEACHER_MANAGEMENT_MESSAGES } from "@/lib/localization/es-ec"
+
+interface StaffPageProps {
+  searchParams: Promise<{ branch?: string }>
+}
 
 /**
  * Admin-scoped teacher management page.
- * Shows teachers assigned to the admin's own branch and allows the admin
- * to assign/revoke teacher roles within that branch.
+ * Shows teachers assigned to the admin's branch via validated context.
  */
-export default async function StaffPage() {
-  // Resolve the admin's own branch from their role assignments
-  const assignments = await fetchRoleAssignments()
-  const adminAssignment = assignments.find((a) => a.role === "admin")
+export default async function StaffPage({ searchParams }: StaffPageProps) {
+  const params = await searchParams
+  const branchResult = await resolveBranchContext(params.branch)
 
-  if (!adminAssignment || !adminAssignment.branchId) {
+  if (branchResult.type === "error") {
     return (
       <div className="flex flex-col gap-4 p-4 md:gap-6 md:p-6">
         <Alert variant="destructive">
@@ -31,7 +35,21 @@ export default async function StaffPage() {
     )
   }
 
-  const branchId = adminAssignment.branchId
+  if (branchResult.type === "redirect") {
+    redirect(`/dashboard/staff?branch=${branchResult.branchId}`)
+  }
+
+  if (branchResult.type === "selector") {
+    return (
+      <BranchSelector
+        branches={branchResult.branches}
+        currentPath="/dashboard/staff"
+        currentParams={{}}
+      />
+    )
+  }
+
+  const branchId = branchResult.branchId
   const result = await listBranchStaff()
 
   // Filter to only teachers in this admin's branch
@@ -55,7 +73,7 @@ export default async function StaffPage() {
             </p>
           </div>
         </div>
-        <GrantRoleDialog branchId={branchId} />
+        {branchResult.canManage && <GrantRoleDialog branchId={branchId} />}
       </div>
 
       {!result.success ? (

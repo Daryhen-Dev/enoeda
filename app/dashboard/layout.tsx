@@ -5,6 +5,7 @@ import { SiteHeader } from "@/components/site-header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { fetchCurrentRoles } from "@/lib/auth/server-roles"
+import { getAuthenticatedContext } from "@/lib/auth/identity-resolver"
 import { getOwnProfile } from "@/lib/domain/profile"
 import { DASHBOARD_SHELL_MESSAGES } from "@/lib/localization/es-ec"
 
@@ -18,9 +19,10 @@ export default async function DashboardLayout({
 }: {
   children: ReactNode
 }) {
-  const [roles, profileResult] = await Promise.all([
+  const [roles, profileResult, identityResult] = await Promise.all([
     fetchCurrentRoles(),
     getOwnProfile(),
+    getAuthenticatedContext(),
   ])
   const isAdmin = roles.includes("admin")
   const canManageProfile = roles.includes("admin") || roles.includes("teacher")
@@ -29,6 +31,21 @@ export default async function DashboardLayout({
       ? `${profileResult.data.first_name} ${profileResult.data.surname}`.trim() ||
         DASHBOARD_SHELL_MESSAGES.PROFILE_NAME_UNAVAILABLE
       : DASHBOARD_SHELL_MESSAGES.PROFILE_NAME_UNAVAILABLE
+
+  // Extract unique branch IDs from assignments for SiteHeader switcher
+  // Layout does NOT resolve ?branch — pages handle that individually
+  const branches: { id: string; name: string }[] = (() => {
+    if (!identityResult.ok) return []
+    const seen = new Set<string>()
+    const result: { id: string; name: string }[] = []
+    for (const a of identityResult.ctx.assignments) {
+      if (a.branchId && !seen.has(a.branchId)) {
+        seen.add(a.branchId)
+        result.push({ id: a.branchId, name: a.branchId })
+      }
+    }
+    return result
+  })()
 
   return (
     <TooltipProvider>
@@ -40,8 +57,8 @@ export default async function DashboardLayout({
         />
         <SidebarInset>
           <SiteHeader
-            canManageProfile={canManageProfile}
             displayName={displayName}
+            branches={branches}
           />
           <div className="flex flex-1 flex-col">
             <div className="@container/main flex flex-1 flex-col gap-2">
