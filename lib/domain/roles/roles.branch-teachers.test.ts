@@ -67,7 +67,7 @@ describe("listBranchTeacherOptions (user_roles source)", () => {
     });
 
     // Mock withAuthenticatedUser to return user_roles data
-    mockWithAuthenticatedUser.mockImplementation(async (fn: any) => {
+    mockWithAuthenticatedUser.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
       const mockTx = {
         user_roles: {
           findMany: vi.fn().mockResolvedValue([
