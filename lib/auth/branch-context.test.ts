@@ -40,11 +40,26 @@ const BRANCH_C = "cccccccc-1111-2222-3333-444444444444";
 describe("resolveBranchContext", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // Default: branch name resolution returns names based on IDs
-    mockWithAuthenticatedUser.mockImplementation(async (fn: Function) => ({
-      success: true,
-      data: [],
-    }));
+    // Default: simulate DB returning active branches. The resolver calls
+    // withAuthenticatedUser passing a callback fn(tx). We execute that
+    // callback with a mock tx that filters branches by the 'in' clause.
+    const allBranches = [
+      { id: BRANCH_A, name: "Sucursal A" },
+      { id: BRANCH_B, name: "Sucursal B" },
+      { id: BRANCH_C, name: "Sucursal C" },
+    ];
+    mockWithAuthenticatedUser.mockImplementation(async (fn: Function) => {
+      const mockTx = {
+        branches: {
+          findMany: ({ where }: { where: { id: { in: string[] }; is_active: boolean } }) => {
+            const ids = where.id.in;
+            return allBranches.filter((b) => ids.includes(b.id));
+          },
+        },
+      };
+      const data = await fn(mockTx);
+      return { success: true, data };
+    });
   });
 
   it("returns error when unauthenticated", async () => {
@@ -161,14 +176,6 @@ describe("resolveBranchContext", () => {
       },
     });
 
-    mockWithAuthenticatedUser.mockResolvedValue({
-      success: true,
-      data: [
-        { id: BRANCH_A, name: "Sucursal A" },
-        { id: BRANCH_B, name: "Sucursal B" },
-      ],
-    });
-
     const result = await resolveBranchContext(BRANCH_C);
     expect(result.type).toBe("selector");
     if (result.type === "selector") {
@@ -192,14 +199,6 @@ describe("resolveBranchContext", () => {
           { role: "admin", branchId: BRANCH_B },
         ],
       },
-    });
-
-    mockWithAuthenticatedUser.mockResolvedValue({
-      success: true,
-      data: [
-        { id: BRANCH_A, name: "Centro" },
-        { id: BRANCH_B, name: "Norte" },
-      ],
     });
 
     const result = await resolveBranchContext(undefined);
@@ -264,5 +263,103 @@ describe("resolveBranchContext", () => {
       branchId: BRANCH_B,
       canManage: false,
     });
+  });
+
+  // --- Correction B: exclude owner/null-role assignments ---
+
+  it("excludes owner assignments from selectable branches", async () => {
+    mockGetAuthenticatedContext.mockResolvedValue({
+      ok: true,
+      ctx: {
+        userId: "user-1",
+        roles: ["owner", "admin"],
+        assignments: [
+          { role: "owner", branchId: null },
+          { role: "admin", branchId: BRANCH_A },
+        ],
+      },
+    });
+
+    // Owner with null branch + admin with BRANCH_A → single active branch → redirect
+    const result = await resolveBranchContext(undefined);
+    expect(result).toEqual({ type: "redirect", branchId: BRANCH_A });
+  });
+
+  it("excludes assignments with roles other than admin/teacher", async () => {
+    mockGetAuthenticatedContext.mockResolvedValue({
+      ok: true,
+      ctx: {
+        userId: "user-1",
+        roles: ["owner"],
+        assignments: [
+          { role: "owner", branchId: BRANCH_A },
+        ],
+      },
+    });
+
+    // Only owner assignments → 0 selectable branches → error
+    const result = await resolveBranchContext(undefined);
+    expect(result).toEqual({ type: "error" });
+  });
+
+  it("does not fall back to UUID for branch names in selector", async () => {
+    mockGetAuthenticatedContext.mockResolvedValue({
+      ok: true,
+      ctx: {
+        userId: "user-1",
+        roles: ["admin"],
+        assignments: [
+          { role: "admin", branchId: BRANCH_A },
+          { role: "admin", branchId: BRANCH_B },
+        ],
+      },
+    });
+
+    // Override mock: BRANCH_B is inactive (not in DB results)
+    mockWithAuthenticatedUser.mockImplementation(async (fn: Function) => {
+      const mockTx = {
+        branches: {
+          findMany: () => [{ id: BRANCH_A, name: "Sucursal A" }],
+        },
+      };
+      const data = await fn(mockTx);
+      return { success: true, data };
+    });
+
+    const result = await resolveBranchContext(undefined);
+    // Only 1 active branch → redirect (not selector)
+    expect(result.type).toBe("redirect");
+    if (result.type === "redirect") {
+      expect(result.branchId).toBe(BRANCH_A);
+    }
+  });
+
+  it("excludes inactive branches from valid/redirect outcomes", async () => {
+    mockGetAuthenticatedContext.mockResolvedValue({
+      ok: true,
+      ctx: {
+        userId: "user-1",
+        roles: ["admin"],
+        assignments: [
+          { role: "admin", branchId: BRANCH_A },
+          { role: "admin", branchId: BRANCH_B },
+        ],
+      },
+    });
+
+    // Override mock: BRANCH_B is inactive (not in DB results)
+    mockWithAuthenticatedUser.mockImplementation(async (fn: Function) => {
+      const mockTx = {
+        branches: {
+          findMany: () => [{ id: BRANCH_A, name: "Sucursal A" }],
+        },
+      };
+      const data = await fn(mockTx);
+      return { success: true, data };
+    });
+
+    // Attempting to validate BRANCH_B (inactive) should NOT be valid
+    const result = await resolveBranchContext(BRANCH_B);
+    expect(result.type).not.toBe("valid");
   });
 });

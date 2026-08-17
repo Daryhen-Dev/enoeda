@@ -28,11 +28,19 @@ export type BranchContextResult =
 
 // --- Helpers ---
 
-/** Extract unique branch IDs from assignments (null branch_id excluded). */
-function uniqueBranchIds(assignments: AppRoleAssignment[]): string[] {
+/** Roles that qualify for operational branch context. */
+const OPERATIONAL_ROLES: Set<string> = new Set(["admin", "teacher"]);
+
+/**
+ * Extract unique branch IDs from assignments that have an operational role
+ * (admin or teacher) and a non-null branchId. Owner and other roles are excluded.
+ */
+function uniqueOperationalBranchIds(assignments: AppRoleAssignment[]): string[] {
   const ids = new Set<string>();
   for (const a of assignments) {
-    if (a.branchId) ids.add(a.branchId);
+    if (a.branchId && OPERATIONAL_ROLES.has(a.role)) {
+      ids.add(a.branchId);
+    }
   }
   return [...ids];
 }
@@ -54,9 +62,11 @@ function hasAdminForBranch(
  * authenticated user's role assignments.
  *
  * Logic:
- * - 0 unique branches → error
- * - 1 unique branch → match param → valid; else → redirect
- * - N>1 unique branches → match param → valid; else → selector
+ * - Only admin/teacher assignments are considered (owner excluded)
+ * - 0 unique operational branches → error
+ * - 1 unique branch → validate active → match param → valid; else → redirect
+ * - N>1 unique branches → validate active → match param → valid; else → selector
+ * - Inactive branches are excluded; no UUID fallback for display names
  */
 export async function resolveBranchContext(
   branchParam: string | undefined
@@ -68,16 +78,33 @@ export async function resolveBranchContext(
   }
 
   const { assignments } = identity.ctx;
-  const branchIds = uniqueBranchIds(assignments);
+  const branchIds = uniqueOperationalBranchIds(assignments);
 
-  // 0 branches (e.g. owner-only with null branch_id)
+  // 0 operational branches (e.g. owner-only with null branch_id)
   if (branchIds.length === 0) {
     return { type: "error" };
   }
 
-  // 1 branch
-  if (branchIds.length === 1) {
-    const singleBranch = branchIds[0];
+  // Validate branches are active in DB (fetch names at the same time)
+  const namesResult = await withAuthenticatedUser(async (tx) => {
+    return tx.branches.findMany({
+      where: { id: { in: branchIds }, is_active: true },
+      select: { id: true, name: true },
+    });
+  });
+
+  const activeBranches = namesResult.success ? namesResult.data : [];
+
+  // No active branches found
+  if (activeBranches.length === 0) {
+    return { type: "error" };
+  }
+
+  const activeBranchIds = activeBranches.map((b) => b.id);
+
+  // 1 active branch
+  if (activeBranchIds.length === 1) {
+    const singleBranch = activeBranchIds[0];
     if (branchParam === singleBranch) {
       return {
         type: "valid",
@@ -88,8 +115,8 @@ export async function resolveBranchContext(
     return { type: "redirect", branchId: singleBranch };
   }
 
-  // N>1 branches
-  if (branchParam && branchIds.includes(branchParam)) {
+  // N>1 active branches — check param match
+  if (branchParam && activeBranchIds.includes(branchParam)) {
     return {
       type: "valid",
       branchId: branchParam,
@@ -97,19 +124,9 @@ export async function resolveBranchContext(
     };
   }
 
-  // No match → selector (resolve actual branch names from DB)
-  const namesResult = await withAuthenticatedUser(async (tx) => {
-    return tx.branches.findMany({
-      where: { id: { in: branchIds }, is_active: true },
-      select: { id: true, name: true },
-    });
-  });
-
-  const branchNames = namesResult.success ? namesResult.data : [];
-  const nameMap = new Map(branchNames.map((b) => [b.id, b.name]));
-
+  // No match → selector (only active branches with real names, never UUID fallback)
   return {
     type: "selector",
-    branches: branchIds.map((id) => ({ id, name: nameMap.get(id) ?? id })),
+    branches: activeBranches.map((b) => ({ id: b.id, name: b.name })),
   };
 }
