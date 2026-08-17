@@ -10,10 +10,11 @@ export interface OverdueStudentRow {
 /**
  * Count distinct students who are overdue (next_due_date < today).
  * Pure tx-scoped query — reusable from dashboard and payments actions.
- * Branch scoping is enforced by RLS on the transaction.
+ * Branch scoping is enforced both by RLS and the explicit branchId filter.
  */
 export async function countOverdueStudents(
-  tx: TransactionClient
+  tx: TransactionClient,
+  branchId: string
 ): Promise<number> {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -22,6 +23,7 @@ export async function countOverdueStudents(
     where: {
       is_active: true,
       next_due_date: { lt: today },
+      students: { branch_id: branchId },
     },
     select: { student_id: true },
     distinct: ["student_id"],
@@ -32,10 +34,11 @@ export async function countOverdueStudents(
 
 /**
  * List students who are overdue with discipline and date details.
- * Branch scoping is enforced by RLS on the transaction.
+ * Branch scoping is enforced both by RLS and the explicit branchId filter.
  */
 export async function listOverdueStudents(
-  tx: TransactionClient
+  tx: TransactionClient,
+  branchId: string
 ): Promise<OverdueStudentRow[]> {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -44,6 +47,7 @@ export async function listOverdueStudents(
     where: {
       is_active: true,
       next_due_date: { lt: today },
+      students: { branch_id: branchId },
     },
     select: {
       students: { select: { id: true, first_name: true, surname: true } },

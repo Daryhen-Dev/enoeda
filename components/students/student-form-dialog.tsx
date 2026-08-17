@@ -69,6 +69,7 @@ interface StudentFormDialogProps {
   disciplines?: DisciplineOption[]
   studentId?: string
   lockedBranchId?: string
+  onCreated?: () => void
 }
 
 function getTodayString(): string {
@@ -109,6 +110,7 @@ export function StudentFormDialog({
   disciplines = [],
   studentId,
   lockedBranchId,
+  onCreated,
 }: StudentFormDialogProps) {
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
@@ -224,6 +226,7 @@ export function StudentFormDialog({
           }
         }
         toast.success(TOAST_MESSAGES.STUDENT_CREATED)
+        onCreated?.()
       }
 
       form.reset(getDefaultValues())

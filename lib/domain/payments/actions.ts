@@ -312,11 +312,14 @@ export async function getStudentPayments(
 
 /**
  * Get count of overdue students for the current branch context.
+ * Requires validated branchId — callers must resolve context at page level.
  */
-export async function getOverdueStudentCount(): Promise<ActionResult<number>> {
+export async function getOverdueStudentCount(
+  branchId: string
+): Promise<ActionResult<number>> {
   try {
     const result = await withAuthenticatedUser(async (tx) => {
-      return countOverdueStudents(tx);
+      return countOverdueStudents(tx, branchId);
     });
 
     if (!result.success) return result;
@@ -328,11 +331,14 @@ export async function getOverdueStudentCount(): Promise<ActionResult<number>> {
 
 /**
  * Get list of overdue students with details.
+ * Requires validated branchId — callers must resolve context at page level.
  */
-export async function getOverdueStudents(): Promise<ActionResult<OverdueStudentRow[]>> {
+export async function getOverdueStudents(
+  branchId: string
+): Promise<ActionResult<OverdueStudentRow[]>> {
   try {
     const result = await withAuthenticatedUser(async (tx) => {
-      return listOverdueStudents(tx);
+      return listOverdueStudents(tx, branchId);
     });
 
     if (!result.success) return result;

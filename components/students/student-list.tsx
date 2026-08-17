@@ -39,7 +39,12 @@ import {
 type StudentStatus = StudentListInput["status"]
 type StudentSummary = Pick<
   StudentListItem,
-  "id" | "first_name" | "surname" | "branch_id"
+  | "id"
+  | "first_name"
+  | "surname"
+  | "branch_id"
+  | "branch_name"
+  | "active_discipline_names"
 >
 
 interface StudentListProps {
@@ -120,6 +125,26 @@ export function StudentList({
     })
   }
 
+  function reloadActiveStudents() {
+    startTransition(async () => {
+      try {
+        const result = await listStudents({ status: "active" })
+        const page = result.data
+
+        if (!result.success || page === undefined) {
+          setActiveError(STUDENT_DIRECTORY_MESSAGES.INITIAL_LOAD_FAILURE)
+          return
+        }
+
+        setActiveItems(page.items)
+        setActiveNextCursor(page.next_cursor)
+        setActiveError(null)
+      } catch {
+        setActiveError(STUDENT_DIRECTORY_MESSAGES.INITIAL_LOAD_FAILURE)
+      }
+    })
+  }
+
   return (
     <section aria-labelledby="students-heading" className="flex flex-col gap-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -133,7 +158,14 @@ export function StudentList({
               : STUDENT_DIRECTORY_MESSAGES.INACTIVE_ACCOUNT_DESCRIPTION}
           </p>
         </div>
-        {isActiveTab && <StudentFormDialog branches={branches} disciplines={disciplines} lockedBranchId={lockedBranchId} />}
+        {isActiveTab && (
+          <StudentFormDialog
+            branches={branches}
+            disciplines={disciplines}
+            lockedBranchId={lockedBranchId}
+            onCreated={reloadActiveStudents}
+          />
+        )}
       </div>
 
       <Tabs
@@ -187,19 +219,22 @@ export function StudentList({
             <TableHeader className="bg-muted/50 text-left text-muted-foreground">
               <TableRow>
                 <TableHead scope="col" className="px-4 py-3">
+                  {STUDENT_DIRECTORY_MESSAGES.ACTIONS}
+                </TableHead>
+                <TableHead scope="col" className="px-4 py-3">
                   {STUDENT_DIRECTORY_MESSAGES.FIRST_NAME}
                 </TableHead>
                 <TableHead scope="col" className="px-4 py-3">
                   {STUDENT_DIRECTORY_MESSAGES.SURNAME}
                 </TableHead>
                 <TableHead scope="col" className="px-4 py-3">
-                  {STUDENT_DIRECTORY_MESSAGES.BRANCH_ID}
+                  {STUDENT_DIRECTORY_MESSAGES.BRANCH}
+                </TableHead>
+                <TableHead scope="col" className="px-4 py-3">
+                  {STUDENT_DIRECTORY_MESSAGES.DISCIPLINES}
                 </TableHead>
                 <TableHead scope="col" className="px-4 py-3">
                   {STUDENT_DIRECTORY_MESSAGES.STATUS}
-                </TableHead>
-                <TableHead scope="col" className="px-4 py-3">
-                  {STUDENT_DIRECTORY_MESSAGES.ACTIONS}
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -207,41 +242,45 @@ export function StudentList({
               {items.map((student) => (
                 <TableRow key={student.id}>
                   <TableCell className="px-4 py-3">
-                    <Link
-                      href={`/dashboard/students/${student.id}`}
-                      className="text-primary underline-offset-4 hover:underline"
-                      aria-label={`${STUDENT_DIRECTORY_MESSAGES.VIEW_DETAILS}: ${student.first_name} ${student.surname}`}
-                    >
-                      {student.first_name}
-                    </Link>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        render={<Link href={`/dashboard/students/${student.id}`} />}
+                      >
+                        {STUDENT_DIRECTORY_MESSAGES.VIEW_DETAILS}
+                      </Button>
+                      {isActiveTab ? (
+                        <>
+                          <StudentFormDialog branches={branches} studentId={student.id} />
+                          <StudentDeactivateDialog
+                            student={{
+                              id: student.id,
+                              first_name: student.first_name,
+                              surname: student.surname,
+                            }}
+                          />
+                        </>
+                      ) : (
+                        <StudentReactivateDialog
+                          student={{ id: student.id, branch_id: student.branch_id }}
+                          branches={branches}
+                        />
+                      )}
+                    </div>
                   </TableCell>
+                  <TableCell className="px-4 py-3">{student.first_name}</TableCell>
                   <TableCell className="px-4 py-3">{student.surname}</TableCell>
-                  <TableCell className="px-4 py-3 font-mono text-xs">
-                    {student.branch_id}
+                  <TableCell className="px-4 py-3">{student.branch_name}</TableCell>
+                  <TableCell className="px-4 py-3">
+                    {student.active_discipline_names.length > 0
+                      ? student.active_discipline_names.join(", ")
+                      : STUDENT_DIRECTORY_MESSAGES.NO_ACTIVE_DISCIPLINES}
                   </TableCell>
                   <TableCell className="px-4 py-3">
                     {isActiveTab
                       ? STUDENT_DIRECTORY_MESSAGES.ACTIVE_STATUS
                       : STUDENT_DIRECTORY_MESSAGES.INACTIVE_STATUS}
-                  </TableCell>
-                  <TableCell className="px-4 py-3">
-                    {isActiveTab ? (
-                      <div className="flex flex-wrap gap-2">
-                        <StudentFormDialog branches={branches} studentId={student.id} />
-                        <StudentDeactivateDialog
-                          student={{
-                            id: student.id,
-                            first_name: student.first_name,
-                            surname: student.surname,
-                          }}
-                        />
-                      </div>
-                    ) : (
-                      <StudentReactivateDialog
-                        student={{ id: student.id, branch_id: student.branch_id }}
-                        branches={branches}
-                      />
-                    )}
                   </TableCell>
                 </TableRow>
               ))}

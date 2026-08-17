@@ -58,7 +58,7 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
   const canManage = branchResult.canManage
 
   const [overdueResult, disciplinesResult] = await Promise.all([
-    getOverdueStudents(),
+    getOverdueStudents(branchResult.branchId),
     listDisciplines(),
   ])
 

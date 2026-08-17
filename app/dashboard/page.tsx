@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation"
 import Link from "next/link"
-import { AlertCircleIcon, BuildingIcon, UsersIcon, AlertTriangleIcon } from "lucide-react"
+import { AlertCircleIcon, UsersIcon, AlertTriangleIcon } from "lucide-react"
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import {
@@ -62,12 +62,8 @@ export default async function DashboardOverview({ searchParams }: DashboardOverv
   }
 
   // Valid branch — proceed with KPI data
-  const result = await getDashboardKpis()
+  const result = await getDashboardKpis(branchResult.branchId)
   const dashboard = result.success && result.data !== undefined ? result.data : null
-  const branchCountLabel =
-    dashboard === null
-      ? DASHBOARD_OVERVIEW_MESSAGES.UNAVAILABLE
-      : formatNumber(dashboard.active_branch_count)
   const activeStudentCountLabel =
     dashboard === null
       ? DASHBOARD_OVERVIEW_MESSAGES.UNAVAILABLE
@@ -88,7 +84,9 @@ export default async function DashboardOverview({ searchParams }: DashboardOverv
           {DASHBOARD_OVERVIEW_MESSAGES.WELCOME}
         </h2>
         <p className="text-sm text-muted-foreground">
-          {DASHBOARD_OVERVIEW_MESSAGES.WORKSPACE_READY}
+          {dashboard !== null
+            ? `${dashboard.branch_name} — ${DASHBOARD_OVERVIEW_MESSAGES.WORKSPACE_READY}`
+            : DASHBOARD_OVERVIEW_MESSAGES.WORKSPACE_READY}
         </p>
       </div>
 
@@ -102,35 +100,6 @@ export default async function DashboardOverview({ searchParams }: DashboardOverv
       )}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <Link
-          href="/dashboard/branches"
-          className="rounded-lg outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-        >
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="flex size-10 items-center justify-center rounded-lg bg-muted">
-                  <BuildingIcon className="size-5 text-foreground" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <CardTitle>{DASHBOARD_OVERVIEW_MESSAGES.BRANCHES}</CardTitle>
-                  <CardDescription>
-                    {DASHBOARD_OVERVIEW_MESSAGES.ACTIVE_BRANCHES_DESCRIPTION}
-                  </CardDescription>
-                </div>
-                <span
-                  aria-label={DASHBOARD_OVERVIEW_MESSAGES.BRANCH_COUNT_ARIA_LABEL(
-                    branchCountLabel,
-                  )}
-                  className="text-2xl font-semibold tabular-nums"
-                >
-                  {branchCountLabel}
-                </span>
-              </div>
-            </CardHeader>
-          </Card>
-        </Link>
-
         <Link
           href="/dashboard/students"
           className="rounded-lg outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
@@ -219,45 +188,6 @@ export default async function DashboardOverview({ searchParams }: DashboardOverv
           </Card>
         </Link>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            {DASHBOARD_OVERVIEW_MESSAGES.ACTIVE_STUDENTS_BY_BRANCH}
-          </CardTitle>
-          <CardDescription>
-            {DASHBOARD_OVERVIEW_MESSAGES.ACTIVE_STUDENTS_BY_BRANCH_DESCRIPTION}
-          </CardDescription>
-          {dashboard === null ? (
-            <p className="text-sm text-muted-foreground">
-              {DASHBOARD_OVERVIEW_MESSAGES.BRANCH_DISTRIBUTION_UNAVAILABLE}
-            </p>
-          ) : dashboard.active_students_by_branch.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              {DASHBOARD_OVERVIEW_MESSAGES.NO_ACTIVE_BRANCHES}
-            </p>
-          ) : (
-            <ul
-              className="divide-y rounded-lg border"
-              aria-label={DASHBOARD_OVERVIEW_MESSAGES.ACTIVE_STUDENTS_BY_BRANCH_LIST_LABEL}
-            >
-              {dashboard.active_students_by_branch.map((branch) => (
-                <li
-                  key={branch.branch_id}
-                  className="flex items-center justify-between gap-4 px-4 py-3"
-                >
-                  <span className="font-medium">{branch.branch_name}</span>
-                  <span className="tabular-nums text-muted-foreground">
-                    {DASHBOARD_OVERVIEW_MESSAGES.ACTIVE_STUDENTS_COUNT(
-                      formatNumber(branch.active_student_count),
-                    )}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </CardHeader>
-      </Card>
     </div>
   )
 }

@@ -47,8 +47,10 @@ export interface StudentProfile {
 export interface StudentListItem {
   id: string;
   branch_id: string;
+  branch_name: string;
   first_name: string;
   surname: string;
+  active_discipline_names: string[];
   is_active: boolean;
 }
 
@@ -71,6 +73,9 @@ export async function listStudents(
       take: listInput.page_size + 1,
       where: {
         is_active: listInput.status === STUDENT_STATUS.ACTIVE,
+        ...(listInput.branch_id !== undefined
+          ? { branch_id: listInput.branch_id }
+          : {}),
       },
       orderBy: [
         { surname: "asc" },
@@ -83,6 +88,11 @@ export async function listStudents(
         first_name: true,
         surname: true,
         is_active: true,
+        branches: { select: { name: true } },
+        student_disciplines: {
+          where: { is_active: true },
+          select: { disciplines: { select: { name: true } } },
+        },
       },
       ...(listInput.cursor === undefined
         ? {}
@@ -93,7 +103,17 @@ export async function listStudents(
   if (!result.success) return result;
 
   const hasExtraItem = result.data.length > listInput.page_size;
-  const items = result.data.slice(0, listInput.page_size);
+  const items = result.data.slice(0, listInput.page_size).map((student) => ({
+    id: student.id,
+    branch_id: student.branch_id,
+    branch_name: student.branches.name,
+    first_name: student.first_name,
+    surname: student.surname,
+    active_discipline_names: student.student_disciplines
+      .map((studentDiscipline) => studentDiscipline.disciplines.name)
+      .sort((firstName, secondName) => firstName.localeCompare(secondName)),
+    is_active: student.is_active,
+  }));
   const lastItem = items.at(-1);
 
   return {
@@ -123,7 +143,8 @@ export async function getActiveStudentCount(): Promise<
 }
 
 export async function getStudentById(
-  id: string
+  id: string,
+  branchId?: string
 ): Promise<ActionResult<StudentProfile>> {
   const parsed = studentIdSchema.safeParse(id);
   if (!parsed.success) {
@@ -148,6 +169,11 @@ export async function getStudentById(
 
   if (!result.success) return result;
   if (result.data === null) {
+    return { success: false, error: STUDENT_NOT_FOUND_ERROR };
+  }
+
+  // Branch ownership validation
+  if (branchId && result.data.branch_id !== branchId) {
     return { success: false, error: STUDENT_NOT_FOUND_ERROR };
   }
 

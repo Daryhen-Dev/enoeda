@@ -84,7 +84,7 @@ export default async function StudentDetailPage({
   const canManage = branchResult.canManage
 
   const [studentResult, disciplinesResult, historyResult] = await Promise.all([
-    getStudentById(id),
+    getStudentById(id, branchResult.branchId),
     getStudentDisciplines({ student_id: id }),
     getEnrollmentHistory({ student_id: id }),
   ])

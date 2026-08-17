@@ -1,8 +1,18 @@
 "use client"
 
+import { useState } from "react"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
-import { BuildingIcon, ChevronDownIcon } from "lucide-react"
+import { BuildingIcon, ChevronDownIcon, CheckIcon } from "lucide-react"
 
+import { Button } from "@/components/ui/button"
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer"
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { DASHBOARD_SHELL_MESSAGES } from "@/lib/localization/es-ec"
@@ -18,6 +28,32 @@ interface SiteHeaderProps {
   currentBranchId?: string
 }
 
+/**
+ * Builds the URL for a branch switch, preserving pathname and all query params.
+ * Pure function — extracted for testability.
+ */
+export function buildBranchSwitchUrl(
+  pathname: string,
+  existingParams: string,
+  newBranchId: string
+): string {
+  const params = new URLSearchParams(existingParams)
+  params.set("branch", newBranchId)
+  return `${pathname}?${params.toString()}`
+}
+
+/**
+ * Determines switcher eligibility.
+ * Pure function — extracted for testability.
+ */
+export function getSwitcherMode(
+  branches: BranchInfo[] | undefined
+): "select" | "static" | "hidden" {
+  if (!branches || branches.length === 0) return "hidden"
+  if (branches.length === 1) return "static"
+  return "select"
+}
+
 export function SiteHeader({
   displayName,
   branches,
@@ -26,15 +62,20 @@ export function SiteHeader({
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
+  const [drawerOpen, setDrawerOpen] = useState(false)
 
   const handleBranchChange = (branchId: string) => {
-    const params = new URLSearchParams(searchParams.toString())
-    params.set("branch", branchId)
-    router.replace(`${pathname}?${params.toString()}`)
+    const url = buildBranchSwitchUrl(
+      pathname,
+      searchParams.toString(),
+      branchId
+    )
+    router.replace(url)
+    setDrawerOpen(false)
   }
 
   const currentBranch = branches?.find((b) => b.id === currentBranchId)
-  const showSwitcher = branches && branches.length > 1
+  const mode = getSwitcherMode(branches)
 
   return (
     <header className="flex h-(--header-height) shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
@@ -51,36 +92,102 @@ export function SiteHeader({
         </div>
 
         <div className="flex min-w-0 flex-wrap items-center gap-1 sm:ml-auto sm:gap-2">
-          {showSwitcher && (
-            <div className="relative">
-              <label htmlFor="branch-switcher" className="sr-only">
-                Cambiar sucursal
-              </label>
-              <select
-                id="branch-switcher"
-                value={currentBranchId ?? ""}
-                onChange={(e) => handleBranchChange(e.target.value)}
-                aria-label="Sucursal activa"
-                className="appearance-none truncate rounded-md border bg-background py-1 pl-8 pr-7 text-sm font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                {branches.map((branch) => (
-                  <option key={branch.id} value={branch.id}>
-                    {branch.name}
-                  </option>
-                ))}
-              </select>
-              <BuildingIcon
-                className="pointer-events-none absolute left-2 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-                aria-hidden="true"
-              />
-              <ChevronDownIcon
-                className="pointer-events-none absolute right-1.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground"
-                aria-hidden="true"
-              />
-            </div>
+          {mode === "select" && branches && (
+            <>
+              {/* Desktop: native select (compact, accessible) */}
+              <div className="relative hidden sm:block">
+                <label htmlFor="branch-switcher" className="sr-only">
+                  Cambiar sucursal
+                </label>
+                <select
+                  id="branch-switcher"
+                  value={currentBranchId ?? ""}
+                  onChange={(e) => handleBranchChange(e.target.value)}
+                  aria-label="Sucursal activa"
+                  className="appearance-none truncate rounded-md border bg-background py-1 pl-8 pr-7 text-sm font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  {branches.map((branch) => (
+                    <option key={branch.id} value={branch.id}>
+                      {branch.name}
+                    </option>
+                  ))}
+                </select>
+                <BuildingIcon
+                  className="pointer-events-none absolute left-2 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+                  aria-hidden="true"
+                />
+                <ChevronDownIcon
+                  className="pointer-events-none absolute right-1.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground"
+                  aria-hidden="true"
+                />
+              </div>
+
+              {/* Mobile: bottom-sheet drawer (accessible overlay) */}
+              <div className="sm:hidden">
+                <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
+                  <DrawerTrigger
+                    render={
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        aria-label="Cambiar sucursal"
+                      />
+                    }
+                  >
+                    <BuildingIcon className="size-4" aria-hidden="true" />
+                    <span className="max-w-[120px] truncate">
+                      {currentBranch?.name ?? "Sucursal"}
+                    </span>
+                    <ChevronDownIcon
+                      className="size-3.5 text-muted-foreground"
+                      aria-hidden="true"
+                    />
+                  </DrawerTrigger>
+                  <DrawerContent>
+                    <DrawerHeader>
+                      <DrawerTitle>Seleccionar sucursal</DrawerTitle>
+                    </DrawerHeader>
+                    <div
+                      className="flex flex-col gap-1 p-4"
+                      role="listbox"
+                      aria-label="Sucursales disponibles"
+                    >
+                      {branches.map((branch) => (
+                        <DrawerClose
+                          key={branch.id}
+                          render={
+                            <button
+                              type="button"
+                              role="option"
+                              aria-selected={branch.id === currentBranchId}
+                              onClick={() => handleBranchChange(branch.id)}
+                              className="flex w-full items-center justify-between rounded-md px-3 py-2.5 text-left text-sm hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                            />
+                          }
+                        >
+                          <span className="flex items-center gap-2">
+                            <BuildingIcon
+                              className="size-4 text-muted-foreground"
+                              aria-hidden="true"
+                            />
+                            {branch.name}
+                          </span>
+                          {branch.id === currentBranchId && (
+                            <CheckIcon
+                              className="size-4 text-primary"
+                              aria-hidden="true"
+                            />
+                          )}
+                        </DrawerClose>
+                      ))}
+                    </div>
+                  </DrawerContent>
+                </Drawer>
+              </div>
+            </>
           )}
 
-          {!showSwitcher && currentBranch && (
+          {mode === "static" && currentBranch && (
             <span className="flex items-center gap-1.5 truncate text-sm text-muted-foreground">
               <BuildingIcon className="size-3.5 shrink-0" aria-hidden="true" />
               <span className="truncate">{currentBranch.name}</span>

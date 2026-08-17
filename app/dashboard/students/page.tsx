@@ -91,8 +91,8 @@ export default async function StudentsPage({ searchParams }: StudentsPageProps) 
 
   const [activeResult, inactiveResult, branchesResult, disciplinesResult] =
     await Promise.all([
-      listStudents({ status: STUDENT_STATUS.ACTIVE }),
-      listStudents({ status: STUDENT_STATUS.INACTIVE }),
+      listStudents({ status: STUDENT_STATUS.ACTIVE, branch_id: branchId }),
+      listStudents({ status: STUDENT_STATUS.INACTIVE, branch_id: branchId }),
       listBranches(),
       listDisciplines(),
     ])
