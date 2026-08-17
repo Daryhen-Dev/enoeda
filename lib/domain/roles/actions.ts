@@ -297,30 +297,6 @@ export async function createBranchTeacher(
     return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
   }
 
-  const rosterProfileResult = await withAuthenticatedUser(async (tx) => {
-    return tx.teacher_profiles.create({
-      data: {
-        user_id: created.user.id,
-        branch_id: parsed.data.branchId,
-        first_name: parsed.data.first_name,
-        surname: parsed.data.surname,
-        phone: parsed.data.phone ?? null,
-        date_of_birth: new Date(parsed.data.date_of_birth),
-      },
-      select: { user_id: true },
-    });
-  });
-  if (!rosterProfileResult.success) {
-    await rollbackCreatedAccount(
-      created.user.id,
-      "teacher",
-      parsed.data.branchId,
-      admin,
-      supabase
-    );
-    return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
-  }
-
   return { success: true, data: { email: parsed.data.email, temporaryPassword } };
 }
 

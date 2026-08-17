@@ -76,7 +76,6 @@ export const ModelName = {
   webauthn_credentials: 'webauthn_credentials',
   user_roles: 'user_roles',
   branches: 'branches',
-  teacher_profiles: 'teacher_profiles',
   user_profiles: 'user_profiles',
   students: 'students',
   disciplines: 'disciplines',
@@ -513,20 +512,6 @@ export const BranchesScalarFieldEnum = {
 } as const
 
 export type BranchesScalarFieldEnum = (typeof BranchesScalarFieldEnum)[keyof typeof BranchesScalarFieldEnum]
-
-
-export const Teacher_profilesScalarFieldEnum = {
-  user_id: 'user_id',
-  branch_id: 'branch_id',
-  first_name: 'first_name',
-  surname: 'surname',
-  phone: 'phone',
-  date_of_birth: 'date_of_birth',
-  created_at: 'created_at',
-  updated_at: 'updated_at'
-} as const
-
-export type Teacher_profilesScalarFieldEnum = (typeof Teacher_profilesScalarFieldEnum)[keyof typeof Teacher_profilesScalarFieldEnum]
 
 
 export const User_profilesScalarFieldEnum = {

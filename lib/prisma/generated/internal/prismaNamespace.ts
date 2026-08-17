@@ -409,7 +409,6 @@ export const ModelName = {
   webauthn_credentials: 'webauthn_credentials',
   user_roles: 'user_roles',
   branches: 'branches',
-  teacher_profiles: 'teacher_profiles',
   user_profiles: 'user_profiles',
   students: 'students',
   disciplines: 'disciplines',
@@ -439,7 +438,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "audit_log_entries" | "custom_oauth_providers" | "flow_state" | "identities" | "instances" | "mfa_amr_claims" | "mfa_challenges" | "mfa_factors" | "oauth_authorizations" | "oauth_client_states" | "oauth_clients" | "oauth_consents" | "one_time_tokens" | "refresh_tokens" | "saml_providers" | "saml_relay_states" | "schema_migrations" | "sessions" | "sso_domains" | "sso_providers" | "users" | "webauthn_challenges" | "webauthn_credentials" | "user_roles" | "branches" | "teacher_profiles" | "user_profiles" | "students" | "disciplines" | "student_disciplines" | "discipline_events" | "scheduled_classes" | "one_time_classes" | "class_sessions" | "attendance" | "discipline_levels" | "student_progress" | "student_notes" | "payments" | "class_payments"
+    modelProps: "audit_log_entries" | "custom_oauth_providers" | "flow_state" | "identities" | "instances" | "mfa_amr_claims" | "mfa_challenges" | "mfa_factors" | "oauth_authorizations" | "oauth_client_states" | "oauth_clients" | "oauth_consents" | "one_time_tokens" | "refresh_tokens" | "saml_providers" | "saml_relay_states" | "schema_migrations" | "sessions" | "sso_domains" | "sso_providers" | "users" | "webauthn_challenges" | "webauthn_credentials" | "user_roles" | "branches" | "user_profiles" | "students" | "disciplines" | "student_disciplines" | "discipline_events" | "scheduled_classes" | "one_time_classes" | "class_sessions" | "attendance" | "discipline_levels" | "student_progress" | "student_notes" | "payments" | "class_payments"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -2293,80 +2292,6 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
-    teacher_profiles: {
-      payload: Prisma.$teacher_profilesPayload<ExtArgs>
-      fields: Prisma.teacher_profilesFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.teacher_profilesFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$teacher_profilesPayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.teacher_profilesFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$teacher_profilesPayload>
-        }
-        findFirst: {
-          args: Prisma.teacher_profilesFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$teacher_profilesPayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.teacher_profilesFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$teacher_profilesPayload>
-        }
-        findMany: {
-          args: Prisma.teacher_profilesFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$teacher_profilesPayload>[]
-        }
-        create: {
-          args: Prisma.teacher_profilesCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$teacher_profilesPayload>
-        }
-        createMany: {
-          args: Prisma.teacher_profilesCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.teacher_profilesCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$teacher_profilesPayload>[]
-        }
-        delete: {
-          args: Prisma.teacher_profilesDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$teacher_profilesPayload>
-        }
-        update: {
-          args: Prisma.teacher_profilesUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$teacher_profilesPayload>
-        }
-        deleteMany: {
-          args: Prisma.teacher_profilesDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.teacher_profilesUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.teacher_profilesUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$teacher_profilesPayload>[]
-        }
-        upsert: {
-          args: Prisma.teacher_profilesUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$teacher_profilesPayload>
-        }
-        aggregate: {
-          args: Prisma.Teacher_profilesAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateTeacher_profiles>
-        }
-        groupBy: {
-          args: Prisma.teacher_profilesGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.Teacher_profilesGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.teacher_profilesCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.Teacher_profilesCountAggregateOutputType> | number
-        }
-      }
-    }
     user_profiles: {
       payload: Prisma.$user_profilesPayload<ExtArgs>
       fields: Prisma.user_profilesFieldRefs
@@ -3848,20 +3773,6 @@ export const BranchesScalarFieldEnum = {
 export type BranchesScalarFieldEnum = (typeof BranchesScalarFieldEnum)[keyof typeof BranchesScalarFieldEnum]
 
 
-export const Teacher_profilesScalarFieldEnum = {
-  user_id: 'user_id',
-  branch_id: 'branch_id',
-  first_name: 'first_name',
-  surname: 'surname',
-  phone: 'phone',
-  date_of_birth: 'date_of_birth',
-  created_at: 'created_at',
-  updated_at: 'updated_at'
-} as const
-
-export type Teacher_profilesScalarFieldEnum = (typeof Teacher_profilesScalarFieldEnum)[keyof typeof Teacher_profilesScalarFieldEnum]
-
-
 export const User_profilesScalarFieldEnum = {
   user_id: 'user_id',
   first_name: 'first_name',
@@ -4499,7 +4410,6 @@ export type GlobalOmitConfig = {
   webauthn_credentials?: Prisma.webauthn_credentialsOmit
   user_roles?: Prisma.user_rolesOmit
   branches?: Prisma.branchesOmit
-  teacher_profiles?: Prisma.teacher_profilesOmit
   user_profiles?: Prisma.user_profilesOmit
   students?: Prisma.studentsOmit
   disciplines?: Prisma.disciplinesOmit

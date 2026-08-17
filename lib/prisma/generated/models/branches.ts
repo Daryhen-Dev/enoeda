@@ -212,7 +212,6 @@ export type branchesWhereInput = {
   students?: Prisma.StudentsListRelationFilter
   user_roles?: Prisma.User_rolesListRelationFilter
   scheduled_classes?: Prisma.Scheduled_classesListRelationFilter
-  teacher_profiles?: Prisma.Teacher_profilesListRelationFilter
   one_time_classes?: Prisma.One_time_classesListRelationFilter
 }
 
@@ -228,7 +227,6 @@ export type branchesOrderByWithRelationInput = {
   students?: Prisma.studentsOrderByRelationAggregateInput
   user_roles?: Prisma.user_rolesOrderByRelationAggregateInput
   scheduled_classes?: Prisma.scheduled_classesOrderByRelationAggregateInput
-  teacher_profiles?: Prisma.teacher_profilesOrderByRelationAggregateInput
   one_time_classes?: Prisma.one_time_classesOrderByRelationAggregateInput
 }
 
@@ -247,7 +245,6 @@ export type branchesWhereUniqueInput = Prisma.AtLeast<{
   students?: Prisma.StudentsListRelationFilter
   user_roles?: Prisma.User_rolesListRelationFilter
   scheduled_classes?: Prisma.Scheduled_classesListRelationFilter
-  teacher_profiles?: Prisma.Teacher_profilesListRelationFilter
   one_time_classes?: Prisma.One_time_classesListRelationFilter
 }, "id">
 
@@ -291,7 +288,6 @@ export type branchesCreateInput = {
   students?: Prisma.studentsCreateNestedManyWithoutBranchesInput
   user_roles?: Prisma.user_rolesCreateNestedManyWithoutBranchesInput
   scheduled_classes?: Prisma.scheduled_classesCreateNestedManyWithoutBranchesInput
-  teacher_profiles?: Prisma.teacher_profilesCreateNestedManyWithoutBranchesInput
   one_time_classes?: Prisma.one_time_classesCreateNestedManyWithoutBranchesInput
 }
 
@@ -307,7 +303,6 @@ export type branchesUncheckedCreateInput = {
   students?: Prisma.studentsUncheckedCreateNestedManyWithoutBranchesInput
   user_roles?: Prisma.user_rolesUncheckedCreateNestedManyWithoutBranchesInput
   scheduled_classes?: Prisma.scheduled_classesUncheckedCreateNestedManyWithoutBranchesInput
-  teacher_profiles?: Prisma.teacher_profilesUncheckedCreateNestedManyWithoutBranchesInput
   one_time_classes?: Prisma.one_time_classesUncheckedCreateNestedManyWithoutBranchesInput
 }
 
@@ -323,7 +318,6 @@ export type branchesUpdateInput = {
   students?: Prisma.studentsUpdateManyWithoutBranchesNestedInput
   user_roles?: Prisma.user_rolesUpdateManyWithoutBranchesNestedInput
   scheduled_classes?: Prisma.scheduled_classesUpdateManyWithoutBranchesNestedInput
-  teacher_profiles?: Prisma.teacher_profilesUpdateManyWithoutBranchesNestedInput
   one_time_classes?: Prisma.one_time_classesUpdateManyWithoutBranchesNestedInput
 }
 
@@ -339,7 +333,6 @@ export type branchesUncheckedUpdateInput = {
   students?: Prisma.studentsUncheckedUpdateManyWithoutBranchesNestedInput
   user_roles?: Prisma.user_rolesUncheckedUpdateManyWithoutBranchesNestedInput
   scheduled_classes?: Prisma.scheduled_classesUncheckedUpdateManyWithoutBranchesNestedInput
-  teacher_profiles?: Prisma.teacher_profilesUncheckedUpdateManyWithoutBranchesNestedInput
   one_time_classes?: Prisma.one_time_classesUncheckedUpdateManyWithoutBranchesNestedInput
 }
 
@@ -435,20 +428,6 @@ export type branchesUpdateOneWithoutUser_rolesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.branchesUpdateToOneWithWhereWithoutUser_rolesInput, Prisma.branchesUpdateWithoutUser_rolesInput>, Prisma.branchesUncheckedUpdateWithoutUser_rolesInput>
 }
 
-export type branchesCreateNestedOneWithoutTeacher_profilesInput = {
-  create?: Prisma.XOR<Prisma.branchesCreateWithoutTeacher_profilesInput, Prisma.branchesUncheckedCreateWithoutTeacher_profilesInput>
-  connectOrCreate?: Prisma.branchesCreateOrConnectWithoutTeacher_profilesInput
-  connect?: Prisma.branchesWhereUniqueInput
-}
-
-export type branchesUpdateOneRequiredWithoutTeacher_profilesNestedInput = {
-  create?: Prisma.XOR<Prisma.branchesCreateWithoutTeacher_profilesInput, Prisma.branchesUncheckedCreateWithoutTeacher_profilesInput>
-  connectOrCreate?: Prisma.branchesCreateOrConnectWithoutTeacher_profilesInput
-  upsert?: Prisma.branchesUpsertWithoutTeacher_profilesInput
-  connect?: Prisma.branchesWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.branchesUpdateToOneWithWhereWithoutTeacher_profilesInput, Prisma.branchesUpdateWithoutTeacher_profilesInput>, Prisma.branchesUncheckedUpdateWithoutTeacher_profilesInput>
-}
-
 export type branchesCreateNestedOneWithoutStudentsInput = {
   create?: Prisma.XOR<Prisma.branchesCreateWithoutStudentsInput, Prisma.branchesUncheckedCreateWithoutStudentsInput>
   connectOrCreate?: Prisma.branchesCreateOrConnectWithoutStudentsInput
@@ -502,7 +481,6 @@ export type branchesCreateWithoutUser_rolesInput = {
   updated_at?: Date | string
   students?: Prisma.studentsCreateNestedManyWithoutBranchesInput
   scheduled_classes?: Prisma.scheduled_classesCreateNestedManyWithoutBranchesInput
-  teacher_profiles?: Prisma.teacher_profilesCreateNestedManyWithoutBranchesInput
   one_time_classes?: Prisma.one_time_classesCreateNestedManyWithoutBranchesInput
 }
 
@@ -517,7 +495,6 @@ export type branchesUncheckedCreateWithoutUser_rolesInput = {
   updated_at?: Date | string
   students?: Prisma.studentsUncheckedCreateNestedManyWithoutBranchesInput
   scheduled_classes?: Prisma.scheduled_classesUncheckedCreateNestedManyWithoutBranchesInput
-  teacher_profiles?: Prisma.teacher_profilesUncheckedCreateNestedManyWithoutBranchesInput
   one_time_classes?: Prisma.one_time_classesUncheckedCreateNestedManyWithoutBranchesInput
 }
 
@@ -548,7 +525,6 @@ export type branchesUpdateWithoutUser_rolesInput = {
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   students?: Prisma.studentsUpdateManyWithoutBranchesNestedInput
   scheduled_classes?: Prisma.scheduled_classesUpdateManyWithoutBranchesNestedInput
-  teacher_profiles?: Prisma.teacher_profilesUpdateManyWithoutBranchesNestedInput
   one_time_classes?: Prisma.one_time_classesUpdateManyWithoutBranchesNestedInput
 }
 
@@ -562,83 +538,6 @@ export type branchesUncheckedUpdateWithoutUser_rolesInput = {
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   students?: Prisma.studentsUncheckedUpdateManyWithoutBranchesNestedInput
-  scheduled_classes?: Prisma.scheduled_classesUncheckedUpdateManyWithoutBranchesNestedInput
-  teacher_profiles?: Prisma.teacher_profilesUncheckedUpdateManyWithoutBranchesNestedInput
-  one_time_classes?: Prisma.one_time_classesUncheckedUpdateManyWithoutBranchesNestedInput
-}
-
-export type branchesCreateWithoutTeacher_profilesInput = {
-  id?: string
-  name: string
-  address?: string | null
-  phone?: string | null
-  time_zone?: string
-  is_active?: boolean
-  created_at?: Date | string
-  updated_at?: Date | string
-  students?: Prisma.studentsCreateNestedManyWithoutBranchesInput
-  user_roles?: Prisma.user_rolesCreateNestedManyWithoutBranchesInput
-  scheduled_classes?: Prisma.scheduled_classesCreateNestedManyWithoutBranchesInput
-  one_time_classes?: Prisma.one_time_classesCreateNestedManyWithoutBranchesInput
-}
-
-export type branchesUncheckedCreateWithoutTeacher_profilesInput = {
-  id?: string
-  name: string
-  address?: string | null
-  phone?: string | null
-  time_zone?: string
-  is_active?: boolean
-  created_at?: Date | string
-  updated_at?: Date | string
-  students?: Prisma.studentsUncheckedCreateNestedManyWithoutBranchesInput
-  user_roles?: Prisma.user_rolesUncheckedCreateNestedManyWithoutBranchesInput
-  scheduled_classes?: Prisma.scheduled_classesUncheckedCreateNestedManyWithoutBranchesInput
-  one_time_classes?: Prisma.one_time_classesUncheckedCreateNestedManyWithoutBranchesInput
-}
-
-export type branchesCreateOrConnectWithoutTeacher_profilesInput = {
-  where: Prisma.branchesWhereUniqueInput
-  create: Prisma.XOR<Prisma.branchesCreateWithoutTeacher_profilesInput, Prisma.branchesUncheckedCreateWithoutTeacher_profilesInput>
-}
-
-export type branchesUpsertWithoutTeacher_profilesInput = {
-  update: Prisma.XOR<Prisma.branchesUpdateWithoutTeacher_profilesInput, Prisma.branchesUncheckedUpdateWithoutTeacher_profilesInput>
-  create: Prisma.XOR<Prisma.branchesCreateWithoutTeacher_profilesInput, Prisma.branchesUncheckedCreateWithoutTeacher_profilesInput>
-  where?: Prisma.branchesWhereInput
-}
-
-export type branchesUpdateToOneWithWhereWithoutTeacher_profilesInput = {
-  where?: Prisma.branchesWhereInput
-  data: Prisma.XOR<Prisma.branchesUpdateWithoutTeacher_profilesInput, Prisma.branchesUncheckedUpdateWithoutTeacher_profilesInput>
-}
-
-export type branchesUpdateWithoutTeacher_profilesInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  time_zone?: Prisma.StringFieldUpdateOperationsInput | string
-  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  students?: Prisma.studentsUpdateManyWithoutBranchesNestedInput
-  user_roles?: Prisma.user_rolesUpdateManyWithoutBranchesNestedInput
-  scheduled_classes?: Prisma.scheduled_classesUpdateManyWithoutBranchesNestedInput
-  one_time_classes?: Prisma.one_time_classesUpdateManyWithoutBranchesNestedInput
-}
-
-export type branchesUncheckedUpdateWithoutTeacher_profilesInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  time_zone?: Prisma.StringFieldUpdateOperationsInput | string
-  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  students?: Prisma.studentsUncheckedUpdateManyWithoutBranchesNestedInput
-  user_roles?: Prisma.user_rolesUncheckedUpdateManyWithoutBranchesNestedInput
   scheduled_classes?: Prisma.scheduled_classesUncheckedUpdateManyWithoutBranchesNestedInput
   one_time_classes?: Prisma.one_time_classesUncheckedUpdateManyWithoutBranchesNestedInput
 }
@@ -654,7 +553,6 @@ export type branchesCreateWithoutStudentsInput = {
   updated_at?: Date | string
   user_roles?: Prisma.user_rolesCreateNestedManyWithoutBranchesInput
   scheduled_classes?: Prisma.scheduled_classesCreateNestedManyWithoutBranchesInput
-  teacher_profiles?: Prisma.teacher_profilesCreateNestedManyWithoutBranchesInput
   one_time_classes?: Prisma.one_time_classesCreateNestedManyWithoutBranchesInput
 }
 
@@ -669,7 +567,6 @@ export type branchesUncheckedCreateWithoutStudentsInput = {
   updated_at?: Date | string
   user_roles?: Prisma.user_rolesUncheckedCreateNestedManyWithoutBranchesInput
   scheduled_classes?: Prisma.scheduled_classesUncheckedCreateNestedManyWithoutBranchesInput
-  teacher_profiles?: Prisma.teacher_profilesUncheckedCreateNestedManyWithoutBranchesInput
   one_time_classes?: Prisma.one_time_classesUncheckedCreateNestedManyWithoutBranchesInput
 }
 
@@ -700,7 +597,6 @@ export type branchesUpdateWithoutStudentsInput = {
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user_roles?: Prisma.user_rolesUpdateManyWithoutBranchesNestedInput
   scheduled_classes?: Prisma.scheduled_classesUpdateManyWithoutBranchesNestedInput
-  teacher_profiles?: Prisma.teacher_profilesUpdateManyWithoutBranchesNestedInput
   one_time_classes?: Prisma.one_time_classesUpdateManyWithoutBranchesNestedInput
 }
 
@@ -715,7 +611,6 @@ export type branchesUncheckedUpdateWithoutStudentsInput = {
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user_roles?: Prisma.user_rolesUncheckedUpdateManyWithoutBranchesNestedInput
   scheduled_classes?: Prisma.scheduled_classesUncheckedUpdateManyWithoutBranchesNestedInput
-  teacher_profiles?: Prisma.teacher_profilesUncheckedUpdateManyWithoutBranchesNestedInput
   one_time_classes?: Prisma.one_time_classesUncheckedUpdateManyWithoutBranchesNestedInput
 }
 
@@ -730,7 +625,6 @@ export type branchesCreateWithoutScheduled_classesInput = {
   updated_at?: Date | string
   students?: Prisma.studentsCreateNestedManyWithoutBranchesInput
   user_roles?: Prisma.user_rolesCreateNestedManyWithoutBranchesInput
-  teacher_profiles?: Prisma.teacher_profilesCreateNestedManyWithoutBranchesInput
   one_time_classes?: Prisma.one_time_classesCreateNestedManyWithoutBranchesInput
 }
 
@@ -745,7 +639,6 @@ export type branchesUncheckedCreateWithoutScheduled_classesInput = {
   updated_at?: Date | string
   students?: Prisma.studentsUncheckedCreateNestedManyWithoutBranchesInput
   user_roles?: Prisma.user_rolesUncheckedCreateNestedManyWithoutBranchesInput
-  teacher_profiles?: Prisma.teacher_profilesUncheckedCreateNestedManyWithoutBranchesInput
   one_time_classes?: Prisma.one_time_classesUncheckedCreateNestedManyWithoutBranchesInput
 }
 
@@ -776,7 +669,6 @@ export type branchesUpdateWithoutScheduled_classesInput = {
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   students?: Prisma.studentsUpdateManyWithoutBranchesNestedInput
   user_roles?: Prisma.user_rolesUpdateManyWithoutBranchesNestedInput
-  teacher_profiles?: Prisma.teacher_profilesUpdateManyWithoutBranchesNestedInput
   one_time_classes?: Prisma.one_time_classesUpdateManyWithoutBranchesNestedInput
 }
 
@@ -791,7 +683,6 @@ export type branchesUncheckedUpdateWithoutScheduled_classesInput = {
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   students?: Prisma.studentsUncheckedUpdateManyWithoutBranchesNestedInput
   user_roles?: Prisma.user_rolesUncheckedUpdateManyWithoutBranchesNestedInput
-  teacher_profiles?: Prisma.teacher_profilesUncheckedUpdateManyWithoutBranchesNestedInput
   one_time_classes?: Prisma.one_time_classesUncheckedUpdateManyWithoutBranchesNestedInput
 }
 
@@ -807,7 +698,6 @@ export type branchesCreateWithoutOne_time_classesInput = {
   students?: Prisma.studentsCreateNestedManyWithoutBranchesInput
   user_roles?: Prisma.user_rolesCreateNestedManyWithoutBranchesInput
   scheduled_classes?: Prisma.scheduled_classesCreateNestedManyWithoutBranchesInput
-  teacher_profiles?: Prisma.teacher_profilesCreateNestedManyWithoutBranchesInput
 }
 
 export type branchesUncheckedCreateWithoutOne_time_classesInput = {
@@ -822,7 +712,6 @@ export type branchesUncheckedCreateWithoutOne_time_classesInput = {
   students?: Prisma.studentsUncheckedCreateNestedManyWithoutBranchesInput
   user_roles?: Prisma.user_rolesUncheckedCreateNestedManyWithoutBranchesInput
   scheduled_classes?: Prisma.scheduled_classesUncheckedCreateNestedManyWithoutBranchesInput
-  teacher_profiles?: Prisma.teacher_profilesUncheckedCreateNestedManyWithoutBranchesInput
 }
 
 export type branchesCreateOrConnectWithoutOne_time_classesInput = {
@@ -853,7 +742,6 @@ export type branchesUpdateWithoutOne_time_classesInput = {
   students?: Prisma.studentsUpdateManyWithoutBranchesNestedInput
   user_roles?: Prisma.user_rolesUpdateManyWithoutBranchesNestedInput
   scheduled_classes?: Prisma.scheduled_classesUpdateManyWithoutBranchesNestedInput
-  teacher_profiles?: Prisma.teacher_profilesUpdateManyWithoutBranchesNestedInput
 }
 
 export type branchesUncheckedUpdateWithoutOne_time_classesInput = {
@@ -868,7 +756,6 @@ export type branchesUncheckedUpdateWithoutOne_time_classesInput = {
   students?: Prisma.studentsUncheckedUpdateManyWithoutBranchesNestedInput
   user_roles?: Prisma.user_rolesUncheckedUpdateManyWithoutBranchesNestedInput
   scheduled_classes?: Prisma.scheduled_classesUncheckedUpdateManyWithoutBranchesNestedInput
-  teacher_profiles?: Prisma.teacher_profilesUncheckedUpdateManyWithoutBranchesNestedInput
 }
 
 
@@ -880,7 +767,6 @@ export type BranchesCountOutputType = {
   students: number
   user_roles: number
   scheduled_classes: number
-  teacher_profiles: number
   one_time_classes: number
 }
 
@@ -888,7 +774,6 @@ export type BranchesCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensio
   students?: boolean | BranchesCountOutputTypeCountStudentsArgs
   user_roles?: boolean | BranchesCountOutputTypeCountUser_rolesArgs
   scheduled_classes?: boolean | BranchesCountOutputTypeCountScheduled_classesArgs
-  teacher_profiles?: boolean | BranchesCountOutputTypeCountTeacher_profilesArgs
   one_time_classes?: boolean | BranchesCountOutputTypeCountOne_time_classesArgs
 }
 
@@ -926,13 +811,6 @@ export type BranchesCountOutputTypeCountScheduled_classesArgs<ExtArgs extends ru
 /**
  * BranchesCountOutputType without action
  */
-export type BranchesCountOutputTypeCountTeacher_profilesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.teacher_profilesWhereInput
-}
-
-/**
- * BranchesCountOutputType without action
- */
 export type BranchesCountOutputTypeCountOne_time_classesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.one_time_classesWhereInput
 }
@@ -950,7 +828,6 @@ export type branchesSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   students?: boolean | Prisma.branches$studentsArgs<ExtArgs>
   user_roles?: boolean | Prisma.branches$user_rolesArgs<ExtArgs>
   scheduled_classes?: boolean | Prisma.branches$scheduled_classesArgs<ExtArgs>
-  teacher_profiles?: boolean | Prisma.branches$teacher_profilesArgs<ExtArgs>
   one_time_classes?: boolean | Prisma.branches$one_time_classesArgs<ExtArgs>
   _count?: boolean | Prisma.BranchesCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["branches"]>
@@ -993,7 +870,6 @@ export type branchesInclude<ExtArgs extends runtime.Types.Extensions.InternalArg
   students?: boolean | Prisma.branches$studentsArgs<ExtArgs>
   user_roles?: boolean | Prisma.branches$user_rolesArgs<ExtArgs>
   scheduled_classes?: boolean | Prisma.branches$scheduled_classesArgs<ExtArgs>
-  teacher_profiles?: boolean | Prisma.branches$teacher_profilesArgs<ExtArgs>
   one_time_classes?: boolean | Prisma.branches$one_time_classesArgs<ExtArgs>
   _count?: boolean | Prisma.BranchesCountOutputTypeDefaultArgs<ExtArgs>
 }
@@ -1006,7 +882,6 @@ export type $branchesPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     students: Prisma.$studentsPayload<ExtArgs>[]
     user_roles: Prisma.$user_rolesPayload<ExtArgs>[]
     scheduled_classes: Prisma.$scheduled_classesPayload<ExtArgs>[]
-    teacher_profiles: Prisma.$teacher_profilesPayload<ExtArgs>[]
     one_time_classes: Prisma.$one_time_classesPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
@@ -1415,7 +1290,6 @@ export interface Prisma__branchesClient<T, Null = never, ExtArgs extends runtime
   students<T extends Prisma.branches$studentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.branches$studentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$studentsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   user_roles<T extends Prisma.branches$user_rolesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.branches$user_rolesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$user_rolesPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   scheduled_classes<T extends Prisma.branches$scheduled_classesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.branches$scheduled_classesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$scheduled_classesPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  teacher_profiles<T extends Prisma.branches$teacher_profilesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.branches$teacher_profilesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$teacher_profilesPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   one_time_classes<T extends Prisma.branches$one_time_classesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.branches$one_time_classesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$one_time_classesPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -1916,30 +1790,6 @@ export type branches$scheduled_classesArgs<ExtArgs extends runtime.Types.Extensi
   take?: number
   skip?: number
   distinct?: Prisma.Scheduled_classesScalarFieldEnum | Prisma.Scheduled_classesScalarFieldEnum[]
-}
-
-/**
- * branches.teacher_profiles
- */
-export type branches$teacher_profilesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the teacher_profiles
-   */
-  select?: Prisma.teacher_profilesSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the teacher_profiles
-   */
-  omit?: Prisma.teacher_profilesOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.teacher_profilesInclude<ExtArgs> | null
-  where?: Prisma.teacher_profilesWhereInput
-  orderBy?: Prisma.teacher_profilesOrderByWithRelationInput | Prisma.teacher_profilesOrderByWithRelationInput[]
-  cursor?: Prisma.teacher_profilesWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.Teacher_profilesScalarFieldEnum | Prisma.Teacher_profilesScalarFieldEnum[]
 }
 
 /**
