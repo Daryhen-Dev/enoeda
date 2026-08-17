@@ -139,7 +139,9 @@ export const STUDENT_DIRECTORY_MESSAGES = {
   INACTIVE_TABLE_CAPTION: "Estudiantes inactivos",
   FIRST_NAME: "Nombre",
   SURNAME: "Apellido",
-  BRANCH_ID: "ID de sucursal",
+  BRANCH: "Sucursal",
+  DISCIPLINES: "Disciplinas",
+  NO_ACTIVE_DISCIPLINES: "Sin disciplinas activas.",
   STATUS: "Estado",
   VIEW_DETAILS: "Ver detalle",
   ACTIONS: "Acciones",
@@ -408,6 +410,10 @@ export const WEEKDAY_LABELS = [
 ] as const
 
 export const CLASS_MESSAGES = {
+  BRANCH_MISMATCH:
+    "La clase no pertenece a la sucursal activa. Seleccione la sucursal correcta.",
+  NOT_FOUND:
+    "La clase solicitada no existe o no tiene permisos para accederla.",
   OVERLAP: "Ya existe una clase en ese horario para esta sucursal y día.",
   OVERLAP_ON_DAY: (dayLabel: string) =>
     `Ya existe una clase en ese horario el día ${dayLabel}.`,
