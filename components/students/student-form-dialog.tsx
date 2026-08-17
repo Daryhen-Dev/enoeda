@@ -220,6 +220,7 @@ export function StudentFormDialog({
           const enrollResult = await enrollStudent({
             student_id: createResult.data.id,
             discipline_ids: values.discipline_ids,
+            branch_id: values.branch_id,
             enrolled_at: values.enrolled_at || undefined,
           })
           if (!enrollResult.success) {

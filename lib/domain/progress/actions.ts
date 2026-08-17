@@ -65,6 +65,7 @@ export interface NoteRecord {
 /**
  * Get promotion readiness: attended sessions vs. required for a target level.
  * Read-only preview for the admin promotion dialog indicator.
+ * Requires branch context; validates student belongs to caller's branch.
  */
 export async function getPromotionReadiness(
   input: ReadinessQueryInput
@@ -74,11 +75,26 @@ export async function getPromotionReadiness(
     return { success: false, error: parsed.error.issues[0].message };
   }
 
-  const { student_id, discipline_id, level_id } = parsed.data;
+  const { student_id, discipline_id, level_id, branch_id } = parsed.data;
 
   try {
-    const result = await withAuthenticatedUser(async (tx) => {
-      // Step 3: Load target level
+    const result = await withAuthenticatedUser(async (tx, ctx) => {
+      // Branch context validation
+      const branchError = assertCallerBranchContext(ctx, branch_id);
+      if (branchError) {
+        return { error: branchError } as const;
+      }
+
+      // Validate student belongs to branch
+      const student = await tx.students.findUnique({
+        where: { id: student_id },
+        select: { branch_id: true },
+      });
+      if (!student || student.branch_id !== branch_id) {
+        return { error: BRANCH_ASSERTION_MESSAGES.CROSS_BRANCH_DENIED } as const;
+      }
+
+      // Load target level
       const level = await tx.discipline_levels.findUnique({
         where: { id: level_id },
         select: { discipline_id: true, required_attended_sessions: true },
@@ -90,14 +106,14 @@ export async function getPromotionReadiness(
         return { error: PROGRESS_MESSAGES.LEVEL_DISCIPLINE_MISMATCH } as const;
       }
 
-      // Step 4: Get last promotion boundary
+      // Get last promotion boundary
       const last = await tx.student_progress.findFirst({
         where: { student_id, discipline_id },
         orderBy: { promoted_at: "desc" },
         select: { promoted_at: true },
       });
 
-      // Step 5: Count attended sessions since last promotion
+      // Count attended sessions since last promotion
       const attended = await tx.attendance.count({
         where: {
           student_id,
@@ -107,7 +123,6 @@ export async function getPromotionReadiness(
         },
       });
 
-      // Step 6
       const required = level.required_attended_sessions;
       const meets_requirement = attended >= required;
 
@@ -134,6 +149,7 @@ export async function getPromotionReadiness(
 /**
  * Promote a student to a level. Admin/Owner only via RLS (policy 6d/6e).
  * Informative: promotion always succeeds regardless of meets_requirement.
+ * Requires branch context; validates student belongs to caller's branch.
  */
 export async function promoteStudent(
   input: PromoteStudentInput
@@ -143,12 +159,27 @@ export async function promoteStudent(
     return { success: false, error: parsed.error.issues[0].message };
   }
 
-  const { student_id, discipline_id, level_id, promoted_at, observations } =
+  const { student_id, discipline_id, level_id, branch_id, promoted_at, observations } =
     parsed.data;
 
   try {
     const result = await withAuthenticatedUser(async (tx, ctx) => {
-      // Step 3: Load target level
+      // Branch context validation
+      const branchError = assertCallerBranchContext(ctx, branch_id);
+      if (branchError) {
+        return { error: branchError } as const;
+      }
+
+      // Validate student belongs to branch
+      const student = await tx.students.findUnique({
+        where: { id: student_id },
+        select: { branch_id: true },
+      });
+      if (!student || student.branch_id !== branch_id) {
+        return { error: BRANCH_ASSERTION_MESSAGES.CROSS_BRANCH_DENIED } as const;
+      }
+
+      // Load target level
       const level = await tx.discipline_levels.findUnique({
         where: { id: level_id },
         select: { discipline_id: true, required_attended_sessions: true },
@@ -160,14 +191,14 @@ export async function promoteStudent(
         return { error: PROGRESS_MESSAGES.LEVEL_DISCIPLINE_MISMATCH } as const;
       }
 
-      // Step 4: Last promotion boundary
+      // Last promotion boundary
       const last = await tx.student_progress.findFirst({
         where: { student_id, discipline_id },
         orderBy: { promoted_at: "desc" },
         select: { promoted_at: true },
       });
 
-      // Step 5: Count attended sessions
+      // Count attended sessions
       const attended = await tx.attendance.count({
         where: {
           student_id,
@@ -177,11 +208,10 @@ export async function promoteStudent(
         },
       });
 
-      // Step 6
       const required = level.required_attended_sessions;
       const meets_requirement = attended >= required;
 
-      // Step 7: INSERT (regardless of meets_requirement)
+      // INSERT (regardless of meets_requirement)
       const record = await tx.student_progress.create({
         data: {
           student_id,
@@ -229,10 +259,10 @@ export async function promoteStudent(
 /**
  * List all progress records for a student (all disciplines).
  * Ordered by promoted_at desc. Current level = first row per discipline group.
- * Validates branch context when provided.
+ * Requires branch context; validates student belongs to caller's branch.
  */
 export async function listProgress(
-  input: ProgressQueryInput & { branch_id?: string }
+  input: ProgressQueryInput
 ): Promise<ActionResult<ProgressRecord[]>> {
   const parsed = progressQuerySchema.safeParse(input);
   if (!parsed.success) {
@@ -241,19 +271,17 @@ export async function listProgress(
 
   try {
     const result = await withAuthenticatedUser(async (tx, ctx) => {
-      if (input.branch_id) {
-        const branchError = assertCallerBranchContext(ctx, input.branch_id);
-        if (branchError) {
-          return { __branchError: branchError } as const;
-        }
+      const branchError = assertCallerBranchContext(ctx, parsed.data.branch_id);
+      if (branchError) {
+        return { __branchError: branchError } as const;
+      }
 
-        const student = await tx.students.findUnique({
-          where: { id: parsed.data.student_id },
-          select: { branch_id: true },
-        });
-        if (!student || student.branch_id !== input.branch_id) {
-          return { __branchError: BRANCH_ASSERTION_MESSAGES.CROSS_BRANCH_DENIED } as const;
-        }
+      const student = await tx.students.findUnique({
+        where: { id: parsed.data.student_id },
+        select: { branch_id: true },
+      });
+      if (!student || student.branch_id !== parsed.data.branch_id) {
+        return { __branchError: BRANCH_ASSERTION_MESSAGES.CROSS_BRANCH_DENIED } as const;
       }
 
       return tx.student_progress.findMany({
@@ -297,6 +325,7 @@ export async function listProgress(
 
 /**
  * Create a note for a student. Admin/Teacher branch-scoped via RLS.
+ * Requires branch context; validates student belongs to caller's branch.
  */
 export async function createNote(
   input: CreateNoteInput
@@ -308,7 +337,22 @@ export async function createNote(
 
   try {
     const result = await withAuthenticatedUser(async (tx, ctx) => {
-      return tx.student_notes.create({
+      // Branch context validation
+      const branchError = assertCallerBranchContext(ctx, parsed.data.branch_id);
+      if (branchError) {
+        return { id: null, error: branchError } as const;
+      }
+
+      // Validate student belongs to branch
+      const student = await tx.students.findUnique({
+        where: { id: parsed.data.student_id },
+        select: { branch_id: true },
+      });
+      if (!student || student.branch_id !== parsed.data.branch_id) {
+        return { id: null, error: BRANCH_ASSERTION_MESSAGES.CROSS_BRANCH_DENIED } as const;
+      }
+
+      const note = await tx.student_notes.create({
         data: {
           student_id: parsed.data.student_id,
           discipline_id: parsed.data.discipline_id ?? null,
@@ -318,9 +362,14 @@ export async function createNote(
         },
         select: { id: true },
       });
+
+      return { id: note.id, error: null } as const;
     });
 
     if (!result.success) return result;
+    if (result.data.id === null) {
+      return { success: false, error: result.data.error ?? COMMON_MESSAGES.UNEXPECTED_ERROR };
+    }
     return { success: true, data: { id: result.data.id } };
   } catch {
     return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
@@ -329,6 +378,7 @@ export async function createNote(
 
 /**
  * Mark a note as completed.
+ * Requires branch context; validates note's student belongs to caller's branch.
  */
 export async function completeNote(
   input: NoteActionInput
@@ -340,13 +390,25 @@ export async function completeNote(
 
   try {
     const result = await withAuthenticatedUser(async (tx, ctx) => {
+      // Branch context validation
+      const branchError = assertCallerBranchContext(ctx, parsed.data.branch_id);
+      if (branchError) {
+        return { id: null, error: branchError } as const;
+      }
+
       const note = await tx.student_notes.findUnique({
         where: { id: parsed.data.id },
-        select: { id: true, is_completed: true },
+        select: { id: true, is_completed: true, student_id: true, students: { select: { branch_id: true } } },
       });
       if (!note) {
         return { id: null, error: NOTES_MESSAGES.INVALID_ID } as const;
       }
+
+      // Validate note's student belongs to the requested branch
+      if (note.students.branch_id !== parsed.data.branch_id) {
+        return { id: null, error: BRANCH_ASSERTION_MESSAGES.CROSS_BRANCH_DENIED } as const;
+      }
+
       if (note.is_completed) {
         return { id: null, error: NOTES_MESSAGES.ALREADY_COMPLETED } as const;
       }
@@ -378,6 +440,7 @@ export async function completeNote(
 
 /**
  * Reopen a completed note.
+ * Requires branch context; validates note's student belongs to caller's branch.
  */
 export async function reopenNote(
   input: NoteActionInput
@@ -388,14 +451,26 @@ export async function reopenNote(
   }
 
   try {
-    const result = await withAuthenticatedUser(async (tx) => {
+    const result = await withAuthenticatedUser(async (tx, ctx) => {
+      // Branch context validation
+      const branchError = assertCallerBranchContext(ctx, parsed.data.branch_id);
+      if (branchError) {
+        return { id: null, error: branchError } as const;
+      }
+
       const note = await tx.student_notes.findUnique({
         where: { id: parsed.data.id },
-        select: { id: true, is_completed: true },
+        select: { id: true, is_completed: true, student_id: true, students: { select: { branch_id: true } } },
       });
       if (!note) {
         return { id: null, error: NOTES_MESSAGES.INVALID_ID } as const;
       }
+
+      // Validate note's student belongs to the requested branch
+      if (note.students.branch_id !== parsed.data.branch_id) {
+        return { id: null, error: BRANCH_ASSERTION_MESSAGES.CROSS_BRANCH_DENIED } as const;
+      }
+
       if (!note.is_completed) {
         return { id: null, error: NOTES_MESSAGES.ALREADY_OPEN } as const;
       }
@@ -427,33 +502,31 @@ export async function reopenNote(
 
 /**
  * List notes for a student with optional discipline/completion filters.
- * Validates branch context when provided.
+ * Requires branch context; validates student belongs to caller's branch.
  */
 export async function listNotes(
-  input: NotesQueryInput & { branch_id?: string }
+  input: NotesQueryInput
 ): Promise<ActionResult<NoteRecord[]>> {
   const parsed = notesQuerySchema.safeParse(input);
   if (!parsed.success) {
     return { success: false, error: parsed.error.issues[0].message };
   }
 
-  const { student_id, discipline_id, is_completed } = parsed.data;
+  const { student_id, branch_id, discipline_id, is_completed } = parsed.data;
 
   try {
     const result = await withAuthenticatedUser(async (tx, ctx) => {
-      if (input.branch_id) {
-        const branchError = assertCallerBranchContext(ctx, input.branch_id);
-        if (branchError) {
-          return { __branchError: branchError } as const;
-        }
+      const branchError = assertCallerBranchContext(ctx, branch_id);
+      if (branchError) {
+        return { __branchError: branchError } as const;
+      }
 
-        const student = await tx.students.findUnique({
-          where: { id: student_id },
-          select: { branch_id: true },
-        });
-        if (!student || student.branch_id !== input.branch_id) {
-          return { __branchError: BRANCH_ASSERTION_MESSAGES.CROSS_BRANCH_DENIED } as const;
-        }
+      const student = await tx.students.findUnique({
+        where: { id: student_id },
+        select: { branch_id: true },
+      });
+      if (!student || student.branch_id !== branch_id) {
+        return { __branchError: BRANCH_ASSERTION_MESSAGES.CROSS_BRANCH_DENIED } as const;
       }
 
       return tx.student_notes.findMany({

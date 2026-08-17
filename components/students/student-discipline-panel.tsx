@@ -21,11 +21,13 @@ import {
 interface StudentDisciplinePanelProps {
   enrollments: StudentDisciplineRecord[]
   canManage: boolean
+  branchId: string
 }
 
 export function StudentDisciplinePanel({
   enrollments,
   canManage,
+  branchId,
 }: StudentDisciplinePanelProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -34,6 +36,7 @@ export function StudentDisciplinePanel({
     startTransition(async () => {
       const result = await suspendEnrollment({
         student_discipline_id: studentDisciplineId,
+        branch_id: branchId,
       })
       if (result.success) {
         toast.success(TOAST_MESSAGES.ENROLLMENT_SUSPENDED)
@@ -48,6 +51,7 @@ export function StudentDisciplinePanel({
     startTransition(async () => {
       const result = await reactivateEnrollment({
         student_discipline_id: studentDisciplineId,
+        branch_id: branchId,
       })
       if (result.success) {
         toast.success(TOAST_MESSAGES.ENROLLMENT_REACTIVATED)

@@ -485,6 +485,7 @@ export const TEACHER_CONFLICT_MESSAGES = {
 } as const
 
 export const ENROLLMENT_MESSAGES = {
+  BRANCH_REQUIRED: "Contexto de sucursal requerido.",
   MIN_ONE_DISCIPLINE: "Seleccioná al menos una disciplina.",
   DATE_FORMAT: "La fecha debe tener formato AAAA-MM-DD.",
   INVALID_DATE: "La fecha de inscripción no es válida.",

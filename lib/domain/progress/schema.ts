@@ -3,6 +3,7 @@
 import { z } from "zod";
 
 export const PROGRESS_MESSAGES = {
+  BRANCH_REQUIRED: "Contexto de sucursal requerido.",
   INVALID_STUDENT_ID: "Identificador de estudiante inválido.",
   INVALID_DISCIPLINE_ID: "Identificador de disciplina inválido.",
   INVALID_LEVEL: "El nivel especificado no existe.",
@@ -15,6 +16,7 @@ export const PROGRESS_MESSAGES = {
 } as const;
 
 export const NOTES_MESSAGES = {
+  BRANCH_REQUIRED: "Contexto de sucursal requerido.",
   INVALID_ID: "Identificador de nota inválido.",
   INVALID_STUDENT_ID: "Identificador de estudiante inválido.",
   INVALID_DISCIPLINE_ID: "Identificador de disciplina inválido.",
@@ -61,6 +63,7 @@ export const promoteStudentSchema = z
     student_id: z.uuid({ error: PROGRESS_MESSAGES.INVALID_STUDENT_ID }),
     discipline_id: z.uuid({ error: PROGRESS_MESSAGES.INVALID_DISCIPLINE_ID }),
     level_id: z.uuid({ error: PROGRESS_MESSAGES.INVALID_LEVEL }),
+    branch_id: z.uuid({ error: PROGRESS_MESSAGES.BRANCH_REQUIRED }),
     promoted_at: z
       .string()
       .regex(DATE_PATTERN, { error: PROGRESS_MESSAGES.PROMOTED_DATE_FORMAT })
@@ -84,12 +87,14 @@ export const readinessQuerySchema = z
     student_id: z.uuid({ error: PROGRESS_MESSAGES.INVALID_STUDENT_ID }),
     discipline_id: z.uuid({ error: PROGRESS_MESSAGES.INVALID_DISCIPLINE_ID }),
     level_id: z.uuid({ error: PROGRESS_MESSAGES.INVALID_LEVEL }),
+    branch_id: z.uuid({ error: PROGRESS_MESSAGES.BRANCH_REQUIRED }),
   })
   .strict();
 
 export const progressQuerySchema = z
   .object({
     student_id: z.uuid({ error: PROGRESS_MESSAGES.INVALID_STUDENT_ID }),
+    branch_id: z.uuid({ error: PROGRESS_MESSAGES.BRANCH_REQUIRED }),
   })
   .strict();
 
@@ -104,18 +109,21 @@ export const createNoteSchema = z
       .string()
       .min(1, { error: NOTES_MESSAGES.CONTENT_REQUIRED })
       .max(2000, { error: NOTES_MESSAGES.CONTENT_MAX }),
+    branch_id: z.uuid({ error: NOTES_MESSAGES.BRANCH_REQUIRED }),
   })
   .strict();
 
 export const noteActionSchema = z
   .object({
     id: z.uuid({ error: NOTES_MESSAGES.INVALID_ID }),
+    branch_id: z.uuid({ error: NOTES_MESSAGES.BRANCH_REQUIRED }),
   })
   .strict();
 
 export const notesQuerySchema = z
   .object({
     student_id: z.uuid({ error: NOTES_MESSAGES.INVALID_STUDENT_ID }),
+    branch_id: z.uuid({ error: NOTES_MESSAGES.BRANCH_REQUIRED }),
     discipline_id: z.uuid({ error: NOTES_MESSAGES.INVALID_DISCIPLINE_ID }).nullable().optional(),
     is_completed: z.boolean().optional(),
   })

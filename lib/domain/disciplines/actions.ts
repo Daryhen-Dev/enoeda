@@ -82,7 +82,7 @@ export async function listDisciplines(
  * Requires branch context; validates student belongs to caller's branch.
  */
 export async function getStudentDisciplines(
-  input: { student_id: string; branch_id?: string }
+  input: { student_id: string; branch_id: string }
 ): Promise<ActionResult<StudentDisciplineRecord[]>> {
   const parsed = studentDisciplinesQuerySchema.safeParse(input);
   if (!parsed.success) {
@@ -91,21 +91,18 @@ export async function getStudentDisciplines(
 
   try {
     const result = await withAuthenticatedUser(async (tx, ctx) => {
-      // Branch context validation when provided
-      if (input.branch_id) {
-        const branchError = assertCallerBranchContext(ctx, input.branch_id);
-        if (branchError) {
-          return { __branchError: branchError } as const;
-        }
+      const branchError = assertCallerBranchContext(ctx, parsed.data.branch_id);
+      if (branchError) {
+        return { __branchError: branchError } as const;
+      }
 
-        // Validate student belongs to branch
-        const student = await tx.students.findUnique({
-          where: { id: parsed.data.student_id },
-          select: { branch_id: true },
-        });
-        if (!student || student.branch_id !== input.branch_id) {
-          return { __branchError: BRANCH_ASSERTION_MESSAGES.CROSS_BRANCH_DENIED } as const;
-        }
+      // Validate student belongs to branch
+      const student = await tx.students.findUnique({
+        where: { id: parsed.data.student_id },
+        select: { branch_id: true },
+      });
+      if (!student || student.branch_id !== parsed.data.branch_id) {
+        return { __branchError: BRANCH_ASSERTION_MESSAGES.CROSS_BRANCH_DENIED } as const;
       }
 
       return tx.student_disciplines.findMany({
@@ -150,7 +147,7 @@ export async function getStudentDisciplines(
  * Requires branch context; validates student belongs to caller's branch.
  */
 export async function getEnrollmentHistory(
-  input: { student_id: string; branch_id?: string }
+  input: { student_id: string; branch_id: string }
 ): Promise<ActionResult<EnrollmentEvent[]>> {
   const parsed = studentDisciplinesQuerySchema.safeParse(input);
   if (!parsed.success) {
@@ -159,19 +156,17 @@ export async function getEnrollmentHistory(
 
   try {
     const result = await withAuthenticatedUser(async (tx, ctx) => {
-      if (input.branch_id) {
-        const branchError = assertCallerBranchContext(ctx, input.branch_id);
-        if (branchError) {
-          return { __branchError: branchError } as const;
-        }
+      const branchError = assertCallerBranchContext(ctx, parsed.data.branch_id);
+      if (branchError) {
+        return { __branchError: branchError } as const;
+      }
 
-        const student = await tx.students.findUnique({
-          where: { id: parsed.data.student_id },
-          select: { branch_id: true },
-        });
-        if (!student || student.branch_id !== input.branch_id) {
-          return { __branchError: BRANCH_ASSERTION_MESSAGES.CROSS_BRANCH_DENIED } as const;
-        }
+      const student = await tx.students.findUnique({
+        where: { id: parsed.data.student_id },
+        select: { branch_id: true },
+      });
+      if (!student || student.branch_id !== parsed.data.branch_id) {
+        return { __branchError: BRANCH_ASSERTION_MESSAGES.CROSS_BRANCH_DENIED } as const;
       }
 
       return tx.discipline_events.findMany({
@@ -250,6 +245,7 @@ export async function createDiscipline(
 /**
  * Enroll a student in one or more disciplines.
  * Owner/Admin-branch via RLS. Batch is atomic.
+ * Requires branch context; validates student belongs to caller's branch.
  */
 export async function enrollStudent(
   input: EnrollStudentInput
@@ -259,10 +255,25 @@ export async function enrollStudent(
     return { success: false, error: parsed.error.issues[0].message };
   }
 
-  const { student_id, discipline_ids, enrolled_at } = parsed.data;
+  const { student_id, discipline_ids, enrolled_at, branch_id } = parsed.data;
 
   try {
     const result = await withAuthenticatedUser(async (tx, ctx) => {
+      // Branch context validation
+      const branchError = assertCallerBranchContext(ctx, branch_id);
+      if (branchError) {
+        return { enrolled: 0, error: branchError };
+      }
+
+      // Validate student belongs to branch
+      const student = await tx.students.findUnique({
+        where: { id: student_id },
+        select: { branch_id: true },
+      });
+      if (!student || student.branch_id !== branch_id) {
+        return { enrolled: 0, error: BRANCH_ASSERTION_MESSAGES.CROSS_BRANCH_DENIED };
+      }
+
       let enrolledCount = 0;
 
       for (const discipline_id of discipline_ids) {
@@ -304,11 +315,14 @@ export async function enrollStudent(
         enrolledCount++;
       }
 
-      return { enrolled: enrolledCount };
+      return { enrolled: enrolledCount, error: null };
     });
 
     if (!result.success) return result;
-    return { success: true, data: result.data };
+    if (result.data.error) {
+      return { success: false, error: result.data.error };
+    }
+    return { success: true, data: { enrolled: result.data.enrolled } };
   } catch (error) {
     if (
       error instanceof Error &&
@@ -323,6 +337,7 @@ export async function enrollStudent(
 /**
  * Suspend an active enrollment.
  * Owner/Admin-branch via RLS.
+ * Requires branch context; validates enrollment belongs to caller's branch.
  */
 export async function suspendEnrollment(
   input: EnrollmentActionInput
@@ -334,13 +349,24 @@ export async function suspendEnrollment(
 
   try {
     const result = await withAuthenticatedUser(async (tx, ctx) => {
+      // Branch context validation
+      const branchError = assertCallerBranchContext(ctx, parsed.data.branch_id);
+      if (branchError) {
+        return { id: null, error: branchError };
+      }
+
       const enrollment = await tx.student_disciplines.findUnique({
         where: { id: parsed.data.student_discipline_id },
-        select: { id: true, is_active: true },
+        select: { id: true, is_active: true, student_id: true, students: { select: { branch_id: true } } },
       });
 
       if (!enrollment) {
         return { id: null, error: ENROLLMENT_MESSAGES.NOT_FOUND };
+      }
+
+      // Validate enrollment belongs to the requested branch
+      if (enrollment.students.branch_id !== parsed.data.branch_id) {
+        return { id: null, error: BRANCH_ASSERTION_MESSAGES.CROSS_BRANCH_DENIED };
       }
 
       if (!enrollment.is_active) {
@@ -381,6 +407,7 @@ export async function suspendEnrollment(
 /**
  * Reactivate a suspended enrollment.
  * Owner/Admin-branch via RLS.
+ * Requires branch context; validates enrollment belongs to caller's branch.
  */
 export async function reactivateEnrollment(
   input: EnrollmentActionInput
@@ -392,13 +419,24 @@ export async function reactivateEnrollment(
 
   try {
     const result = await withAuthenticatedUser(async (tx, ctx) => {
+      // Branch context validation
+      const branchError = assertCallerBranchContext(ctx, parsed.data.branch_id);
+      if (branchError) {
+        return { id: null, error: branchError };
+      }
+
       const enrollment = await tx.student_disciplines.findUnique({
         where: { id: parsed.data.student_discipline_id },
-        select: { id: true, is_active: true },
+        select: { id: true, is_active: true, student_id: true, students: { select: { branch_id: true } } },
       });
 
       if (!enrollment) {
         return { id: null, error: ENROLLMENT_MESSAGES.NOT_FOUND };
+      }
+
+      // Validate enrollment belongs to the requested branch
+      if (enrollment.students.branch_id !== parsed.data.branch_id) {
+        return { id: null, error: BRANCH_ASSERTION_MESSAGES.CROSS_BRANCH_DENIED };
       }
 
       if (enrollment.is_active) {

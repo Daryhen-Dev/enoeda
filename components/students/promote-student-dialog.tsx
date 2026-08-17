@@ -41,6 +41,7 @@ interface PromoteStudentDialogProps {
   disciplineId: string
   disciplineName: string
   levels: LevelRecord[]
+  branchId: string
 }
 
 export function PromoteStudentDialog({
@@ -48,6 +49,7 @@ export function PromoteStudentDialog({
   disciplineId,
   disciplineName,
   levels,
+  branchId,
 }: PromoteStudentDialogProps) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
@@ -73,6 +75,7 @@ export function PromoteStudentDialog({
       student_id: studentId,
       discipline_id: disciplineId,
       level_id: levelId,
+      branch_id: branchId,
     }).then((result) => {
       if (!cancelled && result.success && result.data) {
         setReadiness(result.data)
@@ -81,7 +84,7 @@ export function PromoteStudentDialog({
     return () => {
       cancelled = true
     }
-  }, [levelId, open, studentId, disciplineId])
+  }, [levelId, open, studentId, disciplineId, branchId])
 
   function resetForm() {
     setLevelId("")
@@ -98,6 +101,7 @@ export function PromoteStudentDialog({
         student_id: studentId,
         discipline_id: disciplineId,
         level_id: levelId,
+        branch_id: branchId,
         observations: observations || null,
       })
       if (result.success) {

@@ -175,6 +175,7 @@ export default async function StudentDetailPage({
       <StudentDisciplinePanel
         enrollments={enrollments}
         canManage={canManage}
+        branchId={branchResult.branchId}
       />
 
       {attendanceStats.length > 0 && (
@@ -220,6 +221,7 @@ export default async function StudentDetailPage({
                     disciplineId={disciplineId}
                     disciplineName={disciplineName}
                     levels={dLevels}
+                    branchId={branchResult.branchId}
                   />
                 )
               ))}
@@ -231,7 +233,7 @@ export default async function StudentDetailPage({
       {/* Notes panel */}
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
-          <StudentNotesPanel notes={notesData} />
+          <StudentNotesPanel notes={notesData} branchId={branchResult.branchId} />
         </div>
         {canManage && (
           <CreateNoteDialog
@@ -240,6 +242,7 @@ export default async function StudentDetailPage({
               id: e.discipline_id,
               name: e.discipline_name,
             }))}
+            branchId={branchResult.branchId}
           />
         )}
       </div>

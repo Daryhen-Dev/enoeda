@@ -59,6 +59,7 @@ export const enrollStudentSchema = z.object({
   discipline_ids: z
     .array(z.uuid())
     .min(1, { error: ENROLLMENT_MESSAGES.MIN_ONE_DISCIPLINE }),
+  branch_id: z.uuid({ error: ENROLLMENT_MESSAGES.BRANCH_REQUIRED }),
   enrolled_at: z
     .string()
     .regex(DATE_PATTERN, { error: ENROLLMENT_MESSAGES.DATE_FORMAT })
@@ -69,11 +70,13 @@ export const enrollStudentSchema = z.object({
 
 export const enrollmentActionSchema = z.object({
   student_discipline_id: z.uuid(),
+  branch_id: z.uuid({ error: ENROLLMENT_MESSAGES.BRANCH_REQUIRED }),
   notes: z.string().max(500).optional(),
 });
 
 export const studentDisciplinesQuerySchema = z.object({
   student_id: z.uuid(),
+  branch_id: z.uuid({ error: ENROLLMENT_MESSAGES.BRANCH_REQUIRED }),
 });
 
 export type DisciplineCreateInput = z.infer<typeof disciplineCreateSchema>;

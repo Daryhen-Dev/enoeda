@@ -52,11 +52,13 @@ const NO_DISCIPLINE_VALUE = "__none__"
 interface CreateNoteDialogProps {
   studentId: string
   disciplines: DisciplineOption[]
+  branchId: string
 }
 
 export function CreateNoteDialog({
   studentId,
   disciplines,
+  branchId,
 }: CreateNoteDialogProps) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
@@ -85,6 +87,7 @@ export function CreateNoteDialog({
             : null,
         category: category as NoteCategory,
         content,
+        branch_id: branchId,
       })
       if (result.success) {
         setOpen(false)

@@ -28,9 +28,10 @@ type FilterState = "all" | "open" | "completed"
 
 interface StudentNotesPanelProps {
   notes: NoteRecord[]
+  branchId: string
 }
 
-export function StudentNotesPanel({ notes }: StudentNotesPanelProps) {
+export function StudentNotesPanel({ notes, branchId }: StudentNotesPanelProps) {
   const router = useRouter()
   const [filter, setFilter] = useState<FilterState>("all")
   const [isPending, startTransition] = useTransition()
@@ -43,7 +44,7 @@ export function StudentNotesPanel({ notes }: StudentNotesPanelProps) {
 
   function handleComplete(noteId: string) {
     startTransition(async () => {
-      const result = await completeNote({ id: noteId })
+      const result = await completeNote({ id: noteId, branch_id: branchId })
       if (result.success) {
         toast.success(TOAST_MESSAGES.NOTE_COMPLETED)
         router.refresh()
@@ -55,7 +56,7 @@ export function StudentNotesPanel({ notes }: StudentNotesPanelProps) {
 
   function handleReopen(noteId: string) {
     startTransition(async () => {
-      const result = await reopenNote({ id: noteId })
+      const result = await reopenNote({ id: noteId, branch_id: branchId })
       if (result.success) {
         toast.success(TOAST_MESSAGES.NOTE_REOPENED)
         router.refresh()
