@@ -392,9 +392,14 @@ export async function listBranchTeacherOptions(
     return { success: false, error: COMMON_MESSAGES.INSUFFICIENT_PERMISSIONS };
   }
 
+  // Query active teacher roles from user_roles (NOT teacher_profiles)
   const rosterResult = await withAuthenticatedUser(async (tx) => {
-    return tx.teacher_profiles.findMany({
-      where: { branch_id: parsed.data.branchId },
+    return tx.user_roles.findMany({
+      where: {
+        role: "teacher",
+        branch_id: parsed.data.branchId,
+        revoked_at: null,
+      },
       select: { user_id: true },
     });
   });
@@ -407,7 +412,7 @@ export async function listBranchTeacherOptions(
     .select("user_id, first_name, surname")
     .in(
       "user_id",
-      rosterResult.data.map((profile) => profile.user_id)
+      rosterResult.data.map((r) => r.user_id)
     )
     .order("first_name", { ascending: true });
   if (error) return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
@@ -421,3 +426,37 @@ export async function listBranchTeacherOptions(
   };
 }
 
+
+
+/**
+ * Enable self as teacher in own branch.
+ * Restricted to admin-of-branch only. Uses the existing idempotent
+ * assign_branch_teacher RPC with p_target = own userId.
+ */
+export async function enableSelfAsTeacher(
+  input: { branchId: string }
+): Promise<ActionResult<void>> {
+  const identity = await getAuthenticatedContext();
+  if (!identity.ok) {
+    return { success: false, error: COMMON_MESSAGES.AUTHENTICATION_REQUIRED };
+  }
+
+  const isAdminOfBranch = identity.ctx.assignments.some(
+    (a) => a.role === "admin" && a.branchId === input.branchId
+  );
+  if (!isAdminOfBranch) {
+    return { success: false, error: COMMON_MESSAGES.INSUFFICIENT_PERMISSIONS };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("assign_branch_teacher", {
+    p_target: identity.ctx.userId,
+    p_branch_id: input.branchId,
+  });
+
+  if (error) {
+    return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
+  }
+
+  return { success: true };
+}
