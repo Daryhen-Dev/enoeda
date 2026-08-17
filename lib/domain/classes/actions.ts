@@ -126,7 +126,7 @@ function mapConstraintError(
     : undefined;
 }
 
-// --- Internal: Teacher conflict detection (branch-scoped when branchId provided) ---
+// --- Internal: Teacher conflict detection (mandatory branch-scoped context) ---
 
 async function detectTeacherConflicts(
   tx: TransactionClient,
