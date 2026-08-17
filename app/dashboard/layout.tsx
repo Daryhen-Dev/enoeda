@@ -5,6 +5,13 @@ import { SiteHeader } from "@/components/site-header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { fetchCurrentRoles } from "@/lib/auth/server-roles"
+import { getAuthenticatedContext } from "@/lib/auth/identity-resolver"
+import {
+  getOperationalBranchIds,
+  resolveActiveBranches,
+} from "@/lib/auth/operational-branches"
+import { getOwnProfile } from "@/lib/domain/profile"
+import { DASHBOARD_SHELL_MESSAGES } from "@/lib/localization/es-ec"
 
 const dashboardLayoutStyle = {
   "--sidebar-width": "calc(var(--spacing) * 72)",
@@ -16,15 +23,47 @@ export default async function DashboardLayout({
 }: {
   children: ReactNode
 }) {
-  const roles = await fetchCurrentRoles()
+  const [roles, profileResult, identityResult] = await Promise.all([
+    fetchCurrentRoles(),
+    getOwnProfile(),
+    getAuthenticatedContext(),
+  ])
   const isAdmin = roles.includes("admin")
+  const canManageProfile = roles.includes("admin") || roles.includes("teacher")
+  const displayName =
+    canManageProfile && profileResult.success && profileResult.data
+      ? `${profileResult.data.first_name} ${profileResult.data.surname}`.trim() ||
+        DASHBOARD_SHELL_MESSAGES.PROFILE_NAME_UNAVAILABLE
+      : DASHBOARD_SHELL_MESSAGES.PROFILE_NAME_UNAVAILABLE
+
+  // Extract unique operational branch IDs (admin/teacher only) for SiteHeader
+  // Layout does NOT resolve ?branch — pages handle that individually
+  // Never falls back to UUID names; omits absent/inactive branches
+  const branches = await (async () => {
+    if (!identityResult.ok) return []
+    const ids = getOperationalBranchIds(identityResult.ctx.assignments)
+    if (ids.length === 0) return []
+
+    const { listBranches } = await import("@/lib/domain/branches/actions")
+    const branchesResult = await listBranches()
+    if (!branchesResult.success || !branchesResult.data) return []
+
+    return resolveActiveBranches(ids, branchesResult.data)
+  })()
 
   return (
     <TooltipProvider>
       <SidebarProvider style={dashboardLayoutStyle}>
-        <AppSidebar isAdmin={isAdmin} variant="inset" />
+        <AppSidebar
+          canManageProfile={canManageProfile}
+          isAdmin={isAdmin}
+          variant="inset"
+        />
         <SidebarInset>
-          <SiteHeader />
+          <SiteHeader
+            displayName={displayName}
+            branches={branches}
+          />
           <div className="flex flex-1 flex-col">
             <div className="@container/main flex flex-1 flex-col gap-2">
               {children}

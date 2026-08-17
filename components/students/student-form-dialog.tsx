@@ -11,8 +11,10 @@ import {
   getStudentById,
   updateStudent,
 } from "@/lib/domain/students/actions"
+import { enrollStudent } from "@/lib/domain/disciplines/actions"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Sheet,
   SheetClose,
@@ -34,6 +36,7 @@ import {
 } from "@/components/ui/select"
 import {
   COMMON_MESSAGES,
+  ENROLLMENT_MESSAGES,
   PRODUCT_TERMS,
   STUDENT_FORM_MESSAGES,
   STUDENT_MESSAGES,
@@ -45,6 +48,11 @@ export interface ActiveBranchOption {
   name: string
 }
 
+export interface DisciplineOption {
+  id: string
+  name: string
+}
+
 interface StudentFormValues {
   branch_id: string
   first_name: string
@@ -52,11 +60,25 @@ interface StudentFormValues {
   national_id: string
   email: string
   date_of_birth: string
+  discipline_ids: string[]
+  enrolled_at: string
 }
 
 interface StudentFormDialogProps {
   branches: ActiveBranchOption[]
+  disciplines?: DisciplineOption[]
   studentId?: string
+  lockedBranchId?: string
+  branchId?: string
+  onCreated?: () => void
+}
+
+function getTodayString(): string {
+  const today = new Date()
+  const year = today.getFullYear()
+  const month = String(today.getMonth() + 1).padStart(2, "0")
+  const day = String(today.getDate()).padStart(2, "0")
+  return `${year}-${month}-${day}`
 }
 
 function getDefaultValues(): StudentFormValues {
@@ -67,6 +89,8 @@ function getDefaultValues(): StudentFormValues {
     national_id: "",
     email: "",
     date_of_birth: "",
+    discipline_ids: [],
+    enrolled_at: getTodayString(),
   }
 }
 
@@ -84,20 +108,28 @@ function hasActiveBranch(branches: ActiveBranchOption[], branchId: string): bool
 
 export function StudentFormDialog({
   branches,
+  disciplines = [],
   studentId,
+  lockedBranchId,
+  branchId: contextBranchId,
+  onCreated,
 }: StudentFormDialogProps) {
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
   const [isLoadingStudent, setIsLoadingStudent] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
-  const branchId = useId()
+  const branchFieldId = useId()
   const firstNameId = useId()
   const surnameId = useId()
   const nationalId = useId()
   const emailId = useId()
   const dateOfBirthId = useId()
+  const enrolledAtId = useId()
   const form = useForm<StudentFormValues>({
-    defaultValues: getDefaultValues(),
+    defaultValues: {
+      ...getDefaultValues(),
+      branch_id: lockedBranchId ?? "",
+    },
     mode: "onBlur",
   })
   const isEditing = studentId !== undefined
@@ -118,7 +150,7 @@ export function StudentFormDialog({
     setActionError(null)
 
     try {
-      const result = await getStudentById(studentId)
+      const result = await getStudentById(studentId, contextBranchId ?? "")
 
       if (!result.success || result.data === undefined) {
         setActionError(result.error ?? STUDENT_FORM_MESSAGES.LOAD_FAILURE)
@@ -134,6 +166,8 @@ export function StudentFormDialog({
         national_id: result.data.national_id,
         email: result.data.email,
         date_of_birth: formatDateForInput(result.data.date_of_birth),
+        discipline_ids: [],
+        enrolled_at: getTodayString(),
       })
     } catch {
       setActionError(STUDENT_FORM_MESSAGES.LOAD_FAILURE)
@@ -149,7 +183,10 @@ export function StudentFormDialog({
 
     setIsOpen(nextIsOpen)
     setActionError(null)
-    form.reset(getDefaultValues())
+    form.reset({
+      ...getDefaultValues(),
+      branch_id: lockedBranchId ?? "",
+    })
 
     if (nextIsOpen && isEditing) {
       void loadStudent()
@@ -164,20 +201,39 @@ export function StudentFormDialog({
     setActionError(null)
 
     try {
-      const result = isEditing
-        ? await updateStudent({ id: studentId, ...values })
-        : await createStudent({ ...values, is_active: true })
+      if (isEditing) {
+        const result = await updateStudent({ id: studentId, ...values }, contextBranchId)
+        if (!result.success) {
+          setActionError(result.error ?? STUDENT_FORM_MESSAGES.SAVE_FAILURE)
+          return
+        }
+        toast.success(TOAST_MESSAGES.STUDENT_UPDATED)
+      } else {
+        // Create student, then enroll in selected disciplines
+        const createResult = await createStudent({ ...values, is_active: true })
+        if (!createResult.success || !createResult.data) {
+          setActionError(createResult.error ?? STUDENT_FORM_MESSAGES.SAVE_FAILURE)
+          return
+        }
 
-      if (!result.success) {
-        setActionError(result.error ?? STUDENT_FORM_MESSAGES.SAVE_FAILURE)
-        return
+        if (values.discipline_ids.length > 0) {
+          const enrollResult = await enrollStudent({
+            student_id: createResult.data.id,
+            discipline_ids: values.discipline_ids,
+            branch_id: values.branch_id,
+            enrolled_at: values.enrolled_at || undefined,
+          })
+          if (!enrollResult.success) {
+            setActionError(enrollResult.error ?? STUDENT_FORM_MESSAGES.SAVE_FAILURE)
+            return
+          }
+        }
+        toast.success(TOAST_MESSAGES.STUDENT_CREATED)
+        onCreated?.()
       }
 
       form.reset(getDefaultValues())
       setIsOpen(false)
-      toast.success(
-        isEditing ? TOAST_MESSAGES.STUDENT_UPDATED : TOAST_MESSAGES.STUDENT_CREATED
-      )
       router.refresh()
     } catch {
       setActionError(STUDENT_FORM_MESSAGES.SAVE_FAILURE)
@@ -232,33 +288,42 @@ export function StudentFormDialog({
                 }}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={Boolean(fieldState.error)}>
-                    <FieldLabel htmlFor={branchId}>{PRODUCT_TERMS.BRANCH}</FieldLabel>
-                    <Select
-                      value={field.value}
-                      onValueChange={(value) => {
-                        if (value) {
-                          field.onChange(value)
-                        }
-                      }}
-                      disabled={isPending}
-                    >
-                      <SelectTrigger
-                        id={branchId}
-                        className="w-full"
-                        aria-describedby={fieldState.error ? `${branchId}-error` : undefined}
-                        aria-invalid={Boolean(fieldState.error)}
+                    <FieldLabel htmlFor={branchFieldId}>{PRODUCT_TERMS.BRANCH}</FieldLabel>
+                    {lockedBranchId && !isEditing ? (
+                      <Input
+                        id={branchFieldId}
+                        value={branches.find((b) => b.id === lockedBranchId)?.name ?? lockedBranchId}
+                        disabled
+                        readOnly
+                      />
+                    ) : (
+                      <Select
+                        value={field.value}
+                        onValueChange={(value) => {
+                          if (value) {
+                            field.onChange(value)
+                          }
+                        }}
+                        disabled={isPending}
                       >
-                        <SelectValue placeholder={STUDENT_FORM_MESSAGES.ACTIVE_BRANCH_PLACEHOLDER} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {branches.map((branch) => (
-                          <SelectItem key={branch.id} value={branch.id}>
-                            {branch.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FieldError id={`${branchId}-error`} errors={[fieldState.error]} />
+                        <SelectTrigger
+                          id={branchFieldId}
+                          className="w-full"
+                          aria-describedby={fieldState.error ? `${branchFieldId}-error` : undefined}
+                          aria-invalid={Boolean(fieldState.error)}
+                        >
+                          <SelectValue placeholder={STUDENT_FORM_MESSAGES.ACTIVE_BRANCH_PLACEHOLDER} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {branches.map((branch) => (
+                            <SelectItem key={branch.id} value={branch.id}>
+                              {branch.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                    <FieldError id={`${branchFieldId}-error`} errors={[fieldState.error]} />
                   </Field>
                 )}
               />
@@ -339,6 +404,63 @@ export function StudentFormDialog({
                 />
                 <FieldError id={`${dateOfBirthId}-error`} errors={[errors.date_of_birth]} />
               </Field>
+
+              {/* Discipline enrollment — create mode only */}
+              {!isEditing && disciplines.length > 0 && (
+                <>
+                  <Controller
+                    control={form.control}
+                    name="discipline_ids"
+                    rules={{
+                      validate: (value) =>
+                        value.length >= 1 || ENROLLMENT_MESSAGES.MIN_ONE_DISCIPLINE,
+                    }}
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={Boolean(fieldState.error)}>
+                        <FieldLabel>{ENROLLMENT_MESSAGES.DISCIPLINES_LABEL}</FieldLabel>
+                        <div className="flex flex-col gap-2" role="group" aria-label={ENROLLMENT_MESSAGES.DISCIPLINES_LABEL}>
+                          {disciplines.map((discipline) => {
+                            const isChecked = field.value.includes(discipline.id)
+                            return (
+                              <label
+                                key={discipline.id}
+                                className="flex items-center gap-2 text-sm"
+                              >
+                                <Checkbox
+                                  checked={isChecked}
+                                  onCheckedChange={(checked) => {
+                                    const next = checked
+                                      ? [...field.value, discipline.id]
+                                      : field.value.filter((id) => id !== discipline.id)
+                                    field.onChange(next)
+                                  }}
+                                  disabled={isPending}
+                                />
+                                {discipline.name}
+                              </label>
+                            )
+                          })}
+                        </div>
+                        <FieldError errors={[fieldState.error]} />
+                      </Field>
+                    )}
+                  />
+
+                  <Field data-invalid={Boolean(errors.enrolled_at)}>
+                    <FieldLabel htmlFor={enrolledAtId}>{ENROLLMENT_MESSAGES.ENROLLED_AT_LABEL}</FieldLabel>
+                    <Input
+                      id={enrolledAtId}
+                      type="date"
+                      max={getTodayString()}
+                      aria-describedby={errors.enrolled_at ? `${enrolledAtId}-error` : undefined}
+                      aria-invalid={Boolean(errors.enrolled_at)}
+                      disabled={isPending}
+                      {...form.register("enrolled_at")}
+                    />
+                    <FieldError id={`${enrolledAtId}-error`} errors={[errors.enrolled_at]} />
+                  </Field>
+                </>
+              )}
             </FieldGroup>
 
             <SheetFooter>

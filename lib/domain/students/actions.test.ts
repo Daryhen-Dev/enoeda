@@ -8,17 +8,8 @@ const UUID = "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d";
 const STUDENT_ID = "f1e2d3c4-b5a6-4f7e-8d9c-0a1b2c3d4e5f";
 
 const mockCreate = vi.fn();
+const mockFindUnique = vi.fn();
 const mockWithAuthenticatedUser = vi.fn();
-
-interface StudentCreateDelegate {
-  create: typeof mockCreate;
-}
-
-interface StudentTransaction {
-  students: StudentCreateDelegate;
-}
-
-type StudentCreateCallback = (tx: StudentTransaction) => Promise<{ id: string }>;
 
 vi.mock("@/lib/auth/server-context", () => ({
   withAuthenticatedUser: (...args: unknown[]) =>
@@ -42,21 +33,33 @@ const validInput = {
   is_active: true,
 };
 
+/** Mock context with valid admin assignment for the branch */
+const mockCtx = {
+  userId: "u1",
+  roles: ["admin" as const],
+  assignments: [{ role: "admin" as const, branchId: UUID }],
+};
+
 describe("createStudent", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockWithAuthenticatedUser.mockImplementation(async (fn: StudentCreateCallback) => {
-      const data = await fn({ students: { create: mockCreate } });
+    mockWithAuthenticatedUser.mockImplementation(async (fn: Function) => {
+      const tx = {
+        students: { create: mockCreate },
+        branches: { findUnique: mockFindUnique },
+      };
+      const data = await fn(tx, mockCtx);
       return { success: true, data };
     });
     mockCreate.mockResolvedValue({ id: STUDENT_ID });
+    mockFindUnique.mockResolvedValue({ id: UUID, is_active: true });
   });
 
   it("rejects invalid input before calling withAuthenticatedUser", async () => {
     const result = await createStudent({ ...validInput, email: "bad" });
 
     expect(result.success).toBe(false);
-    expect(result.error).toBe("Invalid email address");
+    expect(result.error).toContain("correo");
     expect(mockWithAuthenticatedUser).not.toHaveBeenCalled();
   });
 

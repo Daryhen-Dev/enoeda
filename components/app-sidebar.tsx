@@ -5,8 +5,10 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
   BuildingIcon,
+  CalendarDaysIcon,
   LayoutDashboardIcon,
   ShieldIcon,
+  UserRoundIcon,
   UsersIcon,
 } from "lucide-react"
 
@@ -31,51 +33,37 @@ interface NavigationItem {
   icon: typeof LayoutDashboardIcon
   available: boolean
   adminOnly?: boolean
+  profileOnly?: boolean
 }
 
 const navigationItems: NavigationItem[] = [
-  {
-    title: DASHBOARD_SHELL_MESSAGES.OVERVIEW,
-    url: "/dashboard",
-    icon: LayoutDashboardIcon,
-    available: true,
-  },
-  {
-    title: DASHBOARD_SHELL_MESSAGES.BRANCHES,
-    url: "/dashboard/branches",
-    icon: BuildingIcon,
-    available: true,
-  },
-  {
-    title: DASHBOARD_SHELL_MESSAGES.STUDENTS,
-    url: "/dashboard/students",
-    icon: UsersIcon,
-    available: true,
-  },
-  {
-    title: DASHBOARD_SHELL_MESSAGES.STAFF,
-    url: "/dashboard/staff",
-    icon: ShieldIcon,
-    available: true,
-    adminOnly: true,
-  },
+  { title: DASHBOARD_SHELL_MESSAGES.OVERVIEW, url: "/dashboard", icon: LayoutDashboardIcon, available: true },
+  { title: DASHBOARD_SHELL_MESSAGES.BRANCHES, url: "/dashboard/branches", icon: BuildingIcon, available: true },
+  { title: DASHBOARD_SHELL_MESSAGES.STUDENTS, url: "/dashboard/students", icon: UsersIcon, available: true },
+  { title: DASHBOARD_SHELL_MESSAGES.STAFF, url: "/dashboard/staff", icon: ShieldIcon, available: true, adminOnly: true },
+  { title: DASHBOARD_SHELL_MESSAGES.CALENDAR, url: "/dashboard/calendar", icon: CalendarDaysIcon, available: true },
+  { title: DASHBOARD_SHELL_MESSAGES.PROFILE, url: "/dashboard/profile", icon: UserRoundIcon, available: true, profileOnly: true },
 ]
 
 function isNavigationItemActive(item: NavigationItem, pathname: string) {
-  return item.url === "/dashboard"
-    ? pathname === item.url
-    : pathname.startsWith(item.url)
+  return item.url === "/dashboard" ? pathname === item.url : pathname.startsWith(item.url)
 }
 
 interface AppSidebarProps extends ComponentProps<typeof Sidebar> {
   isAdmin?: boolean
+  canManageProfile?: boolean
 }
 
-export function AppSidebar({ isAdmin = false, ...props }: AppSidebarProps) {
+export function AppSidebar({
+  isAdmin = false,
+  canManageProfile = false,
+  ...props
+}: AppSidebarProps) {
   const pathname = usePathname()
-
   const visibleItems = navigationItems.filter(
-    (item) => !item.adminOnly || isAdmin
+    (item) =>
+      (!item.adminOnly || isAdmin) &&
+      (!item.profileOnly || canManageProfile)
   )
 
   return (
@@ -95,41 +83,22 @@ export function AppSidebar({ isAdmin = false, ...props }: AppSidebarProps) {
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>
-            {DASHBOARD_SHELL_MESSAGES.MANAGEMENT}
-          </SidebarGroupLabel>
+          <SidebarGroupLabel>{DASHBOARD_SHELL_MESSAGES.MANAGEMENT}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {visibleItems.map((item) => {
                 const Icon = item.icon
                 const isActive = isNavigationItemActive(item, pathname)
-
                 return (
                   <SidebarMenuItem key={item.title}>
-                    {item.available ? (
-                      <SidebarMenuButton
-                        isActive={isActive}
-                        tooltip={item.title}
-                        render={<Link href={item.url} />}
-                      >
-                        <Icon />
-                        <span>{item.title}</span>
-                      </SidebarMenuButton>
-                    ) : (
-                      <SidebarMenuButton
-                        aria-disabled="true"
-                        className="cursor-not-allowed opacity-60"
-                        disabled
-                        isActive={isActive}
-                        tooltip={`${item.title} — Soon`}
-                      >
-                        <Icon />
-                        <span>{item.title}</span>
-                        <span className="ml-auto text-xs text-muted-foreground">
-                          Soon
-                        </span>
-                      </SidebarMenuButton>
-                    )}
+                    <SidebarMenuButton
+                      isActive={isActive}
+                      tooltip={item.title}
+                      render={<Link href={item.url} />}
+                    >
+                      <Icon />
+                      <span>{item.title}</span>
+                    </SidebarMenuButton>
                   </SidebarMenuItem>
                 )
               })}

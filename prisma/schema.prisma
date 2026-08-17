@@ -455,6 +455,7 @@ model users {
   user_roles_user_roles_assigned_byTousers user_roles[]           @relation("user_roles_assigned_byTousers")
   user_roles_user_roles_revoked_byTousers  user_roles[]           @relation("user_roles_revoked_byTousers")
   user_roles_user_roles_user_idTousers     user_roles[]           @relation("user_roles_user_idTousers")
+  user_profiles                            user_profiles?
 
   @@index([created_at(sort: Desc)], map: "idx_users_created_at_desc")
   @@index([email], map: "idx_users_email")
@@ -527,37 +528,299 @@ model user_roles {
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 /// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
 model branches {
-  id         String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name       String
-  address    String?
-  phone      String?
-  time_zone  String       @default("America/Guayaquil")
-  is_active  Boolean      @default(true)
-  created_at DateTime     @default(now()) @db.Timestamptz(6)
-  updated_at DateTime     @default(now()) @db.Timestamptz(6)
-  students   students[]
-  user_roles user_roles[]
+  id                String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name              String
+  address           String?
+  phone             String?
+  time_zone         String              @default("America/Guayaquil")
+  is_active         Boolean             @default(true)
+  created_at        DateTime            @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime            @default(now()) @db.Timestamptz(6)
+  students          students[]
+  user_roles        user_roles[]
+  scheduled_classes scheduled_classes[]
+  one_time_classes  one_time_classes[]
 
   @@schema("public")
 }
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
-model students {
-  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  branch_id     String   @db.Uuid
+model user_profiles {
+  user_id       String   @id @db.Uuid
   first_name    String
   surname       String
-  national_id   String   @unique(map: "students_national_id_uq")
-  email         String
+  phone         String?
   date_of_birth DateTime @db.Date
-  is_active     Boolean  @default(true)
   created_at    DateTime @default(now()) @db.Timestamptz(6)
   updated_at    DateTime @default(now()) @db.Timestamptz(6)
-  branches      branches @relation(fields: [branch_id], references: [id], onUpdate: NoAction)
+  users         users    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@schema("public")
+}
+
+model students {
+  id                  String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  branch_id           String                @db.Uuid
+  first_name          String
+  surname             String
+  national_id         String                @unique(map: "students_national_id_uq")
+  email               String
+  date_of_birth       DateTime              @db.Date
+  is_active           Boolean               @default(true)
+  created_at          DateTime              @default(now()) @db.Timestamptz(6)
+  updated_at          DateTime              @default(now()) @db.Timestamptz(6)
+  branches            branches              @relation(fields: [branch_id], references: [id], onUpdate: NoAction)
+  student_disciplines student_disciplines[]
+  attendance          attendance[]
+  student_progress    student_progress[]
+  student_notes       student_notes[]
 
   @@index([branch_id])
   @@index([email])
+  @@schema("public")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model disciplines {
+  id                  String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                String
+  code                String
+  is_active           Boolean               @default(true)
+  class_price         Decimal?              @db.Decimal(10, 2)
+  created_at          DateTime              @default(now()) @db.Timestamptz(6)
+  updated_at          DateTime              @default(now()) @db.Timestamptz(6)
+  student_disciplines student_disciplines[]
+  scheduled_classes   scheduled_classes[]
+  discipline_levels   discipline_levels[]
+  student_progress    student_progress[]
+  student_notes       student_notes[]
+  one_time_classes    one_time_classes[]
+
+  @@schema("public")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model student_disciplines {
+  id                String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  student_id        String              @db.Uuid
+  discipline_id     String              @db.Uuid
+  enrolled_at       DateTime            @default(dbgenerated("CURRENT_DATE")) @db.Date
+  is_active         Boolean             @default(true)
+  suspended_at      DateTime?           @db.Timestamptz(6)
+  next_due_date     DateTime?           @db.Date
+  created_at        DateTime            @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime            @default(now()) @db.Timestamptz(6)
+  students          students            @relation(fields: [student_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  disciplines       disciplines         @relation(fields: [discipline_id], references: [id], onUpdate: NoAction)
+  discipline_events discipline_events[]
+  payments          payments[]
+  class_payments    class_payments[]
+
+  @@unique([student_id, discipline_id], map: "student_disciplines_pair_uq")
+  @@index([student_id])
+  @@index([discipline_id])
+  @@schema("public")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model discipline_events {
+  id                    String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  student_discipline_id String              @db.Uuid
+  event_type            String
+  performed_by          String              @db.Uuid
+  event_date            DateTime            @default(now()) @db.Timestamptz(6)
+  notes                 String?
+  student_disciplines   student_disciplines @relation(fields: [student_discipline_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([student_discipline_id])
+  @@schema("public")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model scheduled_classes {
+  id                 String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  branch_id          String           @db.Uuid
+  discipline_id      String           @db.Uuid
+  default_teacher_id String?          @db.Uuid
+  day_of_week        Int              @db.SmallInt
+  start_time         DateTime         @db.Time(6)
+  end_time           DateTime?        @db.Time(6)
+  is_active          Boolean          @default(true)
+  created_at         DateTime         @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime         @default(now()) @db.Timestamptz(6)
+  branches           branches         @relation(fields: [branch_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  disciplines        disciplines      @relation(fields: [discipline_id], references: [id], onUpdate: NoAction)
+  class_sessions     class_sessions[]
+  attendance         attendance[]
+
+  @@index([branch_id])
+  @@index([discipline_id])
+  @@index([default_teacher_id])
+  @@schema("public")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model one_time_classes {
+  id            String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  branch_id     String       @db.Uuid
+  discipline_id String       @db.Uuid
+  teacher_id    String?      @db.Uuid
+  class_date    DateTime     @db.Date
+  start_time    DateTime     @db.Time(6)
+  end_time      DateTime?    @db.Time(6)
+  created_at    DateTime     @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime     @default(now()) @db.Timestamptz(6)
+  branches      branches     @relation(fields: [branch_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  disciplines   disciplines  @relation(fields: [discipline_id], references: [id], onUpdate: NoAction)
+  attendance    attendance[]
+
+  @@index([branch_id])
+  @@index([discipline_id])
+  @@index([teacher_id])
+  @@index([class_date])
+  @@schema("public")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model class_sessions {
+  id                  String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  scheduled_class_id  String            @db.Uuid
+  session_date        DateTime          @db.Date
+  assigned_teacher_id String?           @db.Uuid
+  status              String            @default("scheduled")
+  suspension_category String?
+  suspension_reason   String?
+  created_at          DateTime          @default(now()) @db.Timestamptz(6)
+  updated_at          DateTime          @default(now()) @db.Timestamptz(6)
+  scheduled_classes   scheduled_classes @relation(fields: [scheduled_class_id], references: [id], onUpdate: NoAction)
+
+  @@unique([scheduled_class_id, session_date], map: "class_sessions_pair_uq")
+  @@index([scheduled_class_id])
+  @@index([status, session_date])
+  @@index([assigned_teacher_id])
+  @@schema("public")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model attendance {
+  id                 String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  scheduled_class_id String?           @db.Uuid
+  one_time_class_id  String?           @db.Uuid
+  session_date       DateTime          @db.Date
+  student_id         String            @db.Uuid
+  attended           Boolean
+  observation        String?
+  marked_by          String            @db.Uuid
+  created_at         DateTime          @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime          @default(now()) @db.Timestamptz(6)
+  scheduled_classes  scheduled_classes? @relation(fields: [scheduled_class_id], references: [id], onUpdate: NoAction)
+  one_time_classes   one_time_classes?  @relation(fields: [one_time_class_id], references: [id], onUpdate: NoAction)
+  students           students           @relation(fields: [student_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  // Uniqueness is enforced in the DB via two PARTIAL unique indexes
+  // (attendance_scheduled_session_student_uq, attendance_one_time_student_uq)
+  // — not representable in Prisma; the migration is the source of truth.
+  @@index([scheduled_class_id])
+  @@index([one_time_class_id])
+  @@index([student_id])
+  @@index([session_date])
+  @@index([scheduled_class_id, session_date])
+  @@schema("public")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model discipline_levels {
+  id                         String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  discipline_id              String             @db.Uuid
+  name                       String
+  color                      String?
+  sort_order                 Int
+  required_attended_sessions Int                @default(0)
+  created_at                 DateTime           @default(now()) @db.Timestamptz(6)
+  updated_at                 DateTime           @default(now()) @db.Timestamptz(6)
+  disciplines                disciplines        @relation(fields: [discipline_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  student_progress           student_progress[]
+
+  @@unique([discipline_id, sort_order], map: "discipline_levels_discipline_sort_uq")
+  @@index([discipline_id])
+  @@schema("public")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model student_progress {
+  id                String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  student_id        String            @db.Uuid
+  discipline_id     String            @db.Uuid
+  level_id          String            @db.Uuid
+  promoted_at       DateTime          @default(dbgenerated("CURRENT_DATE")) @db.Date
+  observations      String?
+  created_by        String            @db.Uuid
+  created_at        DateTime          @default(now()) @db.Timestamptz(6)
+  students          students          @relation(fields: [student_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  disciplines       disciplines       @relation(fields: [discipline_id], references: [id], onUpdate: NoAction)
+  discipline_levels discipline_levels @relation(fields: [level_id], references: [id], onUpdate: NoAction)
+
+  @@index([student_id, discipline_id, promoted_at(sort: Desc)])
+  @@index([level_id])
+  @@schema("public")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model student_notes {
+  id            String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  student_id    String       @db.Uuid
+  discipline_id String?      @db.Uuid
+  category      String
+  content       String
+  is_completed  Boolean      @default(false)
+  completed_at  DateTime?    @db.Timestamptz(6)
+  completed_by  String?      @db.Uuid
+  created_by    String       @db.Uuid
+  created_at    DateTime     @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime     @default(now()) @db.Timestamptz(6)
+  students      students     @relation(fields: [student_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  disciplines   disciplines? @relation(fields: [discipline_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
+
+  @@index([student_id, discipline_id])
+  @@index([student_id, is_completed])
+  @@schema("public")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model payments {
+  id                    String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  student_discipline_id String              @db.Uuid
+  amount                Decimal             @db.Decimal(10, 2)
+  months_covered        Int                 @db.SmallInt
+  period_start          DateTime            @db.Date
+  period_end            DateTime            @db.Date
+  payment_date          DateTime            @default(dbgenerated("CURRENT_DATE")) @db.Date
+  recorded_by           String              @db.Uuid
+  note                  String?
+  created_at            DateTime            @default(now()) @db.Timestamptz(6)
+  student_disciplines   student_disciplines @relation(fields: [student_discipline_id], references: [id], onUpdate: NoAction)
+
+  @@index([student_discipline_id])
+  @@schema("public")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model class_payments {
+  id                    String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  student_discipline_id String              @db.Uuid
+  amount                Decimal             @db.Decimal(10, 2)
+  class_date            DateTime            @default(dbgenerated("CURRENT_DATE")) @db.Date
+  scheduled_class_id    String?             @db.Uuid
+  recorded_by           String              @db.Uuid
+  created_at            DateTime            @default(now()) @db.Timestamptz(6)
+  student_disciplines   student_disciplines @relation(fields: [student_discipline_id], references: [id], onUpdate: NoAction)
+
+  @@index([student_discipline_id])
+  @@index([class_date])
   @@schema("public")
 }
 

@@ -37,11 +37,13 @@ interface ReactivateStudentSummary {
 interface StudentReactivateDialogProps {
   student: ReactivateStudentSummary
   branches: ActiveBranchOption[]
+  callerBranchId: string
 }
 
 export function StudentReactivateDialog({
   student,
   branches,
+  callerBranchId,
 }: StudentReactivateDialogProps) {
   const router = useRouter()
   const branchSelectId = useId()
@@ -70,7 +72,7 @@ export function StudentReactivateDialog({
       const result = await reactivateStudent({
         id: student.id,
         ...(requiresBranch ? { branch_id: branchId } : {}),
-      })
+      }, callerBranchId)
       if (!result.success) {
         setError(result.error ?? STUDENT_LIFECYCLE_MESSAGES.REACTIVATE_FAILURE)
         return

@@ -9,6 +9,8 @@ export const PRODUCT_TERMS = {
   BRANCH: "Sucursal",
   STUDENT: "Estudiante",
   NATIONAL_ID: "Cédula",
+  DISCIPLINE: "Disciplina",
+  DISCIPLINES: "Disciplinas",
 } as const
 
 export const COMMON_MESSAGES = {
@@ -42,6 +44,21 @@ export const TOAST_MESSAGES = {
   STUDENT_DEACTIVATED: "Estudiante desactivado correctamente.",
   STUDENT_REACTIVATED: "Estudiante reactivado correctamente.",
   PASSWORD_CHANGED: "Contraseña actualizada correctamente.",
+  PROFILE_CREATED: "Perfil creado correctamente.",
+  PROFILE_UPDATED: "Perfil actualizado correctamente.",
+  DISCIPLINE_CREATED: "Disciplina creada correctamente.",
+  STUDENT_ENROLLED: "Estudiante inscripto correctamente.",
+  ENROLLMENT_SUSPENDED: "Inscripción suspendida.",
+  ENROLLMENT_REACTIVATED: "Inscripción reactivada.",
+  LEVEL_CREATED: "Nivel creado correctamente.",
+  LEVEL_UPDATED: "Nivel actualizado correctamente.",
+  STUDENT_PROMOTED: "Estudiante promovido correctamente.",
+  NOTE_CREATED: "Nota creada correctamente.",
+  NOTE_COMPLETED: "Nota completada.",
+  NOTE_REOPENED: "Nota reabierta.",
+  MONTHLY_PAYMENT_REGISTERED: "Pago mensual registrado correctamente.",
+  CLASS_PAYMENT_REGISTERED: "Pago por clase registrado correctamente.",
+  CLASS_PRICE_UPDATED: "Precio por clase actualizado.",
 } as const
 
 export const AUTH_MESSAGES = {
@@ -63,6 +80,9 @@ export const DASHBOARD_SHELL_MESSAGES = {
   STUDENTS: "Estudiantes",
   STAFF: "Personal",
   MANAGEMENT: "Administración",
+  CALENDAR: "Calendario",
+  PROFILE: "Mi perfil",
+  PROFILE_NAME_UNAVAILABLE: "Perfil pendiente",
 } as const
 
 export const SIDEBAR_ACCESSIBILITY_MESSAGES = {
@@ -76,6 +96,7 @@ export const DIALOG_ACCESSIBILITY_MESSAGES = {
 } as const
 
 export const DASHBOARD_OVERVIEW_MESSAGES = {
+  NO_BRANCH_CONTEXT: "No tiene una sucursal activa asignada. Contacte al administrador.",
   WELCOME: "Le damos la bienvenida a Enoeda Academy",
   WORKSPACE_READY: "Su espacio de gestión académica está listo.",
   DATA_UNAVAILABLE_ALERT:
@@ -99,9 +120,14 @@ export const DASHBOARD_OVERVIEW_MESSAGES = {
   INACTIVE_STUDENT_COUNT_ARIA_LABEL: (count: string) =>
     `${count} estudiantes inactivos`,
   ACTIVE_STUDENTS_COUNT: (count: string) => `${count} activos`,
+  OVERDUE_STUDENTS: "Morosos",
+  OVERDUE_STUDENTS_DESCRIPTION: "Estudiantes con pagos vencidos.",
+  OVERDUE_STUDENT_COUNT_ARIA_LABEL: (count: string) => `${count} estudiantes morosos`,
 } as const
 
 export const STUDENT_DIRECTORY_MESSAGES = {
+  PAGE_TITLE: "Estudiantes",
+  NO_BRANCH_CONTEXT: "No tiene una sucursal activa asignada. Contacte al administrador.",
   INITIAL_LOAD_FAILURE: "No se pudieron cargar los estudiantes. Inténtelo nuevamente.",
   LOAD_MORE_FAILURE: "No se pudieron cargar más estudiantes. Inténtelo nuevamente.",
   HEADING: "Estudiantes",
@@ -116,8 +142,11 @@ export const STUDENT_DIRECTORY_MESSAGES = {
   INACTIVE_TABLE_CAPTION: "Estudiantes inactivos",
   FIRST_NAME: "Nombre",
   SURNAME: "Apellido",
-  BRANCH_ID: "ID de sucursal",
+  BRANCH: "Sucursal",
+  DISCIPLINES: "Disciplinas",
+  NO_ACTIVE_DISCIPLINES: "Sin disciplinas activas.",
   STATUS: "Estado",
+  VIEW_DETAILS: "Ver detalle",
   ACTIONS: "Acciones",
   ACTIVE_STATUS: "Activo",
   INACTIVE_STATUS: "Inactivo",
@@ -253,16 +282,20 @@ export const OWNER_MESSAGES = {
   ADMINS_EMPTY_DESCRIPTION: "Asigne un administrador a esta sucursal.",
   ASSIGN_ADMIN: "Asignar administrador",
   ASSIGN_ADMIN_TITLE: "Asignar administrador",
-  ASSIGN_ADMIN_DESCRIPTION: "Ingrese el UUID del usuario que será administrador de esta sucursal.",
+  ASSIGN_ADMIN_DESCRIPTION: "Cree una cuenta de administrador y complete sus datos personales.",
   REVOKE_ACTION: "Revocar",
   REVOKE_ADMIN_TITLE: "¿Revocar acceso de administrador?",
   REVOKE_ADMIN_DESCRIPTION: "El usuario perderá acceso de administrador a esta sucursal.",
   REVOKE_ERROR: "No se pudo revocar el acceso.",
-  USER_ID: "ID de usuario",
+  NAME: "Nombre",
+  PROFILE_UNAVAILABLE: "Perfil pendiente",
   ASSIGNED_AT: "Asignado",
   LOAD_FAILURE: "No se pudieron cargar los datos.",
   OVERVIEW_DESCRIPTION: "Resumen general de sucursales y administradores.",
   BRANCH_DETAIL_DESCRIPTION: "Administre los detalles de esta sucursal.",
+  DISCIPLINES: "Disciplinas",
+  DISCIPLINES_DESCRIPTION: "Gestioná el catálogo de disciplinas.",
+  CREATE_DISCIPLINE: "Crear disciplina",
 } as const
 
 /** Shared messages for owner/admin account-creation flows. */
@@ -272,6 +305,10 @@ export const ROLE_CREATION_MESSAGES = {
   CREATING_ACCOUNT: "Creando cuenta…",
   EMAIL_LABEL: "Correo electrónico",
   EMAIL_PLACEHOLDER: "usuario@ejemplo.com",
+  FIRST_NAME_LABEL: "Nombre",
+  SURNAME_LABEL: "Apellido",
+  PHONE_LABEL: "Teléfono",
+  DATE_OF_BIRTH_LABEL: "Fecha de nacimiento",
   CREDENTIALS_DIALOG_TITLE: "Cuenta creada",
   CREDENTIALS_DIALOG_DESCRIPTION:
     "Copie estas credenciales y entréguelas de forma segura a la persona. No se mostrarán de nuevo. Deberá cambiar la contraseña en su primer inicio de sesión.",
@@ -280,6 +317,18 @@ export const ROLE_CREATION_MESSAGES = {
   COPY_ACTION: "Copiar",
   COPIED_ACTION: "Copiado",
   CLOSE_ACTION: "Cerrar",
+} as const
+
+export const TEACHER_PROFILE_MESSAGES = {
+  INVALID_EMAIL: "El correo electrónico no es válido.",
+  INVALID_BRANCH_ID: "El identificador de la sucursal no es válido.",
+  FIRST_NAME_REQUIRED: "El nombre es obligatorio.",
+  FIRST_NAME_MAX_LENGTH: "El nombre debe tener como máximo 100 caracteres.",
+  SURNAME_REQUIRED: "El apellido es obligatorio.",
+  SURNAME_MAX_LENGTH: "El apellido debe tener como máximo 100 caracteres.",
+  PHONE_MAX_LENGTH: "El teléfono debe tener como máximo 30 caracteres.",
+  DATE_OF_BIRTH_FORMAT: "La fecha de nacimiento debe tener el formato YYYY-MM-DD.",
+  INVALID_DATE_OF_BIRTH: "La fecha de nacimiento no es una fecha válida.",
 } as const
 
 /** Forced password-change screen shown to accounts created by owner/admin. */
@@ -302,9 +351,11 @@ export const TEACHER_MANAGEMENT_MESSAGES = {
   NO_BRANCH_CONTEXT: "No se encontró una sucursal asociada a su cuenta de administrador.",
   LOAD_FAILURE: "No se pudieron cargar los profesores.",
   EMPTY_STATE: "Sin profesores",
-  USER_ID_LABEL: "ID de usuario",
+  NAME_LABEL: "Nombre",
+  PROFILE_UNAVAILABLE: "Perfil pendiente",
   ASSIGNED_AT_LABEL: "Asignado",
   ACTIONS_LABEL: "Acciones",
+  ROLE_LABEL: "Rol",
   ASSIGN_ACTION: "Asignar profesor",
   ASSIGN_DIALOG_TITLE: "Asignar profesor",
   ASSIGN_DIALOG_DESCRIPTION: "Ingrese el UUID del usuario que será profesor en esta sucursal.",
@@ -315,4 +366,325 @@ export const TEACHER_MANAGEMENT_MESSAGES = {
   REVOKE_CONFIRMATION_DESCRIPTION: "El usuario perderá acceso de profesor a esta sucursal.",
   REVOKE_ERROR: "No se pudo revocar el acceso.",
   REVOKING: "Revocando…",
+  SELF_ENABLE_ACTION: "También soy profesor",
+  SELF_ENABLE_ENABLING: "Activando…",
+  SELF_ENABLE_SUCCESS: "Ahora también es profesor en esta sucursal.",
+  SELF_ADMIN_ROLE_LABEL: "Administrador",
+} as const
+
+
+export const DISCIPLINE_MESSAGES = {
+  INVALID_ID: "Identificador de disciplina inválido.",
+  NAME_REQUIRED: "El nombre es obligatorio.",
+  NAME_MAX_LENGTH: "El nombre no puede superar 100 caracteres.",
+  CODE_REQUIRED: "El código es obligatorio.",
+  CODE_MAX_LENGTH: "El código no puede superar 50 caracteres.",
+  CODE_FORMAT: "El código solo admite minúsculas, números y guiones.",
+  NAME_ALREADY_EXISTS: "Ya existe una disciplina con ese nombre.",
+  CODE_ALREADY_EXISTS: "Ya existe una disciplina con ese código.",
+  NOT_FOUND: "Disciplina no encontrada.",
+  LOAD_FAILURE: "No se pudieron cargar las disciplinas.",
+} as const
+
+export const DISCIPLINE_FORM_MESSAGES = {
+  CREATE_TITLE: "Crear disciplina",
+  CREATE_DESCRIPTION: "Agregá una nueva disciplina al catálogo.",
+  NAME_LABEL: "Nombre",
+  CODE_LABEL: "Código",
+} as const
+
+export const CALENDAR_MESSAGES = {
+  PAGE_TITLE: "Calendario",
+  MONTH_VIEW: "Mensual",
+  WEEK_VIEW: "Semanal",
+  TODAY: "Hoy",
+  PREV: "Anterior",
+  NEXT: "Siguiente",
+  FILTER_DISCIPLINES: "Filtrar por disciplina",
+  NO_TEACHER: "Sin profesor",
+  SUBSTITUTE: "Sustituto",
+  NO_BRANCH_CONTEXT: "No se encontró una sucursal asociada a su cuenta.",
+  LOAD_FAILURE: "No se pudo cargar el calendario.",
+} as const
+
+export const WEEKDAY_LABELS = [
+  "Lunes",
+  "Martes",
+  "Miércoles",
+  "Jueves",
+  "Viernes",
+  "Sábado",
+  "Domingo",
+] as const
+
+export const CLASS_MESSAGES = {
+  BRANCH_CONTEXT_REQUIRED:
+    "Se requiere contexto de sucursal activa para esta operación.",
+  BRANCH_MISMATCH:
+    "La clase no pertenece a la sucursal activa. Seleccione la sucursal correcta.",
+  NOT_FOUND:
+    "La clase solicitada no existe o no tiene permisos para accederla.",
+  OVERLAP: "Ya existe una clase en ese horario para esta sucursal y día.",
+  OVERLAP_ON_DAY: (dayLabel: string) =>
+    `Ya existe una clase en ese horario el día ${dayLabel}.`,
+  CREATE_DESCRIPTION:
+    "Agregue una clase recurrente al horario semanal. Puede seleccionar varios días para crearlas todas de una vez.",
+  DISCIPLINE_LABEL: "Disciplina",
+  DISCIPLINE_PLACEHOLDER: "Seleccionar…",
+  DAY_LABEL: "Día",
+  DAYS_LABEL: "Días de la semana",
+  START_TIME_LABEL: "Hora de inicio",
+  TEACHER_LABEL: "Profesor",
+  NO_TEACHER_OPTION: "Sin profesor asignado",
+  DAY_PREFIX: "Día",
+  SESSION_DATE_REQUIRED: "La fecha de la sesión es obligatoria.",
+  CREATE_TITLE: "Crear clase recurrente",
+  CREATED: "Clase creada correctamente.",
+  CREATED_BATCH: (count: number) =>
+    count === 1
+      ? "Se creó 1 clase correctamente."
+      : `Se crearon ${count} clases correctamente.`,
+  PARTIAL_FAILURE_TITLE:
+    "Algunos días no se pudieron crear por conflicto de horario:",
+  DEACTIVATED: "Clase desactivada.",
+} as const
+
+export const ONE_TIME_CLASS_MESSAGES = {
+  CREATE_TITLE: "Crear clase única",
+  CREATE_DESCRIPTION:
+    "Agregue una clase para una sola fecha, fuera del horario semanal recurrente.",
+  DATE_LABEL: "Fecha",
+  CREATED: "Clase única creada correctamente.",
+  ONE_TIME_BADGE: "Única",
+  OVERLAP: "Ya existe una clase en ese horario en esa fecha.",
+} as const
+
+export const SUSPENSION_MESSAGES = {
+  CATEGORY_LABEL: "Categoría",
+  CATEGORY_FERIADO: "Feriado",
+  CATEGORY_EVENTO: "Evento",
+  CATEGORY_EMERGENCIA: "Emergencia",
+  CATEGORY_OTRO: "Otro",
+  REASON_LABEL: "Motivo",
+  REASON_REQUIRED_OTRO: "El motivo es obligatorio cuando la categoría es «Otro».",
+  SUSPEND_TITLE: "Suspender sesión",
+  SUSPENDED: "Sesión suspendida.",
+  REINSTATED: "Sesión reactivada.",
+} as const
+
+export const TEACHER_CONFLICT_MESSAGES = {
+  WARNING: "Este profesor ya está asignado a otra clase el mismo día y horario. Si continúa, esa clase quedará sin profesor asignado.",
+  CONFIRM: "Confirmar y continuar",
+  AFFECTED_TITLE: "Clases que quedarán sin profesor",
+  ASSIGNED: "Profesor asignado correctamente.",
+  ASSIGN_ACTION: "Asignar profesor",
+  ASSIGN_TITLE: "Asignar profesor a la sesión",
+  ASSIGN_DESCRIPTION: "Seleccione el profesor que dará esta clase en la fecha indicada.",
+  TEACHER_LABEL: "Profesor",
+  TEACHER_PLACEHOLDER: "Seleccionar…",
+} as const
+
+export const ENROLLMENT_MESSAGES = {
+  BRANCH_REQUIRED: "Contexto de sucursal requerido.",
+  MIN_ONE_DISCIPLINE: "Seleccioná al menos una disciplina.",
+  DATE_FORMAT: "La fecha debe tener formato AAAA-MM-DD.",
+  INVALID_DATE: "La fecha de inscripción no es válida.",
+  DATE_NOT_FUTURE: "La fecha de inscripción no puede ser futura.",
+  ENROLLED_LABEL: "Inscripto el",
+  SUSPENDED_LABEL: "Suspendido",
+  ACTIVE_LABEL: "Activo",
+  SUSPEND_ACTION: "Suspender",
+  REACTIVATE_ACTION: "Reactivar",
+  DISCIPLINES_LABEL: "Disciplinas",
+  ENROLLED_AT_LABEL: "Fecha de inscripción",
+  HISTORY_TITLE: "Historial de inscripciones",
+  EVENT_ENROLLED: "Inscripción",
+  EVENT_SUSPENDED: "Suspensión",
+  EVENT_REACTIVATED: "Reactivación",
+  NO_DISCIPLINES: "Sin disciplinas activas.",
+  ALREADY_ACTIVE: "La inscripción ya está activa.",
+  ALREADY_SUSPENDED: "La inscripción ya está suspendida.",
+  NOT_FOUND: "Inscripción no encontrada.",
+  ALREADY_ENROLLED: "El estudiante ya está inscripto en esta disciplina.",
+} as const
+
+
+export const ATTENDANCE_MESSAGES = {
+  INVALID_CLASS_ID: "El identificador de la clase no es válido.",
+  INVALID_STUDENT_ID: "El identificador del estudiante no es válido.",
+  INVALID_DATE: "La fecha de la sesión no es válida.",
+  MIN_ONE_RECORD: "Debe incluir al menos un registro de asistencia.",
+  OBSERVATION_MAX: "La observación no puede superar los 500 caracteres.",
+  INVALID_SESSION: "La sesión no es válida o no corresponde al día indicado.",
+  FUTURE_SESSION: "No se puede registrar asistencia para una sesión futura.",
+  SESSION_SUSPENDED: "No se puede registrar asistencia para una sesión suspendida.",
+  INELIGIBLE_STUDENT: "Uno o más estudiantes no están inscriptos en esta sesión.",
+  CORRECTION_WINDOW_EXCEEDED: "Solo se puede corregir la asistencia dentro de los 7 días posteriores a la sesión.",
+  CAPTURE_WINDOW_EXCEEDED: "No se puede registrar asistencia para sesiones con más de 30 días de antigüedad.",
+  LOAD_FAILURE: "No se pudo cargar la asistencia.",
+} as const
+
+export const LEVEL_MESSAGES = {
+  INVALID_ID: "Identificador de nivel inválido.",
+  INVALID_DISCIPLINE_ID: "Identificador de disciplina inválido.",
+  NAME_REQUIRED: "El nombre del nivel es obligatorio.",
+  NAME_MAX_LENGTH: "El nombre del nivel no puede superar 100 caracteres.",
+  COLOR_MAX_LENGTH: "El color no puede superar 30 caracteres.",
+  SORT_ORDER_NONNEG: "El orden debe ser un entero mayor o igual a 0.",
+  REQUIRED_SESSIONS_NONNEG: "Las sesiones requeridas deben ser un entero mayor o igual a 0.",
+  SORT_ORDER_TAKEN: "Ya existe un nivel con ese orden en esta disciplina.",
+  PAGE_TITLE: "Niveles",
+  PAGE_DESCRIPTION: "Catálogo de niveles de esta disciplina.",
+  CREATE_LEVEL: "Crear nivel",
+  EDIT_LEVEL: "Editar nivel",
+  NAME_LABEL: "Nombre",
+  COLOR_LABEL: "Color",
+  SORT_ORDER_LABEL: "Orden",
+  REQUIRED_SESSIONS_LABEL: "Sesiones requeridas",
+  EMPTY_STATE: "Sin niveles configurados.",
+  EMPTY_STATE_DESCRIPTION: "Cree un nivel para comenzar.",
+  LOAD_FAILURE: "No se pudieron cargar los niveles.",
+  SAVING: "Guardando…",
+  MANAGE_LEVELS: "Niveles",
+} as const
+
+export const PROGRESS_MESSAGES = {
+  INVALID_STUDENT_ID: "Identificador de estudiante inválido.",
+  INVALID_DISCIPLINE_ID: "Identificador de disciplina inválido.",
+  INVALID_LEVEL: "El nivel especificado no existe.",
+  LEVEL_DISCIPLINE_MISMATCH: "El nivel no pertenece a la disciplina indicada.",
+  PROMOTED_DATE_FORMAT: "La fecha de promoción debe tener formato AAAA-MM-DD.",
+  PROMOTED_DATE_INVALID: "La fecha de promoción no es válida.",
+  PROMOTED_DATE_NOT_FUTURE: "La fecha de promoción no puede ser futura.",
+  OBSERVATIONS_MAX: "Las observaciones no pueden superar 500 caracteres.",
+  PANEL_TITLE: "Progreso",
+  CURRENT_LEVEL: "Nivel actual",
+  NO_PROGRESS: "Sin progreso registrado.",
+  TIMELINE_TITLE: "Historial de promociones",
+  PROMOTE_ACTION: "Promover",
+  PROMOTE_TITLE: "Promover estudiante",
+  PROMOTE_DESCRIPTION: "Seleccione el nivel al que desea promover al estudiante.",
+  TARGET_LEVEL_LABEL: "Nivel destino",
+  TARGET_LEVEL_PLACEHOLDER: "Seleccionar nivel…",
+  OBSERVATIONS_LABEL: "Observaciones",
+  OBSERVATIONS_PLACEHOLDER: "Nota opcional (máx. 500 caracteres)",
+  READINESS_MEETS: "Cumple requisito de asistencia",
+  READINESS_NOT_MEETS: "No cumple requisito de asistencia",
+  ATTENDED_LABEL: "Sesiones asistidas",
+  REQUIRED_LABEL: "Sesiones requeridas",
+  PROMOTING: "Promoviendo…",
+} as const
+
+export const NOTES_MESSAGES = {
+  INVALID_ID: "Identificador de nota inválido.",
+  INVALID_STUDENT_ID: "Identificador de estudiante inválido.",
+  INVALID_DISCIPLINE_ID: "Identificador de disciplina inválido.",
+  CATEGORY_INVALID: "La categoría debe ser una de: tecnica, fisico, actitud, medica, general.",
+  CONTENT_REQUIRED: "El contenido es obligatorio.",
+  CONTENT_MAX: "El contenido no puede superar 2000 caracteres.",
+  ALREADY_COMPLETED: "La nota ya está completada.",
+  ALREADY_OPEN: "La nota ya está abierta.",
+  PANEL_TITLE: "Bitácora",
+  CREATE_NOTE: "Crear nota",
+  CREATE_TITLE: "Nueva nota",
+  CREATE_DESCRIPTION: "Agregue una nota al estudiante.",
+  CATEGORY_LABEL: "Categoría",
+  CATEGORY_PLACEHOLDER: "Seleccionar categoría…",
+  CONTENT_LABEL: "Contenido",
+  CONTENT_PLACEHOLDER: "Escriba el contenido de la nota…",
+  DISCIPLINE_LABEL: "Disciplina",
+  DISCIPLINE_PLACEHOLDER: "General (sin disciplina)",
+  EMPTY_STATE: "Sin notas registradas.",
+  COMPLETE_ACTION: "Completar",
+  REOPEN_ACTION: "Reabrir",
+  SAVING: "Guardando…",
+  CATEGORY_TECNICA: "Técnica",
+  CATEGORY_FISICO: "Físico",
+  CATEGORY_ACTITUD: "Actitud",
+  CATEGORY_MEDICA: "Médica",
+  CATEGORY_GENERAL: "General",
+  FILTER_ALL: "Todas",
+  FILTER_OPEN: "Abiertas",
+  FILTER_COMPLETED: "Completadas",
+} as const
+
+export const ATTENDANCE_FORM_MESSAGES = {
+  TITLE: "Asistencia",
+  DESCRIPTION: "Registre la asistencia de los estudiantes para esta sesión.",
+  PRESENT_LABEL: "Presente",
+  OBSERVATION_LABEL: "Observación",
+  OBSERVATION_PLACEHOLDER: "Nota opcional (máx. 500 caracteres)",
+  SUBMIT: "Guardar asistencia",
+  SAVING: "Guardando…",
+  EMPTY_ELIGIBLE: "No hay estudiantes inscriptos para esta sesión.",
+  SUSPENDED_NOTE: "La sesión está suspendida. No se puede registrar asistencia.",
+  TAKE_ATTENDANCE: "Tomar asistencia",
+  STATS_LABEL: "Asistencia",
+} as const
+
+export const ATTENDANCE_TOAST = {
+  SAVED: "Asistencia registrada correctamente.",
+} as const
+
+export const PAYMENT_MESSAGES = {
+  ENROLLMENT_NOT_FOUND: "Inscripción no encontrada.",
+  CLASS_PRICE_NOT_SET: "El precio por clase no está configurado para esta disciplina.",
+  REGISTER_MONTHLY_TITLE: "Registrar pago mensual",
+  REGISTER_MONTHLY_DESCRIPTION: "Registre un pago mensual o por bloque de meses.",
+  REGISTER_CLASS_TITLE: "Registrar pago por clase",
+  REGISTER_CLASS_DESCRIPTION: "Cobre el valor de una clase individual.",
+  CONFIGURE_PRICE_TITLE: "Configurar precio por clase",
+  CONFIGURE_PRICE_DESCRIPTION: "Establezca o elimine el precio por clase de esta disciplina.",
+  AMOUNT_LABEL: "Monto",
+  MONTHS_LABEL: "Meses cubiertos",
+  MONTHS_PLACEHOLDER: "Seleccionar…",
+  NOTE_LABEL: "Nota",
+  NOTE_PLACEHOLDER: "Nota opcional (máx. 500 caracteres)",
+  PAYMENT_DATE_LABEL: "Fecha de pago",
+  CLASS_DATE_LABEL: "Fecha de clase",
+  PRICE_LABEL: "Precio por clase",
+  PRICE_PLACEHOLDER: "Dejar vacío para desactivar",
+  DISCIPLINE_LABEL: "Disciplina",
+  DISCIPLINE_PLACEHOLDER: "Seleccionar disciplina…",
+  STUDENT_LABEL: "Estudiante",
+  SUCCESS_MONTHLY: "Pago mensual registrado correctamente.",
+  SUCCESS_CLASS: "Pago por clase registrado correctamente.",
+  SUCCESS_PRICE: "Precio actualizado correctamente.",
+  HISTORY_TITLE: "Historial de pagos",
+  TYPE_MONTHLY: "Mensual",
+  TYPE_CLASS: "Por clase",
+  NO_PAYMENTS: "Sin pagos registrados.",
+  PERIOD_LABEL: "Período",
+  SAVING: "Guardando…",
+  REGISTER_ACTION: "Registrar",
+  CHARGE_CLASS: "Cobrar clase",
+} as const
+
+export const OVERDUE_MESSAGES = {
+  NO_BRANCH_CONTEXT: "No tiene una sucursal activa asignada. Contacte al administrador.",
+  CARD_TITLE: "Morosos",
+  CARD_DESCRIPTION: "Estudiantes con pagos vencidos.",
+  LIST_TITLE: "Estudiantes morosos",
+  LIST_DESCRIPTION: "Estudiantes con fecha de vencimiento superada.",
+  STUDENT_NAME: "Estudiante",
+  DISCIPLINE: "Disciplina",
+  DUE_DATE: "Fecha de vencimiento",
+  EMPTY_STATE: "No hay estudiantes morosos.",
+  COUNT_ARIA_LABEL: (count: string) => `${count} estudiantes morosos`,
+  PAGE_TITLE: "Pagos",
+  PAGE_DESCRIPTION: "Gestión de pagos y morosidad.",
+  PRICING_SECTION_TITLE: "Configuración de precios por clase",
+  PRICING_SECTION_DESCRIPTION: "Establezca el precio por clase individual de cada disciplina.",
+  CURRENT_PRICE: "Precio actual",
+  NO_PRICE: "Sin precio",
+} as const
+
+
+export const PROFILE_MESSAGES = {
+  PAGE_TITLE: "Mi perfil",
+  PAGE_DESCRIPTION: "Actualice sus datos personales.",
+  SETUP_DESCRIPTION: "Complete sus datos personales para continuar.",
+  COMPLETE_SETUP: "Completar perfil",
+  SAVING: "Guardando…",
+  LOAD_FAILURE: "No se pudo cargar su perfil. Inténtelo nuevamente.",
 } as const

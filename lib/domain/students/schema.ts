@@ -71,6 +71,7 @@ export type StudentStatus =
 
 export const studentListSchema = z
   .object({
+    branch_id: z.uuid({ error: STUDENT_MESSAGES.INVALID_BRANCH_ID }),
     cursor: studentIdSchema.optional(),
     page_size: z.number().int().min(1).max(100).default(25),
     status: z
