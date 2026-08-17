@@ -8,48 +8,7 @@
  *
  * Uses mock withAuthenticatedUser to isolate branch guard behavior.
  */
-import { describe, it, expect, vi, beforeEach } from "vitest";
-
-// --- Hoisted mocks ---
-const { mockWithAuthenticatedUser, capturedCallbacks } = vi.hoisted(() => {
-  const capturedCallbacks: Array<(tx: any, ctx: any) => Promise<any>> = [];
-  const mockWithAuthenticatedUser = vi.fn(async (fn: any, _opts?: any) => {
-    capturedCallbacks.push(fn);
-    // Simulate running the callback with a mock tx+ctx
-    const mockTx = {
-      scheduled_classes: {
-        findUnique: vi.fn(),
-        create: vi.fn(),
-        update: vi.fn(),
-      },
-      class_sessions: {
-        upsert: vi.fn(),
-        update: vi.fn(),
-        updateMany: vi.fn(),
-      },
-    };
-    const mockCtx = {
-      userId: "user-1",
-      roles: ["admin"],
-      assignments: [
-        { role: "admin", branchId: "aaaaaaaa-1111-2222-8333-444444444444" },
-      ],
-    };
-    try {
-      const result = await fn(mockTx, mockCtx);
-      return { success: true, data: result };
-    } catch {
-      return { success: false, error: "Transaction error" };
-    }
-  });
-  return { mockWithAuthenticatedUser, capturedCallbacks };
-});
-
-vi.mock("@/lib/auth/server-context", () => ({
-  withAuthenticatedUser: mockWithAuthenticatedUser,
-}));
-
-vi.mock("server-only", () => ({}));
+import { describe, expect, it } from "vitest";
 
 // Import the schemas directly to test validation
 import {
