@@ -355,6 +355,7 @@ export const TEACHER_MANAGEMENT_MESSAGES = {
   PROFILE_UNAVAILABLE: "Perfil pendiente",
   ASSIGNED_AT_LABEL: "Asignado",
   ACTIONS_LABEL: "Acciones",
+  ROLE_LABEL: "Rol",
   ASSIGN_ACTION: "Asignar profesor",
   ASSIGN_DIALOG_TITLE: "Asignar profesor",
   ASSIGN_DIALOG_DESCRIPTION: "Ingrese el UUID del usuario que será profesor en esta sucursal.",
@@ -417,6 +418,8 @@ export const WEEKDAY_LABELS = [
 ] as const
 
 export const CLASS_MESSAGES = {
+  BRANCH_CONTEXT_REQUIRED:
+    "Se requiere contexto de sucursal activa para esta operación.",
   BRANCH_MISMATCH:
     "La clase no pertenece a la sucursal activa. Seleccione la sucursal correcta.",
   NOT_FOUND:

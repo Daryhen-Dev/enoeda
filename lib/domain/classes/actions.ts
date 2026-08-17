@@ -1,6 +1,7 @@
 "use server";
 
 import { withAuthenticatedUser } from "@/lib/auth/server-context";
+import { assertActiveBranchAssignment } from "@/lib/auth/assert-branch-assignment";
 import type { TransactionClient } from "@/lib/prisma/client";
 import { assertClassInContext } from "@/lib/domain/classes/branch-guard";
 import {
@@ -236,7 +237,13 @@ export async function createScheduledClass(
 
   try {
     const result = await withAuthenticatedUser(
-      async (tx) => {
+      async (tx, ctx) => {
+        // Branch assignment assertion — fail-closed
+        const branchCheck = assertActiveBranchAssignment(ctx, parsed.data.branch_id);
+        if (!branchCheck.ok) {
+          throw new Error(branchCheck.error);
+        }
+
         return tx.scheduled_classes.create({
           data: {
             branch_id: parsed.data.branch_id,
@@ -254,7 +261,12 @@ export async function createScheduledClass(
             error,
             "scheduled_classes_no_overlap",
             CLASS_MESSAGES.OVERLAP
-          ),
+          ) ??
+          (error instanceof Error &&
+          (error.message === CLASS_MESSAGES.BRANCH_CONTEXT_REQUIRED ||
+            error.message.includes("permisos"))
+            ? error.message
+            : undefined),
       }
     );
 
@@ -294,6 +306,17 @@ export async function createScheduledClassBatch(
 
   const { branch_id, discipline_id, default_teacher_id, days_of_week, start_time } =
     parsed.data;
+
+  // Pre-validate branch assignment before any writes
+  const preCheckResult = await withAuthenticatedUser(async (_tx, ctx) => {
+    const branchCheck = assertActiveBranchAssignment(ctx, branch_id);
+    if (!branchCheck.ok) return { valid: false, error: branchCheck.error };
+    return { valid: true, error: null };
+  });
+  if (!preCheckResult.success) return preCheckResult;
+  if (!preCheckResult.data.valid) {
+    return { success: false, error: preCheckResult.data.error! };
+  }
 
   const created: CreateScheduledClassBatchResult["created"] = [];
   const failed: CreateScheduledClassBatchResult["failed"] = [];
@@ -369,7 +392,13 @@ export async function createOneTimeClass(
 
   try {
     const result = await withAuthenticatedUser(
-      async (tx) => {
+      async (tx, ctx) => {
+      // Branch assignment assertion — fail-closed
+      const branchCheck = assertActiveBranchAssignment(ctx, branch_id);
+      if (!branchCheck.ok) {
+        throw new Error(branchCheck.error);
+      }
+
       // Reject up front if a recurring class already covers this
       // weekday+time slot for the branch — never write in that case.
       const classDate = new Date(class_date);
@@ -414,7 +443,12 @@ export async function createOneTimeClass(
             error,
             "one_time_classes_no_overlap",
             ONE_TIME_CLASS_MESSAGES.OVERLAP
-          ),
+          ) ??
+          (error instanceof Error &&
+          (error.message === CLASS_MESSAGES.BRANCH_CONTEXT_REQUIRED ||
+            error.message.includes("permisos"))
+            ? error.message
+            : undefined),
       }
     );
 
@@ -448,7 +482,13 @@ export async function updateScheduledClass(
 
   try {
     const result = await withAuthenticatedUser(
-      async (tx) => {
+      async (tx, ctx) => {
+      // Branch assignment assertion — fail-closed
+      const branchCheck = assertActiveBranchAssignment(ctx, branch_id);
+      if (!branchCheck.ok) {
+        throw new Error(branchCheck.error);
+      }
+
       // Branch context enforcement (fail-closed)
       const guard = await assertClassInContext(tx, id, branch_id);
       if (!guard.ok) {
@@ -510,7 +550,13 @@ export async function deactivateScheduledClass(
   }
 
   try {
-    const result = await withAuthenticatedUser(async (tx) => {
+    const result = await withAuthenticatedUser(async (tx, ctx) => {
+      // Branch assignment assertion — fail-closed
+      const branchCheck = assertActiveBranchAssignment(ctx, parsed.data.branch_id);
+      if (!branchCheck.ok) {
+        throw new Error(branchCheck.error);
+      }
+
       // Branch context enforcement (fail-closed)
       const guard = await assertClassInContext(tx, parsed.data.id, parsed.data.branch_id);
       if (!guard.ok) {
@@ -526,7 +572,9 @@ export async function deactivateScheduledClass(
       mapTransactionError: (error) =>
         error instanceof Error &&
         (error.message === CLASS_MESSAGES.BRANCH_MISMATCH ||
-          error.message === CLASS_MESSAGES.NOT_FOUND)
+          error.message === CLASS_MESSAGES.NOT_FOUND ||
+          error.message === CLASS_MESSAGES.BRANCH_CONTEXT_REQUIRED ||
+          error.message.includes("permisos"))
           ? error.message
           : undefined,
     });
@@ -701,7 +749,13 @@ export async function suspendSession(
   }
 
   try {
-    const result = await withAuthenticatedUser(async (tx) => {
+    const result = await withAuthenticatedUser(async (tx, ctx) => {
+      // Branch assignment assertion — fail-closed
+      const branchCheck = assertActiveBranchAssignment(ctx, parsed.data.branch_id);
+      if (!branchCheck.ok) {
+        throw new Error(branchCheck.error);
+      }
+
       // Branch context enforcement (fail-closed)
       const guard = await assertClassInContext(
         tx,
@@ -738,7 +792,9 @@ export async function suspendSession(
       mapTransactionError: (error) =>
         error instanceof Error &&
         (error.message === CLASS_MESSAGES.BRANCH_MISMATCH ||
-          error.message === CLASS_MESSAGES.NOT_FOUND)
+          error.message === CLASS_MESSAGES.NOT_FOUND ||
+          error.message === CLASS_MESSAGES.BRANCH_CONTEXT_REQUIRED ||
+          error.message.includes("permisos"))
           ? error.message
           : undefined,
     });
@@ -763,7 +819,13 @@ export async function reinstateSession(
   }
 
   try {
-    const result = await withAuthenticatedUser(async (tx) => {
+    const result = await withAuthenticatedUser(async (tx, ctx) => {
+      // Branch assignment assertion — fail-closed
+      const branchCheck = assertActiveBranchAssignment(ctx, parsed.data.branch_id);
+      if (!branchCheck.ok) {
+        throw new Error(branchCheck.error);
+      }
+
       // Branch context enforcement (fail-closed)
       const guard = await assertClassInContext(
         tx,
@@ -793,7 +855,9 @@ export async function reinstateSession(
       mapTransactionError: (error) =>
         error instanceof Error &&
         (error.message === CLASS_MESSAGES.BRANCH_MISMATCH ||
-          error.message === CLASS_MESSAGES.NOT_FOUND)
+          error.message === CLASS_MESSAGES.NOT_FOUND ||
+          error.message === CLASS_MESSAGES.BRANCH_CONTEXT_REQUIRED ||
+          error.message.includes("permisos"))
           ? error.message
           : undefined,
     });
@@ -821,7 +885,13 @@ export async function assignTeacher(
     parsed.data;
 
   try {
-    const result = await withAuthenticatedUser(async (tx) => {
+    const result = await withAuthenticatedUser(async (tx, ctx) => {
+      // Branch assignment assertion — fail-closed
+      const branchCheck = assertActiveBranchAssignment(ctx, branch_id);
+      if (!branchCheck.ok) {
+        throw new Error(branchCheck.error);
+      }
+
       // Branch context enforcement (fail-closed)
       const guard = await assertClassInContext(tx, scheduled_class_id, branch_id);
       if (!guard.ok) {
