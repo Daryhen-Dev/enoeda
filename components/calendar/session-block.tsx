@@ -12,6 +12,7 @@ interface SessionBlockProps {
   compact?: boolean;
   teachers?: Array<{ id: string; name: string }>;
   canManage?: boolean;
+  branchId?: string;
 }
 
 /**
@@ -46,6 +47,7 @@ export function SessionBlock({
   compact = false,
   teachers = [],
   canManage = false,
+  branchId,
 }: SessionBlockProps) {
   const colors = getDisciplineColors(session.discipline_code);
   const isSuspended = session.status === "suspended";
@@ -139,10 +141,11 @@ export function SessionBlock({
               sessionDate={session.session_date}
               disabled={isSuspended}
             />
-            {canManage && (
+            {canManage && branchId && (
               <TeacherAssignDialog
                 scheduledClassId={session.scheduled_class_id}
                 sessionDate={session.session_date}
+                branchId={branchId}
                 teachers={teachers}
                 currentTeacherId={session.teacher_id}
               />

@@ -31,6 +31,7 @@ import {
 interface SessionSuspendDialogProps {
   scheduledClassId: string;
   sessionDate: string;
+  branchId: string;
   trigger: React.ReactNode;
 }
 
@@ -44,6 +45,7 @@ const CATEGORIES = [
 export function SessionSuspendDialog({
   scheduledClassId,
   sessionDate,
+  branchId,
   trigger,
 }: SessionSuspendDialogProps) {
   const router = useRouter();
@@ -67,6 +69,7 @@ export function SessionSuspendDialog({
         session_date: sessionDate,
         suspension_category: category as "feriado" | "evento" | "emergencia" | "otro",
         suspension_reason: reason || undefined,
+        branch_id: branchId,
       });
       if (result.success) {
         setOpen(false);

@@ -150,6 +150,7 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
           baseDate={startStr}
           teachers={teachers}
           canManage={canManage}
+          branchId={branchId}
         />
       )}
     </div>

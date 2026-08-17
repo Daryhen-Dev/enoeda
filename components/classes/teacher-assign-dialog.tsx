@@ -34,6 +34,7 @@ import {
 interface TeacherAssignDialogProps {
   scheduledClassId: string;
   sessionDate: string;
+  branchId: string;
   teachers: Array<{ id: string; name: string }>;
   currentTeacherId: string | null;
 }
@@ -48,6 +49,7 @@ interface TeacherAssignDialogProps {
 export function TeacherAssignDialog({
   scheduledClassId,
   sessionDate,
+  branchId,
   teachers,
   currentTeacherId,
 }: TeacherAssignDialogProps) {
@@ -70,6 +72,7 @@ export function TeacherAssignDialog({
         session_date: sessionDate,
         teacher_id: teacherId,
         force: false,
+        branch_id: branchId,
       });
 
       if (result.success && result.data?.success) {
@@ -168,6 +171,7 @@ export function TeacherAssignDialog({
         scheduledClassId={scheduledClassId}
         sessionDate={sessionDate}
         teacherId={teacherId}
+        branchId={branchId}
         onAssigned={() => setOpen(false)}
       />
     </>

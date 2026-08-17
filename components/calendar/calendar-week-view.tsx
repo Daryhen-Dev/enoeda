@@ -8,6 +8,7 @@ interface CalendarWeekViewProps {
   baseDate: string;
   teachers?: Array<{ id: string; name: string }>;
   canManage?: boolean;
+  branchId?: string;
 }
 
 const WEEKDAY_LABELS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
@@ -17,6 +18,7 @@ export function CalendarWeekView({
   baseDate,
   teachers = [],
   canManage = false,
+  branchId,
 }: CalendarWeekViewProps) {
   // baseDate is the Monday of the week
   const start = new Date(baseDate);
@@ -65,6 +67,7 @@ export function CalendarWeekView({
                   session={session}
                   teachers={teachers}
                   canManage={canManage}
+                  branchId={branchId}
                 />
               ))}
             </div>
