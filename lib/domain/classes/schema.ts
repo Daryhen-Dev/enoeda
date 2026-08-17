@@ -56,6 +56,7 @@ export const updateScheduledClassSchema = createScheduledClassSchema
   .partial()
   .extend({
     id: z.uuid(),
+    branch_id: z.uuid(), // Required: caller's validated active branch context
   });
 
 export type CreateScheduledClassBatchInput = z.infer<
@@ -65,6 +66,7 @@ export type CreateOneTimeClassInput = z.infer<typeof createOneTimeClassSchema>;
 
 export const deactivateScheduledClassSchema = z.object({
   id: z.uuid(),
+  branch_id: z.uuid(), // Required: caller's validated active branch context
 });
 
 export const getSessionsForRangeSchema = z.object({
@@ -80,6 +82,7 @@ export const suspendSessionSchema = z
     session_date: z.string().date(),
     suspension_category: suspensionCategoryEnum,
     suspension_reason: z.string().min(1).optional(),
+    branch_id: z.uuid(), // Required: caller's validated active branch context
   })
   .refine(
     (d) => d.suspension_category !== "otro" || !!d.suspension_reason,
@@ -92,6 +95,7 @@ export const suspendSessionSchema = z
 export const reinstateSessionSchema = z.object({
   scheduled_class_id: z.uuid(),
   session_date: z.string().date(),
+  branch_id: z.uuid(), // Required: caller's validated active branch context
 });
 
 export const assignTeacherSchema = z
@@ -101,6 +105,7 @@ export const assignTeacherSchema = z
     session_date: z.string().date().optional(),
     teacher_id: z.uuid(),
     force: z.boolean().default(false),
+    branch_id: z.uuid(), // Required: caller's validated active branch context
   })
   .refine(
     (d) => d.target_type !== "session" || !!d.session_date,

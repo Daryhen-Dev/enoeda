@@ -2,10 +2,10 @@
 
 import { withAuthenticatedUser } from "@/lib/auth/server-context";
 import type { TransactionClient } from "@/lib/prisma/client";
+import { assertClassInContext } from "@/lib/domain/classes/branch-guard";
 import {
   CLASS_MESSAGES,
   COMMON_MESSAGES,
-  SUSPENSION_MESSAGES,
   TEACHER_CONFLICT_MESSAGES,
   WEEKDAY_LABELS,
 } from "@/lib/localization/es-ec";
@@ -115,14 +115,25 @@ function addOneHour(time: string): string {
   return `${String(h + 1).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
-// --- Internal: Teacher conflict detection (GLOBAL, cross-branch) ---
+function mapConstraintError(
+  error: unknown,
+  constraintName: string,
+  message: string
+): string | undefined {
+  return error instanceof Error && error.message.includes(constraintName)
+    ? message
+    : undefined;
+}
+
+// --- Internal: Teacher conflict detection (branch-scoped when branchId provided) ---
 
 async function detectTeacherConflicts(
   tx: TransactionClient,
   teacherId: string,
   isoDay: number,
   startTime: string,
-  excludeClassId?: string
+  excludeClassId?: string,
+  branchId?: string
 ): Promise<ConflictingAssignment[]> {
   const conflicts: ConflictingAssignment[] = [];
 
@@ -131,13 +142,14 @@ async function detectTeacherConflicts(
   const targetStart = targetH * 60 + targetM;
   const targetEnd = targetStart + 60; // 1 hour
 
-  // Check recurring scheduled_classes
+  // Check recurring scheduled_classes (scoped to branch when provided)
   const recurringConflicts = await tx.scheduled_classes.findMany({
     where: {
       default_teacher_id: teacherId,
       day_of_week: isoDay,
       is_active: true,
       ...(excludeClassId ? { id: { not: excludeClassId } } : {}),
+      ...(branchId ? { branch_id: branchId } : {}),
     },
     include: {
       branches: { select: { name: true } },
@@ -164,7 +176,7 @@ async function detectTeacherConflicts(
     }
   }
 
-  // Check session-level overrides
+  // Check session-level overrides (scoped to branch when provided)
   const sessionConflicts = await tx.class_sessions.findMany({
     where: {
       assigned_teacher_id: teacherId,
@@ -173,6 +185,7 @@ async function detectTeacherConflicts(
         day_of_week: isoDay,
         is_active: true,
         ...(excludeClassId ? { id: { not: excludeClassId } } : {}),
+        ...(branchId ? { branch_id: branchId } : {}),
       },
     },
     include: {
@@ -222,18 +235,28 @@ export async function createScheduledClass(
   }
 
   try {
-    const result = await withAuthenticatedUser(async (tx) => {
-      return tx.scheduled_classes.create({
-        data: {
-          branch_id: parsed.data.branch_id,
-          discipline_id: parsed.data.discipline_id,
-          default_teacher_id: parsed.data.default_teacher_id ?? null,
-          day_of_week: parsed.data.day_of_week,
-          start_time: new Date(`1970-01-01T${parsed.data.start_time}:00`),
-        },
-        select: { id: true },
-      });
-    });
+    const result = await withAuthenticatedUser(
+      async (tx) => {
+        return tx.scheduled_classes.create({
+          data: {
+            branch_id: parsed.data.branch_id,
+            discipline_id: parsed.data.discipline_id,
+            default_teacher_id: parsed.data.default_teacher_id ?? null,
+            day_of_week: parsed.data.day_of_week,
+            start_time: new Date(`1970-01-01T${parsed.data.start_time}:00`),
+          },
+          select: { id: true },
+        });
+      },
+      {
+        mapTransactionError: (error) =>
+          mapConstraintError(
+            error,
+            "scheduled_classes_no_overlap",
+            CLASS_MESSAGES.OVERLAP
+          ),
+      }
+    );
 
     if (!result.success) return result;
     return { success: true, data: { id: result.data.id } };
@@ -277,18 +300,28 @@ export async function createScheduledClassBatch(
 
   for (const day_of_week of days_of_week) {
     try {
-      const result = await withAuthenticatedUser(async (tx) => {
-        return tx.scheduled_classes.create({
-          data: {
-            branch_id,
-            discipline_id,
-            default_teacher_id: default_teacher_id ?? null,
-            day_of_week,
-            start_time: new Date(`1970-01-01T${start_time}:00`),
-          },
-          select: { id: true },
-        });
-      });
+      const result = await withAuthenticatedUser(
+        async (tx) => {
+          return tx.scheduled_classes.create({
+            data: {
+              branch_id,
+              discipline_id,
+              default_teacher_id: default_teacher_id ?? null,
+              day_of_week,
+              start_time: new Date(`1970-01-01T${start_time}:00`),
+            },
+            select: { id: true },
+          });
+        },
+        {
+          mapTransactionError: (error) =>
+            mapConstraintError(
+              error,
+              "scheduled_classes_no_overlap",
+              CLASS_MESSAGES.OVERLAP_ON_DAY(WEEKDAY_LABELS[day_of_week])
+            ),
+        }
+      );
 
       if (!result.success) {
         failed.push({ day_of_week, error: result.error });
@@ -335,7 +368,8 @@ export async function createOneTimeClass(
   const { branch_id, discipline_id, teacher_id, class_date, start_time } = parsed.data;
 
   try {
-    const result = await withAuthenticatedUser(async (tx) => {
+    const result = await withAuthenticatedUser(
+      async (tx) => {
       // Reject up front if a recurring class already covers this
       // weekday+time slot for the branch — never write in that case.
       const classDate = new Date(class_date);
@@ -373,7 +407,16 @@ export async function createOneTimeClass(
       });
 
       return { id: created.id, error: null };
-    });
+      },
+      {
+        mapTransactionError: (error) =>
+          mapConstraintError(
+            error,
+            "one_time_classes_no_overlap",
+            ONE_TIME_CLASS_MESSAGES.OVERLAP
+          ),
+      }
+    );
 
     if (!result.success) return result;
     if (result.data.id === null) {
@@ -401,12 +444,19 @@ export async function updateScheduledClass(
     return { success: false, error: parsed.error.issues[0].message };
   }
 
-  const { id, ...fields } = parsed.data;
+  const { id, branch_id, ...fields } = parsed.data;
 
   try {
-    const result = await withAuthenticatedUser(async (tx) => {
+    const result = await withAuthenticatedUser(
+      async (tx) => {
+      // Branch context enforcement (fail-closed)
+      const guard = await assertClassInContext(tx, id, branch_id);
+      if (!guard.ok) {
+        throw new Error(guard.error);
+      }
+
       const data: Record<string, unknown> = {};
-      if (fields.branch_id !== undefined) data.branch_id = fields.branch_id;
+      // Reject branch_id change away from DB branch (no cross-branch move via edit)
       if (fields.discipline_id !== undefined) data.discipline_id = fields.discipline_id;
       if (fields.default_teacher_id !== undefined) data.default_teacher_id = fields.default_teacher_id;
       if (fields.day_of_week !== undefined) data.day_of_week = fields.day_of_week;
@@ -419,7 +469,21 @@ export async function updateScheduledClass(
         data,
         select: { id: true },
       });
-    });
+      },
+      {
+        mapTransactionError: (error) =>
+          mapConstraintError(
+            error,
+            "scheduled_classes_no_overlap",
+            CLASS_MESSAGES.OVERLAP
+          ) ??
+          (error instanceof Error &&
+          (error.message === CLASS_MESSAGES.BRANCH_MISMATCH ||
+            error.message === CLASS_MESSAGES.NOT_FOUND)
+            ? error.message
+            : undefined),
+      }
+    );
 
     if (!result.success) return result;
     return { success: true, data: { id: result.data.id } };
@@ -447,11 +511,24 @@ export async function deactivateScheduledClass(
 
   try {
     const result = await withAuthenticatedUser(async (tx) => {
+      // Branch context enforcement (fail-closed)
+      const guard = await assertClassInContext(tx, parsed.data.id, parsed.data.branch_id);
+      if (!guard.ok) {
+        throw new Error(guard.error);
+      }
+
       return tx.scheduled_classes.update({
         where: { id: parsed.data.id },
         data: { is_active: false },
         select: { id: true },
       });
+    }, {
+      mapTransactionError: (error) =>
+        error instanceof Error &&
+        (error.message === CLASS_MESSAGES.BRANCH_MISMATCH ||
+          error.message === CLASS_MESSAGES.NOT_FOUND)
+          ? error.message
+          : undefined,
     });
 
     if (!result.success) return result;
@@ -625,6 +702,16 @@ export async function suspendSession(
 
   try {
     const result = await withAuthenticatedUser(async (tx) => {
+      // Branch context enforcement (fail-closed)
+      const guard = await assertClassInContext(
+        tx,
+        parsed.data.scheduled_class_id,
+        parsed.data.branch_id
+      );
+      if (!guard.ok) {
+        throw new Error(guard.error);
+      }
+
       const row = await tx.class_sessions.upsert({
         where: {
           scheduled_class_id_session_date: {
@@ -647,6 +734,13 @@ export async function suspendSession(
         select: { id: true },
       });
       return row;
+    }, {
+      mapTransactionError: (error) =>
+        error instanceof Error &&
+        (error.message === CLASS_MESSAGES.BRANCH_MISMATCH ||
+          error.message === CLASS_MESSAGES.NOT_FOUND)
+          ? error.message
+          : undefined,
     });
 
     if (!result.success) return result;
@@ -670,6 +764,16 @@ export async function reinstateSession(
 
   try {
     const result = await withAuthenticatedUser(async (tx) => {
+      // Branch context enforcement (fail-closed)
+      const guard = await assertClassInContext(
+        tx,
+        parsed.data.scheduled_class_id,
+        parsed.data.branch_id
+      );
+      if (!guard.ok) {
+        throw new Error(guard.error);
+      }
+
       const row = await tx.class_sessions.update({
         where: {
           scheduled_class_id_session_date: {
@@ -685,6 +789,13 @@ export async function reinstateSession(
         select: { id: true },
       });
       return row;
+    }, {
+      mapTransactionError: (error) =>
+        error instanceof Error &&
+        (error.message === CLASS_MESSAGES.BRANCH_MISMATCH ||
+          error.message === CLASS_MESSAGES.NOT_FOUND)
+          ? error.message
+          : undefined,
     });
 
     if (!result.success) return result;
@@ -706,11 +817,17 @@ export async function assignTeacher(
     return { success: false, error: parsed.error.issues[0].message };
   }
 
-  const { target_type, scheduled_class_id, session_date, teacher_id, force } =
+  const { target_type, scheduled_class_id, session_date, teacher_id, force, branch_id } =
     parsed.data;
 
   try {
     const result = await withAuthenticatedUser(async (tx) => {
+      // Branch context enforcement (fail-closed)
+      const guard = await assertClassInContext(tx, scheduled_class_id, branch_id);
+      if (!guard.ok) {
+        throw new Error(guard.error);
+      }
+
       // Get the parent class to know day_of_week and start_time
       const parentClass = await tx.scheduled_classes.findUnique({
         where: { id: scheduled_class_id },
@@ -726,13 +843,14 @@ export async function assignTeacher(
 
       const startTimeStr = formatTime(parentClass.start_time);
 
-      // Detect conflicts (GLOBAL, cross-branch)
+      // Detect conflicts scoped to same branch only (local-branch conflict)
       const conflicts = await detectTeacherConflicts(
         tx,
         teacher_id,
         parentClass.day_of_week,
         startTimeStr,
-        scheduled_class_id
+        scheduled_class_id,
+        branch_id
       );
 
       // No conflict → assign directly
@@ -779,7 +897,7 @@ export async function assignTeacher(
         } as AssignTeacherResult;
       }
 
-      // Conflict found, force=true → nullify prior + assign new
+      // Conflict found, force=true → nullify SAME-BRANCH conflicts only
       const affectedClasses: AssignTeacherResult["affected_classes"] = [];
 
       for (const conflict of conflicts) {
@@ -838,6 +956,13 @@ export async function assignTeacher(
         affected_classes: affectedClasses,
         message: TEACHER_CONFLICT_MESSAGES.ASSIGNED,
       } as AssignTeacherResult;
+    }, {
+      mapTransactionError: (error) =>
+        error instanceof Error &&
+        (error.message === CLASS_MESSAGES.BRANCH_MISMATCH ||
+          error.message === CLASS_MESSAGES.NOT_FOUND)
+          ? error.message
+          : undefined,
     });
 
     if (!result.success) return result;
