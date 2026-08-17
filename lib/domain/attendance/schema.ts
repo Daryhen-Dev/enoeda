@@ -31,9 +31,11 @@ function isValidCalendarDate(dateStr: string): boolean {
  * (with its own session_date) OR a one_time_class_id (whose date is fixed
  * at creation — no separate session_date needed). Exactly one must be
  * provided, mirroring the DB's XOR CHECK constraint.
+ * branch_id is required and validated against the caller's active assignments.
  */
 export const takeAttendanceSchema = z
   .object({
+    branch_id: z.uuid({ error: ATTENDANCE_MESSAGES.INVALID_CLASS_ID }),
     scheduled_class_id: z.uuid({ error: ATTENDANCE_MESSAGES.INVALID_CLASS_ID }).optional(),
     one_time_class_id: z.uuid({ error: ATTENDANCE_MESSAGES.INVALID_CLASS_ID }).optional(),
     session_date: z
@@ -65,6 +67,7 @@ export const takeAttendanceSchema = z
 
 export const attendanceForSessionSchema = z
   .object({
+    branch_id: z.uuid({ error: ATTENDANCE_MESSAGES.INVALID_CLASS_ID }),
     scheduled_class_id: z.uuid({ error: ATTENDANCE_MESSAGES.INVALID_CLASS_ID }).optional(),
     one_time_class_id: z.uuid({ error: ATTENDANCE_MESSAGES.INVALID_CLASS_ID }).optional(),
     session_date: z
@@ -85,6 +88,7 @@ export const attendanceForSessionSchema = z
 export const attendanceStatsSchema = z
   .object({
     student_id: z.uuid({ error: ATTENDANCE_MESSAGES.INVALID_STUDENT_ID }),
+    branch_id: z.uuid({ error: ATTENDANCE_MESSAGES.INVALID_CLASS_ID }),
     discipline_id: z.uuid().optional(),
     from: z
       .string()

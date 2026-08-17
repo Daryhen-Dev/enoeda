@@ -374,17 +374,29 @@ export async function getStudentPayments(
 /**
  * Get count of overdue students for the current branch context.
  * Requires validated branchId — callers must resolve context at page level.
+ * Validates caller has active branch assignment internally (fail-closed).
  */
 export async function getOverdueStudentCount(
   branchId: string
 ): Promise<ActionResult<number>> {
+  if (!branchId) {
+    return { success: false, error: BRANCH_ASSERTION_MESSAGES.MISSING_BRANCH_CONTEXT };
+  }
+
   try {
-    const result = await withAuthenticatedUser(async (tx) => {
-      return countOverdueStudents(tx, branchId);
+    const result = await withAuthenticatedUser(async (tx, ctx) => {
+      const branchError = assertCallerBranchContext(ctx, branchId);
+      if (branchError) {
+        return { __branchError: branchError } as const;
+      }
+      return { count: await countOverdueStudents(tx, branchId) };
     });
 
     if (!result.success) return result;
-    return { success: true, data: result.data };
+    if ("__branchError" in result.data) {
+      return { success: false, error: (result.data as { __branchError: string }).__branchError };
+    }
+    return { success: true, data: result.data.count };
   } catch {
     return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
   }
@@ -393,17 +405,29 @@ export async function getOverdueStudentCount(
 /**
  * Get list of overdue students with details.
  * Requires validated branchId — callers must resolve context at page level.
+ * Validates caller has active branch assignment internally (fail-closed).
  */
 export async function getOverdueStudents(
   branchId: string
 ): Promise<ActionResult<OverdueStudentRow[]>> {
+  if (!branchId) {
+    return { success: false, error: BRANCH_ASSERTION_MESSAGES.MISSING_BRANCH_CONTEXT };
+  }
+
   try {
-    const result = await withAuthenticatedUser(async (tx) => {
-      return listOverdueStudents(tx, branchId);
+    const result = await withAuthenticatedUser(async (tx, ctx) => {
+      const branchError = assertCallerBranchContext(ctx, branchId);
+      if (branchError) {
+        return { __branchError: branchError } as const;
+      }
+      return { rows: await listOverdueStudents(tx, branchId) };
     });
 
     if (!result.success) return result;
-    return { success: true, data: result.data };
+    if ("__branchError" in result.data) {
+      return { success: false, error: (result.data as { __branchError: string }).__branchError };
+    }
+    return { success: true, data: result.data.rows };
   } catch {
     return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
   }

@@ -26,12 +26,14 @@ type AttendanceSheetDialogProps =
       scheduledClassId: string
       sessionDate: string
       oneTimeClassId?: undefined
+      branchId: string
       disabled?: boolean
     }
   | {
       scheduledClassId?: undefined
       sessionDate: string
       oneTimeClassId: string
+      branchId: string
       disabled?: boolean
     }
 
@@ -39,6 +41,7 @@ export function AttendanceSheetDialog({
   scheduledClassId,
   sessionDate,
   oneTimeClassId,
+  branchId,
   disabled = false,
 }: AttendanceSheetDialogProps) {
   const [isOpen, setIsOpen] = useState(false)
@@ -56,8 +59,8 @@ export function AttendanceSheetDialog({
       try {
         const result = await getAttendanceForSession(
           scheduledClassId
-            ? { scheduled_class_id: scheduledClassId, session_date: sessionDate }
-            : { one_time_class_id: oneTimeClassId }
+            ? { scheduled_class_id: scheduledClassId, session_date: sessionDate, branch_id: branchId }
+            : { one_time_class_id: oneTimeClassId, branch_id: branchId }
         )
 
         if (!result.success || !result.data) {
@@ -114,6 +117,7 @@ export function AttendanceSheetDialog({
               scheduledClassId={scheduledClassId}
               oneTimeClassId={oneTimeClassId}
               sessionDate={sessionDate}
+              branchId={branchId}
               students={students}
               onSuccess={() => setIsOpen(false)}
             />

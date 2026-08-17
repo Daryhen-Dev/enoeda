@@ -2,23 +2,10 @@
  * SiteHeader URL Preservation Tests — Correction C.
  *
  * Validates that branch switching preserves pathname + all query params.
+ * Imports the production helper directly for test fidelity.
  */
 import { describe, it, expect } from "vitest";
-
-/**
- * Pure logic extracted from SiteHeader's handleBranchChange.
- * Given existing search params and a new branchId, constructs the URL
- * preserving all params.
- */
-function buildBranchSwitchUrl(
-  pathname: string,
-  existingParams: string,
-  newBranchId: string
-): string {
-  const params = new URLSearchParams(existingParams);
-  params.set("branch", newBranchId);
-  return `${pathname}?${params.toString()}`;
-}
+import { buildBranchSwitchUrl } from "./site-header";
 
 const BRANCH_ID = "aaaaaaaa-1111-2222-3333-444444444444";
 

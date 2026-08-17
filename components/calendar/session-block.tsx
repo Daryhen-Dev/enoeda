@@ -132,14 +132,16 @@ export function SessionBlock({
           <AttendanceSheetDialog
             oneTimeClassId={session.scheduled_class_id}
             sessionDate={session.session_date}
-            disabled={isSuspended}
+            branchId={branchId ?? ""}
+            disabled={isSuspended || !branchId}
           />
         ) : (
           <>
             <AttendanceSheetDialog
               scheduledClassId={session.scheduled_class_id}
               sessionDate={session.session_date}
-              disabled={isSuspended}
+              branchId={branchId ?? ""}
+              disabled={isSuspended || !branchId}
             />
             {canManage && branchId && (
               <TeacherAssignDialog

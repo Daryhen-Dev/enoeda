@@ -64,10 +64,16 @@ export async function takeAttendance(
     return { success: false, error: parsed.error.issues[0].message };
   }
 
-  const { scheduled_class_id, one_time_class_id, records } = parsed.data;
+  const { scheduled_class_id, one_time_class_id, records, branch_id } = parsed.data;
 
   // Step 2
   const result = await withAuthenticatedUser(async (tx, ctx) => {
+    // Branch context validation — fail-closed before any DB read
+    const branchError = assertCallerBranchContext(ctx, branch_id);
+    if (branchError) {
+      return { count: -1, error: branchError };
+    }
+
     let branchId: string;
     let disciplineId: string;
     let sessionDate: Date;
@@ -114,6 +120,11 @@ export async function takeAttendance(
 
       branchId = cls.branch_id;
       disciplineId = cls.discipline_id;
+
+      // Cross-branch guard: class must belong to the caller's branch
+      if (branchId !== branch_id) {
+        return { count: -1, error: ATTENDANCE_MESSAGES.INVALID_SESSION };
+      }
     } else {
       // One-time (recovery) class — its date is fixed at creation, no
       // weekday/suspension checks apply.
@@ -128,6 +139,12 @@ export async function takeAttendance(
 
       branchId = otc.branch_id;
       disciplineId = otc.discipline_id;
+
+      // Cross-branch guard: one-time class must belong to the caller's branch
+      if (branchId !== branch_id) {
+        return { count: -1, error: ATTENDANCE_MESSAGES.INVALID_SESSION };
+      }
+
       sessionDate = new Date(otc.class_date);
       sessionDate.setHours(0, 0, 0, 0);
     }
@@ -267,9 +284,15 @@ export async function getAttendanceForSession(
     return { success: false, error: parsed.error.issues[0].message };
   }
 
-  const { scheduled_class_id, one_time_class_id } = parsed.data;
+  const { scheduled_class_id, one_time_class_id, branch_id } = parsed.data;
 
-  const result = await withAuthenticatedUser(async (tx) => {
+  const result = await withAuthenticatedUser(async (tx, ctx) => {
+    // Branch context validation — fail-closed before any DB read
+    const branchError = assertCallerBranchContext(ctx, branch_id);
+    if (branchError) {
+      return null;
+    }
+
     let branchId: string;
     let disciplineId: string;
     let sessionDate: Date;
@@ -291,6 +314,9 @@ export async function getAttendanceForSession(
 
       branchId = cls.branch_id;
       disciplineId = cls.discipline_id;
+
+      // Cross-branch guard
+      if (branchId !== branch_id) return null;
     } else {
       const otc = await tx.one_time_classes.findUnique({
         where: { id: one_time_class_id! },
@@ -301,6 +327,10 @@ export async function getAttendanceForSession(
 
       branchId = otc.branch_id;
       disciplineId = otc.discipline_id;
+
+      // Cross-branch guard
+      if (branchId !== branch_id) return null;
+
       sessionDate = new Date(otc.class_date);
       sessionDate.setHours(0, 0, 0, 0);
     }
@@ -374,32 +404,32 @@ export async function getAttendanceForSession(
 /**
  * getAttendanceStats — Returns attendance statistics for a student,
  * optionally filtered by discipline and date range.
- * Validates branch context when provided.
+ * Requires branch context — validates caller assignment and student belongs to branch.
  */
 export async function getAttendanceStats(
-  input: AttendanceStatsInput & { branch_id?: string }
+  input: AttendanceStatsInput
 ): Promise<ActionResult<{ present: number; total: number; percentage: number }>> {
   const parsed = attendanceStatsSchema.safeParse(input);
   if (!parsed.success) {
     return { success: false, error: parsed.error.issues[0].message };
   }
 
-  const { student_id, discipline_id, from, to } = parsed.data;
+  const { student_id, branch_id, discipline_id, from, to } = parsed.data;
 
   const result = await withAuthenticatedUser(async (tx, ctx) => {
-    if (input.branch_id) {
-      const branchError = assertCallerBranchContext(ctx, input.branch_id);
-      if (branchError) {
-        return { present: 0, total: 0, percentage: 0, __branchError: branchError } as const;
-      }
+    // Branch context validation — fail-closed before any DB read
+    const branchError = assertCallerBranchContext(ctx, branch_id);
+    if (branchError) {
+      return { present: 0, total: 0, percentage: 0, __branchError: branchError } as const;
+    }
 
-      const student = await tx.students.findUnique({
-        where: { id: student_id },
-        select: { branch_id: true },
-      });
-      if (!student || student.branch_id !== input.branch_id) {
-        return { present: 0, total: 0, percentage: 0, __branchError: BRANCH_ASSERTION_MESSAGES.CROSS_BRANCH_DENIED } as const;
-      }
+    // Validate student belongs to the caller's branch
+    const student = await tx.students.findUnique({
+      where: { id: student_id },
+      select: { branch_id: true },
+    });
+    if (!student || student.branch_id !== branch_id) {
+      return { present: 0, total: 0, percentage: 0, __branchError: BRANCH_ASSERTION_MESSAGES.CROSS_BRANCH_DENIED } as const;
     }
 
     // Build where clause. Deliberately excludes one_time_classes

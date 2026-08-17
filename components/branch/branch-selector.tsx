@@ -8,7 +8,7 @@
 import { BuildingIcon } from "lucide-react"
 import Link from "next/link"
 
-import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Card, CardHeader, CardTitle } from "@/components/ui/card"
 
 interface BranchOption {
   id: string
@@ -60,9 +60,6 @@ export function BranchSelector({
                   </div>
                   <div className="min-w-0 flex-1">
                     <CardTitle className="text-base">{branch.name}</CardTitle>
-                    <CardDescription className="truncate">
-                      {branch.id}
-                    </CardDescription>
                   </div>
                 </CardHeader>
               </Card>

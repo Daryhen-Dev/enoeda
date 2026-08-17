@@ -1,6 +1,10 @@
 "use server";
 
 import { withAuthenticatedUser } from "@/lib/auth/server-context";
+import {
+  assertCallerBranchContext,
+  BRANCH_ASSERTION_MESSAGES,
+} from "@/lib/auth/branch-assertion";
 import { countOverdueStudents } from "@/lib/domain/payments/queries";
 
 interface ActionSuccess<T> {
@@ -25,6 +29,7 @@ export interface DashboardKpis {
 /**
  * Get dashboard KPIs scoped to a single validated branch.
  * Requires branchId — callers must resolve context at page level.
+ * Validates caller has active branch assignment internally (fail-closed).
  */
 export async function getDashboardKpis(
   branchId?: string
@@ -34,7 +39,13 @@ export async function getDashboardKpis(
   }
 
   try {
-    const result = await withAuthenticatedUser(async (tx) => {
+    const result = await withAuthenticatedUser(async (tx, ctx) => {
+      // Validate caller has active assignment for this branch
+      const branchError = assertCallerBranchContext(ctx, branchId);
+      if (branchError) {
+        return { __branchError: branchError } as const;
+      }
+
       const [branch, activeStudentCount, inactiveStudentCount, overdueCount] =
         await Promise.all([
           tx.branches.findUnique({
@@ -66,7 +77,11 @@ export async function getDashboardKpis(
       return { success: false, error: "Dashboard data is unavailable" };
     }
 
-    return { success: true, data: result.data };
+    if ("__branchError" in result.data) {
+      return { success: false, error: (result.data as { __branchError: string }).__branchError };
+    }
+
+    return { success: true, data: result.data as DashboardKpis };
   } catch {
     return { success: false, error: "Dashboard data is unavailable" };
   }

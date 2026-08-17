@@ -101,7 +101,7 @@ export default async function DashboardOverview({ searchParams }: DashboardOverv
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Link
-          href="/dashboard/students"
+          href={`/dashboard/students?branch=${branchResult.branchId}`}
           className="rounded-lg outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
         >
           <Card>
@@ -158,7 +158,7 @@ export default async function DashboardOverview({ searchParams }: DashboardOverv
         </Card>
 
         <Link
-          href="/dashboard/payments"
+          href={`/dashboard/payments?branch=${branchResult.branchId}`}
           className="rounded-lg outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
         >
           <Card>

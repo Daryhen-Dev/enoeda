@@ -19,6 +19,7 @@ interface AttendanceSheetProps {
   scheduledClassId?: string
   oneTimeClassId?: string
   sessionDate: string
+  branchId: string
   students: EligibleStudentAttendance[]
   onSuccess?: () => void
 }
@@ -33,6 +34,7 @@ export function AttendanceSheet({
   scheduledClassId,
   oneTimeClassId,
   sessionDate,
+  branchId,
   students,
   onSuccess,
 }: AttendanceSheetProps) {
@@ -65,6 +67,7 @@ export function AttendanceSheet({
         ...(scheduledClassId
           ? { scheduled_class_id: scheduledClassId, session_date: sessionDate }
           : { one_time_class_id: oneTimeClassId }),
+        branch_id: branchId,
         records: records.map((r) => ({
           student_id: r.student_id,
           attended: r.attended,

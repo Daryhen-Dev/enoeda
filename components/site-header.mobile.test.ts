@@ -2,60 +2,26 @@
  * SiteHeader — Mobile behavior and state/eligibility tests.
  *
  * Tests pure logic: branch eligibility, URL building, and state derivation.
- * Manual browser verification (task 3.9) remains unchecked.
+ * Imports production helpers directly for test fidelity.
  */
 import { describe, it, expect } from "vitest";
-
-/**
- * Determines if the switcher should be shown.
- * Extracted as pure function for testability.
- */
-function shouldShowSwitcher(
-  branches: { id: string; name: string }[] | undefined,
-  currentBranchId: string | undefined
-): { show: boolean; mode: "select" | "static" | "hidden" } {
-  if (!branches || branches.length === 0) return { show: false, mode: "hidden" };
-  if (branches.length === 1) return { show: true, mode: "static" };
-  return { show: true, mode: "select" };
-}
-
-/**
- * Builds the branch switch URL preserving all query params.
- */
-function buildBranchSwitchUrl(
-  pathname: string,
-  existingParams: string,
-  newBranchId: string
-): string {
-  const params = new URLSearchParams(existingParams);
-  params.set("branch", newBranchId);
-  return `${pathname}?${params.toString()}`;
-}
+import { buildBranchSwitchUrl, getSwitcherMode } from "./site-header";
 
 const BRANCH_A = "aaaaaaaa-1111-2222-3333-444444444444";
 const BRANCH_B = "bbbbbbbb-1111-2222-3333-444444444444";
 
 describe("SiteHeader eligibility logic", () => {
   it("returns hidden when no branches provided", () => {
-    expect(shouldShowSwitcher(undefined, BRANCH_A)).toEqual({
-      show: false,
-      mode: "hidden",
-    });
+    expect(getSwitcherMode(undefined)).toBe("hidden");
   });
 
   it("returns hidden when empty branches array", () => {
-    expect(shouldShowSwitcher([], BRANCH_A)).toEqual({
-      show: false,
-      mode: "hidden",
-    });
+    expect(getSwitcherMode([])).toBe("hidden");
   });
 
   it("returns static mode when single branch", () => {
     const branches = [{ id: BRANCH_A, name: "Main" }];
-    expect(shouldShowSwitcher(branches, BRANCH_A)).toEqual({
-      show: true,
-      mode: "static",
-    });
+    expect(getSwitcherMode(branches)).toBe("static");
   });
 
   it("returns select mode when multiple branches", () => {
@@ -63,10 +29,7 @@ describe("SiteHeader eligibility logic", () => {
       { id: BRANCH_A, name: "Main" },
       { id: BRANCH_B, name: "Secondary" },
     ];
-    expect(shouldShowSwitcher(branches, BRANCH_A)).toEqual({
-      show: true,
-      mode: "select",
-    });
+    expect(getSwitcherMode(branches)).toBe("select");
   });
 });
 

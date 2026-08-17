@@ -589,6 +589,7 @@ export async function deactivateScheduledClass(
 /**
  * Get sessions for a date range (virtual expansion + materialized overlay).
  * Any authenticated user with branch access via RLS.
+ * Validates caller has active branch assignment internally (fail-closed).
  */
 export async function getSessionsForRange(
   input: unknown
@@ -601,7 +602,12 @@ export async function getSessionsForRange(
   const { branch_id, start_date, end_date, discipline_ids } = parsed.data;
 
   try {
-    const result = await withAuthenticatedUser(async (tx) => {
+    const result = await withAuthenticatedUser(async (tx, ctx) => {
+      // Validate caller has active assignment for this branch
+      const branchCheck = assertActiveBranchAssignment(ctx, branch_id);
+      if (!branchCheck.ok) {
+        return { __branchError: branchCheck.error } as const;
+      }
       // 1. Fetch active scheduled classes for the branch
       const classes = await tx.scheduled_classes.findMany({
         where: {
@@ -730,7 +736,10 @@ export async function getSessionsForRange(
     });
 
     if (!result.success) return result;
-    return { success: true, data: result.data };
+    if (result.data && "__branchError" in result.data) {
+      return { success: false, error: (result.data as { __branchError: string }).__branchError };
+    }
+    return { success: true, data: result.data as SessionView[] };
   } catch {
     return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
   }
