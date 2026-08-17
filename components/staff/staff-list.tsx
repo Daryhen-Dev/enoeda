@@ -34,6 +34,7 @@ import {
 import { revokeBranchRole } from "@/lib/domain/roles/actions"
 import { enableSelfAsTeacher } from "@/lib/domain/roles/actions"
 import type { StaffAssignment } from "@/lib/domain/roles/actions"
+import { isSelfEnableEligibleRow } from "@/lib/domain/roles/self-enable-eligibility"
 import {
   COMMON_MESSAGES,
   formatDate,
@@ -44,14 +45,15 @@ import {
 interface StaffListProps {
   assignments: StaffAssignment[]
   branchId: string
-  canSelfEnable?: boolean
+  currentUserId?: string
 }
 
 /**
- * Admin-scoped teacher list — shows teachers in the admin's own branch.
+ * Admin-scoped staff list — shows all branch staff (admin + teacher).
+ * The self-enable action appears as an action on the current admin's own row.
  */
-export function StaffList({ assignments, branchId, canSelfEnable }: StaffListProps) {
-  if (assignments.length === 0 && !canSelfEnable) {
+export function StaffList({ assignments, branchId, currentUserId }: StaffListProps) {
+  if (assignments.length === 0) {
     return (
       <Empty>
         <EmptyHeader>
@@ -65,40 +67,55 @@ export function StaffList({ assignments, branchId, canSelfEnable }: StaffListPro
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      {canSelfEnable && (
-        <SelfEnableTeacherButton branchId={branchId} />
-      )}
-      {assignments.length > 0 && (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>{TEACHER_MANAGEMENT_MESSAGES.NAME_LABEL}</TableHead>
-              <TableHead>{TEACHER_MANAGEMENT_MESSAGES.ASSIGNED_AT_LABEL}</TableHead>
-              <TableHead>{TEACHER_MANAGEMENT_MESSAGES.ACTIONS_LABEL}</TableHead>
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>{TEACHER_MANAGEMENT_MESSAGES.NAME_LABEL}</TableHead>
+          <TableHead>{TEACHER_MANAGEMENT_MESSAGES.ROLE_LABEL}</TableHead>
+          <TableHead>{TEACHER_MANAGEMENT_MESSAGES.ASSIGNED_AT_LABEL}</TableHead>
+          <TableHead>{TEACHER_MANAGEMENT_MESSAGES.ACTIONS_LABEL}</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {assignments.map((assignment) => {
+          const showSelfEnable =
+            currentUserId !== undefined &&
+            isSelfEnableEligibleRow(
+              assignment,
+              currentUserId,
+              branchId,
+              assignments
+            )
+
+          return (
+            <TableRow key={`${assignment.user_id}-${assignment.role}`}>
+              <TableCell>
+                {assignment.display_name ?? TEACHER_MANAGEMENT_MESSAGES.PROFILE_UNAVAILABLE}
+              </TableCell>
+              <TableCell className="capitalize">
+                {assignment.role}
+              </TableCell>
+              <TableCell>
+                {formatDate(new Date(assignment.assigned_at))}
+              </TableCell>
+              <TableCell>
+                <div className="flex flex-wrap gap-1">
+                  {assignment.role === "teacher" && (
+                    <RevokeTeacherDialog
+                      userId={assignment.user_id}
+                      branchId={branchId}
+                    />
+                  )}
+                  {showSelfEnable && (
+                    <SelfEnableTeacherAction branchId={branchId} />
+                  )}
+                </div>
+              </TableCell>
             </TableRow>
-          </TableHeader>
-          <TableBody>
-            {assignments.map((assignment) => (
-              <TableRow key={assignment.user_id}>
-                <TableCell>
-                  {assignment.display_name ?? TEACHER_MANAGEMENT_MESSAGES.PROFILE_UNAVAILABLE}
-                </TableCell>
-                <TableCell>
-                  {formatDate(new Date(assignment.assigned_at))}
-                </TableCell>
-                <TableCell>
-                  <RevokeTeacherDialog
-                    userId={assignment.user_id}
-                    branchId={branchId}
-                  />
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      )}
-    </div>
+          )
+        })}
+      </TableBody>
+    </Table>
   )
 }
 
@@ -171,7 +188,7 @@ function RevokeTeacherDialog({
   )
 }
 
-function SelfEnableTeacherButton({ branchId }: { branchId: string }) {
+function SelfEnableTeacherAction({ branchId }: { branchId: string }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
@@ -190,7 +207,7 @@ function SelfEnableTeacherButton({ branchId }: { branchId: string }) {
   return (
     <Button
       variant="outline"
-      size="sm"
+      size="xs"
       disabled={isPending}
       onClick={handleSelfEnable}
     >

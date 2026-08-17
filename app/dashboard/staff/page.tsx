@@ -10,7 +10,7 @@ import { resolveBranchContext } from "@/lib/auth/branch-context"
 import { TEACHER_MANAGEMENT_MESSAGES } from "@/lib/localization/es-ec"
 
 interface StaffPageProps {
-  searchParams: Promise<{ branch?: string }>
+  searchParams: Promise<{ branch?: string; [key: string]: string | undefined }>
 }
 
 /**
@@ -36,15 +36,21 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
   }
 
   if (branchResult.type === "redirect") {
-    redirect(`/dashboard/staff?branch=${branchResult.branchId}`)
+    const redirectParams = new URLSearchParams()
+    for (const [key, value] of Object.entries(params)) {
+      if (key !== "branch" && value) redirectParams.set(key, value)
+    }
+    redirectParams.set("branch", branchResult.branchId)
+    redirect(`/dashboard/staff?${redirectParams.toString()}`)
   }
 
   if (branchResult.type === "selector") {
+    const { branch: _, ...otherParams } = params
     return (
       <BranchSelector
         branches={branchResult.branches}
         currentPath="/dashboard/staff"
-        currentParams={{}}
+        currentParams={otherParams as Record<string, string>}
       />
     )
   }
@@ -52,19 +58,14 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
   const branchId = branchResult.branchId
   const result = await listBranchStaff({ branchId })
 
-  // Staff entries already filtered by branch in query
-  const teachers = (result.success ? result.data ?? [] : []).filter(
-    (a) => a.role === "teacher"
-  )
+  // Staff entries already filtered by branch in query — include ALL for row actions
+  const allAssignments = result.success ? result.data ?? [] : []
+  const teachers = allAssignments.filter((a) => a.role === "teacher")
 
-  // Get current user ID for self-enable feature
+  // Get current user ID for self-enable row action
   const { getAuthenticatedContext } = await import("@/lib/auth/identity-resolver")
   const identity = await getAuthenticatedContext()
   const currentUserId = identity.ok ? identity.ctx.userId : undefined
-  // Check if current admin already has a teacher role in this branch
-  const isAlreadyTeacher = identity.ok
-    ? teachers.some((t) => t.user_id === currentUserId)
-    : true
 
   return (
     <div className="flex flex-col gap-4 p-4 md:gap-6 md:p-6">
@@ -95,9 +96,9 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
         </Alert>
       ) : (
         <StaffList
-          assignments={teachers}
+          assignments={allAssignments}
           branchId={branchId}
-          canSelfEnable={branchResult.canManage && !isAlreadyTeacher}
+          currentUserId={currentUserId}
         />
       )}
     </div>
