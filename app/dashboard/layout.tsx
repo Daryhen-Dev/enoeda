@@ -6,6 +6,10 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { fetchCurrentRoles } from "@/lib/auth/server-roles"
 import { getAuthenticatedContext } from "@/lib/auth/identity-resolver"
+import {
+  getOperationalBranchIds,
+  resolveActiveBranches,
+} from "@/lib/auth/operational-branches"
 import { getOwnProfile } from "@/lib/domain/profile"
 import { DASHBOARD_SHELL_MESSAGES } from "@/lib/localization/es-ec"
 
@@ -32,32 +36,19 @@ export default async function DashboardLayout({
         DASHBOARD_SHELL_MESSAGES.PROFILE_NAME_UNAVAILABLE
       : DASHBOARD_SHELL_MESSAGES.PROFILE_NAME_UNAVAILABLE
 
-  // Extract unique branch IDs from assignments for SiteHeader switcher
+  // Extract unique operational branch IDs (admin/teacher only) for SiteHeader
   // Layout does NOT resolve ?branch — pages handle that individually
-  // Resolve actual branch names from DB (never show UUIDs)
-  const branches: { id: string; name: string }[] = await (async () => {
+  // Never falls back to UUID names; omits absent/inactive branches
+  const branches = await (async () => {
     if (!identityResult.ok) return []
-    const seen = new Set<string>()
-    const ids: string[] = []
-    for (const a of identityResult.ctx.assignments) {
-      if (a.branchId && !seen.has(a.branchId)) {
-        seen.add(a.branchId)
-        ids.push(a.branchId)
-      }
-    }
+    const ids = getOperationalBranchIds(identityResult.ctx.assignments)
     if (ids.length === 0) return []
 
     const { listBranches } = await import("@/lib/domain/branches/actions")
     const branchesResult = await listBranches()
-    if (!branchesResult.success || !branchesResult.data) {
-      return ids.map((id) => ({ id, name: id }))
-    }
-    const nameMap = new Map(
-      branchesResult.data
-        .filter((b) => b.is_active)
-        .map((b) => [b.id, b.name])
-    )
-    return ids.map((id) => ({ id, name: nameMap.get(id) ?? id }))
+    if (!branchesResult.success || !branchesResult.data) return []
+
+    return resolveActiveBranches(ids, branchesResult.data)
   })()
 
   return (

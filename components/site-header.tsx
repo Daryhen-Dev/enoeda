@@ -25,7 +25,6 @@ interface BranchInfo {
 interface SiteHeaderProps {
   displayName: string
   branches?: BranchInfo[]
-  currentBranchId?: string
 }
 
 /**
@@ -57,12 +56,14 @@ export function getSwitcherMode(
 export function SiteHeader({
   displayName,
   branches,
-  currentBranchId,
 }: SiteHeaderProps) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const [drawerOpen, setDrawerOpen] = useState(false)
+
+  // Derive current branch exclusively from URL search params
+  const currentBranchId = searchParams.get("branch") ?? undefined
 
   const handleBranchChange = (branchId: string) => {
     const url = buildBranchSwitchUrl(
@@ -135,7 +136,7 @@ export function SiteHeader({
                     }
                   >
                     <BuildingIcon className="size-4" aria-hidden="true" />
-                    <span className="max-w-[120px] truncate">
+                    <span className="max-w-30 truncate">
                       {currentBranch?.name ?? "Sucursal"}
                     </span>
                     <ChevronDownIcon
@@ -149,7 +150,6 @@ export function SiteHeader({
                     </DrawerHeader>
                     <div
                       className="flex flex-col gap-1 p-4"
-                      role="listbox"
                       aria-label="Sucursales disponibles"
                     >
                       {branches.map((branch) => (
@@ -158,8 +158,6 @@ export function SiteHeader({
                           render={
                             <button
                               type="button"
-                              role="option"
-                              aria-selected={branch.id === currentBranchId}
                               onClick={() => handleBranchChange(branch.id)}
                               className="flex w-full items-center justify-between rounded-md px-3 py-2.5 text-left text-sm hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                             />
