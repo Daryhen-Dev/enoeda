@@ -135,6 +135,7 @@ export default async function StudentsPage({ searchParams }: StudentsPageProps) 
         branches={branches}
         disciplines={disciplines}
         lockedBranchId={branchId}
+        branchId={branchId}
       />
     </main>
   )

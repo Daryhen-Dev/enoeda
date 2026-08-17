@@ -28,11 +28,13 @@ import {
 interface ClassPriceConfigDialogProps {
   disciplineId: string
   disciplineName: string
+  branchId: string
 }
 
 export function ClassPriceConfigDialog({
   disciplineId,
   disciplineName,
+  branchId,
 }: ClassPriceConfigDialogProps) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
@@ -52,6 +54,7 @@ export function ClassPriceConfigDialog({
       const result = await configureDisciplineClassPrice({
         discipline_id: disciplineId,
         class_price: numericPrice,
+        branch_id: branchId,
       })
       if (result.success) {
         setOpen(false)

@@ -1,6 +1,11 @@
 "use server";
 
 import { withAuthenticatedUser } from "@/lib/auth/server-context";
+import {
+  assertCallerBranchContext,
+  assertBranchContextAndOwnership,
+  BRANCH_ASSERTION_MESSAGES,
+} from "@/lib/auth/branch-assertion";
 import { COMMON_MESSAGES, STUDENT_MESSAGES } from "@/lib/localization/es-ec";
 import {
   STUDENT_STATUS,
@@ -68,14 +73,18 @@ export async function listStudents(
   }
 
   const listInput: StudentListInput = parsed.data;
-  const result = await withAuthenticatedUser(async (tx) => {
+  const result = await withAuthenticatedUser(async (tx, ctx) => {
+    // Branch context assertion: caller must have active assignment
+    const branchError = assertCallerBranchContext(ctx, listInput.branch_id);
+    if (branchError) {
+      return { __branchError: branchError } as const;
+    }
+
     return tx.students.findMany({
       take: listInput.page_size + 1,
       where: {
         is_active: listInput.status === STUDENT_STATUS.ACTIVE,
-        ...(listInput.branch_id !== undefined
-          ? { branch_id: listInput.branch_id }
-          : {}),
+        branch_id: listInput.branch_id,
       },
       orderBy: [
         { surname: "asc" },
@@ -102,8 +111,14 @@ export async function listStudents(
 
   if (!result.success) return result;
 
-  const hasExtraItem = result.data.length > listInput.page_size;
-  const items = result.data.slice(0, listInput.page_size).map((student) => ({
+  // Handle branch assertion failure
+  if ("__branchError" in result.data) {
+    return { success: false, error: result.data.__branchError };
+  }
+
+  const rows = result.data as Exclude<typeof result.data, { __branchError: string }>;
+  const hasExtraItem = rows.length > listInput.page_size;
+  const items = rows.slice(0, listInput.page_size).map((student) => ({
     id: student.id,
     branch_id: student.branch_id,
     branch_name: student.branches.name,
@@ -144,14 +159,24 @@ export async function getActiveStudentCount(): Promise<
 
 export async function getStudentById(
   id: string,
-  branchId?: string
+  branchId: string
 ): Promise<ActionResult<StudentProfile>> {
   const parsed = studentIdSchema.safeParse(id);
   if (!parsed.success) {
     return { success: false, error: parsed.error.issues[0].message };
   }
 
-  const result = await withAuthenticatedUser(async (tx) => {
+  if (!branchId) {
+    return { success: false, error: BRANCH_ASSERTION_MESSAGES.MISSING_BRANCH_CONTEXT };
+  }
+
+  const result = await withAuthenticatedUser(async (tx, ctx) => {
+    // Assert caller has active assignment for this branch
+    const branchError = assertCallerBranchContext(ctx, branchId);
+    if (branchError) {
+      return { __branchError: branchError } as const;
+    }
+
     return tx.students.findUnique({
       where: { id: parsed.data },
       select: {
@@ -168,26 +193,36 @@ export async function getStudentById(
   });
 
   if (!result.success) return result;
+
   if (result.data === null) {
     return { success: false, error: STUDENT_NOT_FOUND_ERROR };
   }
 
-  // Branch ownership validation
-  if (branchId && result.data.branch_id !== branchId) {
+  if ("__branchError" in result.data) {
+    return { success: false, error: (result.data as { __branchError: string }).__branchError };
+  }
+
+  const student = result.data as Exclude<typeof result.data, { __branchError: string } | null>;
+  if (student === null) {
+    return { success: false, error: STUDENT_NOT_FOUND_ERROR };
+  }
+
+  // Branch ownership validation — fail-closed
+  if (student.branch_id !== branchId) {
     return { success: false, error: STUDENT_NOT_FOUND_ERROR };
   }
 
   return {
     success: true,
     data: {
-      id: result.data.id,
-      branch_id: result.data.branch_id,
-      first_name: result.data.first_name,
-      surname: result.data.surname,
-      national_id: result.data.national_id,
-      email: result.data.email,
-      date_of_birth: result.data.date_of_birth,
-      is_active: result.data.is_active,
+      id: student.id,
+      branch_id: student.branch_id,
+      first_name: student.first_name,
+      surname: student.surname,
+      national_id: student.national_id,
+      email: student.email,
+      date_of_birth: student.date_of_birth,
+      is_active: student.is_active,
     },
   };
 }
@@ -208,6 +243,15 @@ export async function createStudent(
   }
 
   const result = await withAuthenticatedUser(async (tx, ctx) => {
+    // Branch context assertion: caller must have active assignment for target branch
+    const branchError = assertCallerBranchContext(ctx, parsed.data.branch_id);
+    if (branchError) {
+      return {
+        id: null,
+        error: branchError,
+      } satisfies StudentMutationOutcome;
+    }
+
     // A6: Teacher-only branch check (defense-in-depth)
     const isTeacher = ctx.roles.includes("teacher");
     const isAdminOrOwner = ctx.roles.some(
@@ -267,14 +311,26 @@ export async function createStudent(
 }
 
 export async function updateStudent(
-  input: StudentUpdateInput
+  input: StudentUpdateInput,
+  branchId?: string
 ): Promise<ActionResult<{ id: string }>> {
   const parsed = studentUpdateSchema.safeParse(input);
   if (!parsed.success) {
     return { success: false, error: parsed.error.issues[0].message };
   }
 
+  // Branch context is required for defense-in-depth
+  if (!branchId) {
+    return { success: false, error: BRANCH_ASSERTION_MESSAGES.MISSING_BRANCH_CONTEXT };
+  }
+
   const { id, ...editableFields } = parsed.data;
+
+  // Prevent cross-branch transfer via raw branch_id field
+  if (editableFields.branch_id !== undefined && editableFields.branch_id !== branchId) {
+    return { success: false, error: BRANCH_ASSERTION_MESSAGES.CROSS_BRANCH_DENIED };
+  }
+
   const data = {
     ...(editableFields.branch_id === undefined
       ? {}
@@ -294,13 +350,30 @@ export async function updateStudent(
       : { date_of_birth: new Date(editableFields.date_of_birth) }),
   };
 
-  const result = await withAuthenticatedUser(async (tx) => {
+  const result = await withAuthenticatedUser(async (tx, ctx) => {
+    // Assert caller has active assignment for this branch
+    const ctxError = assertCallerBranchContext(ctx, branchId);
+    if (ctxError) {
+      return {
+        id: null,
+        error: ctxError,
+      } satisfies StudentMutationOutcome;
+    }
+
     const student = await tx.students.findUnique({
       where: { id },
-      select: { id: true, is_active: true },
+      select: { id: true, branch_id: true, is_active: true },
     });
 
     if (student === null) {
+      return {
+        id: null,
+        error: STUDENT_NOT_FOUND_ERROR,
+      } satisfies StudentMutationOutcome;
+    }
+
+    // Cross-branch guard: student must belong to the caller's branch
+    if (student.branch_id !== branchId) {
       return {
         id: null,
         error: STUDENT_NOT_FOUND_ERROR,
@@ -345,20 +418,35 @@ export async function updateStudent(
 }
 
 export async function deactivateStudent(
-  id: string
+  id: string,
+  branchId: string
 ): Promise<ActionResult<{ id: string }>> {
   const parsed = studentIdSchema.safeParse(id);
   if (!parsed.success) {
     return { success: false, error: parsed.error.issues[0].message };
   }
 
-  const result = await withAuthenticatedUser(async (tx) => {
+  if (!branchId) {
+    return { success: false, error: BRANCH_ASSERTION_MESSAGES.MISSING_BRANCH_CONTEXT };
+  }
+
+  const result = await withAuthenticatedUser(async (tx, ctx) => {
+    // Assert caller has active assignment for this branch
+    const branchError = assertCallerBranchContext(ctx, branchId);
+    if (branchError) {
+      return { __branchError: branchError } as const;
+    }
+
     const student = await tx.students.findUnique({
       where: { id },
-      select: { id: true, is_active: true },
+      select: { id: true, branch_id: true, is_active: true },
     });
 
     if (student === null) return null;
+
+    // Cross-branch guard
+    if (student.branch_id !== branchId) return null;
+
     if (!student.is_active) return { id: student.id };
 
     return tx.students.update({
@@ -369,6 +457,11 @@ export async function deactivateStudent(
   });
 
   if (!result.success) return result;
+
+  if (result.data !== null && "__branchError" in result.data) {
+    return { success: false, error: result.data.__branchError };
+  }
+
   if (result.data === null) {
     return { success: false, error: STUDENT_NOT_FOUND_ERROR };
   }
@@ -378,20 +471,42 @@ export async function deactivateStudent(
 
 
 export async function reactivateStudent(
-  input: StudentReactivateInput
+  input: StudentReactivateInput,
+  callerBranchId?: string
 ): Promise<ActionResult<{ id: string }>> {
   const parsed = studentReactivateSchema.safeParse(input);
   if (!parsed.success) {
     return { success: false, error: parsed.error.issues[0].message };
   }
 
-  const result = await withAuthenticatedUser(async (tx) => {
+  if (!callerBranchId) {
+    return { success: false, error: BRANCH_ASSERTION_MESSAGES.MISSING_BRANCH_CONTEXT };
+  }
+
+  const result = await withAuthenticatedUser(async (tx, ctx) => {
+    // Assert caller has active assignment for branch
+    const ctxError = assertCallerBranchContext(ctx, callerBranchId);
+    if (ctxError) {
+      return {
+        id: null,
+        error: ctxError,
+      } satisfies StudentMutationOutcome;
+    }
+
     const student = await tx.students.findUnique({
       where: { id: parsed.data.id },
       select: { id: true, branch_id: true, is_active: true },
     });
 
     if (student === null) {
+      return {
+        id: null,
+        error: STUDENT_NOT_FOUND_ERROR,
+      } satisfies StudentMutationOutcome;
+    }
+
+    // Student must be visible in caller's branch context
+    if (student.branch_id !== callerBranchId) {
       return {
         id: null,
         error: STUDENT_NOT_FOUND_ERROR,
@@ -415,6 +530,15 @@ export async function reactivateStudent(
     }
 
     const branchId = parsed.data.branch_id ?? student.branch_id;
+
+    // Prevent cross-branch reactivation to a different branch
+    if (branchId !== callerBranchId) {
+      return {
+        id: null,
+        error: BRANCH_ASSERTION_MESSAGES.CROSS_BRANCH_DENIED,
+      } satisfies StudentMutationOutcome;
+    }
+
     const branch = await tx.branches.findUnique({
       where: { id: branchId },
       select: { id: true, is_active: true },

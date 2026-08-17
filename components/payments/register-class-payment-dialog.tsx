@@ -27,10 +27,12 @@ import {
 
 interface RegisterClassPaymentDialogProps {
   studentDisciplineId: string
+  branchId: string
 }
 
 export function RegisterClassPaymentDialog({
   studentDisciplineId,
+  branchId,
 }: RegisterClassPaymentDialogProps) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
@@ -44,6 +46,7 @@ export function RegisterClassPaymentDialog({
       const result = await registerClassPayment({
         student_discipline_id: studentDisciplineId,
         class_date: classDate || undefined,
+        branch_id: branchId,
       })
       if (result.success) {
         setOpen(false)

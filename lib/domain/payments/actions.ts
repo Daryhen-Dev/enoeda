@@ -1,6 +1,10 @@
 "use server";
 
 import { withAuthenticatedUser } from "@/lib/auth/server-context";
+import {
+  assertCallerBranchContext,
+  BRANCH_ASSERTION_MESSAGES,
+} from "@/lib/auth/branch-assertion";
 import { COMMON_MESSAGES, PAYMENT_MESSAGES } from "@/lib/localization/es-ec";
 import {
   configureDisciplineClassPriceSchema,
@@ -55,6 +59,8 @@ export interface ClassPaymentRecord {
 /**
  * Admin sets/clears class_price on a discipline.
  * RLS restricts UPDATE to Admin via the policy on disciplines.
+ * Even though disciplines are global reference data, the caller must have
+ * a valid active branch context as defense-in-depth (no context-free mutations).
  */
 export async function configureDisciplineClassPrice(
   input: ConfigureDisciplineClassPriceInput
@@ -65,17 +71,26 @@ export async function configureDisciplineClassPrice(
   }
 
   try {
-    const result = await withAuthenticatedUser(async (tx) => {
+    const result = await withAuthenticatedUser(async (tx, ctx) => {
+      // Caller must have active branch assignment (defense-in-depth for global mutation)
+      const branchError = assertCallerBranchContext(ctx, parsed.data.branch_id);
+      if (branchError) {
+        return { id: null, error: branchError };
+      }
+
       const discipline = await tx.disciplines.update({
         where: { id: parsed.data.discipline_id },
         data: { class_price: parsed.data.class_price },
         select: { id: true },
       });
-      return { id: discipline.id };
+      return { id: discipline.id, error: null };
     });
 
     if (!result.success) return result;
-    return { success: true, data: result.data };
+    if (result.data.id === null) {
+      return { success: false, error: result.data.error ?? COMMON_MESSAGES.UNEXPECTED_ERROR };
+    }
+    return { success: true, data: { id: result.data.id } };
   } catch {
     return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
   }
@@ -84,6 +99,7 @@ export async function configureDisciplineClassPrice(
 /**
  * Admin registers a monthly/block payment (1-12 months).
  * Atomically updates next_due_date on the enrollment.
+ * Requires branch context; validates enrollment belongs to the caller's branch.
  */
 export async function registerMonthlyPayment(
   input: RegisterMonthlyPaymentInput
@@ -95,13 +111,28 @@ export async function registerMonthlyPayment(
 
   try {
     const result = await withAuthenticatedUser(async (tx, ctx) => {
+      // Assert caller branch context
+      const branchError = assertCallerBranchContext(ctx, parsed.data.branch_id);
+      if (branchError) {
+        return { id: null, next_due_date: null, error: branchError };
+      }
+
       const enrollment = await tx.student_disciplines.findUnique({
         where: { id: parsed.data.student_discipline_id },
-        select: { id: true, next_due_date: true },
+        select: {
+          id: true,
+          next_due_date: true,
+          students: { select: { branch_id: true } },
+        },
       });
 
       if (!enrollment) {
         return { id: null, next_due_date: null, error: PAYMENT_MESSAGES.ENROLLMENT_NOT_FOUND };
+      }
+
+      // Cross-branch guard: enrollment's student must belong to caller's branch
+      if (enrollment.students.branch_id !== parsed.data.branch_id) {
+        return { id: null, next_due_date: null, error: BRANCH_ASSERTION_MESSAGES.CROSS_BRANCH_DENIED };
       }
 
       const today = new Date();
@@ -111,7 +142,6 @@ export async function registerMonthlyPayment(
         ? new Date(parsed.data.payment_date)
         : today;
 
-      // base = (next_due_date && next_due_date > today) ? next_due_date : payment_date
       const existingDueDate = enrollment.next_due_date
         ? new Date(enrollment.next_due_date)
         : null;
@@ -121,7 +151,6 @@ export async function registerMonthlyPayment(
           ? existingDueDate
           : paymentDate;
 
-      // period_end = base + months_covered months
       const periodEnd = new Date(base);
       periodEnd.setMonth(periodEnd.getMonth() + parsed.data.months_covered);
 
@@ -139,7 +168,6 @@ export async function registerMonthlyPayment(
         select: { id: true },
       });
 
-      // Update next_due_date atomically
       await tx.student_disciplines.update({
         where: { id: enrollment.id },
         data: { next_due_date: periodEnd },
@@ -169,6 +197,7 @@ export async function registerMonthlyPayment(
 /**
  * Admin + Teacher registers a per-class payment.
  * Amount is auto-read from disciplines.class_price; rejects when NULL.
+ * Requires branch context; validates enrollment belongs to the caller's branch.
  */
 export async function registerClassPayment(
   input: RegisterClassPaymentInput
@@ -180,16 +209,28 @@ export async function registerClassPayment(
 
   try {
     const result = await withAuthenticatedUser(async (tx, ctx) => {
+      // Assert caller branch context
+      const branchError = assertCallerBranchContext(ctx, parsed.data.branch_id);
+      if (branchError) {
+        return { id: null, amount: null, error: branchError };
+      }
+
       const enrollment = await tx.student_disciplines.findUnique({
         where: { id: parsed.data.student_discipline_id },
         select: {
           id: true,
           disciplines: { select: { class_price: true } },
+          students: { select: { branch_id: true } },
         },
       });
 
       if (!enrollment) {
         return { id: null, amount: null, error: PAYMENT_MESSAGES.ENROLLMENT_NOT_FOUND };
+      }
+
+      // Cross-branch guard
+      if (enrollment.students.branch_id !== parsed.data.branch_id) {
+        return { id: null, amount: null, error: BRANCH_ASSERTION_MESSAGES.CROSS_BRANCH_DENIED };
       }
 
       const classPrice = enrollment.disciplines.class_price;
@@ -233,6 +274,7 @@ export async function registerClassPayment(
 
 /**
  * Get all payments (monthly + per-class) for a student.
+ * Requires branch context; validates student belongs to the caller's branch.
  */
 export async function getStudentPayments(
   input: GetStudentPaymentsInput
@@ -243,7 +285,23 @@ export async function getStudentPayments(
   }
 
   try {
-    const result = await withAuthenticatedUser(async (tx) => {
+    const result = await withAuthenticatedUser(async (tx, ctx) => {
+      // Assert caller branch context
+      const branchError = assertCallerBranchContext(ctx, parsed.data.branch_id);
+      if (branchError) {
+        return { __branchError: branchError } as const;
+      }
+
+      // Validate student belongs to branch
+      const student = await tx.students.findUnique({
+        where: { id: parsed.data.student_id },
+        select: { branch_id: true },
+      });
+
+      if (!student || student.branch_id !== parsed.data.branch_id) {
+        return { __branchError: BRANCH_ASSERTION_MESSAGES.CROSS_BRANCH_DENIED } as const;
+      }
+
       const [monthly, perClass] = await Promise.all([
         tx.payments.findMany({
           where: { student_disciplines: { student_id: parsed.data.student_id } },
@@ -304,7 +362,10 @@ export async function getStudentPayments(
     });
 
     if (!result.success) return result;
-    return { success: true, data: result.data };
+    if ("__branchError" in result.data) {
+      return { success: false, error: (result.data as { __branchError: string }).__branchError };
+    }
+    return { success: true, data: result.data as { monthly: PaymentRecord[]; perClass: ClassPaymentRecord[] } };
   } catch {
     return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
   }

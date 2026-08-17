@@ -1,6 +1,10 @@
 "use server";
 
 import { withAuthenticatedUser } from "@/lib/auth/server-context";
+import {
+  assertCallerBranchContext,
+  BRANCH_ASSERTION_MESSAGES,
+} from "@/lib/auth/branch-assertion";
 import { ATTENDANCE_MESSAGES, COMMON_MESSAGES } from "@/lib/localization/es-ec";
 import {
   takeAttendanceSchema,
@@ -370,9 +374,10 @@ export async function getAttendanceForSession(
 /**
  * getAttendanceStats — Returns attendance statistics for a student,
  * optionally filtered by discipline and date range.
+ * Validates branch context when provided.
  */
 export async function getAttendanceStats(
-  input: AttendanceStatsInput
+  input: AttendanceStatsInput & { branch_id?: string }
 ): Promise<ActionResult<{ present: number; total: number; percentage: number }>> {
   const parsed = attendanceStatsSchema.safeParse(input);
   if (!parsed.success) {
@@ -381,7 +386,22 @@ export async function getAttendanceStats(
 
   const { student_id, discipline_id, from, to } = parsed.data;
 
-  const result = await withAuthenticatedUser(async (tx) => {
+  const result = await withAuthenticatedUser(async (tx, ctx) => {
+    if (input.branch_id) {
+      const branchError = assertCallerBranchContext(ctx, input.branch_id);
+      if (branchError) {
+        return { present: 0, total: 0, percentage: 0, __branchError: branchError } as const;
+      }
+
+      const student = await tx.students.findUnique({
+        where: { id: student_id },
+        select: { branch_id: true },
+      });
+      if (!student || student.branch_id !== input.branch_id) {
+        return { present: 0, total: 0, percentage: 0, __branchError: BRANCH_ASSERTION_MESSAGES.CROSS_BRANCH_DENIED } as const;
+      }
+    }
+
     // Build where clause. Deliberately excludes one_time_classes
     // (recovery/makeup class) attendance — by product decision, those
     // sessions do NOT count toward the student's regular attendance
@@ -417,5 +437,8 @@ export async function getAttendanceStats(
   });
 
   if (!result.success) return result;
+  if ("__branchError" in result.data) {
+    return { success: false, error: result.data.__branchError };
+  }
   return { success: true, data: result.data };
 }

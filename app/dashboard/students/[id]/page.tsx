@@ -85,8 +85,8 @@ export default async function StudentDetailPage({
 
   const [studentResult, disciplinesResult, historyResult] = await Promise.all([
     getStudentById(id, branchResult.branchId),
-    getStudentDisciplines({ student_id: id }),
-    getEnrollmentHistory({ student_id: id }),
+    getStudentDisciplines({ student_id: id, branch_id: branchResult.branchId }),
+    getEnrollmentHistory({ student_id: id, branch_id: branchResult.branchId }),
   ])
 
   if (!studentResult.success || !studentResult.data) {
@@ -105,7 +105,7 @@ export default async function StudentDetailPage({
   const activeEnrollments = enrollments.filter((e) => e.is_active)
   const statsResults = await Promise.all(
     activeEnrollments.map((enrollment) =>
-      getAttendanceStats({ student_id: id, discipline_id: enrollment.discipline_id })
+      getAttendanceStats({ student_id: id, discipline_id: enrollment.discipline_id, branch_id: branchResult.branchId })
     )
   )
 
@@ -122,9 +122,9 @@ export default async function StudentDetailPage({
 
   // Fetch progress and notes data
   const [progressResult, notesResult, paymentsResult] = await Promise.all([
-    listProgress({ student_id: id }),
-    listNotes({ student_id: id }),
-    getStudentPayments({ student_id: id }),
+    listProgress({ student_id: id, branch_id: branchResult.branchId }),
+    listNotes({ student_id: id, branch_id: branchResult.branchId }),
+    getStudentPayments({ student_id: id, branch_id: branchResult.branchId }),
   ])
 
   const progressData =
@@ -159,7 +159,7 @@ export default async function StudentDetailPage({
           variant="ghost"
           size="icon-sm"
           render={
-            <Link href="/dashboard/students" aria-label="Back to students" />
+            <Link href={`/dashboard/students?branch=${branchResult.branchId}`} aria-label="Back to students" />
           }
         >
           <ArrowLeftIcon />
@@ -259,12 +259,14 @@ export default async function StudentDetailPage({
               <RegisterMonthlyPaymentDialog
                 key={`monthly-${enrollment.id}`}
                 studentDisciplineId={enrollment.id}
+                branchId={branchResult.branchId}
               />
             ))}
             {activeEnrollments.map((enrollment) => (
               <RegisterClassPaymentDialog
                 key={`class-${enrollment.id}`}
                 studentDisciplineId={enrollment.id}
+                branchId={branchResult.branchId}
               />
             ))}
           </div>

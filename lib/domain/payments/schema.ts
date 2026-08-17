@@ -1,8 +1,13 @@
 import { z } from "zod";
 
+export const PAYMENT_BRANCH_MESSAGES = {
+  INVALID_BRANCH_ID: "Identificador de sucursal inválido.",
+} as const;
+
 export const configureDisciplineClassPriceSchema = z.object({
   discipline_id: z.string().uuid(),
   class_price: z.number().min(0).nullable(),
+  branch_id: z.string().uuid({ error: PAYMENT_BRANCH_MESSAGES.INVALID_BRANCH_ID }),
 });
 
 export type ConfigureDisciplineClassPriceInput = z.infer<
@@ -15,6 +20,7 @@ export const registerMonthlyPaymentSchema = z.object({
   months_covered: z.number().int().min(1).max(12),
   payment_date: z.string().date().optional(),
   note: z.string().max(500).optional(),
+  branch_id: z.string().uuid({ error: PAYMENT_BRANCH_MESSAGES.INVALID_BRANCH_ID }),
 });
 
 export type RegisterMonthlyPaymentInput = z.infer<
@@ -25,6 +31,7 @@ export const registerClassPaymentSchema = z.object({
   student_discipline_id: z.string().uuid(),
   class_date: z.string().date().optional(),
   scheduled_class_id: z.string().uuid().optional(),
+  branch_id: z.string().uuid({ error: PAYMENT_BRANCH_MESSAGES.INVALID_BRANCH_ID }),
 });
 
 export type RegisterClassPaymentInput = z.infer<
@@ -33,6 +40,7 @@ export type RegisterClassPaymentInput = z.infer<
 
 export const getStudentPaymentsSchema = z.object({
   student_id: z.string().uuid(),
+  branch_id: z.string().uuid({ error: PAYMENT_BRANCH_MESSAGES.INVALID_BRANCH_ID }),
 });
 
 export type GetStudentPaymentsInput = z.infer<typeof getStudentPaymentsSchema>;

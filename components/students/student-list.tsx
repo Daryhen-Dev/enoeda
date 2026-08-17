@@ -57,6 +57,7 @@ interface StudentListProps {
   branches: ActiveBranchOption[]
   disciplines?: DisciplineOption[]
   lockedBranchId?: string
+  branchId: string
 }
 
 export function StudentList({
@@ -69,6 +70,7 @@ export function StudentList({
   branches,
   disciplines,
   lockedBranchId,
+  branchId,
 }: StudentListProps) {
   const [selectedTab, setSelectedTab] = useState<StudentStatus>("active")
   const [activeItems, setActiveItems] = useState(initialActiveItems)
@@ -98,7 +100,7 @@ export function StudentList({
 
     startTransition(async () => {
       try {
-        const result = await listStudents({ cursor, status })
+        const result = await listStudents({ cursor, status, branch_id: branchId })
         const page = result.data
 
         if (!result.success || page === undefined) {
@@ -128,7 +130,7 @@ export function StudentList({
   function reloadActiveStudents() {
     startTransition(async () => {
       try {
-        const result = await listStudents({ status: "active" })
+        const result = await listStudents({ status: "active", branch_id: branchId })
         const page = result.data
 
         if (!result.success || page === undefined) {
@@ -163,6 +165,7 @@ export function StudentList({
             branches={branches}
             disciplines={disciplines}
             lockedBranchId={lockedBranchId}
+            branchId={branchId}
             onCreated={reloadActiveStudents}
           />
         )}
@@ -246,25 +249,27 @@ export function StudentList({
                       <Button
                         variant="outline"
                         size="sm"
-                        render={<Link href={`/dashboard/students/${student.id}`} />}
+                        render={<Link href={`/dashboard/students/${student.id}?branch=${branchId}`} />}
                       >
                         {STUDENT_DIRECTORY_MESSAGES.VIEW_DETAILS}
                       </Button>
                       {isActiveTab ? (
                         <>
-                          <StudentFormDialog branches={branches} studentId={student.id} />
+                          <StudentFormDialog branches={branches} studentId={student.id} branchId={branchId} />
                           <StudentDeactivateDialog
                             student={{
                               id: student.id,
                               first_name: student.first_name,
                               surname: student.surname,
                             }}
+                            branchId={branchId}
                           />
                         </>
                       ) : (
                         <StudentReactivateDialog
                           student={{ id: student.id, branch_id: student.branch_id }}
                           branches={branches}
+                          callerBranchId={branchId}
                         />
                       )}
                     </div>

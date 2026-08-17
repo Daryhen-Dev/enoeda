@@ -34,6 +34,7 @@ import {
 
 interface RegisterMonthlyPaymentDialogProps {
   studentDisciplineId: string
+  branchId: string
 }
 
 const MONTH_OPTIONS = Array.from({ length: 12 }, (_, i) => ({
@@ -43,6 +44,7 @@ const MONTH_OPTIONS = Array.from({ length: 12 }, (_, i) => ({
 
 export function RegisterMonthlyPaymentDialog({
   studentDisciplineId,
+  branchId,
 }: RegisterMonthlyPaymentDialogProps) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
@@ -71,6 +73,7 @@ export function RegisterMonthlyPaymentDialog({
         months_covered: Number(monthsCovered),
         payment_date: paymentDate || undefined,
         note: note || undefined,
+        branch_id: branchId,
       })
       if (result.success) {
         setOpen(false)

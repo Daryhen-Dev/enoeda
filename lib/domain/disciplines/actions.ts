@@ -2,6 +2,10 @@
 
 import { withAuthenticatedUser } from "@/lib/auth/server-context";
 import {
+  assertCallerBranchContext,
+  BRANCH_ASSERTION_MESSAGES,
+} from "@/lib/auth/branch-assertion";
+import {
   COMMON_MESSAGES,
   DISCIPLINE_MESSAGES,
   ENROLLMENT_MESSAGES,
@@ -75,9 +79,10 @@ export async function listDisciplines(
 /**
  * Get disciplines for a specific student.
  * Any authenticated role can read (RLS scopes rows by branch).
+ * Requires branch context; validates student belongs to caller's branch.
  */
 export async function getStudentDisciplines(
-  input: { student_id: string }
+  input: { student_id: string; branch_id?: string }
 ): Promise<ActionResult<StudentDisciplineRecord[]>> {
   const parsed = studentDisciplinesQuerySchema.safeParse(input);
   if (!parsed.success) {
@@ -85,7 +90,24 @@ export async function getStudentDisciplines(
   }
 
   try {
-    const result = await withAuthenticatedUser(async (tx) => {
+    const result = await withAuthenticatedUser(async (tx, ctx) => {
+      // Branch context validation when provided
+      if (input.branch_id) {
+        const branchError = assertCallerBranchContext(ctx, input.branch_id);
+        if (branchError) {
+          return { __branchError: branchError } as const;
+        }
+
+        // Validate student belongs to branch
+        const student = await tx.students.findUnique({
+          where: { id: parsed.data.student_id },
+          select: { branch_id: true },
+        });
+        if (!student || student.branch_id !== input.branch_id) {
+          return { __branchError: BRANCH_ASSERTION_MESSAGES.CROSS_BRANCH_DENIED } as const;
+        }
+      }
+
       return tx.student_disciplines.findMany({
         where: { student_id: parsed.data.student_id },
         select: {
@@ -102,7 +124,12 @@ export async function getStudentDisciplines(
 
     if (!result.success) return result;
 
-    const records: StudentDisciplineRecord[] = result.data.map((row) => ({
+    if ("__branchError" in result.data) {
+      return { success: false, error: (result.data as { __branchError: string }).__branchError };
+    }
+
+    const rows = result.data as Exclude<typeof result.data, { __branchError: string }>;
+    const records: StudentDisciplineRecord[] = rows.map((row) => ({
       id: row.id,
       discipline_id: row.discipline_id,
       discipline_name: row.disciplines.name,
@@ -120,9 +147,10 @@ export async function getStudentDisciplines(
 /**
  * Get full enrollment history for a student.
  * Returns all events across all discipline enrollments.
+ * Requires branch context; validates student belongs to caller's branch.
  */
 export async function getEnrollmentHistory(
-  input: { student_id: string }
+  input: { student_id: string; branch_id?: string }
 ): Promise<ActionResult<EnrollmentEvent[]>> {
   const parsed = studentDisciplinesQuerySchema.safeParse(input);
   if (!parsed.success) {
@@ -130,7 +158,22 @@ export async function getEnrollmentHistory(
   }
 
   try {
-    const result = await withAuthenticatedUser(async (tx) => {
+    const result = await withAuthenticatedUser(async (tx, ctx) => {
+      if (input.branch_id) {
+        const branchError = assertCallerBranchContext(ctx, input.branch_id);
+        if (branchError) {
+          return { __branchError: branchError } as const;
+        }
+
+        const student = await tx.students.findUnique({
+          where: { id: parsed.data.student_id },
+          select: { branch_id: true },
+        });
+        if (!student || student.branch_id !== input.branch_id) {
+          return { __branchError: BRANCH_ASSERTION_MESSAGES.CROSS_BRANCH_DENIED } as const;
+        }
+      }
+
       return tx.discipline_events.findMany({
         where: {
           student_disciplines: { student_id: parsed.data.student_id },
@@ -148,7 +191,12 @@ export async function getEnrollmentHistory(
 
     if (!result.success) return result;
 
-    const events: EnrollmentEvent[] = result.data.map((row) => ({
+    if ("__branchError" in result.data) {
+      return { success: false, error: (result.data as { __branchError: string }).__branchError };
+    }
+
+    const rows = result.data as Exclude<typeof result.data, { __branchError: string }>;
+    const events: EnrollmentEvent[] = rows.map((row) => ({
       id: row.id,
       event_type: row.event_type as EnrollmentEvent["event_type"],
       performed_by: row.performed_by,

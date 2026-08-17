@@ -1,6 +1,10 @@
 "use server";
 
 import { withAuthenticatedUser } from "@/lib/auth/server-context";
+import {
+  assertCallerBranchContext,
+  BRANCH_ASSERTION_MESSAGES,
+} from "@/lib/auth/branch-assertion";
 import { COMMON_MESSAGES } from "@/lib/localization/es-ec";
 import {
   promoteStudentSchema,
@@ -225,9 +229,10 @@ export async function promoteStudent(
 /**
  * List all progress records for a student (all disciplines).
  * Ordered by promoted_at desc. Current level = first row per discipline group.
+ * Validates branch context when provided.
  */
 export async function listProgress(
-  input: ProgressQueryInput
+  input: ProgressQueryInput & { branch_id?: string }
 ): Promise<ActionResult<ProgressRecord[]>> {
   const parsed = progressQuerySchema.safeParse(input);
   if (!parsed.success) {
@@ -235,7 +240,22 @@ export async function listProgress(
   }
 
   try {
-    const result = await withAuthenticatedUser(async (tx) => {
+    const result = await withAuthenticatedUser(async (tx, ctx) => {
+      if (input.branch_id) {
+        const branchError = assertCallerBranchContext(ctx, input.branch_id);
+        if (branchError) {
+          return { __branchError: branchError } as const;
+        }
+
+        const student = await tx.students.findUnique({
+          where: { id: parsed.data.student_id },
+          select: { branch_id: true },
+        });
+        if (!student || student.branch_id !== input.branch_id) {
+          return { __branchError: BRANCH_ASSERTION_MESSAGES.CROSS_BRANCH_DENIED } as const;
+        }
+      }
+
       return tx.student_progress.findMany({
         where: { student_id: parsed.data.student_id },
         select: {
@@ -253,7 +273,12 @@ export async function listProgress(
 
     if (!result.success) return result;
 
-    const records: ProgressRecord[] = result.data.map((row) => ({
+    if ("__branchError" in result.data) {
+      return { success: false, error: (result.data as { __branchError: string }).__branchError };
+    }
+
+    const rows = result.data as Exclude<typeof result.data, { __branchError: string }>;
+    const records: ProgressRecord[] = rows.map((row) => ({
       id: row.id,
       discipline_id: row.discipline_id,
       discipline_name: row.disciplines.name,
@@ -402,9 +427,10 @@ export async function reopenNote(
 
 /**
  * List notes for a student with optional discipline/completion filters.
+ * Validates branch context when provided.
  */
 export async function listNotes(
-  input: NotesQueryInput
+  input: NotesQueryInput & { branch_id?: string }
 ): Promise<ActionResult<NoteRecord[]>> {
   const parsed = notesQuerySchema.safeParse(input);
   if (!parsed.success) {
@@ -414,7 +440,22 @@ export async function listNotes(
   const { student_id, discipline_id, is_completed } = parsed.data;
 
   try {
-    const result = await withAuthenticatedUser(async (tx) => {
+    const result = await withAuthenticatedUser(async (tx, ctx) => {
+      if (input.branch_id) {
+        const branchError = assertCallerBranchContext(ctx, input.branch_id);
+        if (branchError) {
+          return { __branchError: branchError } as const;
+        }
+
+        const student = await tx.students.findUnique({
+          where: { id: student_id },
+          select: { branch_id: true },
+        });
+        if (!student || student.branch_id !== input.branch_id) {
+          return { __branchError: BRANCH_ASSERTION_MESSAGES.CROSS_BRANCH_DENIED } as const;
+        }
+      }
+
       return tx.student_notes.findMany({
         where: {
           student_id,
@@ -437,7 +478,12 @@ export async function listNotes(
     });
 
     if (!result.success) return result;
-    return { success: true, data: result.data };
+
+    if ("__branchError" in result.data) {
+      return { success: false, error: (result.data as { __branchError: string }).__branchError };
+    }
+
+    return { success: true, data: result.data as NoteRecord[] };
   } catch {
     return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
   }

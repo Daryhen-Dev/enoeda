@@ -69,6 +69,7 @@ interface StudentFormDialogProps {
   disciplines?: DisciplineOption[]
   studentId?: string
   lockedBranchId?: string
+  branchId?: string
   onCreated?: () => void
 }
 
@@ -110,13 +111,14 @@ export function StudentFormDialog({
   disciplines = [],
   studentId,
   lockedBranchId,
+  branchId: contextBranchId,
   onCreated,
 }: StudentFormDialogProps) {
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
   const [isLoadingStudent, setIsLoadingStudent] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
-  const branchId = useId()
+  const branchFieldId = useId()
   const firstNameId = useId()
   const surnameId = useId()
   const nationalId = useId()
@@ -148,7 +150,7 @@ export function StudentFormDialog({
     setActionError(null)
 
     try {
-      const result = await getStudentById(studentId)
+      const result = await getStudentById(studentId, contextBranchId ?? "")
 
       if (!result.success || result.data === undefined) {
         setActionError(result.error ?? STUDENT_FORM_MESSAGES.LOAD_FAILURE)
@@ -200,7 +202,7 @@ export function StudentFormDialog({
 
     try {
       if (isEditing) {
-        const result = await updateStudent({ id: studentId, ...values })
+        const result = await updateStudent({ id: studentId, ...values }, contextBranchId)
         if (!result.success) {
           setActionError(result.error ?? STUDENT_FORM_MESSAGES.SAVE_FAILURE)
           return
@@ -285,10 +287,10 @@ export function StudentFormDialog({
                 }}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={Boolean(fieldState.error)}>
-                    <FieldLabel htmlFor={branchId}>{PRODUCT_TERMS.BRANCH}</FieldLabel>
+                    <FieldLabel htmlFor={branchFieldId}>{PRODUCT_TERMS.BRANCH}</FieldLabel>
                     {lockedBranchId && !isEditing ? (
                       <Input
-                        id={branchId}
+                        id={branchFieldId}
                         value={branches.find((b) => b.id === lockedBranchId)?.name ?? lockedBranchId}
                         disabled
                         readOnly
@@ -304,9 +306,9 @@ export function StudentFormDialog({
                         disabled={isPending}
                       >
                         <SelectTrigger
-                          id={branchId}
+                          id={branchFieldId}
                           className="w-full"
-                          aria-describedby={fieldState.error ? `${branchId}-error` : undefined}
+                          aria-describedby={fieldState.error ? `${branchFieldId}-error` : undefined}
                           aria-invalid={Boolean(fieldState.error)}
                         >
                           <SelectValue placeholder={STUDENT_FORM_MESSAGES.ACTIVE_BRANCH_PLACEHOLDER} />
@@ -320,7 +322,7 @@ export function StudentFormDialog({
                         </SelectContent>
                       </Select>
                     )}
-                    <FieldError id={`${branchId}-error`} errors={[fieldState.error]} />
+                    <FieldError id={`${branchFieldId}-error`} errors={[fieldState.error]} />
                   </Field>
                 )}
               />

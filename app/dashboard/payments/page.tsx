@@ -103,6 +103,7 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
                 key={d.id}
                 disciplineId={d.id}
                 disciplineName={d.name}
+                branchId={branchResult.branchId}
               />
             ))}
           </div>

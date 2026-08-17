@@ -29,10 +29,12 @@ interface StudentDeactivateSummary {
 
 interface StudentDeactivateDialogProps {
   student: StudentDeactivateSummary
+  branchId: string
 }
 
 export function StudentDeactivateDialog({
   student,
+  branchId,
 }: StudentDeactivateDialogProps) {
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
@@ -54,7 +56,7 @@ export function StudentDeactivateDialog({
     setIsDeactivating(true)
 
     try {
-      const result = await deactivateStudent(student.id)
+      const result = await deactivateStudent(student.id, branchId)
 
       if (!result.success) {
         setActionError(result.error ?? STUDENT_LIFECYCLE_MESSAGES.DEACTIVATE_FAILURE)
