@@ -10,7 +10,6 @@
  */
 
 import type { AuthenticatedContext } from "@/lib/auth/server-context";
-import { COMMON_MESSAGES } from "@/lib/localization/es-ec";
 
 export const BRANCH_ASSERTION_MESSAGES = {
   MISSING_BRANCH_CONTEXT: "Contexto de sucursal requerido.",

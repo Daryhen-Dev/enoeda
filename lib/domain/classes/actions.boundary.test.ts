@@ -29,7 +29,7 @@ describe("getSessionsForRange branch boundary", () => {
   });
 
   it("rejects when caller has no active assignment for the branch", async () => {
-    mockWithAuthenticatedUser.mockImplementation(async (fn: any) => {
+    mockWithAuthenticatedUser.mockImplementation(async (fn: (tx: unknown, ctx: unknown) => Promise<unknown>) => {
       const ctx = {
         userId: "user-1",
         roles: ["teacher"],

@@ -22,6 +22,11 @@ vi.mock("@/lib/auth/branch-assertion", async () => {
 });
 
 import { takeAttendance, getAttendanceForSession, getAttendanceStats } from "./actions";
+import type {
+  TakeAttendanceInput,
+  AttendanceForSessionInput,
+  AttendanceStatsInput,
+} from "./schema";
 
 const BRANCH_A = "aaaaaaaa-1111-2222-3333-444444444444";
 const BRANCH_B = "bbbbbbbb-1111-2222-3333-444444444444";
@@ -34,7 +39,7 @@ function makeMockTx() {
     get(_target, prop) {
       return new Proxy({}, {
         get(_t2, method) {
-          return (..._args: unknown[]) => {
+          return () => {
             mockTxCalls.push(`${String(prop)}.${String(method)}`);
             return null;
           };
@@ -52,7 +57,7 @@ describe("takeAttendance branch boundary", () => {
 
   it("rejects when branch_id is missing from input (schema validation)", async () => {
     // Simulate: if withAuthenticatedUser is reached, it would succeed (bad)
-    mockWithAuthenticatedUser.mockImplementation(async (fn: any) => {
+    mockWithAuthenticatedUser.mockImplementation(async (fn: (tx: unknown, ctx: unknown) => Promise<unknown>) => {
       const ctx = {
         userId: "user-1",
         roles: ["admin"],
@@ -67,7 +72,7 @@ describe("takeAttendance branch boundary", () => {
       scheduled_class_id: CLASS_ID,
       session_date: "2024-06-10",
       records: [{ student_id: STUDENT_ID, attended: true }],
-    } as any);
+    } as unknown as TakeAttendanceInput);
 
     expect(result.success).toBe(false);
     // Schema must reject before withAuthenticatedUser when branch_id is missing
@@ -75,7 +80,7 @@ describe("takeAttendance branch boundary", () => {
   });
 
   it("rejects when branch_id is not a valid UUID (schema validation)", async () => {
-    mockWithAuthenticatedUser.mockImplementation(async (fn: any) => {
+    mockWithAuthenticatedUser.mockImplementation(async (fn: (tx: unknown, ctx: unknown) => Promise<unknown>) => {
       const ctx = {
         userId: "user-1",
         roles: ["admin"],
@@ -91,7 +96,7 @@ describe("takeAttendance branch boundary", () => {
       session_date: "2024-06-10",
       branch_id: "not-a-uuid",
       records: [{ student_id: STUDENT_ID, attended: true }],
-    } as any);
+    } as unknown as TakeAttendanceInput);
 
     expect(result.success).toBe(false);
     expect(mockWithAuthenticatedUser).not.toHaveBeenCalled();
@@ -99,7 +104,7 @@ describe("takeAttendance branch boundary", () => {
 
   it("rejects when caller has no active assignment for the branch (no DB read/write)", async () => {
     const tx = makeMockTx();
-    mockWithAuthenticatedUser.mockImplementation(async (fn: any) => {
+    mockWithAuthenticatedUser.mockImplementation(async (fn: (tx: unknown, ctx: unknown) => Promise<unknown>) => {
       const ctx = {
         userId: "user-1",
         roles: ["admin"],
@@ -114,7 +119,7 @@ describe("takeAttendance branch boundary", () => {
       session_date: "2024-06-10",
       branch_id: BRANCH_A,
       records: [{ student_id: STUDENT_ID, attended: true }],
-    } as any);
+    } as unknown as TakeAttendanceInput);
 
     expect(result.success).toBe(false);
     // No DB reads should have occurred
@@ -129,7 +134,7 @@ describe("getAttendanceForSession branch boundary", () => {
   });
 
   it("rejects when branch_id is missing from input (schema validation)", async () => {
-    mockWithAuthenticatedUser.mockImplementation(async (fn: any) => {
+    mockWithAuthenticatedUser.mockImplementation(async (fn: (tx: unknown, ctx: unknown) => Promise<unknown>) => {
       const ctx = {
         userId: "user-1",
         roles: ["admin"],
@@ -143,14 +148,14 @@ describe("getAttendanceForSession branch boundary", () => {
     const result = await getAttendanceForSession({
       scheduled_class_id: CLASS_ID,
       session_date: "2024-06-10",
-    } as any);
+    } as unknown as AttendanceForSessionInput);
 
     expect(result.success).toBe(false);
     expect(mockWithAuthenticatedUser).not.toHaveBeenCalled();
   });
 
   it("rejects when branch_id is not a valid UUID (schema validation)", async () => {
-    mockWithAuthenticatedUser.mockImplementation(async (fn: any) => {
+    mockWithAuthenticatedUser.mockImplementation(async (fn: (tx: unknown, ctx: unknown) => Promise<unknown>) => {
       const ctx = {
         userId: "user-1",
         roles: ["admin"],
@@ -165,7 +170,7 @@ describe("getAttendanceForSession branch boundary", () => {
       scheduled_class_id: CLASS_ID,
       session_date: "2024-06-10",
       branch_id: "not-valid",
-    } as any);
+    } as unknown as AttendanceForSessionInput);
 
     expect(result.success).toBe(false);
     expect(mockWithAuthenticatedUser).not.toHaveBeenCalled();
@@ -173,7 +178,7 @@ describe("getAttendanceForSession branch boundary", () => {
 
   it("rejects when caller has no assignment for the branch (no DB read)", async () => {
     const tx = makeMockTx();
-    mockWithAuthenticatedUser.mockImplementation(async (fn: any) => {
+    mockWithAuthenticatedUser.mockImplementation(async (fn: (tx: unknown, ctx: unknown) => Promise<unknown>) => {
       const ctx = {
         userId: "user-1",
         roles: ["teacher"],
@@ -187,7 +192,7 @@ describe("getAttendanceForSession branch boundary", () => {
       scheduled_class_id: CLASS_ID,
       session_date: "2024-06-10",
       branch_id: BRANCH_A,
-    } as any);
+    } as unknown as AttendanceForSessionInput);
 
     expect(result.success).toBe(false);
     expect(mockTxCalls).toHaveLength(0);
@@ -201,7 +206,7 @@ describe("getAttendanceStats branch boundary", () => {
   });
 
   it("rejects when branch_id is missing from input (schema validation)", async () => {
-    mockWithAuthenticatedUser.mockImplementation(async (fn: any) => {
+    mockWithAuthenticatedUser.mockImplementation(async (fn: (tx: unknown, ctx: unknown) => Promise<unknown>) => {
       const ctx = {
         userId: "user-1",
         roles: ["admin"],
@@ -214,14 +219,14 @@ describe("getAttendanceStats branch boundary", () => {
 
     const result = await getAttendanceStats({
       student_id: STUDENT_ID,
-    } as any);
+    } as unknown as AttendanceStatsInput);
 
     expect(result.success).toBe(false);
     expect(mockWithAuthenticatedUser).not.toHaveBeenCalled();
   });
 
   it("rejects when branch_id is not a valid UUID (schema validation)", async () => {
-    mockWithAuthenticatedUser.mockImplementation(async (fn: any) => {
+    mockWithAuthenticatedUser.mockImplementation(async (fn: (tx: unknown, ctx: unknown) => Promise<unknown>) => {
       const ctx = {
         userId: "user-1",
         roles: ["admin"],
@@ -243,7 +248,7 @@ describe("getAttendanceStats branch boundary", () => {
 
   it("rejects when caller has no active assignment for the branch (no DB read)", async () => {
     const tx = makeMockTx();
-    mockWithAuthenticatedUser.mockImplementation(async (fn: any) => {
+    mockWithAuthenticatedUser.mockImplementation(async (fn: (tx: unknown, ctx: unknown) => Promise<unknown>) => {
       const ctx = {
         userId: "user-1",
         roles: ["admin"],

@@ -3,7 +3,6 @@
 import { withAuthenticatedUser } from "@/lib/auth/server-context";
 import {
   assertCallerBranchContext,
-  assertBranchContextAndOwnership,
   BRANCH_ASSERTION_MESSAGES,
 } from "@/lib/auth/branch-assertion";
 import { COMMON_MESSAGES, STUDENT_MESSAGES } from "@/lib/localization/es-ec";

@@ -5,7 +5,7 @@ import {
   assertCallerBranchContext,
   BRANCH_ASSERTION_MESSAGES,
 } from "@/lib/auth/branch-assertion";
-import { ATTENDANCE_MESSAGES, COMMON_MESSAGES } from "@/lib/localization/es-ec";
+import { ATTENDANCE_MESSAGES } from "@/lib/localization/es-ec";
 import {
   takeAttendanceSchema,
   attendanceForSessionSchema,

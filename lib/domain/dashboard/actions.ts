@@ -1,10 +1,7 @@
 "use server";
 
 import { withAuthenticatedUser } from "@/lib/auth/server-context";
-import {
-  assertCallerBranchContext,
-  BRANCH_ASSERTION_MESSAGES,
-} from "@/lib/auth/branch-assertion";
+import { assertCallerBranchContext } from "@/lib/auth/branch-assertion";
 import { countOverdueStudents } from "@/lib/domain/payments/queries";
 
 interface ActionSuccess<T> {

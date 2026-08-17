@@ -32,6 +32,12 @@ import {
   getStudentPayments,
   configureDisciplineClassPrice,
 } from "./actions";
+import type {
+  RegisterMonthlyPaymentInput,
+  RegisterClassPaymentInput,
+  GetStudentPaymentsInput,
+  ConfigureDisciplineClassPriceInput,
+} from "./schema";
 
 const BRANCH_ID = "aaaaaaaa-1111-4222-a333-444444444444";
 const OTHER_BRANCH = "bbbbbbbb-1111-4222-a333-444444444444";
@@ -63,14 +69,14 @@ describe("registerMonthlyPayment — branch context enforcement", () => {
       student_discipline_id: ENROLLMENT_ID,
       amount: 50,
       months_covered: 1,
-    } as any);
+    } as unknown as RegisterMonthlyPaymentInput);
 
     expect(result.success).toBe(false);
     expect(mockWithAuthenticatedUser).not.toHaveBeenCalled();
   });
 
   it("rejects caller without active assignment for target branch", async () => {
-    mockWithAuthenticatedUser.mockImplementation(async (fn: Function) => {
+    mockWithAuthenticatedUser.mockImplementation(async (fn: (tx: unknown, ctx: unknown) => Promise<unknown>) => {
       const tx = { student_disciplines: { findUnique: vi.fn() } };
       const data = await fn(tx, noAssignmentCtx);
       return { success: true, data };
@@ -88,7 +94,7 @@ describe("registerMonthlyPayment — branch context enforcement", () => {
   });
 
   it("rejects cross-branch enrollment (student in different branch)", async () => {
-    mockWithAuthenticatedUser.mockImplementation(async (fn: Function) => {
+    mockWithAuthenticatedUser.mockImplementation(async (fn: (tx: unknown, ctx: unknown) => Promise<unknown>) => {
       const tx = {
         student_disciplines: {
           findUnique: vi.fn().mockResolvedValue({
@@ -118,7 +124,7 @@ describe("registerMonthlyPayment — branch context enforcement", () => {
   it("succeeds when branch context, assignment, and ownership all match", async () => {
     const mockPaymentCreate = vi.fn().mockResolvedValue({ id: "pay-1" });
     const mockEnrollUpdate = vi.fn();
-    mockWithAuthenticatedUser.mockImplementation(async (fn: Function) => {
+    mockWithAuthenticatedUser.mockImplementation(async (fn: (tx: unknown, ctx: unknown) => Promise<unknown>) => {
       const tx = {
         student_disciplines: {
           findUnique: vi.fn().mockResolvedValue({
@@ -154,14 +160,14 @@ describe("registerClassPayment — branch context enforcement", () => {
   it("rejects when branch_id is missing from input", async () => {
     const result = await registerClassPayment({
       student_discipline_id: ENROLLMENT_ID,
-    } as any);
+    } as unknown as RegisterClassPaymentInput);
 
     expect(result.success).toBe(false);
     expect(mockWithAuthenticatedUser).not.toHaveBeenCalled();
   });
 
   it("rejects caller without active assignment", async () => {
-    mockWithAuthenticatedUser.mockImplementation(async (fn: Function) => {
+    mockWithAuthenticatedUser.mockImplementation(async (fn: (tx: unknown, ctx: unknown) => Promise<unknown>) => {
       const tx = { student_disciplines: { findUnique: vi.fn() } };
       const data = await fn(tx, noAssignmentCtx);
       return { success: true, data };
@@ -177,7 +183,7 @@ describe("registerClassPayment — branch context enforcement", () => {
   });
 
   it("rejects cross-branch enrollment", async () => {
-    mockWithAuthenticatedUser.mockImplementation(async (fn: Function) => {
+    mockWithAuthenticatedUser.mockImplementation(async (fn: (tx: unknown, ctx: unknown) => Promise<unknown>) => {
       const tx = {
         student_disciplines: {
           findUnique: vi.fn().mockResolvedValue({
@@ -210,14 +216,14 @@ describe("getStudentPayments — branch context enforcement", () => {
   it("rejects when branch_id is missing from input", async () => {
     const result = await getStudentPayments({
       student_id: STUDENT_ID,
-    } as any);
+    } as unknown as GetStudentPaymentsInput);
 
     expect(result.success).toBe(false);
     expect(mockWithAuthenticatedUser).not.toHaveBeenCalled();
   });
 
   it("rejects caller without active assignment", async () => {
-    mockWithAuthenticatedUser.mockImplementation(async (fn: Function) => {
+    mockWithAuthenticatedUser.mockImplementation(async (fn: (tx: unknown, ctx: unknown) => Promise<unknown>) => {
       const tx = {
         students: { findUnique: vi.fn() },
         payments: { findMany: vi.fn() },
@@ -237,7 +243,7 @@ describe("getStudentPayments — branch context enforcement", () => {
   });
 
   it("rejects when student belongs to a different branch", async () => {
-    mockWithAuthenticatedUser.mockImplementation(async (fn: Function) => {
+    mockWithAuthenticatedUser.mockImplementation(async (fn: (tx: unknown, ctx: unknown) => Promise<unknown>) => {
       const tx = {
         students: {
           findUnique: vi.fn().mockResolvedValue({ branch_id: OTHER_BRANCH }),
@@ -268,14 +274,14 @@ describe("configureDisciplineClassPrice — branch context enforcement", () => {
     const result = await configureDisciplineClassPrice({
       discipline_id: DISCIPLINE_ID,
       class_price: 10,
-    } as any);
+    } as unknown as ConfigureDisciplineClassPriceInput);
 
     expect(result.success).toBe(false);
     expect(mockWithAuthenticatedUser).not.toHaveBeenCalled();
   });
 
   it("rejects caller without active assignment", async () => {
-    mockWithAuthenticatedUser.mockImplementation(async (fn: Function) => {
+    mockWithAuthenticatedUser.mockImplementation(async (fn: (tx: unknown, ctx: unknown) => Promise<unknown>) => {
       const tx = { disciplines: { update: vi.fn() } };
       const data = await fn(tx, noAssignmentCtx);
       return { success: true, data };
@@ -292,7 +298,7 @@ describe("configureDisciplineClassPrice — branch context enforcement", () => {
   });
 
   it("succeeds when caller has valid branch assignment", async () => {
-    mockWithAuthenticatedUser.mockImplementation(async (fn: Function) => {
+    mockWithAuthenticatedUser.mockImplementation(async (fn: (tx: unknown, ctx: unknown) => Promise<unknown>) => {
       const tx = {
         disciplines: {
           update: vi.fn().mockResolvedValue({ id: DISCIPLINE_ID }),

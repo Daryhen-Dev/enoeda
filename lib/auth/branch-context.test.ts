@@ -48,7 +48,7 @@ describe("resolveBranchContext", () => {
       { id: BRANCH_B, name: "Sucursal B" },
       { id: BRANCH_C, name: "Sucursal C" },
     ];
-    mockWithAuthenticatedUser.mockImplementation(async (fn: Function) => {
+    mockWithAuthenticatedUser.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
       const mockTx = {
         branches: {
           findMany: ({ where }: { where: { id: { in: string[] }; is_active: boolean } }) => {
@@ -316,7 +316,7 @@ describe("resolveBranchContext", () => {
     });
 
     // Override mock: BRANCH_B is inactive (not in DB results)
-    mockWithAuthenticatedUser.mockImplementation(async (fn: Function) => {
+    mockWithAuthenticatedUser.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
       const mockTx = {
         branches: {
           findMany: () => [{ id: BRANCH_A, name: "Sucursal A" }],
@@ -348,7 +348,7 @@ describe("resolveBranchContext", () => {
     });
 
     // Override mock: BRANCH_B is inactive (not in DB results)
-    mockWithAuthenticatedUser.mockImplementation(async (fn: Function) => {
+    mockWithAuthenticatedUser.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
       const mockTx = {
         branches: {
           findMany: () => [{ id: BRANCH_A, name: "Sucursal A" }],

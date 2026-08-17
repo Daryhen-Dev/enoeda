@@ -37,7 +37,7 @@ vi.mock("@/lib/auth/identity-resolver", () => ({
 }));
 
 vi.mock("@/lib/auth/server-context", () => ({
-  withAuthenticatedUser: vi.fn().mockImplementation(async (fn: Function) => ({
+  withAuthenticatedUser: vi.fn().mockImplementation(async () => ({
     success: true,
     data: [],
   })),
@@ -49,7 +49,7 @@ describe("listBranchStaff — branch scoping", () => {
   let mockQuery: ReturnType<typeof createMockQuery>;
 
   function createMockQuery() {
-    const chain: Record<string, any> = {};
+    const chain: Record<string, ReturnType<typeof vi.fn>> = {};
     chain.select = vi.fn().mockReturnValue(chain);
     chain.is = vi.fn().mockReturnValue(chain);
     chain.neq = vi.fn().mockReturnValue(chain);
