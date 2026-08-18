@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 
 const MIGRATION_PATH = path.join(
   __dirname,
-  "20260825000001_harden_teacher_event_attribution.sql"
+  "20260818202959_harden_teacher_event_attribution.sql"
 );
 const migration = readFileSync(MIGRATION_PATH, "utf-8");
 
