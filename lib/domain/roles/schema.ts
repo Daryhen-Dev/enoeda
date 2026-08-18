@@ -171,7 +171,7 @@ const revokedResultSchema = z.object({
 /** Blocked revocation result from the RPC. */
 const blockedResultSchema = z.object({
   status: z.literal("blocked"),
-  reason: z.enum(["no_default_teacher", "revoked_is_default", "conflict"]),
+  reason: z.enum(["no_default_teacher", "revoked_is_default", "no_active_admin", "conflict"]),
   conflicts: z.array(revokeConflictSchema).optional(),
 });
 

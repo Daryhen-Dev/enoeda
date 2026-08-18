@@ -180,6 +180,8 @@ function RevokeTeacherDialog({
           setError("No hay profesor predeterminado configurado para esta sucursal.")
         } else if (data.reason === "revoked_is_default") {
           setError("No se puede revocar al profesor predeterminado. Cambie el predeterminado primero.")
+        } else if (data.reason === "no_active_admin") {
+          setError("No se puede revocar porque no hay otro admin activo para asumir el rol docente predeterminado.")
         } else if (data.reason === "conflict" && data.conflicts) {
           const details = data.conflicts
             .map((c) => `Día ${c.dayOfWeek} a las ${c.startTime}`)
