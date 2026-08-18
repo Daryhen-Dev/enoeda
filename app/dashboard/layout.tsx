@@ -4,7 +4,7 @@ import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { TooltipProvider } from "@/components/ui/tooltip"
-import { fetchCurrentRoles } from "@/lib/auth/server-roles"
+import { APP_ROLES } from "@/lib/auth/authorize"
 import { getAuthenticatedContext } from "@/lib/auth/identity-resolver"
 import {
   getOperationalBranchIds,
@@ -23,13 +23,18 @@ export default async function DashboardLayout({
 }: {
   children: ReactNode
 }) {
-  const [roles, profileResult, identityResult] = await Promise.all([
-    fetchCurrentRoles(),
+  const [profileResult, identityResult] = await Promise.all([
     getOwnProfile(),
     getAuthenticatedContext(),
   ])
-  const isAdmin = roles.includes("admin")
-  const canManageProfile = roles.includes("admin") || roles.includes("teacher")
+  const roles = identityResult.ok ? identityResult.ctx.roles : []
+  const isAdmin = roles.includes(APP_ROLES.ADMIN)
+  const canManageProfile =
+    roles.includes(APP_ROLES.ADMIN) || roles.includes(APP_ROLES.TEACHER)
+  const isTeacherOnly =
+    identityResult.ok &&
+    identityResult.ctx.roles.includes(APP_ROLES.TEACHER) &&
+    !identityResult.ctx.roles.includes(APP_ROLES.ADMIN)
   const displayName =
     canManageProfile && profileResult.success && profileResult.data
       ? `${profileResult.data.first_name} ${profileResult.data.surname}`.trim() ||
@@ -57,6 +62,7 @@ export default async function DashboardLayout({
         <AppSidebar
           canManageProfile={canManageProfile}
           isAdmin={isAdmin}
+          isTeacherOnly={isTeacherOnly}
           variant="inset"
         />
         <SidebarInset>

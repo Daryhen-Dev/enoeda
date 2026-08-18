@@ -77,6 +77,10 @@ export function SiteHeader({
 
   const currentBranch = branches?.find((b) => b.id === currentBranchId)
   const mode = getSwitcherMode(branches)
+  const pageTitle =
+    pathname === "/dashboard/calendar"
+      ? DASHBOARD_SHELL_MESSAGES.CALENDAR
+      : DASHBOARD_SHELL_MESSAGES.OVERVIEW
 
   return (
     <header className="flex h-(--header-height) shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
@@ -88,7 +92,7 @@ export function SiteHeader({
             className="mx-2 h-4 data-vertical:self-auto"
           />
           <h1 className="truncate text-base font-medium">
-            {DASHBOARD_SHELL_MESSAGES.OVERVIEW}
+            {pageTitle}
           </h1>
         </div>
 

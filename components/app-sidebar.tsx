@@ -34,13 +34,14 @@ interface NavigationItem {
   available: boolean
   adminOnly?: boolean
   profileOnly?: boolean
+  hiddenForTeacherOnly?: boolean
 }
 
 const navigationItems: NavigationItem[] = [
-  { title: DASHBOARD_SHELL_MESSAGES.OVERVIEW, url: "/dashboard", icon: LayoutDashboardIcon, available: true },
-  { title: DASHBOARD_SHELL_MESSAGES.BRANCHES, url: "/dashboard/branches", icon: BuildingIcon, available: true },
+  { title: DASHBOARD_SHELL_MESSAGES.OVERVIEW, url: "/dashboard", icon: LayoutDashboardIcon, available: true, hiddenForTeacherOnly: true },
+  { title: DASHBOARD_SHELL_MESSAGES.BRANCHES, url: "/dashboard/branches", icon: BuildingIcon, available: true, hiddenForTeacherOnly: true },
   { title: DASHBOARD_SHELL_MESSAGES.STUDENTS, url: "/dashboard/students", icon: UsersIcon, available: true },
-  { title: DASHBOARD_SHELL_MESSAGES.STAFF, url: "/dashboard/staff", icon: ShieldIcon, available: true, adminOnly: true },
+  { title: DASHBOARD_SHELL_MESSAGES.STAFF, url: "/dashboard/staff", icon: ShieldIcon, available: true, adminOnly: true, hiddenForTeacherOnly: true },
   { title: DASHBOARD_SHELL_MESSAGES.CALENDAR, url: "/dashboard/calendar", icon: CalendarDaysIcon, available: true },
   { title: DASHBOARD_SHELL_MESSAGES.PROFILE, url: "/dashboard/profile", icon: UserRoundIcon, available: true, profileOnly: true },
 ]
@@ -52,18 +53,21 @@ function isNavigationItemActive(item: NavigationItem, pathname: string) {
 interface AppSidebarProps extends ComponentProps<typeof Sidebar> {
   isAdmin?: boolean
   canManageProfile?: boolean
+  isTeacherOnly?: boolean
 }
 
 export function AppSidebar({
   isAdmin = false,
   canManageProfile = false,
+  isTeacherOnly = false,
   ...props
 }: AppSidebarProps) {
   const pathname = usePathname()
   const visibleItems = navigationItems.filter(
     (item) =>
       (!item.adminOnly || isAdmin) &&
-      (!item.profileOnly || canManageProfile)
+      (!item.profileOnly || canManageProfile) &&
+      (!item.hiddenForTeacherOnly || !isTeacherOnly)
   )
 
   return (

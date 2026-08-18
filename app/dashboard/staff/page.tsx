@@ -6,8 +6,10 @@ import { StaffList } from "@/components/staff/staff-list"
 import { DefaultTeacherSelector } from "@/components/staff/default-teacher-selector"
 import { GrantRoleDialog } from "@/components/staff/grant-role-dialog"
 import { BranchSelector } from "@/components/branch/branch-selector"
-import { listBranchStaff, listBranchTeacherOptions, getBranchDefaultTeacher } from "@/lib/domain/roles/actions"
+import { APP_ROLES } from "@/lib/auth/authorize"
 import { resolveBranchContext } from "@/lib/auth/branch-context"
+import { getAuthenticatedContext } from "@/lib/auth/identity-resolver"
+import { listBranchStaff, listBranchTeacherOptions, getBranchDefaultTeacher } from "@/lib/domain/roles/actions"
 import { TEACHER_MANAGEMENT_MESSAGES } from "@/lib/localization/es-ec"
 
 interface StaffPageProps {
@@ -20,6 +22,25 @@ interface StaffPageProps {
  */
 export default async function StaffPage({ searchParams }: StaffPageProps) {
   const params = await searchParams
+  const identityResult = await getAuthenticatedContext()
+  const isTeacherOnly =
+    identityResult.ok &&
+    identityResult.ctx.roles.includes(APP_ROLES.TEACHER) &&
+    !identityResult.ctx.roles.includes(APP_ROLES.ADMIN)
+
+  if (isTeacherOnly) {
+    const redirectParams = new URLSearchParams()
+    for (const [key, value] of Object.entries(params)) {
+      if (value !== undefined) redirectParams.append(key, value)
+    }
+    const queryString = redirectParams.toString()
+    redirect(
+      queryString
+        ? `/dashboard/calendar?${queryString}`
+        : "/dashboard/calendar"
+    )
+  }
+
   const branchResult = await resolveBranchContext(params.branch)
 
   if (branchResult.type === "error") {
@@ -68,9 +89,7 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
   const teachers = allAssignments.filter((a) => a.role === "teacher")
 
   // Get current user ID for self-enable row action
-  const { getAuthenticatedContext } = await import("@/lib/auth/identity-resolver")
-  const identity = await getAuthenticatedContext()
-  const currentUserId = identity.ok ? identity.ctx.userId : undefined
+  const currentUserId = identityResult.ok ? identityResult.ctx.userId : undefined
 
   return (
     <div className="flex flex-col gap-4 p-4 md:gap-6 md:p-6">

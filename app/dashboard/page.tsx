@@ -11,7 +11,9 @@ import {
 } from "@/components/ui/card"
 import { BranchSelector } from "@/components/branch/branch-selector"
 import { getDashboardKpis } from "@/lib/domain/dashboard"
+import { APP_ROLES } from "@/lib/auth/authorize"
 import { resolveBranchContext } from "@/lib/auth/branch-context"
+import { getAuthenticatedContext } from "@/lib/auth/identity-resolver"
 import {
   DASHBOARD_OVERVIEW_MESSAGES,
   formatNumber,
@@ -23,6 +25,24 @@ interface DashboardOverviewProps {
 
 export default async function DashboardOverview({ searchParams }: DashboardOverviewProps) {
   const params = await searchParams
+  const identityResult = await getAuthenticatedContext()
+  const isTeacherOnly =
+    identityResult.ok &&
+    identityResult.ctx.roles.includes(APP_ROLES.TEACHER) &&
+    !identityResult.ctx.roles.includes(APP_ROLES.ADMIN)
+
+  if (isTeacherOnly) {
+    const redirectParams = new URLSearchParams()
+    for (const [key, value] of Object.entries(params)) {
+      if (value !== undefined) redirectParams.append(key, value)
+    }
+    const queryString = redirectParams.toString()
+    redirect(
+      queryString
+        ? `/dashboard/calendar?${queryString}`
+        : "/dashboard/calendar"
+    )
+  }
 
   // Page-level branch context resolution (never in layout)
   const branchResult = await resolveBranchContext(params.branch)
