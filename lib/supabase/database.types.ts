@@ -208,6 +208,20 @@ export type Database = {
         };
         Returns: boolean;
       };
+      revoke_teacher_with_reassignment: {
+        Args: {
+          p_target_user_id: string;
+          p_branch_id: string;
+        };
+        Returns: Json;
+      };
+      set_branch_default_teacher: {
+        Args: {
+          p_branch_id: string;
+          p_teacher_id: string;
+        };
+        Returns: undefined;
+      };
     };
     Enums: {
       role_enum: "admin" | "owner" | "teacher";
