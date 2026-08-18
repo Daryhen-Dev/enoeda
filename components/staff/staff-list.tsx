@@ -31,9 +31,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { revokeBranchRole } from "@/lib/domain/roles/actions"
+import { revokeBranchTeacher } from "@/lib/domain/roles/actions"
 import { enableSelfAsTeacher } from "@/lib/domain/roles/actions"
 import type { StaffAssignment } from "@/lib/domain/roles/actions"
+import type { RevokeTeacherResult } from "@/lib/domain/roles/schema"
 import { isSelfEnableEligibleRow } from "@/lib/domain/roles/self-enable-eligibility"
 import {
   COMMON_MESSAGES,
@@ -128,21 +129,42 @@ function RevokeTeacherDialog({
 }) {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
+  const [summary, setSummary] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
   function handleRevoke() {
     startTransition(async () => {
-      const result = await revokeBranchRole({
+      const result = await revokeBranchTeacher({
         targetUserId: userId,
-        role: "teacher",
         branchId,
       })
-      if (result.success) {
+      if (!result.success) {
+        setError(result.error ?? COMMON_MESSAGES.UNEXPECTED_ERROR)
+        setSummary(null)
+        return
+      }
+      const data = result.data as RevokeTeacherResult
+      if (data.status === "revoked") {
         setError(null)
+        setSummary(
+          `Profesor revocado. ${data.reassignedClassCount} clase(s) reasignada(s).`
+        )
         toast.success(TOAST_MESSAGES.TEACHER_REVOKED)
         router.refresh()
       } else {
-        setError(result.error ?? COMMON_MESSAGES.UNEXPECTED_ERROR)
+        setSummary(null)
+        if (data.reason === "no_default_teacher") {
+          setError("No hay profesor predeterminado configurado para esta sucursal.")
+        } else if (data.reason === "revoked_is_default") {
+          setError("No se puede revocar al profesor predeterminado. Cambie el predeterminado primero.")
+        } else if (data.reason === "conflict" && data.conflicts) {
+          const details = data.conflicts
+            .map((c) => `Día ${c.dayOfWeek} a las ${c.startTime}`)
+            .join("; ")
+          setError(`Conflicto de horario con el reemplazante: ${details}`)
+        } else {
+          setError(COMMON_MESSAGES.UNEXPECTED_ERROR)
+        }
       }
     })
   }
@@ -166,6 +188,13 @@ function RevokeTeacherDialog({
           <Alert variant="destructive">
             <AlertTitle>{TEACHER_MANAGEMENT_MESSAGES.REVOKE_ERROR}</AlertTitle>
             <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        {summary && (
+          <Alert>
+            <AlertTitle>Revocación exitosa</AlertTitle>
+            <AlertDescription>{summary}</AlertDescription>
           </Alert>
         )}
 

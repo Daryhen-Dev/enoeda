@@ -14,6 +14,7 @@ import {
   revokeBranchRoleSchema,
   revokeBranchTeacherSchema,
   revokeTeacherResultSchema,
+  setBranchDefaultTeacherSchema,
   createBranchAdminSchema,
   createBranchTeacherSchema,
   listBranchTeacherOptionsSchema,
@@ -22,6 +23,7 @@ import {
   type RevokeBranchRoleInput,
   type RevokeBranchTeacherInput,
   type RevokeTeacherResult,
+  type SetBranchDefaultTeacherInput,
   type CreateBranchAdminInput,
   type CreateBranchTeacherInput,
 } from "./schema";
@@ -198,6 +200,39 @@ export async function revokeBranchTeacher(
   if (!result.success) return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
 
   return { success: true, data: result.data };
+}
+
+/**
+ * Configure the branch default teacher. Calls `set_branch_default_teacher`
+ * RPC which validates the teacher is active and belongs to the same branch.
+ */
+export async function setBranchDefaultTeacher(
+  input: SetBranchDefaultTeacherInput
+): Promise<ActionResult<void>> {
+  const parsed = setBranchDefaultTeacherSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: parsed.error.issues[0].message };
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("set_branch_default_teacher", {
+    p_branch_id: parsed.data.branchId,
+    p_teacher_id: parsed.data.teacherId,
+  });
+
+  if (error) {
+    return {
+      success: false,
+      error: isAuthorizationError(error.message)
+        ? COMMON_MESSAGES.INSUFFICIENT_PERMISSIONS
+        : COMMON_MESSAGES.UNEXPECTED_ERROR,
+    };
+  }
+  return { success: true };
+}
+/** Get current branch default teacher ID. Returns null if none set. */
+export async function getBranchDefaultTeacher(branchId: string): Promise<string | null> {
+  const supabase = await createClient();
+  const { data } = await supabase.from("branch_default_teachers").select("teacher_id").eq("branch_id", branchId).maybeSingle() as { data: { teacher_id: string } | null };
+  return data?.teacher_id ?? null;
 }
 
 /** Owner creates an Auth account, canonical identity, and branch-admin role. */
