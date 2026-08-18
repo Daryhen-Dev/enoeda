@@ -36,6 +36,10 @@ export interface AuthenticatedContext {
 
 export type AuthContextResult = IdentityResult;
 
+interface TransactionErrorOptions {
+  mapTransactionError?: (error: unknown) => string | undefined;
+}
+
 // --- Adapter: map IdentityResult to legacy AuthContextResult ---
 
 function toAuthContextResult(identity: IdentityResult): AuthContextResult {
@@ -75,7 +79,8 @@ export async function withAuthenticatedUser<T>(
   fn: (
     tx: TransactionClient,
     ctx: AuthenticatedContext
-  ) => Promise<T>
+  ) => Promise<T>,
+  options?: TransactionErrorOptions
 ): Promise<
   | { success: true; data: T }
   | { success: false; error: string }
@@ -98,8 +103,19 @@ export async function withAuthenticatedUser<T>(
       (tx) => fn(tx, ctx)
     );
     return { success: true, data };
-  } catch {
-    // Do not expose raw PostgreSQL errors to callers
-    return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
+  } catch (error) {
+    // Keep database details private while allowing callers to translate a
+    // known, expected constraint into pre-approved user-facing copy.
+    let mappedMessage: string | undefined;
+    try {
+      mappedMessage = options?.mapTransactionError?.(error);
+    } catch {
+      mappedMessage = undefined;
+    }
+
+    return {
+      success: false,
+      error: mappedMessage ?? COMMON_MESSAGES.UNEXPECTED_ERROR,
+    };
   }
 }
