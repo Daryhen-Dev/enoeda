@@ -54,6 +54,12 @@ describe("Default Teacher Reassignment Migration", () => {
     it("calls revoke_branch_role internally", () => {
       expect(fnBlock("public.revoke_teacher_with_reassignment", 5000)).toContain("revoke_branch_role");
     });
+    it("blocks revoking the configured default teacher", () => {
+      const b = fnBlock("public.revoke_teacher_with_reassignment", 5000);
+      expect(b).toMatch(
+        /IF\s+v_repl\s*=\s*p_target_user_id\s+THEN\s+RETURN\s+jsonb_build_object\(\s*'status'\s*,\s*'blocked'\s*,\s*'reason'\s*,\s*'revoked_is_default'\s*\);\s*END IF;/i
+      );
+    });
     it("uses timestamp-based cutoff with scheduled_classes join for session reassignment", () => {
       const b = fnBlock("public.revoke_teacher_with_reassignment", 5000);
       const updateBlock = b.slice(b.indexOf("UPDATE public.class_sessions"));
