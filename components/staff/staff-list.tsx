@@ -43,6 +43,8 @@ import {
   TOAST_MESSAGES,
 } from "@/lib/localization/es-ec"
 
+import { groupStaffAssignmentsByBranchAndUser } from "./staff-list-model"
+
 interface StaffListProps {
   assignments: StaffAssignment[]
   branchId: string
@@ -67,6 +69,8 @@ export function StaffList({ assignments, branchId, currentUserId }: StaffListPro
     )
   }
 
+  const members = groupStaffAssignmentsByBranchAndUser(assignments)
+
   return (
     <Table>
       <TableHeader>
@@ -78,32 +82,51 @@ export function StaffList({ assignments, branchId, currentUserId }: StaffListPro
         </TableRow>
       </TableHeader>
       <TableBody>
-        {assignments.map((assignment) => {
+        {members.map((member) => {
+          const adminAssignment = member.assignments.find(
+            (assignment) => assignment.role === "admin"
+          )
+          const includesTeacher = member.assignments.some(
+            (assignment) => assignment.role === "teacher"
+          )
           const showSelfEnable =
             currentUserId !== undefined &&
+            adminAssignment !== undefined &&
             isSelfEnableEligibleRow(
-              assignment,
+              adminAssignment,
               currentUserId,
               branchId,
               assignments
             )
 
           return (
-            <TableRow key={`${assignment.user_id}-${assignment.role}`}>
+            <TableRow key={`${member.branchId}-${member.userId}`}>
               <TableCell>
-                {assignment.display_name ?? TEACHER_MANAGEMENT_MESSAGES.PROFILE_UNAVAILABLE}
+                {member.displayName ?? TEACHER_MANAGEMENT_MESSAGES.PROFILE_UNAVAILABLE}
               </TableCell>
               <TableCell className="capitalize">
-                {assignment.role}
+                <ul>
+                  {member.assignments.map((assignment, index) => (
+                    <li key={`${assignment.role}-${assignment.assigned_at}-${index}`}>
+                      {assignment.role}
+                    </li>
+                  ))}
+                </ul>
               </TableCell>
               <TableCell>
-                {formatDate(new Date(assignment.assigned_at))}
+                <ul>
+                  {member.assignments.map((assignment, index) => (
+                    <li key={`${assignment.role}-${assignment.assigned_at}-${index}`}>
+                      {formatDate(new Date(assignment.assigned_at))}
+                    </li>
+                  ))}
+                </ul>
               </TableCell>
               <TableCell>
                 <div className="flex flex-wrap gap-1">
-                  {assignment.role === "teacher" && (
+                  {includesTeacher && (
                     <RevokeTeacherDialog
-                      userId={assignment.user_id}
+                      userId={member.userId}
                       branchId={branchId}
                     />
                   )}
