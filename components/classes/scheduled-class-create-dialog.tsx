@@ -151,6 +151,7 @@ export function ScheduledClassCreateDialog({
                 onValueChange={(value) => {
                   if (value) setDisciplineId(value);
                 }}
+                items={disciplines.map((d) => ({ value: d.id, label: d.name }))}
               >
                 <SelectTrigger id="class-discipline" className="w-full">
                   <SelectValue placeholder={CLASS_MESSAGES.DISCIPLINE_PLACEHOLDER} />
