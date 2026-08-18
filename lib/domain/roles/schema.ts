@@ -134,6 +134,16 @@ export function isGrantableRole(value: unknown): value is GrantableRole {
   );
 }
 
+// --- Set branch default teacher ---
+
+/** Input for configuring the branch default teacher. */
+export const setBranchDefaultTeacherSchema = z.object({
+  branchId: z.string().uuid({ message: ROLE_MESSAGES.INVALID_BRANCH_ID }),
+  teacherId: z.string().uuid({ message: ROLE_MESSAGES.INVALID_TARGET_USER_ID }),
+});
+
+export type SetBranchDefaultTeacherInput = z.infer<typeof setBranchDefaultTeacherSchema>;
+
 // --- Revoke teacher with reassignment ---
 
 /** Input for revoking a branch teacher with default-teacher reassignment. */

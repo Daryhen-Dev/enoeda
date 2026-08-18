@@ -3,9 +3,10 @@ import { redirect } from "next/navigation"
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { StaffList } from "@/components/staff/staff-list"
+import { DefaultTeacherSelector } from "@/components/staff/default-teacher-selector"
 import { GrantRoleDialog } from "@/components/staff/grant-role-dialog"
 import { BranchSelector } from "@/components/branch/branch-selector"
-import { listBranchStaff } from "@/lib/domain/roles/actions"
+import { listBranchStaff, listBranchTeacherOptions, getBranchDefaultTeacher } from "@/lib/domain/roles/actions"
 import { resolveBranchContext } from "@/lib/auth/branch-context"
 import { TEACHER_MANAGEMENT_MESSAGES } from "@/lib/localization/es-ec"
 
@@ -56,7 +57,11 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
   }
 
   const branchId = branchResult.branchId
-  const result = await listBranchStaff({ branchId })
+  const [result, teacherOptionsResult, currentDefaultId] = await Promise.all([
+    listBranchStaff({ branchId }),
+    branchResult.canManage ? listBranchTeacherOptions({ branchId }) : Promise.resolve({ success: true, data: [] }),
+    branchResult.canManage ? getBranchDefaultTeacher(branchId) : Promise.resolve(null),
+  ])
 
   // Staff entries already filtered by branch in query — include ALL for row actions
   const allAssignments = result.success ? result.data ?? [] : []
@@ -95,11 +100,14 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
           </AlertDescription>
         </Alert>
       ) : (
-        <StaffList
-          assignments={allAssignments}
-          branchId={branchId}
-          currentUserId={currentUserId}
-        />
+        <>
+          {branchResult.canManage && <DefaultTeacherSelector branchId={branchId} teachers={teacherOptionsResult.success ? teacherOptionsResult.data ?? [] : []} currentDefaultId={currentDefaultId} />}
+          <StaffList
+            assignments={allAssignments}
+            branchId={branchId}
+            currentUserId={currentUserId}
+          />
+        </>
       )}
     </div>
   )
