@@ -659,6 +659,30 @@ export async function getSessionsForRange(
         }
       }
 
+      // 2b. Resolve effective teacher per occurrence via shared resolver
+      if (sessions.length > 0) {
+        const resolvedRows = await tx.$queryRaw<
+          { class_id: string; session_date: string; resolve_effective_teacher: string | null }[]
+        >`SELECT unnest(${sessions.map((s) => s.scheduled_class_id)}::uuid[]) AS class_id,
+                 unnest(${sessions.map((s) => s.session_date)}::date[]) AS session_date,
+                 private.resolve_effective_teacher(
+                   unnest(${sessions.map((s) => s.scheduled_class_id)}::uuid[]),
+                   unnest(${sessions.map((s) => s.session_date)}::date[])
+                 ) AS resolve_effective_teacher`;
+
+        const resolvedMap = new Map<string, string | null>();
+        for (const row of resolvedRows) {
+          const key = `${row.class_id}|${row.session_date}`;
+          resolvedMap.set(key, row.resolve_effective_teacher);
+        }
+        for (const session of sessions) {
+          const resolved = resolvedMap.get(`${session.scheduled_class_id}|${session.session_date}`);
+          if (resolved) {
+            session.teacher_id = resolved;
+          }
+        }
+      }
+
       // 3. Fetch materialized exceptions (class_sessions) in range
       const classIds = classes.map((c) => c.id);
       const materializedSessions = await tx.class_sessions.findMany({
@@ -686,8 +710,10 @@ export async function getSessionsForRange(
           session.suspension_category = override.suspension_category;
           session.suspension_reason = override.suspension_reason;
           if (override.assigned_teacher_id) {
-            session.is_substitute = override.assigned_teacher_id !== session.teacher_id;
-            session.teacher_id = override.assigned_teacher_id;
+            // Resolver already set the correct teacher_id (including override);
+            // mark is_substitute when the override differs from the class default
+            const cls = classes.find((c) => c.id === session.scheduled_class_id);
+            session.is_substitute = override.assigned_teacher_id !== cls?.default_teacher_id;
           }
         }
       }

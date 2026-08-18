@@ -12,12 +12,16 @@ import {
   assignBranchAdminSchema,
   assignBranchTeacherSchema,
   revokeBranchRoleSchema,
+  revokeBranchTeacherSchema,
+  revokeTeacherResultSchema,
   createBranchAdminSchema,
   createBranchTeacherSchema,
   listBranchTeacherOptionsSchema,
   type AssignBranchAdminInput,
   type AssignBranchTeacherInput,
   type RevokeBranchRoleInput,
+  type RevokeBranchTeacherInput,
+  type RevokeTeacherResult,
   type CreateBranchAdminInput,
   type CreateBranchTeacherInput,
 } from "./schema";
@@ -161,6 +165,39 @@ export async function revokeBranchRole(
     };
   }
   return { success: true, data: { revoked: data } };
+}
+
+/**
+ * Revoke a branch teacher with automatic reassignment to the configured default
+ * teacher. Calls `revoke_teacher_with_reassignment` RPC which validates, checks
+ * conflicts, closes/opens attribution periods, rewrites overrides, and soft-revokes
+ * atomically. Does NOT alter legacy `revokeBranchRole` behavior.
+ */
+export async function revokeBranchTeacher(
+  input: RevokeBranchTeacherInput
+): Promise<ActionResult<RevokeTeacherResult>> {
+  const parsed = revokeBranchTeacherSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: parsed.error.issues[0].message };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("revoke_teacher_with_reassignment", {
+    p_target_user_id: parsed.data.targetUserId,
+    p_branch_id: parsed.data.branchId,
+  });
+
+  if (error) {
+    return {
+      success: false,
+      error: isAuthorizationError(error.message)
+        ? COMMON_MESSAGES.INSUFFICIENT_PERMISSIONS
+        : COMMON_MESSAGES.UNEXPECTED_ERROR,
+    };
+  }
+
+  const result = revokeTeacherResultSchema.safeParse(data);
+  if (!result.success) return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
+
+  return { success: true, data: result.data };
 }
 
 /** Owner creates an Auth account, canonical identity, and branch-admin role. */

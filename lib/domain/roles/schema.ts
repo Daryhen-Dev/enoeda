@@ -133,3 +133,39 @@ export function isGrantableRole(value: unknown): value is GrantableRole {
     GRANTABLE_ROLES.some((role) => role === value)
   );
 }
+
+// --- Revoke teacher with reassignment ---
+
+/** Input for revoking a branch teacher with default-teacher reassignment. */
+export const revokeBranchTeacherSchema = z.object({
+  targetUserId: z.string().uuid({ message: ROLE_MESSAGES.INVALID_TARGET_USER_ID }),
+  branchId: z.string().uuid({ message: ROLE_MESSAGES.INVALID_BRANCH_ID }),
+});
+
+export type RevokeBranchTeacherInput = z.infer<typeof revokeBranchTeacherSchema>;
+
+/** Conflict detail returned when revocation is blocked by scheduling overlap. */
+const revokeConflictSchema = z.object({
+  classId: z.string(),
+  dayOfWeek: z.number(),
+  startTime: z.string(),
+});
+
+/** Successful revocation result from the RPC. */
+const revokedResultSchema = z.object({
+  status: z.literal("revoked"),
+  reassignedClassCount: z.number(),
+  cutoff: z.string(),
+});
+
+/** Blocked revocation result from the RPC. */
+const blockedResultSchema = z.object({
+  status: z.literal("blocked"),
+  reason: z.enum(["no_default_teacher", "revoked_is_default", "conflict"]),
+  conflicts: z.array(revokeConflictSchema).optional(),
+});
+
+/** Union result from `revoke_teacher_with_reassignment` RPC. */
+export const revokeTeacherResultSchema = z.union([revokedResultSchema, blockedResultSchema]);
+
+export type RevokeTeacherResult = z.infer<typeof revokeTeacherResultSchema>;
