@@ -36,16 +36,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { COMMON_MESSAGES, PRODUCT_TERMS, TOAST_MESSAGES } from "@/lib/localization/es-ec"
+import { COMMON_MESSAGES, ECUADOR_TIME_ZONE_LABELS, PRODUCT_TERMS, TOAST_MESSAGES } from "@/lib/localization/es-ec"
 
 const TIME_ZONE_OPTIONS = [
   {
     value: ECUADOR_TIME_ZONES.CONTINENTAL,
-    label: "Ecuador continental — America/Guayaquil (UTC−5)",
+    label: ECUADOR_TIME_ZONE_LABELS.CONTINENTAL,
   },
   {
     value: ECUADOR_TIME_ZONES.GALAPAGOS,
-    label: "Galápagos — Pacific/Galapagos (UTC−6)",
+    label: ECUADOR_TIME_ZONE_LABELS.GALAPAGOS,
   },
 ] as const
 

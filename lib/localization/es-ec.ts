@@ -24,6 +24,11 @@ export const COMMON_MESSAGES = {
   INSUFFICIENT_PERMISSIONS: "No tiene permisos para realizar esta acción.",
 } as const
 
+export const ECUADOR_TIME_ZONE_LABELS = {
+  CONTINENTAL: "Ecuador continental — America/Guayaquil (UTC−5)",
+  GALAPAGOS: "Galápagos — Pacific/Galapagos (UTC−6)",
+} as const
+
 /**
  * App-wide success-toast copy (top-right, sonner). Every create/save/
  * assign/revoke action confirms success with one of these instead of a
