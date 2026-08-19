@@ -7,11 +7,20 @@ import { CalendarDayCell } from "./calendar-day-cell";
 interface CalendarMonthViewProps {
   sessions: SessionView[];
   baseDate: string;
+  teachers?: Array<{ id: string; name: string }>;
+  canManage?: boolean;
+  branchId?: string;
 }
 
 const WEEKDAY_LABELS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 
-export function CalendarMonthView({ sessions, baseDate }: CalendarMonthViewProps) {
+export function CalendarMonthView({
+  sessions,
+  baseDate,
+  teachers = [],
+  canManage = false,
+  branchId,
+}: CalendarMonthViewProps) {
   const base = parseDateOnly(baseDate);
   const year = base.getFullYear();
   const month = base.getMonth();
@@ -53,7 +62,7 @@ export function CalendarMonthView({ sessions, baseDate }: CalendarMonthViewProps
         {WEEKDAY_LABELS.map((label) => (
           <div
             key={label}
-            className="py-2 text-center text-xs font-medium text-muted-foreground"
+            className="py-2 text-center text-sm font-medium text-muted-foreground"
           >
             {label}
           </div>
@@ -74,6 +83,9 @@ export function CalendarMonthView({ sessions, baseDate }: CalendarMonthViewProps
               isCurrentMonth={isCurrentMonth}
               isToday={isToday}
               sessions={daySessions}
+              teachers={teachers}
+              canManage={canManage}
+              branchId={branchId}
             />
           );
         })}

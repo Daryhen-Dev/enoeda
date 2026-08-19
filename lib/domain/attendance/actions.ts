@@ -5,7 +5,8 @@ import {
   assertCallerBranchContext,
   BRANCH_ASSERTION_MESSAGES,
 } from "@/lib/auth/branch-assertion";
-import { ATTENDANCE_MESSAGES } from "@/lib/localization/es-ec";
+import { parseDateOnly } from "@/lib/date";
+import { ATTENDANCE_MESSAGES, COMMON_MESSAGES } from "@/lib/localization/es-ec";
 import {
   takeAttendanceSchema,
   attendanceForSessionSchema,
@@ -29,6 +30,11 @@ export interface EligibleStudentAttendance {
   surname: string;
   attended: boolean | null;
   observation: string | null;
+}
+
+export interface PresentStudent {
+  first_name: string;
+  surname: string;
 }
 
 /**
@@ -399,6 +405,99 @@ export async function getAttendanceForSession(
   }
 
   return { success: true, data: result.data };
+}
+
+/**
+ * getPresentStudentsForSession — Returns the names of students marked present
+ * after validating the resource branch and session-specific authorization.
+ */
+export async function getPresentStudentsForSession(
+  input: AttendanceForSessionInput
+): Promise<ActionResult<PresentStudent[]>> {
+  const parsed = attendanceForSessionSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message };
+  }
+
+  const { branch_id, scheduled_class_id, one_time_class_id } = parsed.data;
+  const result = await withAuthenticatedUser(async (tx, ctx) => {
+    const isOwner = ctx.roles.includes("owner");
+    const isActiveBranchAdmin = ctx.assignments.some(
+      (assignment) => assignment.role === "admin" && assignment.branchId === branch_id
+    );
+
+    if (!isOwner) {
+      const branchError = assertCallerBranchContext(ctx, branch_id);
+      if (branchError) return { kind: "denied" } as const;
+    }
+
+    if (scheduled_class_id) {
+      const sessionDate = parseDateOnly(parsed.data.session_date!);
+      const scheduledClass = await tx.scheduled_classes.findUnique({
+        where: { id: scheduled_class_id },
+        select: { branch_id: true, day_of_week: true },
+      });
+
+      if (
+        !scheduledClass ||
+        scheduledClass.branch_id !== branch_id ||
+        scheduledClass.day_of_week !== jsToIsoDayOfWeek(sessionDate.getDay())
+      ) {
+        return { kind: "invalid" } as const;
+      }
+
+      const [effectiveTeacher] = await tx.$queryRaw<
+        { teacher_id: string | null }[]
+      >`SELECT private.resolve_effective_teacher(
+          ${scheduled_class_id}::uuid,
+          ${sessionDate}::date
+        ) AS teacher_id`;
+      const isEffectiveTeacher = effectiveTeacher?.teacher_id === ctx.userId;
+
+      if (!isOwner && !isActiveBranchAdmin && !isEffectiveTeacher) {
+        return { kind: "denied" } as const;
+      }
+
+      const records = await tx.attendance.findMany({
+        where: { scheduled_class_id, session_date: sessionDate, attended: true },
+        select: { students: { select: { first_name: true, surname: true } } },
+      });
+      return { kind: "success", students: records.map((record) => record.students) } as const;
+    }
+
+    const oneTimeClass = await tx.one_time_classes.findUnique({
+      where: { id: one_time_class_id! },
+      select: { branch_id: true, teacher_id: true },
+    });
+
+    if (!oneTimeClass || oneTimeClass.branch_id !== branch_id) {
+      return { kind: "invalid" } as const;
+    }
+
+    if (
+      !isOwner &&
+      !isActiveBranchAdmin &&
+      oneTimeClass.teacher_id !== ctx.userId
+    ) {
+      return { kind: "denied" } as const;
+    }
+
+    const records = await tx.attendance.findMany({
+      where: { one_time_class_id, attended: true },
+      select: { students: { select: { first_name: true, surname: true } } },
+    });
+    return { kind: "success", students: records.map((record) => record.students) } as const;
+  });
+
+  if (!result.success) return result;
+  if (result.data.kind === "denied") {
+    return { success: false, error: COMMON_MESSAGES.INSUFFICIENT_PERMISSIONS };
+  }
+  if (result.data.kind === "invalid") {
+    return { success: false, error: ATTENDANCE_MESSAGES.INVALID_SESSION };
+  }
+
+  return { success: true, data: result.data.students };
 }
 
 /**

@@ -52,14 +52,14 @@ export function CalendarWeekView({
         return (
           <div key={dateStr} className="flex flex-col gap-1">
             <div
-              className={`py-2 text-center text-sm font-medium ${
+              className={`rounded-md py-2 text-center text-base font-medium ${
                 isToday
-                  ? "rounded-md bg-primary text-primary-foreground"
-                  : "text-muted-foreground"
+                  ? "bg-primary text-primary-foreground"
+                  : "border border-border text-muted-foreground"
               }`}
             >
               <div>{WEEKDAY_LABELS[idx]}</div>
-              <div className="text-lg">{day.getDate()}</div>
+              <div className="text-xl">{day.getDate()}</div>
             </div>
             <div className="flex flex-col gap-1">
               {daySessions.map((session) => (

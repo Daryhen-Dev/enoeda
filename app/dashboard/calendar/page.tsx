@@ -146,7 +146,13 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
       )}
       <CalendarHeader currentView={view} baseDate={baseDateString} />
       {view === "month" ? (
-        <CalendarMonthView sessions={sessions} baseDate={baseDateString} />
+        <CalendarMonthView
+          sessions={sessions}
+          baseDate={baseDateString}
+          teachers={teachers}
+          canManage={canManage}
+          branchId={branchId}
+        />
       ) : (
         <CalendarWeekView
           sessions={sessions}

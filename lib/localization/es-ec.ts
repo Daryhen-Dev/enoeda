@@ -405,6 +405,9 @@ export const CALENDAR_MESSAGES = {
   TEACHER_DISPLAY_NAME: (name: string) => `Profesor: ${name}`,
   TEACHER_PROFILE_UNAVAILABLE: "Perfil de profesor no disponible",
   SUSPENDED_BADGE: "Suspendida",
+  COMPACT_STATUS_SUSPENDED: "Suspendida",
+  COMPACT_STATUS_COMPLETED: "Realizada",
+  COMPACT_STATUS_SCHEDULED: "Programada",
   SUBSTITUTE: "Sustituto",
   ATTENDANCE_RECORDED: (presentCount: number) =>
     `Asistencia registrada · ${presentCount} presentes`,
@@ -617,6 +620,36 @@ export const NOTES_MESSAGES = {
   FILTER_ALL: "Todas",
   FILTER_OPEN: "Abiertas",
   FILTER_COMPLETED: "Completadas",
+} as const
+
+export const SESSION_INFO_MESSAGES = {
+  TITLE: "Información de la sesión",
+  DESCRIPTION: "Resumen de solo lectura de la sesión y su asistencia.",
+  DISCIPLINE_LABEL: "Disciplina",
+  DATE_LABEL: "Fecha",
+  SCHEDULE_LABEL: "Horario",
+  TEACHER_LABEL: "Profesor",
+  NO_TEACHER: "Sin profesor asignado",
+  TEACHER_PROFILE_UNAVAILABLE: "Perfil de profesor no disponible",
+  SUBSTITUTE_LABEL: "Cobertura",
+  SUBSTITUTE_VALUE: "Profesor sustituto",
+  ONE_TIME_TYPE_LABEL: "Tipo de sesión",
+  ONE_TIME_TYPE_VALUE: "Clase única",
+  STATUS_LABEL: "Estado",
+  SCHEDULED_STATUS: "Programada",
+  SUSPENDED_STATUS: "Suspendida",
+  SUSPENSION_CATEGORY_LABEL: "Categoría de suspensión",
+  SUSPENSION_REASON_LABEL: "Motivo de suspensión",
+  NOT_PROVIDED: "No especificado",
+  ATTENDANCE_TITLE: "Asistencia",
+  ATTENDANCE_SUMMARY: (recordCount: number, presentCount: number) =>
+    `Registros: ${recordCount} · Presentes: ${presentCount}`,
+  ATTENDANCE_NOT_REGISTERED: "La asistencia aún no ha sido registrada.",
+  ATTENDANCE_EMPTY_PRESENT: "No se registraron estudiantes presentes.",
+  ATTENDANCE_SUSPENDED: "Esta sesión está suspendida. La asistencia histórica no se considera válida.",
+  PRESENT_STUDENTS_LABEL: "Estudiantes presentes",
+  PRESENT_STUDENTS_LOADING: "Cargando estudiantes presentes…",
+  PRESENT_STUDENTS_ERROR: "No se pudieron cargar los estudiantes presentes.",
 } as const
 
 export const ATTENDANCE_FORM_MESSAGES = {

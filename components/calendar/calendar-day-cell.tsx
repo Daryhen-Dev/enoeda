@@ -8,6 +8,9 @@ interface CalendarDayCellProps {
   isCurrentMonth: boolean;
   isToday: boolean;
   sessions: SessionView[];
+  teachers?: Array<{ id: string; name: string }>;
+  canManage?: boolean;
+  branchId?: string;
 }
 
 export function CalendarDayCell({
@@ -15,6 +18,9 @@ export function CalendarDayCell({
   isCurrentMonth,
   isToday,
   sessions,
+  teachers = [],
+  canManage = false,
+  branchId,
 }: CalendarDayCellProps) {
   const dayNumber = new Date(date).getDate();
 
@@ -25,7 +31,7 @@ export function CalendarDayCell({
       } ${isToday ? "border-primary" : "border-border"}`}
     >
       <div
-        className={`mb-1 text-right text-xs font-medium ${
+        className={`mb-1 text-right text-sm font-medium ${
           isToday
             ? "inline-flex size-5 items-center justify-center rounded-full bg-primary text-primary-foreground"
             : "text-muted-foreground"
@@ -39,6 +45,9 @@ export function CalendarDayCell({
             key={`${session.scheduled_class_id}-${session.session_date}`}
             session={session}
             compact
+            teachers={teachers}
+            canManage={canManage}
+            branchId={branchId}
           />
         ))}
       </div>
