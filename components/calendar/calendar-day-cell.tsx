@@ -1,5 +1,6 @@
 "use client";
 
+import { parseDateOnly } from "@/lib/date";
 import type { SessionView } from "@/lib/domain/classes/actions";
 import { SessionBlock } from "./session-block";
 
@@ -22,13 +23,14 @@ export function CalendarDayCell({
   canManage = false,
   branchId,
 }: CalendarDayCellProps) {
-  const dayNumber = new Date(date).getDate();
+  const dayNumber = parseDateOnly(date).getDate();
 
   return (
     <div
-      className={`min-h-24 rounded-md border p-1 ${
+      className={`min-h-24 min-w-0 rounded-md border p-1 ${
         !isCurrentMonth ? "bg-muted/30 opacity-50" : ""
       } ${isToday ? "border-primary" : "border-border"}`}
+      aria-current={isToday ? "date" : undefined}
     >
       <div
         className={`mb-1 text-right text-sm font-medium ${
