@@ -10,6 +10,7 @@ import {
 } from "@/lib/auth/authorize";
 import { getPersonaHome } from "@/lib/auth/redirect";
 import { createServerClient } from "@supabase/ssr";
+import { getSupabasePublicConfig } from "@/lib/supabase/config";
 
 function mustChangePassword(user: { app_metadata?: Record<string, unknown> }): boolean {
   return user.app_metadata?.must_change_password === true;
@@ -38,9 +39,10 @@ export async function middleware(request: NextRequest) {
   // persona route guard (e.g. "/" has no guard but must still be gated).
   let supabaseResponse = NextResponse.next({ request });
 
+  const { url, anonKey } = getSupabasePublicConfig();
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    url,
+    anonKey,
     {
       cookies: {
         getAll() {
