@@ -10,12 +10,13 @@ function isConfigured(value: string | undefined): value is string {
 export function getSupabasePublicConfig(): SupabasePublicConfig {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  const missingVariables = [
-    !isConfigured(url) && "NEXT_PUBLIC_SUPABASE_URL",
-    !isConfigured(anonKey) && "NEXT_PUBLIC_SUPABASE_ANON_KEY",
-  ].filter((variable): variable is string => Boolean(variable));
 
-  if (missingVariables.length > 0) {
+  if (!isConfigured(url) || !isConfigured(anonKey)) {
+    const missingVariables = [
+      !isConfigured(url) && "NEXT_PUBLIC_SUPABASE_URL",
+      !isConfigured(anonKey) && "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+    ].filter((variable): variable is string => Boolean(variable));
+
     throw new Error(
       `Missing required Supabase public environment variables: ${missingVariables.join(
         ", "
