@@ -6,7 +6,6 @@ import { LoaderCircleIcon, ClipboardCheckIcon } from "lucide-react"
 import { getAttendanceForSession } from "@/lib/domain/attendance/actions"
 import type { EligibleStudentAttendance } from "@/lib/domain/attendance/actions"
 import { AttendanceSheet } from "@/components/attendance/attendance-sheet"
-import { Button } from "@/components/ui/button"
 import {
   Sheet,
   SheetContent,
@@ -28,6 +27,7 @@ type AttendanceSheetDialogProps =
       oneTimeClassId?: undefined
       branchId: string
       disabled?: boolean
+      triggerClassName?: string
     }
   | {
       scheduledClassId?: undefined
@@ -35,6 +35,7 @@ type AttendanceSheetDialogProps =
       oneTimeClassId: string
       branchId: string
       disabled?: boolean
+      triggerClassName?: string
     }
 
 export function AttendanceSheetDialog({
@@ -43,6 +44,7 @@ export function AttendanceSheetDialog({
   oneTimeClassId,
   branchId,
   disabled = false,
+  triggerClassName,
 }: AttendanceSheetDialogProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -81,9 +83,7 @@ export function AttendanceSheetDialog({
 
   return (
     <Sheet open={isOpen} onOpenChange={handleOpen}>
-      <SheetTrigger
-        render={<Button variant="outline" size="sm" disabled={disabled} />}
-      >
+      <SheetTrigger className={triggerClassName} disabled={disabled}>
         <ClipboardCheckIcon data-icon="inline-start" />
         {ATTENDANCE_FORM_MESSAGES.TAKE_ATTENDANCE}
       </SheetTrigger>

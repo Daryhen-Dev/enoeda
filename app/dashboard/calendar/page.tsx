@@ -2,6 +2,7 @@ import { AlertCircleIcon } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { getSessionsForRange } from "@/lib/domain/classes/actions";
+import { parseDateOnly, formatDateOnly } from "@/lib/date";
 import { listDisciplines } from "@/lib/domain/disciplines/actions";
 import { listBranchTeacherOptions } from "@/lib/domain/roles/actions";
 import { CalendarHeader } from "@/components/calendar/calendar-header";
@@ -64,7 +65,7 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
   const canManage = branchResult.canManage;
   const view = params.view === "week" ? "week" : "month";
   const today = new Date();
-  const baseDate = params.date ? new Date(params.date) : today;
+  const baseDate = params.date ? parseDateOnly(params.date) : today;
 
   // Compute date range based on view
   let startDate: Date;
@@ -91,8 +92,9 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
     endDate.setDate(endDate.getDate() + endOffset);
   }
 
-  const startStr = startDate.toISOString().split("T")[0];
-  const endStr = endDate.toISOString().split("T")[0];
+  const startStr = formatDateOnly(startDate);
+  const endStr = formatDateOnly(endDate);
+  const baseDateString = formatDateOnly(baseDate);
 
   // Parse discipline filter
   const disciplineIds = params.disciplines
@@ -135,15 +137,16 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
           </div>
         )}
       </div>
-      <CalendarHeader
-        currentView={view}
-        baseDate={baseDate.toISOString().split("T")[0]}
-      />
+      {!sessionsResult.success && (
+        <Alert variant="destructive">
+          <AlertCircleIcon />
+          <AlertTitle>{CALENDAR_MESSAGES.PAGE_TITLE}</AlertTitle>
+          <AlertDescription>{CALENDAR_MESSAGES.LOAD_FAILURE}</AlertDescription>
+        </Alert>
+      )}
+      <CalendarHeader currentView={view} baseDate={baseDateString} />
       {view === "month" ? (
-        <CalendarMonthView
-          sessions={sessions}
-          baseDate={baseDate.toISOString().split("T")[0]}
-        />
+        <CalendarMonthView sessions={sessions} baseDate={baseDateString} />
       ) : (
         <CalendarWeekView
           sessions={sessions}

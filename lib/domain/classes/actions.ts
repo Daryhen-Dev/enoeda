@@ -2,8 +2,10 @@
 
 import { withAuthenticatedUser } from "@/lib/auth/server-context";
 import { assertActiveBranchAssignment } from "@/lib/auth/assert-branch-assignment";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type { TransactionClient } from "@/lib/prisma/client";
 import { assertClassInContext } from "@/lib/domain/classes/branch-guard";
+import { formatDatabaseDateOnly, formatDateOnly, parseDateOnly } from "@/lib/date";
 import {
   CLASS_MESSAGES,
   COMMON_MESSAGES,
@@ -32,6 +34,11 @@ export interface ActionResult<T = unknown> {
 
 // --- View types ---
 
+export interface SessionAttendanceSummary {
+  record_count: number;
+  present_count: number;
+}
+
 export interface SessionView {
   /** id of the scheduled_classes row, OR the one_time_classes row when is_one_time=true. */
   scheduled_class_id: string;
@@ -42,6 +49,8 @@ export interface SessionView {
   start_time: string;
   end_time: string;
   teacher_id: string | null;
+  effective_teacher_name?: string | null;
+  attendance: SessionAttendanceSummary;
   status: "scheduled" | "suspended";
   suspension_category: string | null;
   suspension_reason: string | null;
@@ -608,7 +617,9 @@ export async function getSessionsForRange(
       if (!branchCheck.ok) {
         return { __branchError: branchCheck.error } as const;
       }
-      // 1. Fetch active scheduled classes for the branch
+
+      const start = parseDateOnly(start_date);
+      const end = parseDateOnly(end_date);
       const classes = await tx.scheduled_classes.findMany({
         where: {
           branch_id,
@@ -622,20 +633,11 @@ export async function getSessionsForRange(
         },
       });
 
-      if (classes.length === 0) return [];
-
-      // 2. Expand virtual sessions by iterating dates
+      // Expand recurring virtual sessions by iterating dates.
       const sessions: SessionView[] = [];
-      const start = new Date(start_date);
-      const end = new Date(end_date);
-
-      for (
-        let d = new Date(start);
-        d <= end;
-        d.setDate(d.getDate() + 1)
-      ) {
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
         const isoDay = jsToIsoDayOfWeek(d.getDay());
-        const dateStr = d.toISOString().split("T")[0];
+        const dateStr = formatDateOnly(d);
 
         for (const cls of classes) {
           if (cls.day_of_week === isoDay) {
@@ -649,6 +651,7 @@ export async function getSessionsForRange(
               start_time: timeStr,
               end_time: addOneHour(timeStr),
               teacher_id: cls.default_teacher_id,
+              attendance: { record_count: 0, present_count: 0 },
               status: "scheduled",
               suspension_category: null,
               suspension_reason: null,
@@ -659,7 +662,7 @@ export async function getSessionsForRange(
         }
       }
 
-      // 2b. Resolve effective teacher per occurrence via shared resolver
+      // Resolve the effective teacher for each recurring occurrence.
       if (sessions.length > 0) {
         const resolvedRows = await tx.$queryRaw<
           { class_id: string; session_date: string; resolve_effective_teacher: string | null }[]
@@ -672,8 +675,7 @@ export async function getSessionsForRange(
 
         const resolvedMap = new Map<string, string | null>();
         for (const row of resolvedRows) {
-          const key = `${row.class_id}|${row.session_date}`;
-          resolvedMap.set(key, row.resolve_effective_teacher);
+          resolvedMap.set(`${row.class_id}|${row.session_date}`, row.resolve_effective_teacher);
         }
         for (const session of sessions) {
           const resolved = resolvedMap.get(`${session.scheduled_class_id}|${session.session_date}`);
@@ -683,46 +685,48 @@ export async function getSessionsForRange(
         }
       }
 
-      // 3. Fetch materialized exceptions (class_sessions) in range
-      const classIds = classes.map((c) => c.id);
-      const materializedSessions = await tx.class_sessions.findMany({
-        where: {
-          scheduled_class_id: { in: classIds },
-          session_date: {
-            gte: new Date(start_date),
-            lte: new Date(end_date),
-          },
-        },
-      });
+      const classIds = classes.map((cls) => cls.id);
+      const materializedSessions = classIds.length > 0
+        ? await tx.class_sessions.findMany({
+            where: {
+              scheduled_class_id: { in: classIds },
+              session_date: { gte: start, lte: end },
+            },
+          })
+        : [];
 
-      // 4. Overlay materialized on virtual
       const overrideMap = new Map<string, typeof materializedSessions[number]>();
-      for (const ms of materializedSessions) {
-        const key = `${ms.scheduled_class_id}|${ms.session_date.toISOString().split("T")[0]}`;
-        overrideMap.set(key, ms);
+      for (const materializedSession of materializedSessions) {
+        const key = `${materializedSession.scheduled_class_id}|${formatDatabaseDateOnly(
+          materializedSession.session_date
+        )}`;
+        overrideMap.set(key, materializedSession);
+      }
+
+      const defaultTeacherByClassId = new Map<string, string | null>();
+      for (const cls of classes) {
+        defaultTeacherByClassId.set(cls.id, cls.default_teacher_id);
       }
 
       for (const session of sessions) {
-        const key = `${session.scheduled_class_id}|${session.session_date}`;
-        const override = overrideMap.get(key);
+        const override = overrideMap.get(`${session.scheduled_class_id}|${session.session_date}`);
         if (override) {
           session.status = override.status as "scheduled" | "suspended";
           session.suspension_category = override.suspension_category;
           session.suspension_reason = override.suspension_reason;
           if (override.assigned_teacher_id) {
-            // Resolver already set the correct teacher_id (including override);
-            // mark is_substitute when the override differs from the class default
-            const cls = classes.find((c) => c.id === session.scheduled_class_id);
-            session.is_substitute = override.assigned_teacher_id !== cls?.default_teacher_id;
+            session.is_substitute =
+              override.assigned_teacher_id !==
+              defaultTeacherByClassId.get(session.scheduled_class_id);
           }
         }
       }
 
-      // 5. Fetch one-time classes in range and merge them in
+      // Merge in one-time sessions even when there are no recurring classes.
       const oneTimeClasses = await tx.one_time_classes.findMany({
         where: {
           branch_id,
-          class_date: { gte: new Date(start_date), lte: new Date(end_date) },
+          class_date: { gte: start, lte: end },
           ...(discipline_ids && discipline_ids.length > 0
             ? { discipline_id: { in: discipline_ids } }
             : {}),
@@ -732,17 +736,18 @@ export async function getSessionsForRange(
         },
       });
 
-      for (const otc of oneTimeClasses) {
-        const timeStr = formatTime(otc.start_time);
+      for (const oneTimeClass of oneTimeClasses) {
+        const timeStr = formatTime(oneTimeClass.start_time);
         sessions.push({
-          scheduled_class_id: otc.id,
-          session_date: otc.class_date.toISOString().split("T")[0],
-          discipline_id: otc.disciplines.id,
-          discipline_name: otc.disciplines.name,
-          discipline_code: otc.disciplines.code,
+          scheduled_class_id: oneTimeClass.id,
+          session_date: formatDateOnly(oneTimeClass.class_date),
+          discipline_id: oneTimeClass.disciplines.id,
+          discipline_name: oneTimeClass.disciplines.name,
+          discipline_code: oneTimeClass.disciplines.code,
           start_time: timeStr,
           end_time: addOneHour(timeStr),
-          teacher_id: otc.teacher_id,
+          teacher_id: oneTimeClass.teacher_id,
+          attendance: { record_count: 0, present_count: 0 },
           status: "scheduled",
           suspension_category: null,
           suspension_reason: null,
@@ -751,7 +756,102 @@ export async function getSessionsForRange(
         });
       }
 
-      // 6. Sort by date + start_time
+      const teacherIds = [
+        ...new Set(
+          sessions
+            .map((session) => session.teacher_id)
+            .filter((teacherId): teacherId is string => teacherId !== null)
+        ),
+      ];
+      const teacherNameById = new Map<string, string>();
+      if (teacherIds.length > 0) {
+        const admin = createAdminClient();
+        const { data: teacherRoles, error: teacherRolesError } = await admin
+          .from("user_roles")
+          .select("user_id")
+          .eq("branch_id", branch_id)
+          .eq("role", "teacher")
+          .is("revoked_at", null)
+          .in("user_id", teacherIds);
+        if (teacherRolesError) {
+          throw new Error(COMMON_MESSAGES.UNEXPECTED_ERROR);
+        }
+
+        const authorizedTeacherIds = (teacherRoles ?? []).map((teacherRole) => teacherRole.user_id);
+        if (authorizedTeacherIds.length > 0) {
+          const { data: teacherProfiles, error: teacherProfilesError } = await admin
+            .from("user_profiles")
+            .select("user_id, first_name, surname")
+            .in("user_id", authorizedTeacherIds);
+          if (teacherProfilesError) {
+            throw new Error(COMMON_MESSAGES.UNEXPECTED_ERROR);
+          }
+
+          for (const profile of teacherProfiles ?? []) {
+            const displayName = [profile.first_name, profile.surname]
+              .filter((name): name is string => Boolean(name))
+              .join(" ");
+            if (displayName) {
+              teacherNameById.set(profile.user_id, displayName);
+            }
+          }
+        }
+      }
+      for (const session of sessions) {
+        session.effective_teacher_name = session.teacher_id
+          ? teacherNameById.get(session.teacher_id) ?? null
+          : null;
+      }
+
+      const oneTimeClassIds = oneTimeClasses.map((oneTimeClass) => oneTimeClass.id);
+      const attendanceRows = sessions.length > 0
+        ? await tx.attendance.findMany({
+            where: {
+              OR: [
+                {
+                  scheduled_class_id: { in: classIds },
+                  session_date: { gte: start, lte: end },
+                },
+                { one_time_class_id: { in: oneTimeClassIds } },
+              ],
+            },
+            select: {
+              scheduled_class_id: true,
+              one_time_class_id: true,
+              session_date: true,
+              attended: true,
+            },
+          })
+        : [];
+      const attendanceBySessionKey = new Map<string, SessionAttendanceSummary>();
+      for (const attendance of attendanceRows) {
+        const key = attendance.scheduled_class_id
+          ? `recurring:${attendance.scheduled_class_id}:${formatDatabaseDateOnly(attendance.session_date)}`
+          : attendance.one_time_class_id
+            ? `one-time:${attendance.one_time_class_id}`
+            : null;
+        if (!key) continue;
+
+        const summary = attendanceBySessionKey.get(key) ?? {
+          record_count: 0,
+          present_count: 0,
+        };
+        summary.record_count += 1;
+        if (attendance.attended) {
+          summary.present_count += 1;
+        }
+        attendanceBySessionKey.set(key, summary);
+      }
+      for (const session of sessions) {
+        const key = session.is_one_time
+          ? `one-time:${session.scheduled_class_id}`
+          : `recurring:${session.scheduled_class_id}:${session.session_date}`;
+        session.attendance = attendanceBySessionKey.get(key) ?? {
+          record_count: 0,
+          present_count: 0,
+        };
+      }
+
       sessions.sort((a, b) => {
         const dateCompare = a.session_date.localeCompare(b.session_date);
         if (dateCompare !== 0) return dateCompare;

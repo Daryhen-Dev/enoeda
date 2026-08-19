@@ -33,6 +33,7 @@ interface SessionSuspendDialogProps {
   sessionDate: string;
   branchId: string;
   trigger: React.ReactNode;
+  triggerClassName?: string;
 }
 
 const CATEGORIES = [
@@ -47,6 +48,7 @@ export function SessionSuspendDialog({
   sessionDate,
   branchId,
   trigger,
+  triggerClassName,
 }: SessionSuspendDialogProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -92,7 +94,7 @@ export function SessionSuspendDialog({
         if (!nextOpen) resetForm();
       }}
     >
-      <SheetTrigger render={<Button variant="outline" size="sm" />}>
+      <SheetTrigger className={triggerClassName}>
         {trigger}
       </SheetTrigger>
       <SheetContent side="right" size="content">

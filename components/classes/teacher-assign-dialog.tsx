@@ -37,6 +37,8 @@ interface TeacherAssignDialogProps {
   branchId: string;
   teachers: Array<{ id: string; name: string }>;
   currentTeacherId: string | null;
+  triggerClassName?: string;
+  triggerText?: string;
 }
 
 /**
@@ -52,6 +54,8 @@ export function TeacherAssignDialog({
   branchId,
   teachers,
   currentTeacherId,
+  triggerClassName,
+  triggerText,
 }: TeacherAssignDialogProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -106,9 +110,9 @@ export function TeacherAssignDialog({
           }
         }}
       >
-        <SheetTrigger render={<Button variant="outline" size="sm" />}>
+        <SheetTrigger className={triggerClassName}>
           <UserPlusIcon data-icon="inline-start" />
-          {TEACHER_CONFLICT_MESSAGES.ASSIGN_ACTION}
+          {triggerText ?? TEACHER_CONFLICT_MESSAGES.ASSIGN_ACTION}
         </SheetTrigger>
         <SheetContent side="right" size="content">
           <SheetHeader>

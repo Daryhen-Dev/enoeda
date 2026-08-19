@@ -402,7 +402,16 @@ export const CALENDAR_MESSAGES = {
   NEXT: "Siguiente",
   FILTER_DISCIPLINES: "Filtrar por disciplina",
   NO_TEACHER: "Sin profesor",
+  TEACHER_DISPLAY_NAME: (name: string) => `Profesor: ${name}`,
+  TEACHER_PROFILE_UNAVAILABLE: "Perfil de profesor no disponible",
+  SUSPENDED_BADGE: "Suspendida",
   SUBSTITUTE: "Sustituto",
+  ATTENDANCE_RECORDED: (presentCount: number) =>
+    `Asistencia registrada · ${presentCount} presentes`,
+  ATTENDANCE_PRESENT_COUNT: (presentCount: number) =>
+    presentCount === 1
+      ? `${presentCount} estudiante asistió`
+      : `${presentCount} estudiantes asistieron`,
   NO_BRANCH_CONTEXT: "No se encontró una sucursal asociada a su cuenta.",
   LOAD_FAILURE: "No se pudo cargar el calendario.",
 } as const
@@ -468,6 +477,7 @@ export const SUSPENSION_MESSAGES = {
   REASON_LABEL: "Motivo",
   REASON_REQUIRED_OTRO: "El motivo es obligatorio cuando la categoría es «Otro».",
   SUSPEND_TITLE: "Suspender sesión",
+  REINSTATE_ACTION: "Reactivar sesión",
   SUSPENDED: "Sesión suspendida.",
   REINSTATED: "Sesión reactivada.",
 } as const
@@ -478,6 +488,7 @@ export const TEACHER_CONFLICT_MESSAGES = {
   AFFECTED_TITLE: "Clases que quedarán sin profesor",
   ASSIGNED: "Profesor asignado correctamente.",
   ASSIGN_ACTION: "Asignar profesor",
+  CHANGE_ACTION: "Cambiar profesor",
   ASSIGN_TITLE: "Asignar profesor a la sesión",
   ASSIGN_DESCRIPTION: "Seleccione el profesor que dará esta clase en la fecha indicada.",
   TEACHER_LABEL: "Profesor",

@@ -1,6 +1,7 @@
 "use client";
 
 import type { SessionView } from "@/lib/domain/classes/actions";
+import { formatDateOnly, parseDateOnly } from "@/lib/date";
 import { CalendarDayCell } from "./calendar-day-cell";
 
 interface CalendarMonthViewProps {
@@ -11,7 +12,7 @@ interface CalendarMonthViewProps {
 const WEEKDAY_LABELS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 
 export function CalendarMonthView({ sessions, baseDate }: CalendarMonthViewProps) {
-  const base = new Date(baseDate);
+  const base = parseDateOnly(baseDate);
   const year = base.getFullYear();
   const month = base.getMonth();
 
@@ -43,7 +44,7 @@ export function CalendarMonthView({ sessions, baseDate }: CalendarMonthViewProps
     sessionsByDate.set(s.session_date, existing);
   }
 
-  const today = new Date().toISOString().split("T")[0];
+  const today = formatDateOnly(new Date());
 
   return (
     <div className="flex flex-col gap-0.5">
@@ -61,7 +62,7 @@ export function CalendarMonthView({ sessions, baseDate }: CalendarMonthViewProps
       {/* Day cells grid */}
       <div className="grid grid-cols-7 gap-0.5">
         {days.map((day) => {
-          const dateStr = day.toISOString().split("T")[0];
+          const dateStr = formatDateOnly(day);
           const isCurrentMonth = day.getMonth() === month;
           const isToday = dateStr === today;
           const daySessions = sessionsByDate.get(dateStr) ?? [];

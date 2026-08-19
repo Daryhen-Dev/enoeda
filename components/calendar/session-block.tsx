@@ -1,11 +1,22 @@
 "use client";
 
-import { AlertTriangleIcon, UserIcon } from "lucide-react";
+import { useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { AlertTriangleIcon, CirclePauseIcon, UserIcon } from "lucide-react";
+import { toast } from "sonner";
 
-import type { SessionView } from "@/lib/domain/classes/actions";
 import { AttendanceSheetDialog } from "@/components/attendance/attendance-sheet-dialog";
+import { SessionSuspendDialog } from "@/components/classes/session-suspend-dialog";
 import { TeacherAssignDialog } from "@/components/classes/teacher-assign-dialog";
-import { CALENDAR_MESSAGES, ONE_TIME_CLASS_MESSAGES } from "@/lib/localization/es-ec";
+import { Button } from "@/components/ui/button";
+import { reinstateSession, type SessionView } from "@/lib/domain/classes/actions";
+import {
+  CALENDAR_MESSAGES,
+  COMMON_MESSAGES,
+  ONE_TIME_CLASS_MESSAGES,
+  SUSPENSION_MESSAGES,
+  TEACHER_CONFLICT_MESSAGES,
+} from "@/lib/localization/es-ec";
 
 interface SessionBlockProps {
   session: SessionView;
@@ -49,45 +60,107 @@ export function SessionBlock({
   canManage = false,
   branchId,
 }: SessionBlockProps) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
   const colors = getDisciplineColors(session.discipline_code);
   const isSuspended = session.status === "suspended";
   const hasNoTeacher = !session.teacher_id;
   const isSubstitute = session.is_substitute;
   const isOneTime = session.is_one_time;
+  const teacherLabel = hasNoTeacher
+    ? CALENDAR_MESSAGES.NO_TEACHER
+    : session.effective_teacher_name
+      ? CALENDAR_MESSAGES.TEACHER_DISPLAY_NAME(session.effective_teacher_name)
+      : CALENDAR_MESSAGES.TEACHER_PROFILE_UNAVAILABLE;
 
-  const baseClasses = `rounded border px-1.5 py-0.5 text-xs ${colors.bg} ${colors.text}`;
+  function handleReinstate() {
+    if (!branchId) return;
+
+    startTransition(async () => {
+      const result = await reinstateSession({
+        scheduled_class_id: session.scheduled_class_id,
+        session_date: session.session_date,
+        branch_id: branchId,
+      });
+
+      if (result.success) {
+        toast.success(SUSPENSION_MESSAGES.REINSTATED);
+        router.refresh();
+      } else {
+        toast.error(result.error ?? COMMON_MESSAGES.UNEXPECTED_ERROR);
+      }
+    });
+  }
+
+  const baseClasses = compact
+    ? "rounded border px-1.5 py-1 text-xs"
+    : `rounded border text-xs ${colors.bg} ${colors.text}`;
 
   // Visual state modifiers
   const suspendedClasses = isSuspended ? "line-through opacity-70" : "";
   const noTeacherClasses = hasNoTeacher
     ? "border-dashed border-amber-500"
     : colors.border;
+  const hasAttendanceRecords = session.attendance.record_count > 0;
+  const compactStateClasses = isSuspended
+    ? "border-destructive/40 bg-destructive/10 text-destructive dark:border-destructive/50 dark:bg-destructive/20 dark:text-red-200"
+    : hasAttendanceRecords
+      ? "border-emerald-300 bg-emerald-50 text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-100"
+      : `${colors.bg} ${colors.text} ${noTeacherClasses}`;
+  const compactTitle = [
+    `${session.discipline_name} ${session.start_time}–${session.end_time}`,
+    session.effective_teacher_name
+      ? CALENDAR_MESSAGES.TEACHER_DISPLAY_NAME(session.effective_teacher_name)
+      : hasNoTeacher
+        ? CALENDAR_MESSAGES.NO_TEACHER
+        : undefined,
+    isSuspended ? SUSPENSION_MESSAGES.SUSPENDED : undefined,
+    hasAttendanceRecords && !isSuspended
+      ? CALENDAR_MESSAGES.ATTENDANCE_PRESENT_COUNT(session.attendance.present_count)
+      : undefined,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
   if (compact) {
     return (
-      <div
-        className={`${baseClasses} ${suspendedClasses} ${noTeacherClasses} truncate`}
-        title={`${session.discipline_name} ${session.start_time}–${session.end_time}`}
-      >
-        <span className="font-medium">{session.start_time}</span>{" "}
-        {session.discipline_name.slice(0, 3)}
-        {isSuspended && session.suspension_category && (
-          <span className="ml-0.5 rounded bg-amber-200 px-0.5 text-[10px]">
-            {session.suspension_category}
-          </span>
-        )}
-        {isSubstitute && (
-          <span className="ml-0.5 rounded bg-purple-200 px-0.5 text-[10px]">
-            {CALENDAR_MESSAGES.SUBSTITUTE.slice(0, 3)}
-          </span>
-        )}
-        {isOneTime && (
-          <span className="ml-0.5 rounded bg-sky-200 px-0.5 text-[10px]">
-            {ONE_TIME_CLASS_MESSAGES.ONE_TIME_BADGE.slice(0, 3)}
-          </span>
-        )}
-        {hasNoTeacher && (
-          <AlertTriangleIcon className="ml-0.5 inline size-3 text-amber-600" />
+      <div className={`${baseClasses} ${compactStateClasses}`} title={compactTitle}>
+        <div className="flex min-w-0 items-center gap-1">
+          <span className="shrink-0 font-medium">{session.start_time}</span>
+          <span className="truncate">{session.discipline_name}</span>
+          {isSuspended && (
+            <span className="shrink-0 rounded bg-destructive/15 px-1 text-[10px] font-medium text-destructive dark:bg-destructive/25 dark:text-red-100">
+              {CALENDAR_MESSAGES.SUSPENDED_BADGE}
+            </span>
+          )}
+          {isSubstitute && (
+            <span className="shrink-0 rounded bg-purple-200 px-0.5 text-[10px]">
+              {CALENDAR_MESSAGES.SUBSTITUTE.slice(0, 3)}
+            </span>
+          )}
+          {isOneTime && (
+            <span className="shrink-0 rounded bg-sky-200 px-0.5 text-[10px]">
+              {ONE_TIME_CLASS_MESSAGES.ONE_TIME_BADGE.slice(0, 3)}
+            </span>
+          )}
+        </div>
+        {(session.effective_teacher_name || hasNoTeacher || (hasAttendanceRecords && !isSuspended)) && (
+          <div className="flex min-w-0 items-center gap-1 text-[10px] leading-3">
+            {session.effective_teacher_name && (
+              <>
+                <UserIcon className="size-3 shrink-0" />
+                <span className="min-w-0 flex-1 truncate">{session.effective_teacher_name}</span>
+              </>
+            )}
+            {hasNoTeacher && (
+              <AlertTriangleIcon className="size-3 shrink-0 text-amber-600" />
+            )}
+            {hasAttendanceRecords && !isSuspended && (
+              <span className="shrink-0 rounded bg-emerald-200/70 px-1 font-medium text-emerald-950 dark:bg-emerald-900/70 dark:text-emerald-100">
+                {CALENDAR_MESSAGES.ATTENDANCE_PRESENT_COUNT(session.attendance.present_count)}
+              </span>
+            )}
+          </div>
         )}
       </div>
     );
@@ -95,7 +168,7 @@ export function SessionBlock({
 
   return (
     <div
-      className={`${baseClasses} ${suspendedClasses} ${noTeacherClasses} flex flex-col gap-0.5`}
+      className={`${baseClasses} ${suspendedClasses} ${noTeacherClasses} flex min-h-32 flex-col gap-2 px-3 py-2.5`}
     >
       <div className="flex items-center justify-between">
         <span className="font-medium">
@@ -107,7 +180,7 @@ export function SessionBlock({
           </span>
         )}
       </div>
-      <div className="flex items-center gap-1">
+      <div className="flex flex-wrap items-center gap-1">
         <span>{session.discipline_name}</span>
         {isSubstitute && (
           <span className="rounded bg-purple-200 px-1 text-[10px]">
@@ -120,13 +193,22 @@ export function SessionBlock({
             {ONE_TIME_CLASS_MESSAGES.ONE_TIME_BADGE}
           </span>
         )}
-        {hasNoTeacher && (
-          <span className="flex items-center gap-0.5 text-amber-600">
-            <AlertTriangleIcon className="size-3" />
-            <span className="text-[10px]">{CALENDAR_MESSAGES.NO_TEACHER}</span>
-          </span>
-        )}
       </div>
+      <div
+        className={`flex items-center gap-1 text-[11px] ${
+          hasNoTeacher
+            ? "text-amber-600"
+            : "text-muted-foreground dark:text-slate-950"
+        }`}
+      >
+        {hasNoTeacher ? <AlertTriangleIcon className="size-3" /> : <UserIcon className="size-3" />}
+        <span>{teacherLabel}</span>
+      </div>
+      {!isSuspended && (
+        <div className="rounded bg-white/70 px-2 py-1 text-[11px] font-medium text-slate-900 shadow-sm dark:bg-slate-950/80 dark:text-slate-100">
+          {CALENDAR_MESSAGES.ATTENDANCE_PRESENT_COUNT(session.attendance.present_count)}
+        </div>
+      )}
       <div className="mt-1 flex flex-wrap gap-1">
         {isOneTime ? (
           <AttendanceSheetDialog
@@ -134,6 +216,7 @@ export function SessionBlock({
             sessionDate={session.session_date}
             branchId={branchId ?? ""}
             disabled={isSuspended || !branchId}
+            triggerClassName="inline-flex h-6 shrink-0 items-center justify-center gap-1 rounded-full border px-2 text-xs font-medium whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 border-sky-600 bg-sky-600 text-white shadow-sm hover:bg-sky-700 hover:text-white focus-visible:border-sky-950 focus-visible:ring-sky-950/50"
           />
         ) : (
           <>
@@ -142,15 +225,50 @@ export function SessionBlock({
               sessionDate={session.session_date}
               branchId={branchId ?? ""}
               disabled={isSuspended || !branchId}
+              triggerClassName="inline-flex h-6 shrink-0 items-center justify-center gap-1 rounded-full border px-2 text-xs font-medium whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 border-sky-600 bg-sky-600 text-white shadow-sm hover:bg-sky-700 hover:text-white focus-visible:border-sky-950 focus-visible:ring-sky-950/50"
             />
             {canManage && branchId && (
-              <TeacherAssignDialog
-                scheduledClassId={session.scheduled_class_id}
-                sessionDate={session.session_date}
-                branchId={branchId}
-                teachers={teachers}
-                currentTeacherId={session.teacher_id}
-              />
+              <>
+                {session.status === "scheduled" ? (
+                  <SessionSuspendDialog
+                    scheduledClassId={session.scheduled_class_id}
+                    sessionDate={session.session_date}
+                    branchId={branchId}
+                    trigger={
+                      <>
+                        <CirclePauseIcon data-icon="inline-start" />
+                        {SUSPENSION_MESSAGES.SUSPEND_TITLE}
+                      </>
+                    }
+                    triggerClassName="inline-flex h-6 shrink-0 items-center justify-center gap-1 rounded-full border px-2 text-xs font-medium whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 border-destructive bg-destructive text-white shadow-sm hover:bg-red-700 hover:text-white focus-visible:border-red-950 focus-visible:ring-red-950/50"
+                  />
+                ) : isSuspended ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={isPending}
+                    onClick={handleReinstate}
+                    className="h-6 rounded-full px-2 text-xs border-emerald-600 bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 hover:text-white focus-visible:border-emerald-950 focus-visible:ring-emerald-950/50"
+                  >
+                    {isPending
+                      ? COMMON_MESSAGES.LOADING
+                      : SUSPENSION_MESSAGES.REINSTATE_ACTION}
+                  </Button>
+                ) : null}
+                <TeacherAssignDialog
+                  scheduledClassId={session.scheduled_class_id}
+                  sessionDate={session.session_date}
+                  branchId={branchId}
+                  teachers={teachers}
+                  currentTeacherId={session.teacher_id}
+                  triggerText={
+                    hasNoTeacher
+                      ? TEACHER_CONFLICT_MESSAGES.ASSIGN_ACTION
+                      : TEACHER_CONFLICT_MESSAGES.CHANGE_ACTION
+                  }
+                  triggerClassName="inline-flex h-6 shrink-0 items-center justify-center gap-1 rounded-full border px-2 text-xs font-medium whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 border-purple-600 bg-purple-600 text-white shadow-sm hover:bg-purple-700 hover:text-white focus-visible:border-purple-950 focus-visible:ring-purple-950/50"
+                />
+              </>
             )}
           </>
         )}

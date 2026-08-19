@@ -1,6 +1,7 @@
 "use client";
 
 import type { SessionView } from "@/lib/domain/classes/actions";
+import { formatDateOnly, parseDateOnly } from "@/lib/date";
 import { SessionBlock } from "./session-block";
 
 interface CalendarWeekViewProps {
@@ -21,7 +22,7 @@ export function CalendarWeekView({
   branchId,
 }: CalendarWeekViewProps) {
   // baseDate is the Monday of the week
-  const start = new Date(baseDate);
+  const start = parseDateOnly(baseDate);
   const days: Date[] = [];
   for (let i = 0; i < 7; i++) {
     const d = new Date(start);
@@ -29,7 +30,7 @@ export function CalendarWeekView({
     days.push(d);
   }
 
-  const today = new Date().toISOString().split("T")[0];
+  const today = formatDateOnly(new Date());
 
   // Group sessions by date
   const sessionsByDate = new Map<string, SessionView[]>();
@@ -42,7 +43,7 @@ export function CalendarWeekView({
   return (
     <div className="grid grid-cols-7 gap-2">
       {days.map((day, idx) => {
-        const dateStr = day.toISOString().split("T")[0];
+        const dateStr = formatDateOnly(day);
         const isToday = dateStr === today;
         const daySessions = (sessionsByDate.get(dateStr) ?? []).sort((a, b) =>
           a.start_time.localeCompare(b.start_time)

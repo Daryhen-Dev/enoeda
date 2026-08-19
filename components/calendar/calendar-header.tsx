@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { formatDateOnly, parseDateOnly } from "@/lib/date";
 import { CALENDAR_MESSAGES } from "@/lib/localization/es-ec";
 
 interface CalendarHeaderProps {
@@ -17,7 +18,7 @@ export function CalendarHeader({ currentView, baseDate }: CalendarHeaderProps) {
 
   function navigate(direction: "prev" | "next" | "today") {
     const params = new URLSearchParams(searchParams.toString());
-    const current = new Date(baseDate);
+    const current = parseDateOnly(baseDate);
 
     if (direction === "today") {
       params.delete("date");
@@ -28,7 +29,7 @@ export function CalendarHeader({ currentView, baseDate }: CalendarHeaderProps) {
       } else {
         current.setDate(current.getDate() + offset * 7);
       }
-      params.set("date", current.toISOString().split("T")[0]);
+      params.set("date", formatDateOnly(current));
     }
 
     router.push(`/dashboard/calendar?${params.toString()}`);
@@ -40,7 +41,7 @@ export function CalendarHeader({ currentView, baseDate }: CalendarHeaderProps) {
     router.push(`/dashboard/calendar?${params.toString()}`);
   }
 
-  const displayDate = new Date(baseDate);
+  const displayDate = parseDateOnly(baseDate);
   const monthYear = displayDate.toLocaleDateString("es-EC", {
     month: "long",
     year: "numeric",
