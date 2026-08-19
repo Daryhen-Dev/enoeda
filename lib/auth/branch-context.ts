@@ -21,7 +21,12 @@ import type { AppRoleAssignment } from "@/lib/auth/authorize";
 // --- Result types ---
 
 export type BranchContextResult =
-  | { type: "valid"; branchId: string; canManage: boolean }
+  | {
+      type: "valid";
+      branchId: string;
+      branchName: string;
+      canManage: boolean;
+    }
   | { type: "redirect"; branchId: string }
   | { type: "selector"; branches: { id: string; name: string }[] }
   | { type: "error" };
@@ -104,23 +109,32 @@ export async function resolveBranchContext(
 
   // 1 active branch
   if (activeBranchIds.length === 1) {
-    const singleBranch = activeBranchIds[0];
-    if (branchParam === singleBranch) {
+    const singleBranch = activeBranches[0];
+    if (singleBranch === undefined) {
+      return { type: "error" };
+    }
+
+    if (branchParam === singleBranch.id) {
       return {
         type: "valid",
-        branchId: singleBranch,
-        canManage: hasAdminForBranch(assignments, singleBranch),
+        branchId: singleBranch.id,
+        branchName: singleBranch.name,
+        canManage: hasAdminForBranch(assignments, singleBranch.id),
       };
     }
-    return { type: "redirect", branchId: singleBranch };
+    return { type: "redirect", branchId: singleBranch.id };
   }
 
   // N>1 active branches — check param match
-  if (branchParam && activeBranchIds.includes(branchParam)) {
+  const selectedBranch = activeBranches.find(
+    (branch) => branch.id === branchParam
+  );
+  if (selectedBranch !== undefined) {
     return {
       type: "valid",
-      branchId: branchParam,
-      canManage: hasAdminForBranch(assignments, branchParam),
+      branchId: selectedBranch.id,
+      branchName: selectedBranch.name,
+      canManage: hasAdminForBranch(assignments, selectedBranch.id),
     };
   }
 

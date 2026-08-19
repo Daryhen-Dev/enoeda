@@ -142,6 +142,14 @@ export const STUDENT_DIRECTORY_MESSAGES = {
   INACTIVE_TABLE_CAPTION: "Estudiantes inactivos",
   FIRST_NAME: "Nombre",
   SURNAME: "Apellido",
+  NATIONAL_ID: "Cédula",
+  SEARCH_LABEL: "Buscar estudiantes",
+  SEARCH_PLACEHOLDER: "Buscar por nombre o apellido",
+  DISCIPLINE_FILTER_LABEL: "Filtrar por disciplina",
+  ALL_DISCIPLINES: "Todas las disciplinas",
+  INVALID_FILTER: "Los filtros de estudiantes no son válidos.",
+  QUERY_MAX_LENGTH: "La búsqueda debe tener como máximo 100 caracteres.",
+  INVALID_DISCIPLINE_ID: "La disciplina seleccionada no es válida.",
   BRANCH: "Sucursal",
   DISCIPLINES: "Disciplinas",
   NO_ACTIVE_DISCIPLINES: "Sin disciplinas activas.",
@@ -395,11 +403,22 @@ export const DISCIPLINE_FORM_MESSAGES = {
 
 export const CALENDAR_MESSAGES = {
   PAGE_TITLE: "Calendario",
+  DAY_VIEW: "Día",
   MONTH_VIEW: "Mensual",
   WEEK_VIEW: "Semanal",
+  VIEW_SELECTOR_LABEL: "Seleccionar vista del calendario",
   TODAY: "Hoy",
   PREV: "Anterior",
   NEXT: "Siguiente",
+  DAY_AGENDA: "Agenda del día",
+  DAY_EMPTY_STATE: "No hay sesiones programadas para esta fecha.",
+  MONTH_DATE_SELECTOR_LABEL: "Seleccionar una fecha del mes",
+  DATE_SELECTOR_ARIA_LABEL: (date: string, sessionCount: number, isSelected: boolean) =>
+    `${date}. ${sessionCount === 1 ? "1 sesión" : `${sessionCount} sesiones`}.${
+      isSelected ? " Fecha seleccionada." : ""
+    }`,
+  SESSION_INFO_ARIA_LABEL: (discipline: string, startTime: string, date: string) =>
+    `Abrir información de ${discipline}, ${date}, a las ${startTime}`,
   FILTER_DISCIPLINES: "Filtrar por disciplina",
   NO_TEACHER: "Sin profesor",
   TEACHER_DISPLAY_NAME: (name: string) => `Profesor: ${name}`,
@@ -637,6 +656,7 @@ export const SESSION_INFO_MESSAGES = {
   ONE_TIME_TYPE_VALUE: "Clase única",
   STATUS_LABEL: "Estado",
   SCHEDULED_STATUS: "Programada",
+  COMPLETED_STATUS: "Realizada",
   SUSPENDED_STATUS: "Suspendida",
   SUSPENSION_CATEGORY_LABEL: "Categoría de suspensión",
   SUSPENSION_REASON_LABEL: "Motivo de suspensión",

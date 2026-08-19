@@ -4,43 +4,13 @@ import { AlertCircleIcon } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { BranchSelector } from "@/components/branch/branch-selector"
 import { StudentList } from "@/components/students/student-list"
-import { listBranches } from "@/lib/domain/branches/actions"
 import { listDisciplines } from "@/lib/domain/disciplines/actions"
 import {
   listStudents,
   STUDENT_STATUS,
-  type StudentListItem,
 } from "@/lib/domain/students"
 import { resolveBranchContext } from "@/lib/auth/branch-context"
 import { STUDENT_DIRECTORY_MESSAGES } from "@/lib/localization/es-ec"
-
-type StudentSummary = Pick<
-  StudentListItem,
-  | "id"
-  | "first_name"
-  | "surname"
-  | "branch_id"
-  | "branch_name"
-  | "active_discipline_names"
->
-
-function toStudentSummary({
-  id,
-  first_name,
-  surname,
-  branch_id,
-  branch_name,
-  active_discipline_names,
-}: StudentListItem): StudentSummary {
-  return {
-    id,
-    first_name,
-    surname,
-    branch_id,
-    branch_name,
-    active_discipline_names,
-  }
-}
 
 interface StudentsPageProps {
   searchParams: Promise<{ branch?: string; [key: string]: string | undefined }>
@@ -76,56 +46,51 @@ export default async function StudentsPage({ searchParams }: StudentsPageProps) 
   }
 
   if (branchResult.type === "selector") {
-    const { branch: _, ...otherParams } = params
+    const otherParams: Record<string, string> = Object.fromEntries(
+      Object.entries(params).filter(
+        (entry): entry is [string, string] =>
+          entry[0] !== "branch" && entry[1] !== undefined,
+      ),
+    )
     return (
       <BranchSelector
         branches={branchResult.branches}
         currentPath="/dashboard/students"
-        currentParams={otherParams as Record<string, string>}
+        currentParams={otherParams}
       />
     )
   }
 
-  // Valid branch — fetch data scoped to branch
   const branchId = branchResult.branchId
+  const branches = [{ id: branchId, name: branchResult.branchName }]
 
-  const [activeResult, inactiveResult, branchesResult, disciplinesResult] =
-    await Promise.all([
-      listStudents({ status: STUDENT_STATUS.ACTIVE, branch_id: branchId }),
-      listStudents({ status: STUDENT_STATUS.INACTIVE, branch_id: branchId }),
-      listBranches(),
-      listDisciplines(),
-    ])
+  const [activeResult, inactiveResult, disciplinesResult] = await Promise.all([
+    listStudents({ status: STUDENT_STATUS.ACTIVE, branch_id: branchId }),
+    listStudents({ status: STUDENT_STATUS.INACTIVE, branch_id: branchId }),
+    listDisciplines(),
+  ])
 
   const activePage = activeResult.success ? activeResult.data : undefined
   const inactivePage = inactiveResult.success ? inactiveResult.data : undefined
-
-  const allBranches =
-    branchesResult.success && branchesResult.data !== undefined
-      ? branchesResult.data
-          .filter((branch) => branch.is_active)
-          .map((branch) => ({ id: branch.id, name: branch.name }))
-      : []
-
-  // Scope branches to validated branch context
-  const branches = allBranches.filter((b) => b.id === branchId)
-
   const disciplines =
     disciplinesResult.success && disciplinesResult.data !== undefined
-      ? disciplinesResult.data.map((d) => ({ id: d.id, name: d.name }))
+      ? disciplinesResult.data.map((discipline) => ({
+          id: discipline.id,
+          name: discipline.name,
+        }))
       : []
 
   return (
     <main className="flex flex-col gap-4 p-4 md:gap-6 md:p-6">
       <StudentList
-        activeItems={activePage?.items.map(toStudentSummary) ?? []}
+        activeItems={activePage?.items ?? []}
         activeNextCursor={activePage?.next_cursor ?? null}
         activeInitialError={
           activeResult.success
             ? undefined
             : STUDENT_DIRECTORY_MESSAGES.INITIAL_LOAD_FAILURE
         }
-        inactiveItems={inactivePage?.items.map(toStudentSummary) ?? []}
+        inactiveItems={inactivePage?.items ?? []}
         inactiveNextCursor={inactivePage?.next_cursor ?? null}
         inactiveInitialError={
           inactiveResult.success

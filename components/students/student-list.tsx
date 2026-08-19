@@ -1,16 +1,23 @@
 "use client"
 
-import { useState, useTransition } from "react"
-import Link from "next/link"
+import { useEffect, useId, useRef, useState, useTransition } from "react"
 
-import { StudentDeactivateDialog } from "@/components/students/student-deactivate-dialog"
+import { getStudentColumns } from "@/components/students/student-columns"
 import {
   StudentFormDialog,
   type ActiveBranchOption,
   type DisciplineOption,
 } from "@/components/students/student-form-dialog"
-import { StudentReactivateDialog } from "@/components/students/student-reactivate-dialog"
 import { Button } from "@/components/ui/button"
+import { DataTable } from "@/components/ui/data-table"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+} from "@/components/ui/select"
 import {
   Tabs,
   TabsContent,
@@ -18,16 +25,8 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs"
 import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import {
   listStudents,
+  STUDENT_STATUS,
   type StudentListInput,
   type StudentListItem,
 } from "@/lib/domain/students"
@@ -36,22 +35,15 @@ import {
   STUDENT_DIRECTORY_MESSAGES,
 } from "@/lib/localization/es-ec"
 
+const ALL_DISCIPLINES_VALUE = "todas"
+
 type StudentStatus = StudentListInput["status"]
-type StudentSummary = Pick<
-  StudentListItem,
-  | "id"
-  | "first_name"
-  | "surname"
-  | "branch_id"
-  | "branch_name"
-  | "active_discipline_names"
->
 
 interface StudentListProps {
-  activeItems: StudentSummary[]
+  activeItems: StudentListItem[]
   activeNextCursor: string | null
   activeInitialError?: string
-  inactiveItems: StudentSummary[]
+  inactiveItems: StudentListItem[]
   inactiveNextCursor: string | null
   inactiveInitialError?: string
   branches: ActiveBranchOption[]
@@ -68,11 +60,18 @@ export function StudentList({
   inactiveNextCursor: initialInactiveNextCursor,
   inactiveInitialError,
   branches,
-  disciplines,
+  disciplines = [],
   lockedBranchId,
   branchId,
 }: StudentListProps) {
-  const [selectedTab, setSelectedTab] = useState<StudentStatus>("active")
+  const searchInputId = useId()
+  const searchSuggestionsId = useId()
+  const disciplineFilterId = useId()
+  const [selectedTab, setSelectedTab] = useState<StudentStatus>(
+    STUDENT_STATUS.ACTIVE,
+  )
+  const [searchQuery, setSearchQuery] = useState("")
+  const [disciplineId, setDisciplineId] = useState<string | undefined>()
   const [activeItems, setActiveItems] = useState(initialActiveItems)
   const [activeNextCursor, setActiveNextCursor] = useState(
     initialActiveNextCursor,
@@ -86,52 +85,167 @@ export function StudentList({
     inactiveInitialError ?? null,
   )
   const [isPending, startTransition] = useTransition()
+  const requestSequence = useRef(0)
+  const skipInitialLoad = useRef(true)
 
-  const isActiveTab = selectedTab === "active"
+  const isActiveTab = selectedTab === STUDENT_STATUS.ACTIVE
   const items = isActiveTab ? activeItems : inactiveItems
   const nextCursor = isActiveTab ? activeNextCursor : inactiveNextCursor
   const error = isActiveTab ? activeError : inactiveError
+  const selectedDisciplineName =
+    disciplines.find((discipline) => discipline.id === disciplineId)?.name ??
+    STUDENT_DIRECTORY_MESSAGES.ALL_DISCIPLINES
+  const columns = getStudentColumns({
+    branchId,
+    branches,
+    status: selectedTab,
+  })
+
+  function resetPage(status: StudentStatus) {
+    if (status === STUDENT_STATUS.ACTIVE) {
+      setActiveItems([])
+      setActiveNextCursor(null)
+      setActiveError(null)
+      return
+    }
+
+    setInactiveItems([])
+    setInactiveNextCursor(null)
+    setInactiveError(null)
+  }
+
+  function resetAllPages() {
+    resetPage(STUDENT_STATUS.ACTIVE)
+    resetPage(STUDENT_STATUS.INACTIVE)
+  }
+
+  useEffect(() => {
+    if (skipInitialLoad.current) {
+      skipInitialLoad.current = false
+      return
+    }
+
+    const timer = window.setTimeout(() => {
+      const requestId = requestSequence.current + 1
+      requestSequence.current = requestId
+      const status = selectedTab
+
+      startTransition(async () => {
+        try {
+          const result = await listStudents({
+            status,
+            branch_id: branchId,
+            query: searchQuery,
+            discipline_id: disciplineId,
+          })
+          const page = result.data
+
+          if (requestId !== requestSequence.current) return
+
+          if (!result.success || page === undefined) {
+            if (status === STUDENT_STATUS.ACTIVE) {
+              setActiveError(STUDENT_DIRECTORY_MESSAGES.INITIAL_LOAD_FAILURE)
+            } else {
+              setInactiveError(STUDENT_DIRECTORY_MESSAGES.INITIAL_LOAD_FAILURE)
+            }
+            return
+          }
+
+          if (status === STUDENT_STATUS.ACTIVE) {
+            setActiveItems(page.items)
+            setActiveNextCursor(page.next_cursor)
+            setActiveError(null)
+          } else {
+            setInactiveItems(page.items)
+            setInactiveNextCursor(page.next_cursor)
+            setInactiveError(null)
+          }
+        } catch {
+          if (requestId !== requestSequence.current) return
+
+          if (status === STUDENT_STATUS.ACTIVE) {
+            setActiveError(STUDENT_DIRECTORY_MESSAGES.INITIAL_LOAD_FAILURE)
+          } else {
+            setInactiveError(STUDENT_DIRECTORY_MESSAGES.INITIAL_LOAD_FAILURE)
+          }
+        }
+      })
+    }, 300)
+
+    return () => window.clearTimeout(timer)
+  }, [branchId, disciplineId, searchQuery, selectedTab, startTransition])
 
   function loadMore() {
     const status = selectedTab
-    const cursor = status === "active" ? activeNextCursor : inactiveNextCursor
+    const cursor =
+      status === STUDENT_STATUS.ACTIVE
+        ? activeNextCursor
+        : inactiveNextCursor
 
     if (cursor === null || isPending) return
 
+    const requestId = requestSequence.current + 1
+    requestSequence.current = requestId
+
     startTransition(async () => {
       try {
-        const result = await listStudents({ cursor, status, branch_id: branchId })
+        const result = await listStudents({
+          cursor,
+          status,
+          branch_id: branchId,
+          query: searchQuery,
+          discipline_id: disciplineId,
+        })
         const page = result.data
 
+        if (requestId !== requestSequence.current) return
+
         if (!result.success || page === undefined) {
-          if (status === "active") setActiveError(STUDENT_DIRECTORY_MESSAGES.LOAD_MORE_FAILURE)
-          else setInactiveError(STUDENT_DIRECTORY_MESSAGES.LOAD_MORE_FAILURE)
+          if (status === STUDENT_STATUS.ACTIVE) {
+            setActiveError(STUDENT_DIRECTORY_MESSAGES.LOAD_MORE_FAILURE)
+          } else {
+            setInactiveError(STUDENT_DIRECTORY_MESSAGES.LOAD_MORE_FAILURE)
+          }
           return
         }
 
-        const loadedItems = page.items
-
-        if (status === "active") {
-          setActiveItems((currentItems) => [...currentItems, ...loadedItems])
+        if (status === STUDENT_STATUS.ACTIVE) {
+          setActiveItems((currentItems) => [...currentItems, ...page.items])
           setActiveNextCursor(page.next_cursor)
           setActiveError(null)
         } else {
-          setInactiveItems((currentItems) => [...currentItems, ...loadedItems])
+          setInactiveItems((currentItems) => [...currentItems, ...page.items])
           setInactiveNextCursor(page.next_cursor)
           setInactiveError(null)
         }
       } catch {
-        if (status === "active") setActiveError(STUDENT_DIRECTORY_MESSAGES.LOAD_MORE_FAILURE)
-        else setInactiveError(STUDENT_DIRECTORY_MESSAGES.LOAD_MORE_FAILURE)
+        if (requestId !== requestSequence.current) return
+
+        if (status === STUDENT_STATUS.ACTIVE) {
+          setActiveError(STUDENT_DIRECTORY_MESSAGES.LOAD_MORE_FAILURE)
+        } else {
+          setInactiveError(STUDENT_DIRECTORY_MESSAGES.LOAD_MORE_FAILURE)
+        }
       }
     })
   }
 
   function reloadActiveStudents() {
+    const requestId = requestSequence.current + 1
+    requestSequence.current = requestId
+    resetPage(STUDENT_STATUS.ACTIVE)
+
     startTransition(async () => {
       try {
-        const result = await listStudents({ status: "active", branch_id: branchId })
+        const result = await listStudents({
+          status: STUDENT_STATUS.ACTIVE,
+          branch_id: branchId,
+          query: searchQuery,
+          discipline_id: disciplineId,
+        })
         const page = result.data
+
+        if (requestId !== requestSequence.current) return
 
         if (!result.success || page === undefined) {
           setActiveError(STUDENT_DIRECTORY_MESSAGES.INITIAL_LOAD_FAILURE)
@@ -142,9 +256,35 @@ export function StudentList({
         setActiveNextCursor(page.next_cursor)
         setActiveError(null)
       } catch {
-        setActiveError(STUDENT_DIRECTORY_MESSAGES.INITIAL_LOAD_FAILURE)
+        if (requestId === requestSequence.current) {
+          setActiveError(STUDENT_DIRECTORY_MESSAGES.INITIAL_LOAD_FAILURE)
+        }
       }
     })
+  }
+
+  function handleSearchChange(value: string) {
+    requestSequence.current += 1
+    resetAllPages()
+    setSearchQuery(value)
+  }
+
+  function handleDisciplineChange(value: string | null) {
+    requestSequence.current += 1
+    resetAllPages()
+    setDisciplineId(value === ALL_DISCIPLINES_VALUE ? undefined : value ?? undefined)
+  }
+
+  function handleTabChange(value: string) {
+    if (value !== STUDENT_STATUS.ACTIVE && value !== STUDENT_STATUS.INACTIVE) {
+      return
+    }
+
+    if (value === selectedTab) return
+
+    requestSequence.current += 1
+    resetPage(value)
+    setSelectedTab(value)
   }
 
   return (
@@ -171,135 +311,104 @@ export function StudentList({
         )}
       </div>
 
-      <Tabs
-        value={selectedTab}
-        onValueChange={(value) => {
-          if (value === "active" || value === "inactive") setSelectedTab(value)
-        }}
-      >
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+        <div className="flex flex-1 flex-col gap-2">
+          <Label htmlFor={searchInputId}>
+            {STUDENT_DIRECTORY_MESSAGES.SEARCH_LABEL}
+          </Label>
+          <Input
+            id={searchInputId}
+            list={searchSuggestionsId}
+            value={searchQuery}
+            onChange={(event) => handleSearchChange(event.target.value)}
+            placeholder={STUDENT_DIRECTORY_MESSAGES.SEARCH_PLACEHOLDER}
+          />
+          <datalist id={searchSuggestionsId}>
+            {items.map((student) => (
+              <option
+                key={student.id}
+                value={`${student.first_name} ${student.surname}`}
+              />
+            ))}
+          </datalist>
+        </div>
+        <div className="flex flex-1 flex-col gap-2 sm:max-w-xs">
+          <Label htmlFor={disciplineFilterId}>
+            {STUDENT_DIRECTORY_MESSAGES.DISCIPLINE_FILTER_LABEL}
+          </Label>
+          <Select
+            value={disciplineId ?? ALL_DISCIPLINES_VALUE}
+            onValueChange={handleDisciplineChange}
+          >
+            <SelectTrigger id={disciplineFilterId} className="w-full">
+              <span data-slot="select-value" className="flex flex-1 text-left">
+                {selectedDisciplineName}
+              </span>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL_DISCIPLINES_VALUE}>
+                {STUDENT_DIRECTORY_MESSAGES.ALL_DISCIPLINES}
+              </SelectItem>
+              {disciplines.map((discipline) => (
+                <SelectItem key={discipline.id} value={discipline.id}>
+                  {discipline.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <Tabs value={selectedTab} onValueChange={handleTabChange}>
         <TabsList>
-          <TabsTrigger value="active">
+          <TabsTrigger value={STUDENT_STATUS.ACTIVE}>
             {STUDENT_DIRECTORY_MESSAGES.ACTIVE_TAB}
           </TabsTrigger>
-          <TabsTrigger value="inactive">
+          <TabsTrigger value={STUDENT_STATUS.INACTIVE}>
             {STUDENT_DIRECTORY_MESSAGES.HISTORY_TAB}
           </TabsTrigger>
         </TabsList>
         <TabsContent value={selectedTab} className="flex flex-col gap-4">
           {error && (
-        <p
-          role="alert"
-          className="rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive"
-        >
-          {error}
-        </p>
-      )}
+            <p
+              role="alert"
+              className="rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+            >
+              {error}
+            </p>
+          )}
 
-      {isPending && (
-        <p role="status" aria-live="polite" className="sr-only">
-          {STUDENT_DIRECTORY_MESSAGES.PAGINATION_LOADING_STATUS}
-        </p>
-      )}
+          {isPending && (
+            <p role="status" aria-live="polite" className="sr-only">
+              {STUDENT_DIRECTORY_MESSAGES.PAGINATION_LOADING_STATUS}
+            </p>
+          )}
 
-      {items.length === 0 && !error ? (
-        <p
-          role="status"
-          aria-live="polite"
-          className="rounded-lg border border-dashed px-4 py-8 text-center text-sm text-muted-foreground"
-        >
-          {isActiveTab
-            ? STUDENT_DIRECTORY_MESSAGES.ACTIVE_EMPTY_STATE
-            : STUDENT_DIRECTORY_MESSAGES.INACTIVE_EMPTY_STATE}
-        </p>
-      ) : items.length > 0 ? (
-        <div className="rounded-lg border">
-          <Table>
-            <TableCaption className="sr-only">
-              {isActiveTab
-                ? STUDENT_DIRECTORY_MESSAGES.ACTIVE_TABLE_CAPTION
-                : STUDENT_DIRECTORY_MESSAGES.INACTIVE_TABLE_CAPTION}
-            </TableCaption>
-            <TableHeader className="bg-muted/50 text-left text-muted-foreground">
-              <TableRow>
-                <TableHead scope="col" className="px-4 py-3">
-                  {STUDENT_DIRECTORY_MESSAGES.ACTIONS}
-                </TableHead>
-                <TableHead scope="col" className="px-4 py-3">
-                  {STUDENT_DIRECTORY_MESSAGES.FIRST_NAME}
-                </TableHead>
-                <TableHead scope="col" className="px-4 py-3">
-                  {STUDENT_DIRECTORY_MESSAGES.SURNAME}
-                </TableHead>
-                <TableHead scope="col" className="px-4 py-3">
-                  {STUDENT_DIRECTORY_MESSAGES.BRANCH}
-                </TableHead>
-                <TableHead scope="col" className="px-4 py-3">
-                  {STUDENT_DIRECTORY_MESSAGES.DISCIPLINES}
-                </TableHead>
-                <TableHead scope="col" className="px-4 py-3">
-                  {STUDENT_DIRECTORY_MESSAGES.STATUS}
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {items.map((student) => (
-                <TableRow key={student.id}>
-                  <TableCell className="px-4 py-3">
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        render={<Link href={`/dashboard/students/${student.id}?branch=${branchId}`} />}
-                      >
-                        {STUDENT_DIRECTORY_MESSAGES.VIEW_DETAILS}
-                      </Button>
-                      {isActiveTab ? (
-                        <>
-                          <StudentFormDialog branches={branches} studentId={student.id} branchId={branchId} />
-                          <StudentDeactivateDialog
-                            student={{
-                              id: student.id,
-                              first_name: student.first_name,
-                              surname: student.surname,
-                            }}
-                            branchId={branchId}
-                          />
-                        </>
-                      ) : (
-                        <StudentReactivateDialog
-                          student={{ id: student.id, branch_id: student.branch_id }}
-                          branches={branches}
-                          callerBranchId={branchId}
-                        />
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell className="px-4 py-3">{student.first_name}</TableCell>
-                  <TableCell className="px-4 py-3">{student.surname}</TableCell>
-                  <TableCell className="px-4 py-3">{student.branch_name}</TableCell>
-                  <TableCell className="px-4 py-3">
-                    {student.active_discipline_names.length > 0
-                      ? student.active_discipline_names.join(", ")
-                      : STUDENT_DIRECTORY_MESSAGES.NO_ACTIVE_DISCIPLINES}
-                  </TableCell>
-                  <TableCell className="px-4 py-3">
-                    {isActiveTab
-                      ? STUDENT_DIRECTORY_MESSAGES.ACTIVE_STATUS
-                      : STUDENT_DIRECTORY_MESSAGES.INACTIVE_STATUS}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      ) : null}
+          {!error && (
+            <DataTable
+              columns={columns}
+              data={items}
+              caption={
+                isActiveTab
+                  ? STUDENT_DIRECTORY_MESSAGES.ACTIVE_TABLE_CAPTION
+                  : STUDENT_DIRECTORY_MESSAGES.INACTIVE_TABLE_CAPTION
+              }
+              emptyState={
+                isActiveTab
+                  ? STUDENT_DIRECTORY_MESSAGES.ACTIVE_EMPTY_STATE
+                  : STUDENT_DIRECTORY_MESSAGES.INACTIVE_EMPTY_STATE
+              }
+            />
+          )}
 
-      {nextCursor !== null && (
-        <div>
-          <Button type="button" onClick={loadMore} disabled={isPending}>
-            {isPending ? COMMON_MESSAGES.LOADING : STUDENT_DIRECTORY_MESSAGES.LOAD_MORE}
-          </Button>
-        </div>
+          {nextCursor !== null && !error && (
+            <div>
+              <Button type="button" onClick={loadMore} disabled={isPending}>
+                {isPending
+                  ? COMMON_MESSAGES.LOADING
+                  : STUDENT_DIRECTORY_MESSAGES.LOAD_MORE}
+              </Button>
+            </div>
           )}
         </TabsContent>
       </Tabs>

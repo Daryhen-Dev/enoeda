@@ -51,11 +51,10 @@ export interface StudentProfile {
 export interface StudentListItem {
   id: string;
   branch_id: string;
-  branch_name: string;
   first_name: string;
   surname: string;
+  national_id: string;
   active_discipline_names: string[];
-  is_active: boolean;
 }
 
 export interface StudentListPage {
@@ -79,12 +78,42 @@ export async function listStudents(
       return { __branchError: branchError } as const;
     }
 
+    const where = {
+      branch_id: listInput.branch_id,
+      is_active: listInput.status === STUDENT_STATUS.ACTIVE,
+      ...(listInput.query === undefined
+        ? {}
+        : {
+            OR: [
+              {
+                first_name: {
+                  contains: listInput.query,
+                  mode: "insensitive" as const,
+                },
+              },
+              {
+                surname: {
+                  contains: listInput.query,
+                  mode: "insensitive" as const,
+                },
+              },
+            ],
+          }),
+      ...(listInput.discipline_id === undefined
+        ? {}
+        : {
+            student_disciplines: {
+              some: {
+                discipline_id: listInput.discipline_id,
+                is_active: true,
+              },
+            },
+          }),
+    };
+
     return tx.students.findMany({
       take: listInput.page_size + 1,
-      where: {
-        is_active: listInput.status === STUDENT_STATUS.ACTIVE,
-        branch_id: listInput.branch_id,
-      },
+      where,
       orderBy: [
         { surname: "asc" },
         { first_name: "asc" },
@@ -95,8 +124,7 @@ export async function listStudents(
         branch_id: true,
         first_name: true,
         surname: true,
-        is_active: true,
-        branches: { select: { name: true } },
+        national_id: true,
         student_disciplines: {
           where: { is_active: true },
           select: { disciplines: { select: { name: true } } },
@@ -120,13 +148,12 @@ export async function listStudents(
   const items = rows.slice(0, listInput.page_size).map((student) => ({
     id: student.id,
     branch_id: student.branch_id,
-    branch_name: student.branches.name,
     first_name: student.first_name,
     surname: student.surname,
+    national_id: student.national_id,
     active_discipline_names: student.student_disciplines
       .map((studentDiscipline) => studentDiscipline.disciplines.name)
       .sort((firstName, secondName) => firstName.localeCompare(secondName)),
-    is_active: student.is_active,
   }));
   const lastItem = items.at(-1);
 

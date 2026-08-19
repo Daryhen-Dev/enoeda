@@ -1,4 +1,4 @@
-import { STUDENT_MESSAGES } from "@/lib/localization/es-ec";
+import { STUDENT_DIRECTORY_MESSAGES, STUDENT_MESSAGES } from "@/lib/localization/es-ec";
 import { z } from "zod";
 
 /**
@@ -77,6 +77,16 @@ export const studentListSchema = z
     status: z
       .enum([STUDENT_STATUS.ACTIVE, STUDENT_STATUS.INACTIVE])
       .default(STUDENT_STATUS.ACTIVE),
+    query: z
+      .string({ error: STUDENT_DIRECTORY_MESSAGES.INVALID_FILTER })
+      .trim()
+      .max(100, { error: STUDENT_DIRECTORY_MESSAGES.QUERY_MAX_LENGTH })
+      .transform((value) => value.replace(/\s+/g, " "))
+      .transform((value) => (value === "" ? undefined : value))
+      .optional(),
+    discipline_id: z
+      .uuid({ error: STUDENT_DIRECTORY_MESSAGES.INVALID_DISCIPLINE_ID })
+      .optional(),
   })
   .strict();
 
