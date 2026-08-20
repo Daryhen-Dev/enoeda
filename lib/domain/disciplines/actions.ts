@@ -11,10 +11,12 @@ import {
   ENROLLMENT_MESSAGES,
 } from "@/lib/localization/es-ec";
 import {
+  activeDisciplinesForBranchSchema,
   disciplineCreateSchema,
   enrollStudentSchema,
   enrollmentActionSchema,
   studentDisciplinesQuerySchema,
+  type ActiveDisciplinesForBranchInput,
   type DisciplineCreateInput,
   type EnrollStudentInput,
   type EnrollmentActionInput,
@@ -31,6 +33,11 @@ export interface DisciplineRecord {
   name: string;
   code: string;
   is_active: boolean;
+}
+
+export interface DisciplineFilterOption {
+  id: string;
+  name: string;
 }
 
 export interface StudentDisciplineRecord {
@@ -71,6 +78,45 @@ export async function listDisciplines(
 
     if (!result.success) return result;
     return { success: true, data: result.data };
+  } catch {
+    return { success: false, error: DISCIPLINE_MESSAGES.LOAD_FAILURE };
+  }
+}
+
+/**
+ * Lists active catalog disciplines after validating the selected branch and
+ * caller branch access. Catalog entries are independent of student enrollments.
+ */
+export async function listActiveDisciplinesForBranch(
+  input: ActiveDisciplinesForBranchInput
+): Promise<ActionResult<DisciplineFilterOption[]>> {
+  const parsed = activeDisciplinesForBranchSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message };
+  }
+
+  try {
+    const result = await withAuthenticatedUser(async (tx, ctx) => {
+      const branchError = assertCallerBranchContext(ctx, parsed.data.branch_id);
+      if (branchError) {
+        return { records: [], error: branchError };
+      }
+
+      const rows = await tx.disciplines.findMany({
+        where: { is_active: true },
+        select: { id: true, name: true },
+        orderBy: { name: "asc" },
+      });
+
+      return { records: rows, error: null };
+    });
+
+    if (!result.success) return result;
+    if (result.data.error) {
+      return { success: false, error: result.data.error };
+    }
+
+    return { success: true, data: result.data.records };
   } catch {
     return { success: false, error: DISCIPLINE_MESSAGES.LOAD_FAILURE };
   }

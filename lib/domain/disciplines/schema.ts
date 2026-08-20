@@ -79,6 +79,14 @@ export const studentDisciplinesQuerySchema = z.object({
   branch_id: z.uuid({ error: ENROLLMENT_MESSAGES.BRANCH_REQUIRED }),
 });
 
+export const activeDisciplinesForBranchSchema = z.object({
+  branch_id: z.uuid({ error: ENROLLMENT_MESSAGES.BRANCH_REQUIRED }),
+});
+
+export type ActiveDisciplinesForBranchInput = z.infer<
+  typeof activeDisciplinesForBranchSchema
+>;
+
 export type DisciplineCreateInput = z.infer<typeof disciplineCreateSchema>;
 export type EnrollStudentInput = z.infer<typeof enrollStudentSchema>;
 export type EnrollmentActionInput = z.infer<typeof enrollmentActionSchema>;

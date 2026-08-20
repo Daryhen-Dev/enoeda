@@ -91,6 +91,7 @@ vi.mock("@/lib/auth/branch-assertion", async () => {
 
 // Import actions under test (after mock setup)
 let getStudentDisciplines: typeof import("./actions").getStudentDisciplines;
+let listActiveDisciplinesForBranch: typeof import("./actions").listActiveDisciplinesForBranch;
 let getEnrollmentHistory: typeof import("./actions").getEnrollmentHistory;
 let enrollStudent: typeof import("./actions").enrollStudent;
 let suspendEnrollment: typeof import("./actions").suspendEnrollment;
@@ -108,6 +109,7 @@ beforeEach(async () => {
 
   const mod = await import("./actions");
   getStudentDisciplines = mod.getStudentDisciplines;
+  listActiveDisciplinesForBranch = mod.listActiveDisciplinesForBranch;
   getEnrollmentHistory = mod.getEnrollmentHistory;
   enrollStudent = mod.enrollStudent;
   suspendEnrollment = mod.suspendEnrollment;
@@ -344,5 +346,57 @@ describe("reactivateEnrollment — branch security", () => {
     });
     expect(result.success).toBe(false);
     expect(result.error).toContain("otra sucursal");
+  });
+});
+
+
+describe("listActiveDisciplinesForBranch — branch security", () => {
+  it("rejects a malformed branch UUID before authentication", async () => {
+    const result = await listActiveDisciplinesForBranch({
+      branch_id: "not-a-uuid",
+    });
+
+    expect(result.success).toBe(false);
+    expect(mockWithAuth).not.toHaveBeenCalled();
+  });
+
+  it("lists the ordered active catalog without requiring enrollments", async () => {
+    const tx = buildMockTx();
+    const findMany = vi.fn().mockResolvedValue([
+      { id: DISCIPLINE_ID, name: "Piano" },
+      { id: "f5555555-5555-4555-8555-555555555555", name: "Violin" },
+    ]);
+    tx.disciplines.findMany = findMany;
+    setupWithAuth(ctxBranchA, tx);
+
+    const result = await listActiveDisciplinesForBranch({
+      branch_id: BRANCH_A,
+    });
+
+    expect(result).toEqual({
+      success: true,
+      data: [
+        { id: DISCIPLINE_ID, name: "Piano" },
+        { id: "f5555555-5555-4555-8555-555555555555", name: "Violin" },
+      ],
+    });
+    expect(findMany).toHaveBeenCalledWith({
+      where: { is_active: true },
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+    });
+    expect(tx.student_disciplines.findMany).not.toHaveBeenCalled();
+  });
+
+  it("rejects a caller outside the selected branch before loading the catalog", async () => {
+    const tx = buildMockTx();
+    setupWithAuth(ctxBranchB, tx);
+
+    const result = await listActiveDisciplinesForBranch({
+      branch_id: BRANCH_A,
+    });
+
+    expect(result.success).toBe(false);
+    expect(tx.disciplines.findMany).not.toHaveBeenCalled();
   });
 });

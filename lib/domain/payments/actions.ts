@@ -11,14 +11,18 @@ import {
   registerMonthlyPaymentSchema,
   registerClassPaymentSchema,
   getStudentPaymentsSchema,
+  paymentConsoleFilterSchema,
   type ConfigureDisciplineClassPriceInput,
   type RegisterMonthlyPaymentInput,
   type RegisterClassPaymentInput,
   type GetStudentPaymentsInput,
+  type PaymentConsoleFilterInput,
 } from "./schema";
 import {
   countOverdueStudents,
+  getMonthlyPaymentSummaryQuery,
   listOverdueStudents,
+  type MonthlyPaymentSummary,
   type OverdueStudentRow,
 } from "./queries";
 
@@ -408,19 +412,26 @@ export async function getOverdueStudentCount(
  * Validates caller has active branch assignment internally (fail-closed).
  */
 export async function getOverdueStudents(
-  branchId: string
+  input: PaymentConsoleFilterInput
 ): Promise<ActionResult<OverdueStudentRow[]>> {
-  if (!branchId) {
-    return { success: false, error: BRANCH_ASSERTION_MESSAGES.MISSING_BRANCH_CONTEXT };
+  const parsed = paymentConsoleFilterSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message };
   }
 
   try {
     const result = await withAuthenticatedUser(async (tx, ctx) => {
-      const branchError = assertCallerBranchContext(ctx, branchId);
+      const branchError = assertCallerBranchContext(ctx, parsed.data.branch_id);
       if (branchError) {
         return { __branchError: branchError } as const;
       }
-      return { rows: await listOverdueStudents(tx, branchId) };
+      return {
+        rows: await listOverdueStudents(
+          tx,
+          parsed.data.branch_id,
+          parsed.data.discipline_id
+        ),
+      };
     });
 
     if (!result.success) return result;
@@ -428,6 +439,48 @@ export async function getOverdueStudents(
       return { success: false, error: (result.data as { __branchError: string }).__branchError };
     }
     return { success: true, data: result.data.rows };
+  } catch {
+    return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
+  }
+}
+
+/**
+ * Gets the current calendar month's payment summary for a validated branch.
+ * Read protection mirrors the payment mutation boundary and never accepts a period.
+ */
+export async function getMonthlyPaymentSummary(
+  input: PaymentConsoleFilterInput
+): Promise<ActionResult<MonthlyPaymentSummary>> {
+  const parsed = paymentConsoleFilterSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message };
+  }
+
+  try {
+    const result = await withAuthenticatedUser(async (tx, ctx) => {
+      const branchError = assertCallerBranchContext(ctx, parsed.data.branch_id);
+      if (branchError) {
+        return { __branchError: branchError } as const;
+      }
+
+      return {
+        summary: await getMonthlyPaymentSummaryQuery(
+          tx,
+          parsed.data.branch_id,
+          parsed.data.discipline_id
+        ),
+      };
+    });
+
+    if (!result.success) return result;
+    if ("__branchError" in result.data) {
+      return {
+        success: false,
+        error: result.data.__branchError ?? COMMON_MESSAGES.UNEXPECTED_ERROR,
+      };
+    }
+
+    return { success: true, data: result.data.summary };
   } catch {
     return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
   }

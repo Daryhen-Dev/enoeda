@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation"
 import {
   BuildingIcon,
   CalendarDaysIcon,
+  CreditCardIcon,
   LayoutDashboardIcon,
   ShieldIcon,
   UserRoundIcon,
@@ -43,6 +44,7 @@ const navigationItems: NavigationItem[] = [
   { title: DASHBOARD_SHELL_MESSAGES.STUDENTS, url: "/dashboard/students", icon: UsersIcon, available: true },
   { title: DASHBOARD_SHELL_MESSAGES.STAFF, url: "/dashboard/staff", icon: ShieldIcon, available: true, adminOnly: true, hiddenForTeacherOnly: true },
   { title: DASHBOARD_SHELL_MESSAGES.CALENDAR, url: "/dashboard/calendar", icon: CalendarDaysIcon, available: true },
+  { title: DASHBOARD_SHELL_MESSAGES.PAYMENTS, url: "/dashboard/payments", icon: CreditCardIcon, available: true, adminOnly: true, hiddenForTeacherOnly: true },
   { title: DASHBOARD_SHELL_MESSAGES.PROFILE, url: "/dashboard/profile", icon: UserRoundIcon, available: true, profileOnly: true },
 ]
 

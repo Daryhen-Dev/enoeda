@@ -1,59 +1,73 @@
 "use client"
 
+import type { ColumnDef, TableFeatures } from "@tanstack/react-table"
 import Link from "next/link"
+
+import { DataTable } from "@/components/data-table"
+import { RegisterMonthlyPaymentDialog } from "@/components/payments/register-monthly-payment-dialog"
 import type { OverdueStudentRow } from "@/lib/domain/payments/queries"
-import { formatDate, OVERDUE_MESSAGES } from "@/lib/localization/es-ec"
+import { formatDate, PAYMENT_CONSOLE_MESSAGES } from "@/lib/localization/es-ec"
 
 interface OverdueStudentsListProps {
   students: OverdueStudentRow[]
+  branchId: string
+  canManage: boolean
 }
 
-export function OverdueStudentsList({ students }: OverdueStudentsListProps) {
-  if (students.length === 0) {
-    return (
-      <p className="text-sm text-muted-foreground">
-        {OVERDUE_MESSAGES.EMPTY_STATE}
-      </p>
-    )
-  }
+function studentHref(studentId: string, branchId: string): string {
+  const params = new URLSearchParams({ branch: branchId })
+  return `/dashboard/students/${studentId}?${params.toString()}`
+}
+
+export function OverdueStudentsList({
+  students,
+  branchId,
+  canManage,
+}: OverdueStudentsListProps) {
+  const columns: ColumnDef<TableFeatures, OverdueStudentRow>[] = [
+    {
+      accessorKey: "student_name",
+      header: PAYMENT_CONSOLE_MESSAGES.STUDENT,
+      cell: ({ row }) => (
+        <Link
+          href={studentHref(row.original.student_id, branchId)}
+          className="font-medium text-primary underline-offset-4 hover:underline"
+        >
+          {row.original.student_name}
+        </Link>
+      ),
+    },
+    {
+      accessorKey: "discipline_name",
+      header: PAYMENT_CONSOLE_MESSAGES.DISCIPLINE,
+    },
+    {
+      accessorKey: "next_due_date",
+      header: PAYMENT_CONSOLE_MESSAGES.DUE_DATE,
+      cell: ({ row }) => formatDate(new Date(row.original.next_due_date)),
+    },
+    ...(canManage
+      ? [
+          {
+            id: "actions",
+            header: PAYMENT_CONSOLE_MESSAGES.ACTIONS,
+            cell: ({ row }: { row: { original: OverdueStudentRow } }) => (
+              <RegisterMonthlyPaymentDialog
+                studentDisciplineId={row.original.student_discipline_id}
+                branchId={branchId}
+              />
+            ),
+          },
+        ]
+      : []),
+  ]
 
   return (
-    <div className="overflow-x-auto rounded-lg border">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b bg-muted/50">
-            <th className="px-4 py-2 text-left font-medium">
-              {OVERDUE_MESSAGES.STUDENT_NAME}
-            </th>
-            <th className="px-4 py-2 text-left font-medium">
-              {OVERDUE_MESSAGES.DISCIPLINE}
-            </th>
-            <th className="px-4 py-2 text-left font-medium">
-              {OVERDUE_MESSAGES.DUE_DATE}
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {students.map((student, idx) => (
-            <tr key={`${student.student_id}-${idx}`} className="border-b last:border-b-0">
-              <td className="px-4 py-2">
-                <Link
-                  href={`/dashboard/students/${student.student_id}`}
-                  className="font-medium text-primary underline-offset-4 hover:underline"
-                >
-                  {student.student_name}
-                </Link>
-              </td>
-              <td className="px-4 py-2 text-muted-foreground">
-                {student.discipline_name}
-              </td>
-              <td className="px-4 py-2 text-muted-foreground">
-                {formatDate(new Date(student.next_due_date))}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <DataTable
+      columns={columns}
+      data={students}
+      caption={PAYMENT_CONSOLE_MESSAGES.OVERDUE_CAPTION}
+      emptyState={PAYMENT_CONSOLE_MESSAGES.EMPTY_OVERDUE}
+    />
   )
 }

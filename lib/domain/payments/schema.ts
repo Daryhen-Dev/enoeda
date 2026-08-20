@@ -44,3 +44,12 @@ export const getStudentPaymentsSchema = z.object({
 });
 
 export type GetStudentPaymentsInput = z.infer<typeof getStudentPaymentsSchema>;
+
+export const paymentConsoleFilterSchema = z.object({
+  branch_id: z.string().uuid({ error: PAYMENT_BRANCH_MESSAGES.INVALID_BRANCH_ID }),
+  discipline_id: z.string().uuid().optional(),
+});
+
+export type PaymentConsoleFilterInput = z.infer<
+  typeof paymentConsoleFilterSchema
+>;

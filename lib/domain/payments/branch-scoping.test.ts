@@ -23,6 +23,7 @@ vi.mock("./schema", async () => {
 
 vi.mock("./queries", () => ({
   countOverdueStudents: vi.fn(),
+  getMonthlyPaymentSummaryQuery: vi.fn(),
   listOverdueStudents: vi.fn(),
 }));
 
@@ -297,14 +298,10 @@ describe("configureDisciplineClassPrice — branch context enforcement", () => {
     if (!result.success) expect(result.error).toContain("asignación");
   });
 
-  it("succeeds when caller has valid branch assignment", async () => {
+  it("updates a discipline without a student enrollment when the caller has valid branch assignment", async () => {
+    const update = vi.fn().mockResolvedValue({ id: DISCIPLINE_ID });
     mockWithAuthenticatedUser.mockImplementation(async (fn: (tx: unknown, ctx: unknown) => Promise<unknown>) => {
-      const tx = {
-        disciplines: {
-          update: vi.fn().mockResolvedValue({ id: DISCIPLINE_ID }),
-        },
-      };
-      const data = await fn(tx, validAdminCtx);
+      const data = await fn({ disciplines: { update } }, validAdminCtx);
       return { success: true, data };
     });
 
@@ -314,6 +311,11 @@ describe("configureDisciplineClassPrice — branch context enforcement", () => {
       branch_id: BRANCH_ID,
     });
 
-    expect(result.success).toBe(true);
+    expect(result).toEqual({ success: true, data: { id: DISCIPLINE_ID } });
+    expect(update).toHaveBeenCalledWith({
+      where: { id: DISCIPLINE_ID },
+      data: { class_price: 10 },
+      select: { id: true },
+    });
   });
 });

@@ -86,6 +86,7 @@ export const DASHBOARD_SHELL_MESSAGES = {
   STAFF: "Personal",
   MANAGEMENT: "Administración",
   CALENDAR: "Calendario",
+  PAYMENTS: "Pagos",
   PROFILE: "Mi perfil",
   PROFILE_NAME_UNAVAILABLE: "Perfil pendiente",
 } as const
@@ -125,9 +126,10 @@ export const DASHBOARD_OVERVIEW_MESSAGES = {
   INACTIVE_STUDENT_COUNT_ARIA_LABEL: (count: string) =>
     `${count} estudiantes inactivos`,
   ACTIVE_STUDENTS_COUNT: (count: string) => `${count} activos`,
-  OVERDUE_STUDENTS: "Morosos",
-  OVERDUE_STUDENTS_DESCRIPTION: "Estudiantes con pagos vencidos.",
-  OVERDUE_STUDENT_COUNT_ARIA_LABEL: (count: string) => `${count} estudiantes morosos`,
+  OVERDUE_STUDENTS: "Pagos en espera",
+  OVERDUE_STUDENTS_DESCRIPTION: "Inscripciones con pago pendiente.",
+  OVERDUE_STUDENT_COUNT_ARIA_LABEL: (count: string) =>
+    `${count} inscripciones con pago pendiente`,
 } as const
 
 export const STUDENT_DIRECTORY_MESSAGES = {
@@ -199,6 +201,8 @@ export const STUDENT_FORM_MESSAGES = {
   ACTIVE_BRANCH_REQUIRED: "Seleccione una sucursal activa.",
   ACTIVE_BRANCH_PLACEHOLDER: "Seleccione una sucursal activa",
   EMAIL_REQUIRED: "El correo electrónico es obligatorio.",
+  PHONE_LABEL: "Teléfono",
+  EDIT_BRANCH_UNAVAILABLE: "Sucursal del estudiante no disponible.",
   DATE_OF_BIRTH_REQUIRED: "La fecha de nacimiento es obligatoria.",
   DATE_OF_BIRTH_INVALID: "Ingrese una fecha de nacimiento válida.",
   FIRST_NAME_LABEL: "Nombre",
@@ -236,6 +240,7 @@ export const STUDENT_MESSAGES = {
   SURNAME_MAX_LENGTH: "El apellido debe tener como máximo 100 caracteres.",
   NATIONAL_ID_REQUIRED: "La cédula es obligatoria.",
   NATIONAL_ID_MAX_LENGTH: "La cédula debe tener como máximo 30 caracteres.",
+  PHONE_MAX_LENGTH: "El teléfono debe tener como máximo 30 caracteres.",
   INVALID_EMAIL: "El correo electrónico no es válido.",
   DATE_OF_BIRTH_FORMAT: "La fecha de nacimiento debe tener el formato YYYY-MM-DD.",
   INVALID_DATE_OF_BIRTH: "La fecha de nacimiento no es una fecha válida.",
@@ -729,19 +734,46 @@ export const PAYMENT_MESSAGES = {
   CHARGE_CLASS: "Cobrar clase",
 } as const
 
+export const PAYMENT_CONSOLE_MESSAGES = {
+  HEADING: "Pagos en espera",
+  DESCRIPTION: "Resumen mensual de pagos y seguimiento de inscripciones pendientes.",
+  CURRENT_PERIOD: "Período actual",
+  DISCIPLINE_FILTER_LABEL: "Filtrar pagos por disciplina",
+  ALL_DISCIPLINES: "Todas las disciplinas",
+  TOTAL_COLLECTED: "Total cobrado",
+  MONTHLY_PAYMENT_COUNT: "Pagos mensuales",
+  CLASS_PAYMENT_COUNT: "Pagos por clase",
+  OVERDUE_COUNT: "Pagos en espera",
+  REQUIRES_ACTION: "Inscripciones con pago pendiente",
+  RECENT_ACTIVITY: "Actividad reciente",
+  OVERDUE_CAPTION: "Inscripciones con pago pendiente.",
+  ACTIVITY_CAPTION: "Pagos registrados durante el período actual.",
+  STUDENT: "Estudiante",
+  DISCIPLINE: "Disciplina",
+  DUE_DATE: "Fecha de vencimiento",
+  DATE: "Fecha",
+  AMOUNT: "Monto",
+  TYPE: "Tipo",
+  ACTIONS: "Acciones",
+  EMPTY_OVERDUE: "No hay inscripciones con pago pendiente.",
+  EMPTY_ACTIVITY: "No hay pagos registrados en este período.",
+  CURRENCY_CODE: "USD",
+} as const
+
 export const OVERDUE_MESSAGES = {
   NO_BRANCH_CONTEXT: "No tiene una sucursal activa asignada. Contacte al administrador.",
-  CARD_TITLE: "Morosos",
-  CARD_DESCRIPTION: "Estudiantes con pagos vencidos.",
-  LIST_TITLE: "Estudiantes morosos",
-  LIST_DESCRIPTION: "Estudiantes con fecha de vencimiento superada.",
+  CARD_TITLE: "Pagos en espera",
+  CARD_DESCRIPTION: "Inscripciones con pago pendiente.",
+  LIST_TITLE: "Inscripciones con pago pendiente",
+  LIST_DESCRIPTION: "Inscripciones con fecha de pago pendiente.",
   STUDENT_NAME: "Estudiante",
   DISCIPLINE: "Disciplina",
   DUE_DATE: "Fecha de vencimiento",
-  EMPTY_STATE: "No hay estudiantes morosos.",
-  COUNT_ARIA_LABEL: (count: string) => `${count} estudiantes morosos`,
-  PAGE_TITLE: "Pagos",
-  PAGE_DESCRIPTION: "Gestión de pagos y morosidad.",
+  EMPTY_STATE: "No hay inscripciones con pago pendiente.",
+  COUNT_ARIA_LABEL: (count: string) =>
+    `${count} inscripciones con pago pendiente`,
+  PAGE_TITLE: "Pagos en espera",
+  PAGE_DESCRIPTION: "Gestión de pagos en espera.",
   PRICING_SECTION_TITLE: "Configuración de precios por clase",
   PRICING_SECTION_DESCRIPTION: "Establezca el precio por clase individual de cada disciplina.",
   CURRENT_PRICE: "Precio actual",
