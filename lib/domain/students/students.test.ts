@@ -12,15 +12,38 @@ const base = {
   first_name: "Juan",
   surname: "Pérez",
   national_id: "12345678",
-  email: "juan@example.com",
-  date_of_birth: "1995-03-15",
+  email: "example@student.test",
+  date_of_birth: "2000-01-01",
 } as const;
 
 describe("studentCreateSchema", () => {
-  it("accepts valid input and defaults is_active to true", () => {
+  it("accepts valid input and defaults is_active and phone", () => {
     const r = studentCreateSchema.safeParse(base);
     expect(r.success).toBe(true);
-    if (r.success) expect(r.data.is_active).toBe(true);
+    if (r.success) {
+      expect(r.data.is_active).toBe(true);
+      expect(r.data.phone).toBeNull();
+    }
+  });
+
+  it("accepts and normalizes an optional phone", () => {
+    const r = studentCreateSchema.safeParse({ ...base, phone: "contact-value" });
+    expect(r.success).toBe(true);
+    if (r.success) expect(r.data.phone).toBe("contact-value");
+  });
+
+  it("accepts a phone with exactly 30 characters", () => {
+    expect(studentCreateSchema.safeParse({ ...base, phone: "p".repeat(30) }).success).toBe(true);
+  });
+
+  it("rejects a phone with more than 30 characters", () => {
+    expect(studentCreateSchema.safeParse({ ...base, phone: "p".repeat(31) }).success).toBe(false);
+  });
+
+  it("normalizes an empty phone to null", () => {
+    const r = studentCreateSchema.safeParse({ ...base, phone: "" });
+    expect(r.success).toBe(true);
+    if (r.success) expect(r.data.phone).toBeNull();
   });
 
   it.each([
@@ -68,6 +91,16 @@ describe("studentUpdateSchema", () => {
     expect(
       studentUpdateSchema.safeParse({ id, ...base, is_active: false }).success,
     ).toBe(true);
+  });
+
+  it("normalizes an empty phone to null and preserves absent phone", () => {
+    const emptyPhone = studentUpdateSchema.safeParse({ id, phone: "" });
+    expect(emptyPhone.success).toBe(true);
+    if (emptyPhone.success) expect(emptyPhone.data.phone).toBeNull();
+
+    const absentPhone = studentUpdateSchema.safeParse({ id, first_name: "Example" });
+    expect(absentPhone.success).toBe(true);
+    if (absentPhone.success) expect(absentPhone.data.phone).toBeUndefined();
   });
 
   it("rejects invalid UUID for id", () => {

@@ -59,6 +59,7 @@ interface StudentFormValues {
   surname: string
   national_id: string
   email: string
+  phone: string
   date_of_birth: string
   discipline_ids: string[]
   enrolled_at: string
@@ -88,6 +89,7 @@ function getDefaultValues(): StudentFormValues {
     surname: "",
     national_id: "",
     email: "",
+    phone: "",
     date_of_birth: "",
     discipline_ids: [],
     enrolled_at: getTodayString(),
@@ -123,6 +125,7 @@ export function StudentFormDialog({
   const surnameId = useId()
   const nationalId = useId()
   const emailId = useId()
+  const phoneId = useId()
   const dateOfBirthId = useId()
   const enrolledAtId = useId()
   const form = useForm<StudentFormValues>({
@@ -158,13 +161,12 @@ export function StudentFormDialog({
       }
 
       form.reset({
-        branch_id: hasActiveBranch(branches, result.data.branch_id)
-          ? result.data.branch_id
-          : "",
+        branch_id: contextBranchId ?? lockedBranchId ?? result.data.branch_id,
         first_name: result.data.first_name,
         surname: result.data.surname,
         national_id: result.data.national_id,
         email: result.data.email,
+        phone: result.data.phone ?? "",
         date_of_birth: formatDateForInput(result.data.date_of_birth),
         discipline_ids: [],
         enrolled_at: getTodayString(),
@@ -202,7 +204,15 @@ export function StudentFormDialog({
 
     try {
       if (isEditing) {
-        const result = await updateStudent({ id: studentId, ...values }, contextBranchId)
+        const result = await updateStudent(
+          {
+            id: studentId,
+            ...values,
+            branch_id: contextBranchId ?? lockedBranchId ?? values.branch_id,
+            phone: values.phone === "" ? null : values.phone,
+          },
+          contextBranchId
+        )
         if (!result.success) {
           setActionError(result.error ?? STUDENT_FORM_MESSAGES.SAVE_FAILURE)
           return
@@ -210,7 +220,11 @@ export function StudentFormDialog({
         toast.success(TOAST_MESSAGES.STUDENT_UPDATED)
       } else {
         // Create student, then enroll in selected disciplines
-        const createResult = await createStudent({ ...values, is_active: true })
+        const createResult = await createStudent({
+          ...values,
+          phone: values.phone === "" ? null : values.phone,
+          is_active: true,
+        })
         if (!createResult.success || !createResult.data) {
           setActionError(createResult.error ?? STUDENT_FORM_MESSAGES.SAVE_FAILURE)
           return
@@ -284,12 +298,27 @@ export function StudentFormDialog({
                 name="branch_id"
                 rules={{
                   validate: (value) =>
-                    hasActiveBranch(branches, value) || STUDENT_FORM_MESSAGES.ACTIVE_BRANCH_REQUIRED,
+                    isEditing ||
+                    hasActiveBranch(branches, value) ||
+                    STUDENT_FORM_MESSAGES.ACTIVE_BRANCH_REQUIRED,
                 }}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={Boolean(fieldState.error)}>
                     <FieldLabel htmlFor={branchFieldId}>{PRODUCT_TERMS.BRANCH}</FieldLabel>
-                    {lockedBranchId && !isEditing ? (
+                    {isEditing ? (
+                      <Input
+                        id={branchFieldId}
+                        value={
+                          branches.find(
+                            (branch) =>
+                              branch.id ===
+                              (contextBranchId ?? lockedBranchId ?? field.value)
+                          )?.name ?? STUDENT_FORM_MESSAGES.EDIT_BRANCH_UNAVAILABLE
+                        }
+                        disabled
+                        readOnly
+                      />
+                    ) : lockedBranchId ? (
                       <Input
                         id={branchFieldId}
                         value={branches.find((b) => b.id === lockedBranchId)?.name ?? lockedBranchId}
@@ -387,6 +416,22 @@ export function StudentFormDialog({
                   })}
                 />
                 <FieldError id={`${emailId}-error`} errors={[errors.email]} />
+              </Field>
+
+              <Field data-invalid={Boolean(errors.phone)}>
+                <FieldLabel htmlFor={phoneId}>{STUDENT_FORM_MESSAGES.PHONE_LABEL}</FieldLabel>
+                <Input
+                  id={phoneId}
+                  type="tel"
+                  maxLength={30}
+                  aria-describedby={errors.phone ? `${phoneId}-error` : undefined}
+                  aria-invalid={Boolean(errors.phone)}
+                  disabled={isPending}
+                  {...form.register("phone", {
+                    maxLength: { value: 30, message: STUDENT_MESSAGES.PHONE_MAX_LENGTH },
+                  })}
+                />
+                <FieldError id={`${phoneId}-error`} errors={[errors.phone]} />
               </Field>
 
               <Field data-invalid={Boolean(errors.date_of_birth)}>

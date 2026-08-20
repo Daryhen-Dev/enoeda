@@ -44,6 +44,7 @@ export interface StudentProfile {
   surname: string;
   national_id: string;
   email: string;
+  phone: string | null;
   date_of_birth: Date;
   is_active: boolean;
 }
@@ -212,6 +213,7 @@ export async function getStudentById(
         surname: true,
         national_id: true,
         email: true,
+        phone: true,
         date_of_birth: true,
         is_active: true,
       },
@@ -247,6 +249,7 @@ export async function getStudentById(
       surname: student.surname,
       national_id: student.national_id,
       email: student.email,
+      phone: student.phone,
       date_of_birth: student.date_of_birth,
       is_active: student.is_active,
     },
@@ -316,6 +319,7 @@ export async function createStudent(
         surname: parsed.data.surname,
         national_id: parsed.data.national_id,
         email: parsed.data.email,
+        phone: parsed.data.phone,
         date_of_birth: new Date(parsed.data.date_of_birth),
         is_active: parsed.data.is_active,
       },
@@ -371,6 +375,7 @@ export async function updateStudent(
       ? {}
       : { national_id: editableFields.national_id }),
     ...(editableFields.email === undefined ? {} : { email: editableFields.email }),
+    ...(editableFields.phone === undefined ? {} : { phone: editableFields.phone }),
     ...(editableFields.date_of_birth === undefined
       ? {}
       : { date_of_birth: new Date(editableFields.date_of_birth) }),

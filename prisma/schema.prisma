@@ -566,6 +566,7 @@ model students {
   surname             String
   national_id         String                @unique(map: "students_national_id_uq")
   email               String
+  phone               String?
   date_of_birth       DateTime              @db.Date
   is_active           Boolean               @default(true)
   created_at          DateTime              @default(now()) @db.Timestamptz(6)

@@ -70,12 +70,15 @@ export default async function StudentDetailPage({
   }
 
   if (branchResult.type === "selector") {
-    const { branch: _, ...otherParams } = search
+    const otherParams = Object.fromEntries(
+      Object.entries(search).filter(([key]) => key !== "branch")
+    ) as Record<string, string>
+
     return (
       <BranchSelector
         branches={branchResult.branches}
         currentPath={`/dashboard/students/${id}`}
-        currentParams={otherParams as Record<string, string>}
+        currentParams={otherParams}
       />
     )
   }
@@ -158,6 +161,7 @@ export default async function StudentDetailPage({
         <Button
           variant="ghost"
           size="icon-sm"
+          nativeButton={false}
           render={
             <Link href={`/dashboard/students?branch=${branchResult.branchId}`} aria-label="Back to students" />
           }
@@ -169,6 +173,9 @@ export default async function StudentDetailPage({
             {student.first_name} {student.surname}
           </h1>
           <p className="text-sm text-muted-foreground">{student.email}</p>
+          {student.phone && (
+            <p className="text-sm text-muted-foreground">{student.phone}</p>
+          )}
         </div>
       </div>
 

@@ -8,6 +8,16 @@ import { z } from "zod";
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
+const studentPhoneSchema = z
+  .string()
+  .max(30, { error: STUDENT_MESSAGES.PHONE_MAX_LENGTH })
+  .nullish()
+  .transform((value) => (value === "" ? null : value));
+
+const studentCreatePhoneSchema = studentPhoneSchema.transform((value) =>
+  value === undefined ? null : value
+);
+
 export const studentIdSchema = z.uuid({ error: STUDENT_MESSAGES.INVALID_ID });
 
 /**
@@ -52,6 +62,7 @@ export const studentCreateSchema = z.object({
     .min(1, { error: STUDENT_MESSAGES.NATIONAL_ID_REQUIRED })
     .max(30, { error: STUDENT_MESSAGES.NATIONAL_ID_MAX_LENGTH }),
   email: z.email({ error: STUDENT_MESSAGES.INVALID_EMAIL }),
+  phone: studentCreatePhoneSchema,
   date_of_birth: z
     .string()
     .regex(DATE_PATTERN, { error: STUDENT_MESSAGES.DATE_OF_BIRTH_FORMAT })
@@ -121,6 +132,7 @@ export const studentUpdateSchema = z
       .max(30, { error: STUDENT_MESSAGES.NATIONAL_ID_MAX_LENGTH })
       .optional(),
     email: z.email({ error: STUDENT_MESSAGES.INVALID_EMAIL }).optional(),
+    phone: studentPhoneSchema,
     date_of_birth: z
       .string()
       .regex(DATE_PATTERN, { error: STUDENT_MESSAGES.DATE_OF_BIRTH_FORMAT })
@@ -136,11 +148,12 @@ export const studentUpdateSchema = z
       data.surname !== undefined ||
       data.national_id !== undefined ||
       data.email !== undefined ||
+      data.phone !== undefined ||
       data.date_of_birth !== undefined,
     { error: STUDENT_MESSAGES.AT_LEAST_ONE_FIELD_REQUIRED }
   );
 
-export type StudentCreateInput = z.infer<typeof studentCreateSchema>;
+export type StudentCreateInput = z.input<typeof studentCreateSchema>;
 export type StudentListInput = z.infer<typeof studentListSchema>;
 export type StudentReactivateInput = z.infer<typeof studentReactivateSchema>;
-export type StudentUpdateInput = z.infer<typeof studentUpdateSchema>;
+export type StudentUpdateInput = z.input<typeof studentUpdateSchema>;

@@ -3793,6 +3793,7 @@ export const StudentsScalarFieldEnum = {
   surname: 'surname',
   national_id: 'national_id',
   email: 'email',
+  phone: 'phone',
   date_of_birth: 'date_of_birth',
   is_active: 'is_active',
   created_at: 'created_at',

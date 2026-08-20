@@ -333,6 +333,34 @@ describe("updateStudent — branch context enforcement", () => {
     expect(result.success).toBe(false);
   });
 
+  it("updates phone within the caller's branch", async () => {
+    const mockUpdate = vi.fn().mockResolvedValue({ id: STUDENT_ID });
+    mockWithAuthenticatedUser.mockImplementation(async (fn: (tx: unknown, ctx: unknown) => Promise<unknown>) => {
+      const tx = {
+        students: {
+          findUnique: vi.fn().mockResolvedValue({
+            id: STUDENT_ID,
+            branch_id: BRANCH_ID,
+            is_active: true,
+          }),
+          update: mockUpdate,
+        },
+      };
+      const data = await fn(tx, validAdminCtx);
+      return { success: true, data };
+    });
+
+    const result = await updateStudent(
+      { id: STUDENT_ID, phone: "contact-value" },
+      BRANCH_ID
+    );
+
+    expect(result.success).toBe(true);
+    expect(mockUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ phone: "contact-value" }) })
+    );
+  });
+
   it("succeeds when branch context and ownership match", async () => {
     const mockUpdate = vi.fn().mockResolvedValue({ id: STUDENT_ID });
     mockWithAuthenticatedUser.mockImplementation(async (fn: (tx: unknown, ctx: unknown) => Promise<unknown>) => {
