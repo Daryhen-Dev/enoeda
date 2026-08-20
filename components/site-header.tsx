@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import { BuildingIcon, ChevronDownIcon, CheckIcon } from "lucide-react"
 
+import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
 import {
   Drawer,
@@ -196,6 +197,7 @@ export function SiteHeader({
             </span>
           )}
 
+          <ThemeToggle />
           <span className="truncate text-sm text-muted-foreground">
             {displayName}
           </span>

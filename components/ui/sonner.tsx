@@ -1,6 +1,7 @@
 "use client"
 
 import type { CSSProperties } from "react"
+import { useTheme } from "next-themes"
 import { Toaster as Sonner, type ToasterProps } from "sonner"
 import {
   CircleCheckIcon,
@@ -11,15 +12,15 @@ import {
 } from "lucide-react"
 
 /**
- * App-wide toast host. Positioned top-right per the app's standard for
- * save/create confirmations. The app has no dark-mode theme provider, so
- * this always renders in the "light" theme rather than depending on
- * next-themes.
+ * App-wide, theme-aware toast host. Positioned top-right for standard
+ * save/create confirmations.
  */
 function Toaster({ ...props }: ToasterProps) {
+  const { resolvedTheme } = useTheme()
+
   return (
     <Sonner
-      theme="light"
+      theme={resolvedTheme === "dark" ? "dark" : "light"}
       position="top-right"
       className="toaster group"
       icons={{
