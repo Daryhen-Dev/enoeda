@@ -388,6 +388,7 @@ export function StudentList({
             <DataTable
               columns={columns}
               data={items}
+              isLoading={isPending}
               caption={
                 isActiveTab
                   ? STUDENT_DIRECTORY_MESSAGES.ACTIVE_TABLE_CAPTION
