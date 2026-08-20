@@ -13,6 +13,7 @@ import { getAttendanceStats } from "@/lib/domain/attendance/actions"
 import { listProgress, listNotes } from "@/lib/domain/progress/actions"
 import { getLevels } from "@/lib/domain/levels/actions"
 import { getStudentPayments } from "@/lib/domain/payments/actions"
+import { getBranchPaymentSettings } from "@/lib/domain/branches/actions"
 import { StudentDisciplinePanel } from "@/components/students/student-discipline-panel"
 import { EnrollmentHistory } from "@/components/students/enrollment-history"
 import { AttendanceStatsBadge } from "@/components/attendance/attendance-stats-badge"
@@ -85,6 +86,14 @@ export default async function StudentDetailPage({
 
   // Valid branch — proceed with scoped data
   const canManage = branchResult.canManage
+  const paymentSettingsResult = canManage
+    ? await getBranchPaymentSettings(branchResult.branchId)
+    : null
+  const paymentSettings = paymentSettingsResult?.success
+    ? paymentSettingsResult.data
+    : undefined
+  const paymentSettingsAvailable = paymentSettings !== undefined
+  const paymentEditWindowDays = paymentSettings?.payment_edit_window_days ?? null
 
   const [studentResult, disciplinesResult, historyResult] = await Promise.all([
     getStudentById(id, branchResult.branchId),
@@ -262,6 +271,10 @@ export default async function StudentDetailPage({
         <StudentPaymentHistory
           monthly={paymentsData.monthly}
           perClass={paymentsData.perClass}
+          branchId={branchResult.branchId}
+          canManage={canManage}
+          paymentSettingsAvailable={paymentSettingsAvailable}
+          paymentEditWindowDays={paymentEditWindowDays}
         />
         {canManage && activeEnrollments.length > 0 && (
           <div className="flex flex-wrap gap-2">

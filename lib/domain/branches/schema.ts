@@ -107,3 +107,14 @@ export const branchUpdateSchema = z
 export type BranchCreateInput = z.infer<typeof branchCreateSchema>;
 export type BranchListInput = z.infer<typeof branchListSchema>;
 export type BranchUpdateInput = z.infer<typeof branchUpdateSchema>;
+
+
+export const branchPaymentSettingsSchema = z
+  .object({
+    branch_id: branchIdSchema,
+    payment_due_day: z.number().int().min(1).max(31),
+    payment_edit_window_days: z.number().int().min(0).max(365),
+  })
+  .strict();
+
+export type BranchPaymentSettingsInput = z.infer<typeof branchPaymentSettingsSchema>;

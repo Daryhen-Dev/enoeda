@@ -7,27 +7,36 @@ import { BanknoteIcon } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet"
 import { registerClassPayment } from "@/lib/domain/payments/actions"
 import {
   COMMON_MESSAGES,
-  TOAST_MESSAGES,
   PAYMENT_MESSAGES,
+  TOAST_MESSAGES,
 } from "@/lib/localization/es-ec"
 
 interface RegisterClassPaymentDialogProps {
   studentDisciplineId: string
   branchId: string
+}
+
+function getLocalDateInputValue() {
+  const date = new Date()
+  const month = String(date.getMonth() + 1).padStart(2, "0")
+  const day = String(date.getDate()).padStart(2, "0")
+
+  return `${date.getFullYear()}-${month}-${day}`
 }
 
 export function RegisterClassPaymentDialog({
@@ -36,9 +45,14 @@ export function RegisterClassPaymentDialog({
 }: RegisterClassPaymentDialogProps) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
-  const [classDate, setClassDate] = useState("")
+  const [classDate, setClassDate] = useState(getLocalDateInputValue)
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+
+  function resetForm() {
+    setClassDate(getLocalDateInputValue())
+    setError(null)
+  }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -50,8 +64,7 @@ export function RegisterClassPaymentDialog({
       })
       if (result.success) {
         setOpen(false)
-        setClassDate("")
-        setError(null)
+        resetForm()
         toast.success(TOAST_MESSAGES.CLASS_PAYMENT_REGISTERED)
         router.refresh()
       } else {
@@ -61,27 +74,26 @@ export function RegisterClassPaymentDialog({
   }
 
   return (
-    <Dialog
+    <Sheet
       open={open}
       onOpenChange={(nextOpen) => {
+        if (isPending) return
+
         setOpen(nextOpen)
-        if (!nextOpen) {
-          setClassDate("")
-          setError(null)
-        }
+        resetForm()
       }}
     >
-      <DialogTrigger render={<Button variant="outline" size="sm" />}>
+      <SheetTrigger render={<Button variant="outline" size="sm" />}>
         <BanknoteIcon className="size-4" />
         {PAYMENT_MESSAGES.CHARGE_CLASS}
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{PAYMENT_MESSAGES.REGISTER_CLASS_TITLE}</DialogTitle>
-          <DialogDescription>
+      </SheetTrigger>
+      <SheetContent side="right" size="content" showCloseButton={!isPending}>
+        <SheetHeader>
+          <SheetTitle>{PAYMENT_MESSAGES.REGISTER_CLASS_TITLE}</SheetTitle>
+          <SheetDescription>
             {PAYMENT_MESSAGES.REGISTER_CLASS_DESCRIPTION}
-          </DialogDescription>
-        </DialogHeader>
+          </SheetDescription>
+        </SheetHeader>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <FieldGroup>
@@ -93,19 +105,30 @@ export function RegisterClassPaymentDialog({
                 id="class-date"
                 type="date"
                 value={classDate}
-                onChange={(e) => setClassDate(e.target.value)}
+                onChange={(event) => setClassDate(event.target.value)}
+                aria-invalid={Boolean(error)}
+                aria-describedby={error ? "class-payment-error" : undefined}
               />
             </Field>
-            {error && <FieldError>{error}</FieldError>}
+            {error && <FieldError id="class-payment-error">{error}</FieldError>}
           </FieldGroup>
 
-          <DialogFooter>
+          <SheetFooter>
+            <SheetClose
+              render={
+                <Button type="button" variant="outline" disabled={isPending} />
+              }
+            >
+              {COMMON_MESSAGES.CANCEL}
+            </SheetClose>
             <Button type="submit" disabled={isPending}>
-              {isPending ? PAYMENT_MESSAGES.SAVING : PAYMENT_MESSAGES.REGISTER_ACTION}
+              {isPending
+                ? PAYMENT_MESSAGES.SAVING
+                : PAYMENT_MESSAGES.REGISTER_ACTION}
             </Button>
-          </DialogFooter>
+          </SheetFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   )
 }

@@ -14,6 +14,7 @@ import type { AuthenticatedContext } from "@/lib/auth/server-context";
 export const BRANCH_ASSERTION_MESSAGES = {
   MISSING_BRANCH_CONTEXT: "Contexto de sucursal requerido.",
   CALLER_NOT_ASSIGNED: "No tiene asignación activa en la sucursal indicada.",
+  CALLER_NOT_BRANCH_ADMIN: "Se requiere una asignación activa de administrador en la sucursal indicada.",
   CROSS_BRANCH_DENIED: "Operación denegada: el recurso pertenece a otra sucursal.",
 } as const;
 
@@ -74,4 +75,27 @@ export function assertBranchContextAndOwnership(
   if (callerError) return callerError;
 
   return assertResourceBranchOwnership(resourceBranchId, requestedBranchId);
+}
+
+
+/**
+ * Asserts the caller has an active administrator assignment for the branch.
+ * This is intentionally narrower than operational context: teachers may work
+ * in a branch, but cannot correct payments or change payment settings.
+ */
+export function assertCallerBranchAdmin(
+  ctx: AuthenticatedContext,
+  branchId: string
+): string | null {
+  if (!branchId) {
+    return BRANCH_ASSERTION_MESSAGES.MISSING_BRANCH_CONTEXT;
+  }
+
+  const hasAdminAssignment = ctx.assignments.some(
+    (assignment) => assignment.branchId === branchId && assignment.role === "admin"
+  );
+
+  return hasAdminAssignment
+    ? null
+    : BRANCH_ASSERTION_MESSAGES.CALLER_NOT_BRANCH_ADMIN;
 }

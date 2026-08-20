@@ -1,91 +1,124 @@
 "use client"
 
-import type { PaymentRecord, ClassPaymentRecord } from "@/lib/domain/payments/actions"
+import type { ColumnDef, TableFeatures } from "@tanstack/react-table"
+
+import { DataTable } from "@/components/data-table"
+import {
+  PAYMENT_HISTORY_KIND,
+  PaymentHistoryActions,
+  type PaymentHistoryActionRecord,
+} from "@/components/payments/payment-history-actions"
+import type { ClassPaymentRecord, PaymentRecord } from "@/lib/domain/payments/actions"
 import { formatDate, PAYMENT_MESSAGES } from "@/lib/localization/es-ec"
 
 interface StudentPaymentHistoryProps {
   monthly: PaymentRecord[]
   perClass: ClassPaymentRecord[]
+  branchId: string
+  canManage: boolean
+  paymentSettingsAvailable: boolean
+  paymentEditWindowDays: number | null
 }
 
 interface CombinedPaymentEntry {
   id: string
-  type: "monthly" | "class"
   discipline_name: string
   amount: number
   date: Date
+  type: string
   detail: string
+  record: PaymentHistoryActionRecord
 }
 
 export function StudentPaymentHistory({
   monthly,
   perClass,
+  branchId,
+  canManage,
+  paymentSettingsAvailable,
+  paymentEditWindowDays,
 }: StudentPaymentHistoryProps) {
   const entries: CombinedPaymentEntry[] = [
-    ...monthly.map((p) => ({
-      id: p.id,
-      type: "monthly" as const,
-      discipline_name: p.discipline_name,
-      amount: p.amount,
-      date: new Date(p.payment_date),
-      detail: `${p.months_covered}m`,
+    ...monthly.map((payment) => ({
+      id: payment.id,
+      discipline_name: payment.discipline_name,
+      amount: payment.amount,
+      date: payment.payment_date,
+      type: PAYMENT_MESSAGES.TYPE_MONTHLY,
+      detail: `${payment.months_covered}m`,
+      record: {
+        id: payment.id,
+        kind: PAYMENT_HISTORY_KIND.MONTHLY,
+        amount: payment.amount,
+        payment_date: payment.payment_date,
+        class_date: payment.payment_date,
+        period_start: payment.period_start,
+        period_end: payment.period_end,
+        created_at: payment.created_at,
+        note: payment.note,
+      },
     })),
-    ...perClass.map((p) => ({
-      id: p.id,
-      type: "class" as const,
-      discipline_name: p.discipline_name,
-      amount: p.amount,
-      date: new Date(p.class_date),
+    ...perClass.map((payment) => ({
+      id: payment.id,
+      discipline_name: payment.discipline_name,
+      amount: payment.amount,
+      date: payment.class_date,
+      type: PAYMENT_MESSAGES.TYPE_CLASS,
       detail: "",
+      record: {
+        id: payment.id,
+        kind: PAYMENT_HISTORY_KIND.CLASS,
+        amount: payment.amount,
+        payment_date: payment.class_date,
+        class_date: payment.class_date,
+        period_start: payment.class_date,
+        period_end: payment.class_date,
+        created_at: payment.created_at,
+        note: null,
+      },
     })),
-  ].sort((a, b) => b.date.getTime() - a.date.getTime())
+  ].sort((left, right) => right.date.getTime() - left.date.getTime())
 
-  if (entries.length === 0) {
-    return (
-      <p className="text-sm text-muted-foreground">
-        {PAYMENT_MESSAGES.NO_PAYMENTS}
-      </p>
-    )
-  }
+  const columns: ColumnDef<TableFeatures, CombinedPaymentEntry>[] = [
+    {
+      accessorKey: "date",
+      header: PAYMENT_MESSAGES.PAYMENT_DATE_LABEL,
+      cell: ({ row }) => formatDate(row.original.date),
+    },
+    { accessorKey: "discipline_name", header: PAYMENT_MESSAGES.DISCIPLINE_LABEL },
+    {
+      accessorKey: "amount",
+      header: PAYMENT_MESSAGES.AMOUNT_LABEL,
+      cell: ({ row }) => `$${row.original.amount.toFixed(2)}`,
+    },
+    {
+      accessorKey: "type",
+      header: PAYMENT_MESSAGES.TYPE_MONTHLY,
+      cell: ({ row }) => row.original.detail
+        ? `${row.original.type} (${row.original.detail})`
+        : row.original.type,
+    },
+    {
+      id: "actions",
+      header: PAYMENT_MESSAGES.ACTIONS_LABEL,
+      cell: ({ row }) => (
+        <PaymentHistoryActions
+          record={row.original.record}
+          branchId={branchId}
+          canManage={canManage}
+          paymentSettingsAvailable={paymentSettingsAvailable}
+          paymentEditWindowDays={paymentEditWindowDays}
+        />
+      ),
+    },
+  ]
 
   return (
-    <div className="overflow-x-auto rounded-lg border">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b bg-muted/50">
-            <th className="px-4 py-2 text-left font-medium">
-              {PAYMENT_MESSAGES.PAYMENT_DATE_LABEL}
-            </th>
-            <th className="px-4 py-2 text-left font-medium">
-              {PAYMENT_MESSAGES.DISCIPLINE_LABEL}
-            </th>
-            <th className="px-4 py-2 text-left font-medium">
-              {PAYMENT_MESSAGES.AMOUNT_LABEL}
-            </th>
-            <th className="px-4 py-2 text-left font-medium">
-              {PAYMENT_MESSAGES.TYPE_MONTHLY}
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {entries.map((entry) => (
-            <tr key={entry.id} className="border-b last:border-b-0">
-              <td className="px-4 py-2">{formatDate(entry.date)}</td>
-              <td className="px-4 py-2 text-muted-foreground">
-                {entry.discipline_name}
-              </td>
-              <td className="px-4 py-2 tabular-nums">
-                ${entry.amount.toFixed(2)}
-              </td>
-              <td className="px-4 py-2">
-                {entry.type === "monthly"
-                  ? `${PAYMENT_MESSAGES.TYPE_MONTHLY} (${entry.detail})`
-                  : PAYMENT_MESSAGES.TYPE_CLASS}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <DataTable
+      columns={columns}
+      data={entries}
+      caption={PAYMENT_MESSAGES.HISTORY_TITLE}
+      emptyState={PAYMENT_MESSAGES.NO_PAYMENTS}
+    />
   )
 }

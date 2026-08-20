@@ -2,22 +2,33 @@
 
 import { withAuthenticatedUser } from "@/lib/auth/server-context";
 import {
+  assertCallerBranchAdmin,
   assertCallerBranchContext,
   BRANCH_ASSERTION_MESSAGES,
 } from "@/lib/auth/branch-assertion";
-import { COMMON_MESSAGES, PAYMENT_MESSAGES } from "@/lib/localization/es-ec";
+import { formatDatabaseDateOnly, formatDateOnly, parseDateOnly } from "@/lib/date";
+import type { TransactionClient } from "@/lib/prisma/client";
+import { BRANCH_MESSAGES, COMMON_MESSAGES, PAYMENT_MESSAGES } from "@/lib/localization/es-ec";
 import {
   configureDisciplineClassPriceSchema,
   registerMonthlyPaymentSchema,
   registerClassPaymentSchema,
   getStudentPaymentsSchema,
   paymentConsoleFilterSchema,
+  deriveMonthsCovered,
+  correctMonthlyPaymentSchema,
+  correctClassPaymentSchema,
+  deletePaymentSchema,
   type ConfigureDisciplineClassPriceInput,
   type RegisterMonthlyPaymentInput,
   type RegisterClassPaymentInput,
+  type CorrectMonthlyPaymentInput,
+  type CorrectClassPaymentInput,
+  type DeletePaymentInput,
   type GetStudentPaymentsInput,
   type PaymentConsoleFilterInput,
 } from "./schema";
+import { isPaymentCorrectionWithinWindow } from "./reconciliation";
 import {
   countOverdueStudents,
   getMonthlyPaymentSummaryQuery,
@@ -60,6 +71,38 @@ export interface ClassPaymentRecord {
   created_at: Date;
 }
 
+interface BranchPaymentSettingsRow {
+  payment_due_day: number;
+  payment_edit_window_days: number;
+}
+
+interface PaymentResourceRow {
+  id: string;
+  created_at: Date;
+  student_discipline_id: string;
+  student_disciplines: { students: { branch_id: string } };
+}
+
+function mapPaymentTransactionError(error: unknown): string | undefined {
+  if (!(error instanceof Error)) return undefined;
+  if (error.message.includes("payments_coverage_no_overlap")) {
+    return PAYMENT_MESSAGES.PERIOD_OVERLAP;
+  }
+  return undefined;
+}
+
+async function getBranchPaymentSettings(
+  tx: TransactionClient,
+  branchId: string
+): Promise<BranchPaymentSettingsRow | null> {
+  const rows = await tx.$queryRaw<BranchPaymentSettingsRow[]>`
+    SELECT payment_due_day, payment_edit_window_days
+    FROM public.branches
+    WHERE id = ${branchId} AND is_active = true
+  `;
+  return rows[0] ?? null;
+}
+
 /**
  * Admin sets/clears class_price on a discipline.
  * RLS restricts UPDATE to Admin via the policy on disciplines.
@@ -76,8 +119,8 @@ export async function configureDisciplineClassPrice(
 
   try {
     const result = await withAuthenticatedUser(async (tx, ctx) => {
-      // Caller must have active branch assignment (defense-in-depth for global mutation)
-      const branchError = assertCallerBranchContext(ctx, parsed.data.branch_id);
+      // Pricing changes are restricted to an active branch administrator.
+      const branchError = assertCallerBranchAdmin(ctx, parsed.data.branch_id);
       if (branchError) {
         return { id: null, error: branchError };
       }
@@ -101,9 +144,9 @@ export async function configureDisciplineClassPrice(
 }
 
 /**
- * Admin registers a monthly/block payment (1-12 months).
- * Atomically updates next_due_date on the enrollment.
- * Requires branch context; validates enrollment belongs to the caller's branch.
+ * An active branch admin registers a monthly payment for an inclusive range
+ * of up to 24 calendar months. The database reconciles next_due_date using
+ * the branch due-day configuration after each insert.
  */
 export async function registerMonthlyPayment(
   input: RegisterMonthlyPaymentInput
@@ -113,89 +156,77 @@ export async function registerMonthlyPayment(
     return { success: false, error: parsed.error.issues[0].message };
   }
 
-  try {
-    const result = await withAuthenticatedUser(async (tx, ctx) => {
-      // Assert caller branch context
-      const branchError = assertCallerBranchContext(ctx, parsed.data.branch_id);
+  const result = await withAuthenticatedUser(
+    async (tx, ctx) => {
+      const branchError = assertCallerBranchAdmin(ctx, parsed.data.branch_id);
       if (branchError) {
         return { id: null, next_due_date: null, error: branchError };
       }
 
       const enrollment = await tx.student_disciplines.findUnique({
         where: { id: parsed.data.student_discipline_id },
-        select: {
-          id: true,
-          next_due_date: true,
-          students: { select: { branch_id: true } },
-        },
+        select: { id: true, students: { select: { branch_id: true } } },
       });
-
       if (!enrollment) {
         return { id: null, next_due_date: null, error: PAYMENT_MESSAGES.ENROLLMENT_NOT_FOUND };
       }
-
-      // Cross-branch guard: enrollment's student must belong to caller's branch
       if (enrollment.students.branch_id !== parsed.data.branch_id) {
         return { id: null, next_due_date: null, error: BRANCH_ASSERTION_MESSAGES.CROSS_BRANCH_DENIED };
       }
 
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      const settings = await getBranchPaymentSettings(tx, parsed.data.branch_id);
+      if (!settings) {
+        return { id: null, next_due_date: null, error: BRANCH_MESSAGES.INACTIVE_OR_NOT_FOUND };
+      }
 
-      const paymentDate = parsed.data.payment_date
-        ? new Date(parsed.data.payment_date)
-        : today;
-
-      const existingDueDate = enrollment.next_due_date
-        ? new Date(enrollment.next_due_date)
-        : null;
-
-      const base =
-        existingDueDate && existingDueDate > today
-          ? existingDueDate
-          : paymentDate;
-
-      const periodEnd = new Date(base);
-      periodEnd.setMonth(periodEnd.getMonth() + parsed.data.months_covered);
+      const overlap = await tx.payments.findFirst({
+        where: {
+          student_discipline_id: enrollment.id,
+          period_start: { lt: parsed.data.period_end },
+          period_end: { gt: parsed.data.period_start },
+        },
+        select: { id: true },
+      });
+      if (overlap) {
+        return { id: null, next_due_date: null, error: PAYMENT_MESSAGES.PERIOD_OVERLAP };
+      }
 
       const payment = await tx.payments.create({
         data: {
           student_discipline_id: enrollment.id,
           amount: parsed.data.amount,
-          months_covered: parsed.data.months_covered,
-          period_start: base,
-          period_end: periodEnd,
-          payment_date: paymentDate,
+          months_covered: deriveMonthsCovered(parsed.data.period_start, parsed.data.period_end),
+          period_start: parsed.data.period_start,
+          period_end: parsed.data.period_end,
+          payment_date: parsed.data.payment_date ?? formatDateOnly(new Date()),
           recorded_by: ctx.userId,
           note: parsed.data.note ?? null,
         },
         select: { id: true },
       });
 
-      await tx.student_disciplines.update({
+      const reconciledEnrollment = await tx.student_disciplines.findUnique({
         where: { id: enrollment.id },
-        data: { next_due_date: periodEnd },
+        select: { next_due_date: true },
       });
+      if (!reconciledEnrollment?.next_due_date) {
+        throw new Error("payment reconciliation did not return a due date");
+      }
 
       return {
         id: payment.id,
-        next_due_date: periodEnd.toISOString().split("T")[0],
+        next_due_date: formatDatabaseDateOnly(reconciledEnrollment.next_due_date),
         error: null,
       };
-    });
+    },
+    { mapTransactionError: mapPaymentTransactionError }
+  );
 
-    if (!result.success) return result;
-    if (result.data.id === null) {
-      return { success: false, error: result.data.error ?? COMMON_MESSAGES.UNEXPECTED_ERROR };
-    }
-
-    return {
-      success: true,
-      data: { id: result.data.id, next_due_date: result.data.next_due_date! },
-    };
-  } catch {
-    return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
+  if (!result.success) return result;
+  if (result.data.id === null || result.data.next_due_date === null) {
+    return { success: false, error: result.data.error ?? COMMON_MESSAGES.UNEXPECTED_ERROR };
   }
+  return { success: true, data: { id: result.data.id, next_due_date: result.data.next_due_date } };
 }
 
 /**
@@ -242,12 +273,17 @@ export async function registerClassPayment(
         return { id: null, amount: null, error: PAYMENT_MESSAGES.CLASS_PRICE_NOT_SET };
       }
 
+      const settings = await getBranchPaymentSettings(tx, parsed.data.branch_id);
+      if (!settings) {
+        return { id: null, amount: null, error: BRANCH_MESSAGES.INACTIVE_OR_NOT_FOUND };
+      }
+
       const classPayment = await tx.class_payments.create({
         data: {
           student_discipline_id: enrollment.id,
           amount: classPrice,
           class_date: parsed.data.class_date
-            ? new Date(parsed.data.class_date)
+            ? parseDateOnly(parsed.data.class_date)
             : undefined,
           scheduled_class_id: parsed.data.scheduled_class_id ?? null,
           recorded_by: ctx.userId,
@@ -484,4 +520,193 @@ export async function getMonthlyPaymentSummary(
   } catch {
     return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
   }
+}
+
+
+export async function correctMonthlyPayment(
+  input: CorrectMonthlyPaymentInput
+): Promise<ActionResult<{ id: string; next_due_date: string }>> {
+  const parsed = correctMonthlyPaymentSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: parsed.error.issues[0].message };
+
+  const result = await withAuthenticatedUser(async (tx, ctx) => {
+    const branchError = assertCallerBranchAdmin(ctx, parsed.data.branch_id);
+    if (branchError) return { id: null, next_due_date: null, error: branchError };
+
+    const payment: PaymentResourceRow | null = await tx.payments.findUnique({
+      where: { id: parsed.data.id },
+      select: {
+        id: true,
+        created_at: true,
+        student_discipline_id: true,
+        student_disciplines: { select: { students: { select: { branch_id: true } } } },
+      },
+    });
+    if (!payment) return { id: null, next_due_date: null, error: PAYMENT_MESSAGES.PAYMENT_NOT_FOUND };
+    if (payment.student_disciplines.students.branch_id !== parsed.data.branch_id) {
+      return { id: null, next_due_date: null, error: BRANCH_ASSERTION_MESSAGES.CROSS_BRANCH_DENIED };
+    }
+    const settings = await getBranchPaymentSettings(tx, parsed.data.branch_id);
+    if (!settings) {
+      return { id: null, next_due_date: null, error: BRANCH_MESSAGES.INACTIVE_OR_NOT_FOUND };
+    }
+    if (!isPaymentCorrectionWithinWindow(payment.created_at, settings.payment_edit_window_days)) {
+      return { id: null, next_due_date: null, error: PAYMENT_MESSAGES.CORRECTION_WINDOW_EXCEEDED };
+    }
+
+    const overlap = await tx.payments.findFirst({
+      where: {
+        student_discipline_id: payment.student_discipline_id,
+        id: { not: payment.id },
+        period_start: { lt: parsed.data.period_end },
+        period_end: { gt: parsed.data.period_start },
+      },
+      select: { id: true },
+    });
+    if (overlap) return { id: null, next_due_date: null, error: PAYMENT_MESSAGES.PERIOD_OVERLAP };
+
+    await tx.payments.update({
+      where: { id: payment.id },
+      data: {
+        amount: parsed.data.amount,
+        months_covered: deriveMonthsCovered(parsed.data.period_start, parsed.data.period_end),
+        period_start: parsed.data.period_start,
+        period_end: parsed.data.period_end,
+        payment_date: parsed.data.payment_date ?? formatDateOnly(new Date()),
+        note: parsed.data.note ?? null,
+      },
+      select: { id: true },
+    });
+    const enrollment = await tx.student_disciplines.findUnique({
+      where: { id: payment.student_discipline_id },
+      select: { next_due_date: true },
+    });
+    if (!enrollment?.next_due_date) throw new Error("payment reconciliation did not return a due date");
+    return { id: payment.id, next_due_date: formatDatabaseDateOnly(enrollment.next_due_date), error: null };
+  }, { mapTransactionError: mapPaymentTransactionError });
+
+  if (!result.success) return result;
+  if (result.data.id === null || result.data.next_due_date === null) {
+    return { success: false, error: result.data.error ?? COMMON_MESSAGES.UNEXPECTED_ERROR };
+  }
+  return { success: true, data: { id: result.data.id, next_due_date: result.data.next_due_date } };
+}
+
+export async function correctClassPayment(
+  input: CorrectClassPaymentInput
+): Promise<ActionResult<{ id: string }>> {
+  const parsed = correctClassPaymentSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: parsed.error.issues[0].message };
+
+  const result = await withAuthenticatedUser(async (tx, ctx) => {
+    const branchError = assertCallerBranchAdmin(ctx, parsed.data.branch_id);
+    if (branchError) return { id: null, error: branchError };
+
+    const payment: PaymentResourceRow | null = await tx.class_payments.findUnique({
+      where: { id: parsed.data.id },
+      select: {
+        id: true,
+        created_at: true,
+        student_discipline_id: true,
+        student_disciplines: { select: { students: { select: { branch_id: true } } } },
+      },
+    });
+    if (!payment) return { id: null, error: PAYMENT_MESSAGES.PAYMENT_NOT_FOUND };
+    if (payment.student_disciplines.students.branch_id !== parsed.data.branch_id) {
+      return { id: null, error: BRANCH_ASSERTION_MESSAGES.CROSS_BRANCH_DENIED };
+    }
+    const settings = await getBranchPaymentSettings(tx, parsed.data.branch_id);
+    if (!settings) {
+      return { id: null, error: BRANCH_MESSAGES.INACTIVE_OR_NOT_FOUND };
+    }
+    if (!isPaymentCorrectionWithinWindow(payment.created_at, settings.payment_edit_window_days)) {
+      return { id: null, error: PAYMENT_MESSAGES.CORRECTION_WINDOW_EXCEEDED };
+    }
+
+    await tx.class_payments.update({
+      where: { id: payment.id },
+      data: { amount: parsed.data.amount, class_date: parseDateOnly(parsed.data.class_date) },
+      select: { id: true },
+    });
+    return { id: payment.id, error: null };
+  });
+
+  if (!result.success) return result;
+  return result.data.id === null
+    ? { success: false, error: result.data.error ?? COMMON_MESSAGES.UNEXPECTED_ERROR }
+    : { success: true, data: { id: result.data.id } };
+}
+
+export async function deleteMonthlyPayment(
+  input: DeletePaymentInput
+): Promise<ActionResult<{ id: string }>> {
+  return deletePayment(input, "monthly");
+}
+
+export async function deleteClassPayment(
+  input: DeletePaymentInput
+): Promise<ActionResult<{ id: string }>> {
+  return deletePayment(input, "class");
+}
+
+const PAYMENT_KIND = {
+  MONTHLY: "monthly",
+  CLASS: "class",
+} as const;
+type PaymentKind = (typeof PAYMENT_KIND)[keyof typeof PAYMENT_KIND];
+
+async function deletePayment(
+  input: DeletePaymentInput,
+  kind: PaymentKind
+): Promise<ActionResult<{ id: string }>> {
+  const parsed = deletePaymentSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: parsed.error.issues[0].message };
+
+  const result = await withAuthenticatedUser(async (tx, ctx) => {
+    const branchError = assertCallerBranchAdmin(ctx, parsed.data.branch_id);
+    if (branchError) return { id: null, error: branchError };
+
+    const payment: PaymentResourceRow | null = kind === PAYMENT_KIND.MONTHLY
+      ? await tx.payments.findUnique({
+          where: { id: parsed.data.id },
+          select: {
+            id: true,
+            created_at: true,
+            student_discipline_id: true,
+            student_disciplines: { select: { students: { select: { branch_id: true } } } },
+          },
+        })
+      : await tx.class_payments.findUnique({
+          where: { id: parsed.data.id },
+          select: {
+            id: true,
+            created_at: true,
+            student_discipline_id: true,
+            student_disciplines: { select: { students: { select: { branch_id: true } } } },
+          },
+        });
+    if (!payment) return { id: null, error: PAYMENT_MESSAGES.PAYMENT_NOT_FOUND };
+    if (payment.student_disciplines.students.branch_id !== parsed.data.branch_id) {
+      return { id: null, error: BRANCH_ASSERTION_MESSAGES.CROSS_BRANCH_DENIED };
+    }
+    const settings = await getBranchPaymentSettings(tx, parsed.data.branch_id);
+    if (!settings) {
+      return { id: null, error: BRANCH_MESSAGES.INACTIVE_OR_NOT_FOUND };
+    }
+    if (!isPaymentCorrectionWithinWindow(payment.created_at, settings.payment_edit_window_days)) {
+      return { id: null, error: PAYMENT_MESSAGES.CORRECTION_WINDOW_EXCEEDED };
+    }
+
+    if (kind === PAYMENT_KIND.MONTHLY) {
+      await tx.payments.delete({ where: { id: payment.id }, select: { id: true } });
+    } else {
+      await tx.class_payments.delete({ where: { id: payment.id }, select: { id: true } });
+    }
+    return { id: payment.id, error: null };
+  });
+
+  if (!result.success) return result;
+  return result.data.id === null
+    ? { success: false, error: result.data.error ?? COMMON_MESSAGES.UNEXPECTED_ERROR }
+    : { success: true, data: { id: result.data.id } };
 }

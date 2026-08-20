@@ -1,6 +1,7 @@
 "use server";
 
 import { withAuthenticatedUser } from "@/lib/auth/server-context";
+import { assertCallerBranchAdmin } from "@/lib/auth/branch-assertion";
 import { BRANCH_MESSAGES, COMMON_MESSAGES } from "@/lib/localization/es-ec";
 import {
   BRANCH_STATUS,
@@ -9,8 +10,10 @@ import {
   branchListSchema,
   branchRecordSchema,
   branchUpdateSchema,
+  branchPaymentSettingsSchema,
   type BranchCreateInput,
   type BranchUpdateInput,
+  type BranchPaymentSettingsInput,
   type EcuadorTimeZone,
 } from "./schema";
 
@@ -387,6 +390,70 @@ export async function getBranch(
     }
 
     return { success: true, data: record.data };
+  } catch {
+    return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
+  }
+}
+
+
+/** Payment-specific branch settings intentionally use raw SQL until Prisma is regenerated. */
+export interface BranchPaymentSettings {
+  branch_id: string;
+  payment_due_day: number;
+  payment_edit_window_days: number;
+}
+
+export async function getBranchPaymentSettings(
+  branchId: string
+): Promise<ActionResult<BranchPaymentSettings>> {
+  const parsed = branchIdSchema.safeParse(branchId);
+  if (!parsed.success) return { success: false, error: parsed.error.issues[0].message };
+
+  try {
+    const result = await withAuthenticatedUser(async (tx, ctx) => {
+      const branchError = assertCallerBranchAdmin(ctx, parsed.data);
+      if (branchError) return { settings: null, error: branchError };
+      const rows = await tx.$queryRaw<BranchPaymentSettings[]>`
+        SELECT id AS branch_id, payment_due_day, payment_edit_window_days
+        FROM public.branches
+        WHERE id = ${parsed.data} AND is_active = true
+      `;
+      return { settings: rows[0] ?? null, error: null };
+    });
+    if (!result.success) return result;
+    if (!result.data.settings) {
+      return { success: false, error: result.data.error ?? BRANCH_MESSAGES.INACTIVE_OR_NOT_FOUND };
+    }
+    return { success: true, data: result.data.settings };
+  } catch {
+    return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
+  }
+}
+
+export async function saveBranchPaymentSettings(
+  input: BranchPaymentSettingsInput
+): Promise<ActionResult<BranchPaymentSettings>> {
+  const parsed = branchPaymentSettingsSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: parsed.error.issues[0].message };
+
+  try {
+    const result = await withAuthenticatedUser(async (tx, ctx) => {
+      const branchError = assertCallerBranchAdmin(ctx, parsed.data.branch_id);
+      if (branchError) return { settings: null, error: branchError };
+      const rows = await tx.$queryRaw<BranchPaymentSettings[]>`
+        UPDATE public.branches
+        SET payment_due_day = ${parsed.data.payment_due_day},
+            payment_edit_window_days = ${parsed.data.payment_edit_window_days}
+        WHERE id = ${parsed.data.branch_id} AND is_active = true
+        RETURNING id AS branch_id, payment_due_day, payment_edit_window_days
+      `;
+      return { settings: rows[0] ?? null, error: null };
+    });
+    if (!result.success) return result;
+    if (!result.data.settings) {
+      return { success: false, error: result.data.error ?? BRANCH_MESSAGES.INACTIVE_OR_NOT_FOUND };
+    }
+    return { success: true, data: result.data.settings };
   } catch {
     return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
   }
