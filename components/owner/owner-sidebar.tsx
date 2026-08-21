@@ -4,6 +4,7 @@ import type { ComponentProps } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
+  BookOpenIcon,
   BuildingIcon,
   LayoutDashboardIcon,
   ShieldIcon,
@@ -34,6 +35,11 @@ const navigationItems = [
     title: OWNER_MESSAGES.BRANCHES,
     url: "/owner/branches",
     icon: BuildingIcon,
+  },
+  {
+    title: OWNER_MESSAGES.DISCIPLINES,
+    url: "/owner/disciplines",
+    icon: BookOpenIcon,
   },
 ] as const
 

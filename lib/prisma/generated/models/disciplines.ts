@@ -40,6 +40,7 @@ export type DisciplinesMinAggregateOutputType = {
   code: string | null
   is_active: boolean | null
   class_price: runtime.Decimal | null
+  initial_level_id: string | null
   created_at: Date | null
   updated_at: Date | null
 }
@@ -50,6 +51,7 @@ export type DisciplinesMaxAggregateOutputType = {
   code: string | null
   is_active: boolean | null
   class_price: runtime.Decimal | null
+  initial_level_id: string | null
   created_at: Date | null
   updated_at: Date | null
 }
@@ -60,6 +62,7 @@ export type DisciplinesCountAggregateOutputType = {
   code: number
   is_active: number
   class_price: number
+  initial_level_id: number
   created_at: number
   updated_at: number
   _all: number
@@ -80,6 +83,7 @@ export type DisciplinesMinAggregateInputType = {
   code?: true
   is_active?: true
   class_price?: true
+  initial_level_id?: true
   created_at?: true
   updated_at?: true
 }
@@ -90,6 +94,7 @@ export type DisciplinesMaxAggregateInputType = {
   code?: true
   is_active?: true
   class_price?: true
+  initial_level_id?: true
   created_at?: true
   updated_at?: true
 }
@@ -100,6 +105,7 @@ export type DisciplinesCountAggregateInputType = {
   code?: true
   is_active?: true
   class_price?: true
+  initial_level_id?: true
   created_at?: true
   updated_at?: true
   _all?: true
@@ -197,6 +203,7 @@ export type DisciplinesGroupByOutputType = {
   code: string
   is_active: boolean
   class_price: runtime.Decimal | null
+  initial_level_id: string | null
   created_at: Date
   updated_at: Date
   _count: DisciplinesCountAggregateOutputType | null
@@ -230,11 +237,13 @@ export type disciplinesWhereInput = {
   code?: Prisma.StringFilter<"disciplines"> | string
   is_active?: Prisma.BoolFilter<"disciplines"> | boolean
   class_price?: Prisma.DecimalNullableFilter<"disciplines"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  initial_level_id?: Prisma.UuidNullableFilter<"disciplines"> | string | null
   created_at?: Prisma.DateTimeFilter<"disciplines"> | Date | string
   updated_at?: Prisma.DateTimeFilter<"disciplines"> | Date | string
   student_disciplines?: Prisma.Student_disciplinesListRelationFilter
   scheduled_classes?: Prisma.Scheduled_classesListRelationFilter
   discipline_levels?: Prisma.Discipline_levelsListRelationFilter
+  initial_level?: Prisma.XOR<Prisma.Discipline_levelsNullableScalarRelationFilter, Prisma.discipline_levelsWhereInput> | null
   student_progress?: Prisma.Student_progressListRelationFilter
   student_notes?: Prisma.Student_notesListRelationFilter
   one_time_classes?: Prisma.One_time_classesListRelationFilter
@@ -246,11 +255,13 @@ export type disciplinesOrderByWithRelationInput = {
   code?: Prisma.SortOrder
   is_active?: Prisma.SortOrder
   class_price?: Prisma.SortOrderInput | Prisma.SortOrder
+  initial_level_id?: Prisma.SortOrderInput | Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
   student_disciplines?: Prisma.student_disciplinesOrderByRelationAggregateInput
   scheduled_classes?: Prisma.scheduled_classesOrderByRelationAggregateInput
   discipline_levels?: Prisma.discipline_levelsOrderByRelationAggregateInput
+  initial_level?: Prisma.discipline_levelsOrderByWithRelationInput
   student_progress?: Prisma.student_progressOrderByRelationAggregateInput
   student_notes?: Prisma.student_notesOrderByRelationAggregateInput
   one_time_classes?: Prisma.one_time_classesOrderByRelationAggregateInput
@@ -265,11 +276,13 @@ export type disciplinesWhereUniqueInput = Prisma.AtLeast<{
   code?: Prisma.StringFilter<"disciplines"> | string
   is_active?: Prisma.BoolFilter<"disciplines"> | boolean
   class_price?: Prisma.DecimalNullableFilter<"disciplines"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  initial_level_id?: Prisma.UuidNullableFilter<"disciplines"> | string | null
   created_at?: Prisma.DateTimeFilter<"disciplines"> | Date | string
   updated_at?: Prisma.DateTimeFilter<"disciplines"> | Date | string
   student_disciplines?: Prisma.Student_disciplinesListRelationFilter
   scheduled_classes?: Prisma.Scheduled_classesListRelationFilter
   discipline_levels?: Prisma.Discipline_levelsListRelationFilter
+  initial_level?: Prisma.XOR<Prisma.Discipline_levelsNullableScalarRelationFilter, Prisma.discipline_levelsWhereInput> | null
   student_progress?: Prisma.Student_progressListRelationFilter
   student_notes?: Prisma.Student_notesListRelationFilter
   one_time_classes?: Prisma.One_time_classesListRelationFilter
@@ -281,6 +294,7 @@ export type disciplinesOrderByWithAggregationInput = {
   code?: Prisma.SortOrder
   is_active?: Prisma.SortOrder
   class_price?: Prisma.SortOrderInput | Prisma.SortOrder
+  initial_level_id?: Prisma.SortOrderInput | Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
   _count?: Prisma.disciplinesCountOrderByAggregateInput
@@ -299,6 +313,7 @@ export type disciplinesScalarWhereWithAggregatesInput = {
   code?: Prisma.StringWithAggregatesFilter<"disciplines"> | string
   is_active?: Prisma.BoolWithAggregatesFilter<"disciplines"> | boolean
   class_price?: Prisma.DecimalNullableWithAggregatesFilter<"disciplines"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  initial_level_id?: Prisma.UuidNullableWithAggregatesFilter<"disciplines"> | string | null
   created_at?: Prisma.DateTimeWithAggregatesFilter<"disciplines"> | Date | string
   updated_at?: Prisma.DateTimeWithAggregatesFilter<"disciplines"> | Date | string
 }
@@ -314,6 +329,7 @@ export type disciplinesCreateInput = {
   student_disciplines?: Prisma.student_disciplinesCreateNestedManyWithoutDisciplinesInput
   scheduled_classes?: Prisma.scheduled_classesCreateNestedManyWithoutDisciplinesInput
   discipline_levels?: Prisma.discipline_levelsCreateNestedManyWithoutDisciplinesInput
+  initial_level?: Prisma.discipline_levelsCreateNestedOneWithoutInitial_for_disciplinesInput
   student_progress?: Prisma.student_progressCreateNestedManyWithoutDisciplinesInput
   student_notes?: Prisma.student_notesCreateNestedManyWithoutDisciplinesInput
   one_time_classes?: Prisma.one_time_classesCreateNestedManyWithoutDisciplinesInput
@@ -325,6 +341,7 @@ export type disciplinesUncheckedCreateInput = {
   code: string
   is_active?: boolean
   class_price?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  initial_level_id?: string | null
   created_at?: Date | string
   updated_at?: Date | string
   student_disciplines?: Prisma.student_disciplinesUncheckedCreateNestedManyWithoutDisciplinesInput
@@ -346,6 +363,7 @@ export type disciplinesUpdateInput = {
   student_disciplines?: Prisma.student_disciplinesUpdateManyWithoutDisciplinesNestedInput
   scheduled_classes?: Prisma.scheduled_classesUpdateManyWithoutDisciplinesNestedInput
   discipline_levels?: Prisma.discipline_levelsUpdateManyWithoutDisciplinesNestedInput
+  initial_level?: Prisma.discipline_levelsUpdateOneWithoutInitial_for_disciplinesNestedInput
   student_progress?: Prisma.student_progressUpdateManyWithoutDisciplinesNestedInput
   student_notes?: Prisma.student_notesUpdateManyWithoutDisciplinesNestedInput
   one_time_classes?: Prisma.one_time_classesUpdateManyWithoutDisciplinesNestedInput
@@ -357,6 +375,7 @@ export type disciplinesUncheckedUpdateInput = {
   code?: Prisma.StringFieldUpdateOperationsInput | string
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   class_price?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  initial_level_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   student_disciplines?: Prisma.student_disciplinesUncheckedUpdateManyWithoutDisciplinesNestedInput
@@ -373,6 +392,7 @@ export type disciplinesCreateManyInput = {
   code: string
   is_active?: boolean
   class_price?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  initial_level_id?: string | null
   created_at?: Date | string
   updated_at?: Date | string
 }
@@ -393,6 +413,7 @@ export type disciplinesUncheckedUpdateManyInput = {
   code?: Prisma.StringFieldUpdateOperationsInput | string
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   class_price?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  initial_level_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -403,6 +424,7 @@ export type disciplinesCountOrderByAggregateInput = {
   code?: Prisma.SortOrder
   is_active?: Prisma.SortOrder
   class_price?: Prisma.SortOrder
+  initial_level_id?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
 }
@@ -417,6 +439,7 @@ export type disciplinesMaxOrderByAggregateInput = {
   code?: Prisma.SortOrder
   is_active?: Prisma.SortOrder
   class_price?: Prisma.SortOrder
+  initial_level_id?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
 }
@@ -427,6 +450,7 @@ export type disciplinesMinOrderByAggregateInput = {
   code?: Prisma.SortOrder
   is_active?: Prisma.SortOrder
   class_price?: Prisma.SortOrder
+  initial_level_id?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
 }
@@ -438,6 +462,16 @@ export type disciplinesSumOrderByAggregateInput = {
 export type DisciplinesScalarRelationFilter = {
   is?: Prisma.disciplinesWhereInput
   isNot?: Prisma.disciplinesWhereInput
+}
+
+export type DisciplinesListRelationFilter = {
+  every?: Prisma.disciplinesWhereInput
+  some?: Prisma.disciplinesWhereInput
+  none?: Prisma.disciplinesWhereInput
+}
+
+export type disciplinesOrderByRelationAggregateInput = {
+  _count?: Prisma.SortOrder
 }
 
 export type DisciplinesNullableScalarRelationFilter = {
@@ -501,12 +535,54 @@ export type disciplinesCreateNestedOneWithoutDiscipline_levelsInput = {
   connect?: Prisma.disciplinesWhereUniqueInput
 }
 
+export type disciplinesCreateNestedManyWithoutInitial_levelInput = {
+  create?: Prisma.XOR<Prisma.disciplinesCreateWithoutInitial_levelInput, Prisma.disciplinesUncheckedCreateWithoutInitial_levelInput> | Prisma.disciplinesCreateWithoutInitial_levelInput[] | Prisma.disciplinesUncheckedCreateWithoutInitial_levelInput[]
+  connectOrCreate?: Prisma.disciplinesCreateOrConnectWithoutInitial_levelInput | Prisma.disciplinesCreateOrConnectWithoutInitial_levelInput[]
+  createMany?: Prisma.disciplinesCreateManyInitial_levelInputEnvelope
+  connect?: Prisma.disciplinesWhereUniqueInput | Prisma.disciplinesWhereUniqueInput[]
+}
+
+export type disciplinesUncheckedCreateNestedManyWithoutInitial_levelInput = {
+  create?: Prisma.XOR<Prisma.disciplinesCreateWithoutInitial_levelInput, Prisma.disciplinesUncheckedCreateWithoutInitial_levelInput> | Prisma.disciplinesCreateWithoutInitial_levelInput[] | Prisma.disciplinesUncheckedCreateWithoutInitial_levelInput[]
+  connectOrCreate?: Prisma.disciplinesCreateOrConnectWithoutInitial_levelInput | Prisma.disciplinesCreateOrConnectWithoutInitial_levelInput[]
+  createMany?: Prisma.disciplinesCreateManyInitial_levelInputEnvelope
+  connect?: Prisma.disciplinesWhereUniqueInput | Prisma.disciplinesWhereUniqueInput[]
+}
+
 export type disciplinesUpdateOneRequiredWithoutDiscipline_levelsNestedInput = {
   create?: Prisma.XOR<Prisma.disciplinesCreateWithoutDiscipline_levelsInput, Prisma.disciplinesUncheckedCreateWithoutDiscipline_levelsInput>
   connectOrCreate?: Prisma.disciplinesCreateOrConnectWithoutDiscipline_levelsInput
   upsert?: Prisma.disciplinesUpsertWithoutDiscipline_levelsInput
   connect?: Prisma.disciplinesWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.disciplinesUpdateToOneWithWhereWithoutDiscipline_levelsInput, Prisma.disciplinesUpdateWithoutDiscipline_levelsInput>, Prisma.disciplinesUncheckedUpdateWithoutDiscipline_levelsInput>
+}
+
+export type disciplinesUpdateManyWithoutInitial_levelNestedInput = {
+  create?: Prisma.XOR<Prisma.disciplinesCreateWithoutInitial_levelInput, Prisma.disciplinesUncheckedCreateWithoutInitial_levelInput> | Prisma.disciplinesCreateWithoutInitial_levelInput[] | Prisma.disciplinesUncheckedCreateWithoutInitial_levelInput[]
+  connectOrCreate?: Prisma.disciplinesCreateOrConnectWithoutInitial_levelInput | Prisma.disciplinesCreateOrConnectWithoutInitial_levelInput[]
+  upsert?: Prisma.disciplinesUpsertWithWhereUniqueWithoutInitial_levelInput | Prisma.disciplinesUpsertWithWhereUniqueWithoutInitial_levelInput[]
+  createMany?: Prisma.disciplinesCreateManyInitial_levelInputEnvelope
+  set?: Prisma.disciplinesWhereUniqueInput | Prisma.disciplinesWhereUniqueInput[]
+  disconnect?: Prisma.disciplinesWhereUniqueInput | Prisma.disciplinesWhereUniqueInput[]
+  delete?: Prisma.disciplinesWhereUniqueInput | Prisma.disciplinesWhereUniqueInput[]
+  connect?: Prisma.disciplinesWhereUniqueInput | Prisma.disciplinesWhereUniqueInput[]
+  update?: Prisma.disciplinesUpdateWithWhereUniqueWithoutInitial_levelInput | Prisma.disciplinesUpdateWithWhereUniqueWithoutInitial_levelInput[]
+  updateMany?: Prisma.disciplinesUpdateManyWithWhereWithoutInitial_levelInput | Prisma.disciplinesUpdateManyWithWhereWithoutInitial_levelInput[]
+  deleteMany?: Prisma.disciplinesScalarWhereInput | Prisma.disciplinesScalarWhereInput[]
+}
+
+export type disciplinesUncheckedUpdateManyWithoutInitial_levelNestedInput = {
+  create?: Prisma.XOR<Prisma.disciplinesCreateWithoutInitial_levelInput, Prisma.disciplinesUncheckedCreateWithoutInitial_levelInput> | Prisma.disciplinesCreateWithoutInitial_levelInput[] | Prisma.disciplinesUncheckedCreateWithoutInitial_levelInput[]
+  connectOrCreate?: Prisma.disciplinesCreateOrConnectWithoutInitial_levelInput | Prisma.disciplinesCreateOrConnectWithoutInitial_levelInput[]
+  upsert?: Prisma.disciplinesUpsertWithWhereUniqueWithoutInitial_levelInput | Prisma.disciplinesUpsertWithWhereUniqueWithoutInitial_levelInput[]
+  createMany?: Prisma.disciplinesCreateManyInitial_levelInputEnvelope
+  set?: Prisma.disciplinesWhereUniqueInput | Prisma.disciplinesWhereUniqueInput[]
+  disconnect?: Prisma.disciplinesWhereUniqueInput | Prisma.disciplinesWhereUniqueInput[]
+  delete?: Prisma.disciplinesWhereUniqueInput | Prisma.disciplinesWhereUniqueInput[]
+  connect?: Prisma.disciplinesWhereUniqueInput | Prisma.disciplinesWhereUniqueInput[]
+  update?: Prisma.disciplinesUpdateWithWhereUniqueWithoutInitial_levelInput | Prisma.disciplinesUpdateWithWhereUniqueWithoutInitial_levelInput[]
+  updateMany?: Prisma.disciplinesUpdateManyWithWhereWithoutInitial_levelInput | Prisma.disciplinesUpdateManyWithWhereWithoutInitial_levelInput[]
+  deleteMany?: Prisma.disciplinesScalarWhereInput | Prisma.disciplinesScalarWhereInput[]
 }
 
 export type disciplinesCreateNestedOneWithoutStudent_progressInput = {
@@ -549,6 +625,7 @@ export type disciplinesCreateWithoutStudent_disciplinesInput = {
   updated_at?: Date | string
   scheduled_classes?: Prisma.scheduled_classesCreateNestedManyWithoutDisciplinesInput
   discipline_levels?: Prisma.discipline_levelsCreateNestedManyWithoutDisciplinesInput
+  initial_level?: Prisma.discipline_levelsCreateNestedOneWithoutInitial_for_disciplinesInput
   student_progress?: Prisma.student_progressCreateNestedManyWithoutDisciplinesInput
   student_notes?: Prisma.student_notesCreateNestedManyWithoutDisciplinesInput
   one_time_classes?: Prisma.one_time_classesCreateNestedManyWithoutDisciplinesInput
@@ -560,6 +637,7 @@ export type disciplinesUncheckedCreateWithoutStudent_disciplinesInput = {
   code: string
   is_active?: boolean
   class_price?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  initial_level_id?: string | null
   created_at?: Date | string
   updated_at?: Date | string
   scheduled_classes?: Prisma.scheduled_classesUncheckedCreateNestedManyWithoutDisciplinesInput
@@ -595,6 +673,7 @@ export type disciplinesUpdateWithoutStudent_disciplinesInput = {
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   scheduled_classes?: Prisma.scheduled_classesUpdateManyWithoutDisciplinesNestedInput
   discipline_levels?: Prisma.discipline_levelsUpdateManyWithoutDisciplinesNestedInput
+  initial_level?: Prisma.discipline_levelsUpdateOneWithoutInitial_for_disciplinesNestedInput
   student_progress?: Prisma.student_progressUpdateManyWithoutDisciplinesNestedInput
   student_notes?: Prisma.student_notesUpdateManyWithoutDisciplinesNestedInput
   one_time_classes?: Prisma.one_time_classesUpdateManyWithoutDisciplinesNestedInput
@@ -606,6 +685,7 @@ export type disciplinesUncheckedUpdateWithoutStudent_disciplinesInput = {
   code?: Prisma.StringFieldUpdateOperationsInput | string
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   class_price?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  initial_level_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   scheduled_classes?: Prisma.scheduled_classesUncheckedUpdateManyWithoutDisciplinesNestedInput
@@ -625,6 +705,7 @@ export type disciplinesCreateWithoutScheduled_classesInput = {
   updated_at?: Date | string
   student_disciplines?: Prisma.student_disciplinesCreateNestedManyWithoutDisciplinesInput
   discipline_levels?: Prisma.discipline_levelsCreateNestedManyWithoutDisciplinesInput
+  initial_level?: Prisma.discipline_levelsCreateNestedOneWithoutInitial_for_disciplinesInput
   student_progress?: Prisma.student_progressCreateNestedManyWithoutDisciplinesInput
   student_notes?: Prisma.student_notesCreateNestedManyWithoutDisciplinesInput
   one_time_classes?: Prisma.one_time_classesCreateNestedManyWithoutDisciplinesInput
@@ -636,6 +717,7 @@ export type disciplinesUncheckedCreateWithoutScheduled_classesInput = {
   code: string
   is_active?: boolean
   class_price?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  initial_level_id?: string | null
   created_at?: Date | string
   updated_at?: Date | string
   student_disciplines?: Prisma.student_disciplinesUncheckedCreateNestedManyWithoutDisciplinesInput
@@ -671,6 +753,7 @@ export type disciplinesUpdateWithoutScheduled_classesInput = {
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   student_disciplines?: Prisma.student_disciplinesUpdateManyWithoutDisciplinesNestedInput
   discipline_levels?: Prisma.discipline_levelsUpdateManyWithoutDisciplinesNestedInput
+  initial_level?: Prisma.discipline_levelsUpdateOneWithoutInitial_for_disciplinesNestedInput
   student_progress?: Prisma.student_progressUpdateManyWithoutDisciplinesNestedInput
   student_notes?: Prisma.student_notesUpdateManyWithoutDisciplinesNestedInput
   one_time_classes?: Prisma.one_time_classesUpdateManyWithoutDisciplinesNestedInput
@@ -682,6 +765,7 @@ export type disciplinesUncheckedUpdateWithoutScheduled_classesInput = {
   code?: Prisma.StringFieldUpdateOperationsInput | string
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   class_price?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  initial_level_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   student_disciplines?: Prisma.student_disciplinesUncheckedUpdateManyWithoutDisciplinesNestedInput
@@ -702,6 +786,7 @@ export type disciplinesCreateWithoutOne_time_classesInput = {
   student_disciplines?: Prisma.student_disciplinesCreateNestedManyWithoutDisciplinesInput
   scheduled_classes?: Prisma.scheduled_classesCreateNestedManyWithoutDisciplinesInput
   discipline_levels?: Prisma.discipline_levelsCreateNestedManyWithoutDisciplinesInput
+  initial_level?: Prisma.discipline_levelsCreateNestedOneWithoutInitial_for_disciplinesInput
   student_progress?: Prisma.student_progressCreateNestedManyWithoutDisciplinesInput
   student_notes?: Prisma.student_notesCreateNestedManyWithoutDisciplinesInput
 }
@@ -712,6 +797,7 @@ export type disciplinesUncheckedCreateWithoutOne_time_classesInput = {
   code: string
   is_active?: boolean
   class_price?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  initial_level_id?: string | null
   created_at?: Date | string
   updated_at?: Date | string
   student_disciplines?: Prisma.student_disciplinesUncheckedCreateNestedManyWithoutDisciplinesInput
@@ -748,6 +834,7 @@ export type disciplinesUpdateWithoutOne_time_classesInput = {
   student_disciplines?: Prisma.student_disciplinesUpdateManyWithoutDisciplinesNestedInput
   scheduled_classes?: Prisma.scheduled_classesUpdateManyWithoutDisciplinesNestedInput
   discipline_levels?: Prisma.discipline_levelsUpdateManyWithoutDisciplinesNestedInput
+  initial_level?: Prisma.discipline_levelsUpdateOneWithoutInitial_for_disciplinesNestedInput
   student_progress?: Prisma.student_progressUpdateManyWithoutDisciplinesNestedInput
   student_notes?: Prisma.student_notesUpdateManyWithoutDisciplinesNestedInput
 }
@@ -758,6 +845,7 @@ export type disciplinesUncheckedUpdateWithoutOne_time_classesInput = {
   code?: Prisma.StringFieldUpdateOperationsInput | string
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   class_price?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  initial_level_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   student_disciplines?: Prisma.student_disciplinesUncheckedUpdateManyWithoutDisciplinesNestedInput
@@ -777,6 +865,7 @@ export type disciplinesCreateWithoutDiscipline_levelsInput = {
   updated_at?: Date | string
   student_disciplines?: Prisma.student_disciplinesCreateNestedManyWithoutDisciplinesInput
   scheduled_classes?: Prisma.scheduled_classesCreateNestedManyWithoutDisciplinesInput
+  initial_level?: Prisma.discipline_levelsCreateNestedOneWithoutInitial_for_disciplinesInput
   student_progress?: Prisma.student_progressCreateNestedManyWithoutDisciplinesInput
   student_notes?: Prisma.student_notesCreateNestedManyWithoutDisciplinesInput
   one_time_classes?: Prisma.one_time_classesCreateNestedManyWithoutDisciplinesInput
@@ -788,6 +877,7 @@ export type disciplinesUncheckedCreateWithoutDiscipline_levelsInput = {
   code: string
   is_active?: boolean
   class_price?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  initial_level_id?: string | null
   created_at?: Date | string
   updated_at?: Date | string
   student_disciplines?: Prisma.student_disciplinesUncheckedCreateNestedManyWithoutDisciplinesInput
@@ -800,6 +890,48 @@ export type disciplinesUncheckedCreateWithoutDiscipline_levelsInput = {
 export type disciplinesCreateOrConnectWithoutDiscipline_levelsInput = {
   where: Prisma.disciplinesWhereUniqueInput
   create: Prisma.XOR<Prisma.disciplinesCreateWithoutDiscipline_levelsInput, Prisma.disciplinesUncheckedCreateWithoutDiscipline_levelsInput>
+}
+
+export type disciplinesCreateWithoutInitial_levelInput = {
+  id?: string
+  name: string
+  code: string
+  is_active?: boolean
+  class_price?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  created_at?: Date | string
+  updated_at?: Date | string
+  student_disciplines?: Prisma.student_disciplinesCreateNestedManyWithoutDisciplinesInput
+  scheduled_classes?: Prisma.scheduled_classesCreateNestedManyWithoutDisciplinesInput
+  discipline_levels?: Prisma.discipline_levelsCreateNestedManyWithoutDisciplinesInput
+  student_progress?: Prisma.student_progressCreateNestedManyWithoutDisciplinesInput
+  student_notes?: Prisma.student_notesCreateNestedManyWithoutDisciplinesInput
+  one_time_classes?: Prisma.one_time_classesCreateNestedManyWithoutDisciplinesInput
+}
+
+export type disciplinesUncheckedCreateWithoutInitial_levelInput = {
+  id?: string
+  name: string
+  code: string
+  is_active?: boolean
+  class_price?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  created_at?: Date | string
+  updated_at?: Date | string
+  student_disciplines?: Prisma.student_disciplinesUncheckedCreateNestedManyWithoutDisciplinesInput
+  scheduled_classes?: Prisma.scheduled_classesUncheckedCreateNestedManyWithoutDisciplinesInput
+  discipline_levels?: Prisma.discipline_levelsUncheckedCreateNestedManyWithoutDisciplinesInput
+  student_progress?: Prisma.student_progressUncheckedCreateNestedManyWithoutDisciplinesInput
+  student_notes?: Prisma.student_notesUncheckedCreateNestedManyWithoutDisciplinesInput
+  one_time_classes?: Prisma.one_time_classesUncheckedCreateNestedManyWithoutDisciplinesInput
+}
+
+export type disciplinesCreateOrConnectWithoutInitial_levelInput = {
+  where: Prisma.disciplinesWhereUniqueInput
+  create: Prisma.XOR<Prisma.disciplinesCreateWithoutInitial_levelInput, Prisma.disciplinesUncheckedCreateWithoutInitial_levelInput>
+}
+
+export type disciplinesCreateManyInitial_levelInputEnvelope = {
+  data: Prisma.disciplinesCreateManyInitial_levelInput | Prisma.disciplinesCreateManyInitial_levelInput[]
+  skipDuplicates?: boolean
 }
 
 export type disciplinesUpsertWithoutDiscipline_levelsInput = {
@@ -823,6 +955,7 @@ export type disciplinesUpdateWithoutDiscipline_levelsInput = {
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   student_disciplines?: Prisma.student_disciplinesUpdateManyWithoutDisciplinesNestedInput
   scheduled_classes?: Prisma.scheduled_classesUpdateManyWithoutDisciplinesNestedInput
+  initial_level?: Prisma.discipline_levelsUpdateOneWithoutInitial_for_disciplinesNestedInput
   student_progress?: Prisma.student_progressUpdateManyWithoutDisciplinesNestedInput
   student_notes?: Prisma.student_notesUpdateManyWithoutDisciplinesNestedInput
   one_time_classes?: Prisma.one_time_classesUpdateManyWithoutDisciplinesNestedInput
@@ -834,6 +967,7 @@ export type disciplinesUncheckedUpdateWithoutDiscipline_levelsInput = {
   code?: Prisma.StringFieldUpdateOperationsInput | string
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   class_price?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  initial_level_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   student_disciplines?: Prisma.student_disciplinesUncheckedUpdateManyWithoutDisciplinesNestedInput
@@ -841,6 +975,36 @@ export type disciplinesUncheckedUpdateWithoutDiscipline_levelsInput = {
   student_progress?: Prisma.student_progressUncheckedUpdateManyWithoutDisciplinesNestedInput
   student_notes?: Prisma.student_notesUncheckedUpdateManyWithoutDisciplinesNestedInput
   one_time_classes?: Prisma.one_time_classesUncheckedUpdateManyWithoutDisciplinesNestedInput
+}
+
+export type disciplinesUpsertWithWhereUniqueWithoutInitial_levelInput = {
+  where: Prisma.disciplinesWhereUniqueInput
+  update: Prisma.XOR<Prisma.disciplinesUpdateWithoutInitial_levelInput, Prisma.disciplinesUncheckedUpdateWithoutInitial_levelInput>
+  create: Prisma.XOR<Prisma.disciplinesCreateWithoutInitial_levelInput, Prisma.disciplinesUncheckedCreateWithoutInitial_levelInput>
+}
+
+export type disciplinesUpdateWithWhereUniqueWithoutInitial_levelInput = {
+  where: Prisma.disciplinesWhereUniqueInput
+  data: Prisma.XOR<Prisma.disciplinesUpdateWithoutInitial_levelInput, Prisma.disciplinesUncheckedUpdateWithoutInitial_levelInput>
+}
+
+export type disciplinesUpdateManyWithWhereWithoutInitial_levelInput = {
+  where: Prisma.disciplinesScalarWhereInput
+  data: Prisma.XOR<Prisma.disciplinesUpdateManyMutationInput, Prisma.disciplinesUncheckedUpdateManyWithoutInitial_levelInput>
+}
+
+export type disciplinesScalarWhereInput = {
+  AND?: Prisma.disciplinesScalarWhereInput | Prisma.disciplinesScalarWhereInput[]
+  OR?: Prisma.disciplinesScalarWhereInput[]
+  NOT?: Prisma.disciplinesScalarWhereInput | Prisma.disciplinesScalarWhereInput[]
+  id?: Prisma.UuidFilter<"disciplines"> | string
+  name?: Prisma.StringFilter<"disciplines"> | string
+  code?: Prisma.StringFilter<"disciplines"> | string
+  is_active?: Prisma.BoolFilter<"disciplines"> | boolean
+  class_price?: Prisma.DecimalNullableFilter<"disciplines"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  initial_level_id?: Prisma.UuidNullableFilter<"disciplines"> | string | null
+  created_at?: Prisma.DateTimeFilter<"disciplines"> | Date | string
+  updated_at?: Prisma.DateTimeFilter<"disciplines"> | Date | string
 }
 
 export type disciplinesCreateWithoutStudent_progressInput = {
@@ -854,6 +1018,7 @@ export type disciplinesCreateWithoutStudent_progressInput = {
   student_disciplines?: Prisma.student_disciplinesCreateNestedManyWithoutDisciplinesInput
   scheduled_classes?: Prisma.scheduled_classesCreateNestedManyWithoutDisciplinesInput
   discipline_levels?: Prisma.discipline_levelsCreateNestedManyWithoutDisciplinesInput
+  initial_level?: Prisma.discipline_levelsCreateNestedOneWithoutInitial_for_disciplinesInput
   student_notes?: Prisma.student_notesCreateNestedManyWithoutDisciplinesInput
   one_time_classes?: Prisma.one_time_classesCreateNestedManyWithoutDisciplinesInput
 }
@@ -864,6 +1029,7 @@ export type disciplinesUncheckedCreateWithoutStudent_progressInput = {
   code: string
   is_active?: boolean
   class_price?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  initial_level_id?: string | null
   created_at?: Date | string
   updated_at?: Date | string
   student_disciplines?: Prisma.student_disciplinesUncheckedCreateNestedManyWithoutDisciplinesInput
@@ -900,6 +1066,7 @@ export type disciplinesUpdateWithoutStudent_progressInput = {
   student_disciplines?: Prisma.student_disciplinesUpdateManyWithoutDisciplinesNestedInput
   scheduled_classes?: Prisma.scheduled_classesUpdateManyWithoutDisciplinesNestedInput
   discipline_levels?: Prisma.discipline_levelsUpdateManyWithoutDisciplinesNestedInput
+  initial_level?: Prisma.discipline_levelsUpdateOneWithoutInitial_for_disciplinesNestedInput
   student_notes?: Prisma.student_notesUpdateManyWithoutDisciplinesNestedInput
   one_time_classes?: Prisma.one_time_classesUpdateManyWithoutDisciplinesNestedInput
 }
@@ -910,6 +1077,7 @@ export type disciplinesUncheckedUpdateWithoutStudent_progressInput = {
   code?: Prisma.StringFieldUpdateOperationsInput | string
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   class_price?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  initial_level_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   student_disciplines?: Prisma.student_disciplinesUncheckedUpdateManyWithoutDisciplinesNestedInput
@@ -930,6 +1098,7 @@ export type disciplinesCreateWithoutStudent_notesInput = {
   student_disciplines?: Prisma.student_disciplinesCreateNestedManyWithoutDisciplinesInput
   scheduled_classes?: Prisma.scheduled_classesCreateNestedManyWithoutDisciplinesInput
   discipline_levels?: Prisma.discipline_levelsCreateNestedManyWithoutDisciplinesInput
+  initial_level?: Prisma.discipline_levelsCreateNestedOneWithoutInitial_for_disciplinesInput
   student_progress?: Prisma.student_progressCreateNestedManyWithoutDisciplinesInput
   one_time_classes?: Prisma.one_time_classesCreateNestedManyWithoutDisciplinesInput
 }
@@ -940,6 +1109,7 @@ export type disciplinesUncheckedCreateWithoutStudent_notesInput = {
   code: string
   is_active?: boolean
   class_price?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  initial_level_id?: string | null
   created_at?: Date | string
   updated_at?: Date | string
   student_disciplines?: Prisma.student_disciplinesUncheckedCreateNestedManyWithoutDisciplinesInput
@@ -976,11 +1146,54 @@ export type disciplinesUpdateWithoutStudent_notesInput = {
   student_disciplines?: Prisma.student_disciplinesUpdateManyWithoutDisciplinesNestedInput
   scheduled_classes?: Prisma.scheduled_classesUpdateManyWithoutDisciplinesNestedInput
   discipline_levels?: Prisma.discipline_levelsUpdateManyWithoutDisciplinesNestedInput
+  initial_level?: Prisma.discipline_levelsUpdateOneWithoutInitial_for_disciplinesNestedInput
   student_progress?: Prisma.student_progressUpdateManyWithoutDisciplinesNestedInput
   one_time_classes?: Prisma.one_time_classesUpdateManyWithoutDisciplinesNestedInput
 }
 
 export type disciplinesUncheckedUpdateWithoutStudent_notesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  code?: Prisma.StringFieldUpdateOperationsInput | string
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  class_price?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  initial_level_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  student_disciplines?: Prisma.student_disciplinesUncheckedUpdateManyWithoutDisciplinesNestedInput
+  scheduled_classes?: Prisma.scheduled_classesUncheckedUpdateManyWithoutDisciplinesNestedInput
+  discipline_levels?: Prisma.discipline_levelsUncheckedUpdateManyWithoutDisciplinesNestedInput
+  student_progress?: Prisma.student_progressUncheckedUpdateManyWithoutDisciplinesNestedInput
+  one_time_classes?: Prisma.one_time_classesUncheckedUpdateManyWithoutDisciplinesNestedInput
+}
+
+export type disciplinesCreateManyInitial_levelInput = {
+  id?: string
+  name: string
+  code: string
+  is_active?: boolean
+  class_price?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  created_at?: Date | string
+  updated_at?: Date | string
+}
+
+export type disciplinesUpdateWithoutInitial_levelInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  code?: Prisma.StringFieldUpdateOperationsInput | string
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  class_price?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  student_disciplines?: Prisma.student_disciplinesUpdateManyWithoutDisciplinesNestedInput
+  scheduled_classes?: Prisma.scheduled_classesUpdateManyWithoutDisciplinesNestedInput
+  discipline_levels?: Prisma.discipline_levelsUpdateManyWithoutDisciplinesNestedInput
+  student_progress?: Prisma.student_progressUpdateManyWithoutDisciplinesNestedInput
+  student_notes?: Prisma.student_notesUpdateManyWithoutDisciplinesNestedInput
+  one_time_classes?: Prisma.one_time_classesUpdateManyWithoutDisciplinesNestedInput
+}
+
+export type disciplinesUncheckedUpdateWithoutInitial_levelInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   code?: Prisma.StringFieldUpdateOperationsInput | string
@@ -992,7 +1205,18 @@ export type disciplinesUncheckedUpdateWithoutStudent_notesInput = {
   scheduled_classes?: Prisma.scheduled_classesUncheckedUpdateManyWithoutDisciplinesNestedInput
   discipline_levels?: Prisma.discipline_levelsUncheckedUpdateManyWithoutDisciplinesNestedInput
   student_progress?: Prisma.student_progressUncheckedUpdateManyWithoutDisciplinesNestedInput
+  student_notes?: Prisma.student_notesUncheckedUpdateManyWithoutDisciplinesNestedInput
   one_time_classes?: Prisma.one_time_classesUncheckedUpdateManyWithoutDisciplinesNestedInput
+}
+
+export type disciplinesUncheckedUpdateManyWithoutInitial_levelInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  code?: Prisma.StringFieldUpdateOperationsInput | string
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  class_price?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 
@@ -1077,11 +1301,13 @@ export type disciplinesSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   code?: boolean
   is_active?: boolean
   class_price?: boolean
+  initial_level_id?: boolean
   created_at?: boolean
   updated_at?: boolean
   student_disciplines?: boolean | Prisma.disciplines$student_disciplinesArgs<ExtArgs>
   scheduled_classes?: boolean | Prisma.disciplines$scheduled_classesArgs<ExtArgs>
   discipline_levels?: boolean | Prisma.disciplines$discipline_levelsArgs<ExtArgs>
+  initial_level?: boolean | Prisma.disciplines$initial_levelArgs<ExtArgs>
   student_progress?: boolean | Prisma.disciplines$student_progressArgs<ExtArgs>
   student_notes?: boolean | Prisma.disciplines$student_notesArgs<ExtArgs>
   one_time_classes?: boolean | Prisma.disciplines$one_time_classesArgs<ExtArgs>
@@ -1094,8 +1320,10 @@ export type disciplinesSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
   code?: boolean
   is_active?: boolean
   class_price?: boolean
+  initial_level_id?: boolean
   created_at?: boolean
   updated_at?: boolean
+  initial_level?: boolean | Prisma.disciplines$initial_levelArgs<ExtArgs>
 }, ExtArgs["result"]["disciplines"]>
 
 export type disciplinesSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -1104,8 +1332,10 @@ export type disciplinesSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
   code?: boolean
   is_active?: boolean
   class_price?: boolean
+  initial_level_id?: boolean
   created_at?: boolean
   updated_at?: boolean
+  initial_level?: boolean | Prisma.disciplines$initial_levelArgs<ExtArgs>
 }, ExtArgs["result"]["disciplines"]>
 
 export type disciplinesSelectScalar = {
@@ -1114,22 +1344,28 @@ export type disciplinesSelectScalar = {
   code?: boolean
   is_active?: boolean
   class_price?: boolean
+  initial_level_id?: boolean
   created_at?: boolean
   updated_at?: boolean
 }
 
-export type disciplinesOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "code" | "is_active" | "class_price" | "created_at" | "updated_at", ExtArgs["result"]["disciplines"]>
+export type disciplinesOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "code" | "is_active" | "class_price" | "initial_level_id" | "created_at" | "updated_at", ExtArgs["result"]["disciplines"]>
 export type disciplinesInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   student_disciplines?: boolean | Prisma.disciplines$student_disciplinesArgs<ExtArgs>
   scheduled_classes?: boolean | Prisma.disciplines$scheduled_classesArgs<ExtArgs>
   discipline_levels?: boolean | Prisma.disciplines$discipline_levelsArgs<ExtArgs>
+  initial_level?: boolean | Prisma.disciplines$initial_levelArgs<ExtArgs>
   student_progress?: boolean | Prisma.disciplines$student_progressArgs<ExtArgs>
   student_notes?: boolean | Prisma.disciplines$student_notesArgs<ExtArgs>
   one_time_classes?: boolean | Prisma.disciplines$one_time_classesArgs<ExtArgs>
   _count?: boolean | Prisma.DisciplinesCountOutputTypeDefaultArgs<ExtArgs>
 }
-export type disciplinesIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
-export type disciplinesIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
+export type disciplinesIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  initial_level?: boolean | Prisma.disciplines$initial_levelArgs<ExtArgs>
+}
+export type disciplinesIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  initial_level?: boolean | Prisma.disciplines$initial_levelArgs<ExtArgs>
+}
 
 export type $disciplinesPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "disciplines"
@@ -1137,6 +1373,7 @@ export type $disciplinesPayload<ExtArgs extends runtime.Types.Extensions.Interna
     student_disciplines: Prisma.$student_disciplinesPayload<ExtArgs>[]
     scheduled_classes: Prisma.$scheduled_classesPayload<ExtArgs>[]
     discipline_levels: Prisma.$discipline_levelsPayload<ExtArgs>[]
+    initial_level: Prisma.$discipline_levelsPayload<ExtArgs> | null
     student_progress: Prisma.$student_progressPayload<ExtArgs>[]
     student_notes: Prisma.$student_notesPayload<ExtArgs>[]
     one_time_classes: Prisma.$one_time_classesPayload<ExtArgs>[]
@@ -1147,6 +1384,7 @@ export type $disciplinesPayload<ExtArgs extends runtime.Types.Extensions.Interna
     code: string
     is_active: boolean
     class_price: runtime.Decimal | null
+    initial_level_id: string | null
     created_at: Date
     updated_at: Date
   }, ExtArgs["result"]["disciplines"]>
@@ -1546,6 +1784,7 @@ export interface Prisma__disciplinesClient<T, Null = never, ExtArgs extends runt
   student_disciplines<T extends Prisma.disciplines$student_disciplinesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.disciplines$student_disciplinesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$student_disciplinesPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   scheduled_classes<T extends Prisma.disciplines$scheduled_classesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.disciplines$scheduled_classesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$scheduled_classesPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   discipline_levels<T extends Prisma.disciplines$discipline_levelsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.disciplines$discipline_levelsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$discipline_levelsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  initial_level<T extends Prisma.disciplines$initial_levelArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.disciplines$initial_levelArgs<ExtArgs>>): Prisma.Prisma__discipline_levelsClient<runtime.Types.Result.GetResult<Prisma.$discipline_levelsPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   student_progress<T extends Prisma.disciplines$student_progressArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.disciplines$student_progressArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$student_progressPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   student_notes<T extends Prisma.disciplines$student_notesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.disciplines$student_notesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$student_notesPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   one_time_classes<T extends Prisma.disciplines$one_time_classesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.disciplines$one_time_classesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$one_time_classesPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -1583,6 +1822,7 @@ export interface disciplinesFieldRefs {
   readonly code: Prisma.FieldRef<"disciplines", 'String'>
   readonly is_active: Prisma.FieldRef<"disciplines", 'Boolean'>
   readonly class_price: Prisma.FieldRef<"disciplines", 'Decimal'>
+  readonly initial_level_id: Prisma.FieldRef<"disciplines", 'String'>
   readonly created_at: Prisma.FieldRef<"disciplines", 'DateTime'>
   readonly updated_at: Prisma.FieldRef<"disciplines", 'DateTime'>
 }
@@ -1839,6 +2079,10 @@ export type disciplinesCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Ext
    */
   data: Prisma.disciplinesCreateManyInput | Prisma.disciplinesCreateManyInput[]
   skipDuplicates?: boolean
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.disciplinesIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1909,6 +2153,10 @@ export type disciplinesUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Ext
    * Limit how many disciplines to update.
    */
   limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.disciplinesIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -2047,6 +2295,25 @@ export type disciplines$discipline_levelsArgs<ExtArgs extends runtime.Types.Exte
   take?: number
   skip?: number
   distinct?: Prisma.Discipline_levelsScalarFieldEnum | Prisma.Discipline_levelsScalarFieldEnum[]
+}
+
+/**
+ * disciplines.initial_level
+ */
+export type disciplines$initial_levelArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the discipline_levels
+   */
+  select?: Prisma.discipline_levelsSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the discipline_levels
+   */
+  omit?: Prisma.discipline_levelsOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.discipline_levelsInclude<ExtArgs> | null
+  where?: Prisma.discipline_levelsWhereInput
 }
 
 /**

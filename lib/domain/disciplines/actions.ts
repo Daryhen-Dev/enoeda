@@ -341,18 +341,16 @@ export async function enrollStudent(
           },
         });
 
-        // Auto-assign initial level (min sort_order) if catalog exists
-        const initialLevel = await tx.discipline_levels.findFirst({
-          where: { discipline_id },
-          orderBy: { sort_order: "asc" },
-          select: { id: true },
+        const discipline = await tx.disciplines.findUnique({
+          where: { id: discipline_id },
+          select: { initial_level_id: true },
         });
-        if (initialLevel) {
+        if (discipline?.initial_level_id) {
           await tx.student_progress.create({
             data: {
               student_id,
               discipline_id,
-              level_id: initialLevel.id,
+              level_id: discipline.initial_level_id,
               created_by: ctx.userId,
             },
           });

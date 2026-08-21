@@ -245,6 +245,7 @@ export type discipline_levelsWhereInput = {
   created_at?: Prisma.DateTimeFilter<"discipline_levels"> | Date | string
   updated_at?: Prisma.DateTimeFilter<"discipline_levels"> | Date | string
   disciplines?: Prisma.XOR<Prisma.DisciplinesScalarRelationFilter, Prisma.disciplinesWhereInput>
+  initial_for_disciplines?: Prisma.DisciplinesListRelationFilter
   student_progress?: Prisma.Student_progressListRelationFilter
 }
 
@@ -258,6 +259,7 @@ export type discipline_levelsOrderByWithRelationInput = {
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
   disciplines?: Prisma.disciplinesOrderByWithRelationInput
+  initial_for_disciplines?: Prisma.disciplinesOrderByRelationAggregateInput
   student_progress?: Prisma.student_progressOrderByRelationAggregateInput
 }
 
@@ -275,6 +277,7 @@ export type discipline_levelsWhereUniqueInput = Prisma.AtLeast<{
   created_at?: Prisma.DateTimeFilter<"discipline_levels"> | Date | string
   updated_at?: Prisma.DateTimeFilter<"discipline_levels"> | Date | string
   disciplines?: Prisma.XOR<Prisma.DisciplinesScalarRelationFilter, Prisma.disciplinesWhereInput>
+  initial_for_disciplines?: Prisma.DisciplinesListRelationFilter
   student_progress?: Prisma.Student_progressListRelationFilter
 }, "id" | "discipline_id_sort_order">
 
@@ -317,6 +320,7 @@ export type discipline_levelsCreateInput = {
   created_at?: Date | string
   updated_at?: Date | string
   disciplines: Prisma.disciplinesCreateNestedOneWithoutDiscipline_levelsInput
+  initial_for_disciplines?: Prisma.disciplinesCreateNestedManyWithoutInitial_levelInput
   student_progress?: Prisma.student_progressCreateNestedManyWithoutDiscipline_levelsInput
 }
 
@@ -329,6 +333,7 @@ export type discipline_levelsUncheckedCreateInput = {
   required_attended_sessions?: number
   created_at?: Date | string
   updated_at?: Date | string
+  initial_for_disciplines?: Prisma.disciplinesUncheckedCreateNestedManyWithoutInitial_levelInput
   student_progress?: Prisma.student_progressUncheckedCreateNestedManyWithoutDiscipline_levelsInput
 }
 
@@ -341,6 +346,7 @@ export type discipline_levelsUpdateInput = {
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   disciplines?: Prisma.disciplinesUpdateOneRequiredWithoutDiscipline_levelsNestedInput
+  initial_for_disciplines?: Prisma.disciplinesUpdateManyWithoutInitial_levelNestedInput
   student_progress?: Prisma.student_progressUpdateManyWithoutDiscipline_levelsNestedInput
 }
 
@@ -353,6 +359,7 @@ export type discipline_levelsUncheckedUpdateInput = {
   required_attended_sessions?: Prisma.IntFieldUpdateOperationsInput | number
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  initial_for_disciplines?: Prisma.disciplinesUncheckedUpdateManyWithoutInitial_levelNestedInput
   student_progress?: Prisma.student_progressUncheckedUpdateManyWithoutDiscipline_levelsNestedInput
 }
 
@@ -392,6 +399,11 @@ export type Discipline_levelsListRelationFilter = {
   every?: Prisma.discipline_levelsWhereInput
   some?: Prisma.discipline_levelsWhereInput
   none?: Prisma.discipline_levelsWhereInput
+}
+
+export type Discipline_levelsNullableScalarRelationFilter = {
+  is?: Prisma.discipline_levelsWhereInput | null
+  isNot?: Prisma.discipline_levelsWhereInput | null
 }
 
 export type discipline_levelsOrderByRelationAggregateInput = {
@@ -458,6 +470,12 @@ export type discipline_levelsCreateNestedManyWithoutDisciplinesInput = {
   connect?: Prisma.discipline_levelsWhereUniqueInput | Prisma.discipline_levelsWhereUniqueInput[]
 }
 
+export type discipline_levelsCreateNestedOneWithoutInitial_for_disciplinesInput = {
+  create?: Prisma.XOR<Prisma.discipline_levelsCreateWithoutInitial_for_disciplinesInput, Prisma.discipline_levelsUncheckedCreateWithoutInitial_for_disciplinesInput>
+  connectOrCreate?: Prisma.discipline_levelsCreateOrConnectWithoutInitial_for_disciplinesInput
+  connect?: Prisma.discipline_levelsWhereUniqueInput
+}
+
 export type discipline_levelsUncheckedCreateNestedManyWithoutDisciplinesInput = {
   create?: Prisma.XOR<Prisma.discipline_levelsCreateWithoutDisciplinesInput, Prisma.discipline_levelsUncheckedCreateWithoutDisciplinesInput> | Prisma.discipline_levelsCreateWithoutDisciplinesInput[] | Prisma.discipline_levelsUncheckedCreateWithoutDisciplinesInput[]
   connectOrCreate?: Prisma.discipline_levelsCreateOrConnectWithoutDisciplinesInput | Prisma.discipline_levelsCreateOrConnectWithoutDisciplinesInput[]
@@ -477,6 +495,16 @@ export type discipline_levelsUpdateManyWithoutDisciplinesNestedInput = {
   update?: Prisma.discipline_levelsUpdateWithWhereUniqueWithoutDisciplinesInput | Prisma.discipline_levelsUpdateWithWhereUniqueWithoutDisciplinesInput[]
   updateMany?: Prisma.discipline_levelsUpdateManyWithWhereWithoutDisciplinesInput | Prisma.discipline_levelsUpdateManyWithWhereWithoutDisciplinesInput[]
   deleteMany?: Prisma.discipline_levelsScalarWhereInput | Prisma.discipline_levelsScalarWhereInput[]
+}
+
+export type discipline_levelsUpdateOneWithoutInitial_for_disciplinesNestedInput = {
+  create?: Prisma.XOR<Prisma.discipline_levelsCreateWithoutInitial_for_disciplinesInput, Prisma.discipline_levelsUncheckedCreateWithoutInitial_for_disciplinesInput>
+  connectOrCreate?: Prisma.discipline_levelsCreateOrConnectWithoutInitial_for_disciplinesInput
+  upsert?: Prisma.discipline_levelsUpsertWithoutInitial_for_disciplinesInput
+  disconnect?: Prisma.discipline_levelsWhereInput | boolean
+  delete?: Prisma.discipline_levelsWhereInput | boolean
+  connect?: Prisma.discipline_levelsWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.discipline_levelsUpdateToOneWithWhereWithoutInitial_for_disciplinesInput, Prisma.discipline_levelsUpdateWithoutInitial_for_disciplinesInput>, Prisma.discipline_levelsUncheckedUpdateWithoutInitial_for_disciplinesInput>
 }
 
 export type discipline_levelsUncheckedUpdateManyWithoutDisciplinesNestedInput = {
@@ -515,6 +543,7 @@ export type discipline_levelsCreateWithoutDisciplinesInput = {
   required_attended_sessions?: number
   created_at?: Date | string
   updated_at?: Date | string
+  initial_for_disciplines?: Prisma.disciplinesCreateNestedManyWithoutInitial_levelInput
   student_progress?: Prisma.student_progressCreateNestedManyWithoutDiscipline_levelsInput
 }
 
@@ -526,6 +555,7 @@ export type discipline_levelsUncheckedCreateWithoutDisciplinesInput = {
   required_attended_sessions?: number
   created_at?: Date | string
   updated_at?: Date | string
+  initial_for_disciplines?: Prisma.disciplinesUncheckedCreateNestedManyWithoutInitial_levelInput
   student_progress?: Prisma.student_progressUncheckedCreateNestedManyWithoutDiscipline_levelsInput
 }
 
@@ -537,6 +567,35 @@ export type discipline_levelsCreateOrConnectWithoutDisciplinesInput = {
 export type discipline_levelsCreateManyDisciplinesInputEnvelope = {
   data: Prisma.discipline_levelsCreateManyDisciplinesInput | Prisma.discipline_levelsCreateManyDisciplinesInput[]
   skipDuplicates?: boolean
+}
+
+export type discipline_levelsCreateWithoutInitial_for_disciplinesInput = {
+  id?: string
+  name: string
+  color?: string | null
+  sort_order: number
+  required_attended_sessions?: number
+  created_at?: Date | string
+  updated_at?: Date | string
+  disciplines: Prisma.disciplinesCreateNestedOneWithoutDiscipline_levelsInput
+  student_progress?: Prisma.student_progressCreateNestedManyWithoutDiscipline_levelsInput
+}
+
+export type discipline_levelsUncheckedCreateWithoutInitial_for_disciplinesInput = {
+  id?: string
+  discipline_id: string
+  name: string
+  color?: string | null
+  sort_order: number
+  required_attended_sessions?: number
+  created_at?: Date | string
+  updated_at?: Date | string
+  student_progress?: Prisma.student_progressUncheckedCreateNestedManyWithoutDiscipline_levelsInput
+}
+
+export type discipline_levelsCreateOrConnectWithoutInitial_for_disciplinesInput = {
+  where: Prisma.discipline_levelsWhereUniqueInput
+  create: Prisma.XOR<Prisma.discipline_levelsCreateWithoutInitial_for_disciplinesInput, Prisma.discipline_levelsUncheckedCreateWithoutInitial_for_disciplinesInput>
 }
 
 export type discipline_levelsUpsertWithWhereUniqueWithoutDisciplinesInput = {
@@ -569,6 +628,41 @@ export type discipline_levelsScalarWhereInput = {
   updated_at?: Prisma.DateTimeFilter<"discipline_levels"> | Date | string
 }
 
+export type discipline_levelsUpsertWithoutInitial_for_disciplinesInput = {
+  update: Prisma.XOR<Prisma.discipline_levelsUpdateWithoutInitial_for_disciplinesInput, Prisma.discipline_levelsUncheckedUpdateWithoutInitial_for_disciplinesInput>
+  create: Prisma.XOR<Prisma.discipline_levelsCreateWithoutInitial_for_disciplinesInput, Prisma.discipline_levelsUncheckedCreateWithoutInitial_for_disciplinesInput>
+  where?: Prisma.discipline_levelsWhereInput
+}
+
+export type discipline_levelsUpdateToOneWithWhereWithoutInitial_for_disciplinesInput = {
+  where?: Prisma.discipline_levelsWhereInput
+  data: Prisma.XOR<Prisma.discipline_levelsUpdateWithoutInitial_for_disciplinesInput, Prisma.discipline_levelsUncheckedUpdateWithoutInitial_for_disciplinesInput>
+}
+
+export type discipline_levelsUpdateWithoutInitial_for_disciplinesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  color?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sort_order?: Prisma.IntFieldUpdateOperationsInput | number
+  required_attended_sessions?: Prisma.IntFieldUpdateOperationsInput | number
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  disciplines?: Prisma.disciplinesUpdateOneRequiredWithoutDiscipline_levelsNestedInput
+  student_progress?: Prisma.student_progressUpdateManyWithoutDiscipline_levelsNestedInput
+}
+
+export type discipline_levelsUncheckedUpdateWithoutInitial_for_disciplinesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  discipline_id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  color?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sort_order?: Prisma.IntFieldUpdateOperationsInput | number
+  required_attended_sessions?: Prisma.IntFieldUpdateOperationsInput | number
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  student_progress?: Prisma.student_progressUncheckedUpdateManyWithoutDiscipline_levelsNestedInput
+}
+
 export type discipline_levelsCreateWithoutStudent_progressInput = {
   id?: string
   name: string
@@ -578,6 +672,7 @@ export type discipline_levelsCreateWithoutStudent_progressInput = {
   created_at?: Date | string
   updated_at?: Date | string
   disciplines: Prisma.disciplinesCreateNestedOneWithoutDiscipline_levelsInput
+  initial_for_disciplines?: Prisma.disciplinesCreateNestedManyWithoutInitial_levelInput
 }
 
 export type discipline_levelsUncheckedCreateWithoutStudent_progressInput = {
@@ -589,6 +684,7 @@ export type discipline_levelsUncheckedCreateWithoutStudent_progressInput = {
   required_attended_sessions?: number
   created_at?: Date | string
   updated_at?: Date | string
+  initial_for_disciplines?: Prisma.disciplinesUncheckedCreateNestedManyWithoutInitial_levelInput
 }
 
 export type discipline_levelsCreateOrConnectWithoutStudent_progressInput = {
@@ -616,6 +712,7 @@ export type discipline_levelsUpdateWithoutStudent_progressInput = {
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   disciplines?: Prisma.disciplinesUpdateOneRequiredWithoutDiscipline_levelsNestedInput
+  initial_for_disciplines?: Prisma.disciplinesUpdateManyWithoutInitial_levelNestedInput
 }
 
 export type discipline_levelsUncheckedUpdateWithoutStudent_progressInput = {
@@ -627,6 +724,7 @@ export type discipline_levelsUncheckedUpdateWithoutStudent_progressInput = {
   required_attended_sessions?: Prisma.IntFieldUpdateOperationsInput | number
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  initial_for_disciplines?: Prisma.disciplinesUncheckedUpdateManyWithoutInitial_levelNestedInput
 }
 
 export type discipline_levelsCreateManyDisciplinesInput = {
@@ -647,6 +745,7 @@ export type discipline_levelsUpdateWithoutDisciplinesInput = {
   required_attended_sessions?: Prisma.IntFieldUpdateOperationsInput | number
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  initial_for_disciplines?: Prisma.disciplinesUpdateManyWithoutInitial_levelNestedInput
   student_progress?: Prisma.student_progressUpdateManyWithoutDiscipline_levelsNestedInput
 }
 
@@ -658,6 +757,7 @@ export type discipline_levelsUncheckedUpdateWithoutDisciplinesInput = {
   required_attended_sessions?: Prisma.IntFieldUpdateOperationsInput | number
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  initial_for_disciplines?: Prisma.disciplinesUncheckedUpdateManyWithoutInitial_levelNestedInput
   student_progress?: Prisma.student_progressUncheckedUpdateManyWithoutDiscipline_levelsNestedInput
 }
 
@@ -677,10 +777,12 @@ export type discipline_levelsUncheckedUpdateManyWithoutDisciplinesInput = {
  */
 
 export type Discipline_levelsCountOutputType = {
+  initial_for_disciplines: number
   student_progress: number
 }
 
 export type Discipline_levelsCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  initial_for_disciplines?: boolean | Discipline_levelsCountOutputTypeCountInitial_for_disciplinesArgs
   student_progress?: boolean | Discipline_levelsCountOutputTypeCountStudent_progressArgs
 }
 
@@ -692,6 +794,13 @@ export type Discipline_levelsCountOutputTypeDefaultArgs<ExtArgs extends runtime.
    * Select specific fields to fetch from the Discipline_levelsCountOutputType
    */
   select?: Prisma.Discipline_levelsCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * Discipline_levelsCountOutputType without action
+ */
+export type Discipline_levelsCountOutputTypeCountInitial_for_disciplinesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.disciplinesWhereInput
 }
 
 /**
@@ -712,6 +821,7 @@ export type discipline_levelsSelect<ExtArgs extends runtime.Types.Extensions.Int
   created_at?: boolean
   updated_at?: boolean
   disciplines?: boolean | Prisma.disciplinesDefaultArgs<ExtArgs>
+  initial_for_disciplines?: boolean | Prisma.discipline_levels$initial_for_disciplinesArgs<ExtArgs>
   student_progress?: boolean | Prisma.discipline_levels$student_progressArgs<ExtArgs>
   _count?: boolean | Prisma.Discipline_levelsCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["discipline_levels"]>
@@ -754,6 +864,7 @@ export type discipline_levelsSelectScalar = {
 export type discipline_levelsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "discipline_id" | "name" | "color" | "sort_order" | "required_attended_sessions" | "created_at" | "updated_at", ExtArgs["result"]["discipline_levels"]>
 export type discipline_levelsInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   disciplines?: boolean | Prisma.disciplinesDefaultArgs<ExtArgs>
+  initial_for_disciplines?: boolean | Prisma.discipline_levels$initial_for_disciplinesArgs<ExtArgs>
   student_progress?: boolean | Prisma.discipline_levels$student_progressArgs<ExtArgs>
   _count?: boolean | Prisma.Discipline_levelsCountOutputTypeDefaultArgs<ExtArgs>
 }
@@ -768,6 +879,7 @@ export type $discipline_levelsPayload<ExtArgs extends runtime.Types.Extensions.I
   name: "discipline_levels"
   objects: {
     disciplines: Prisma.$disciplinesPayload<ExtArgs>
+    initial_for_disciplines: Prisma.$disciplinesPayload<ExtArgs>[]
     student_progress: Prisma.$student_progressPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
@@ -1174,6 +1286,7 @@ readonly fields: discipline_levelsFieldRefs;
 export interface Prisma__discipline_levelsClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   disciplines<T extends Prisma.disciplinesDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.disciplinesDefaultArgs<ExtArgs>>): Prisma.Prisma__disciplinesClient<runtime.Types.Result.GetResult<Prisma.$disciplinesPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  initial_for_disciplines<T extends Prisma.discipline_levels$initial_for_disciplinesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.discipline_levels$initial_for_disciplinesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$disciplinesPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   student_progress<T extends Prisma.discipline_levels$student_progressArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.discipline_levels$student_progressArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$student_progressPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -1610,6 +1723,30 @@ export type discipline_levelsDeleteManyArgs<ExtArgs extends runtime.Types.Extens
    * Limit how many discipline_levels to delete.
    */
   limit?: number
+}
+
+/**
+ * discipline_levels.initial_for_disciplines
+ */
+export type discipline_levels$initial_for_disciplinesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the disciplines
+   */
+  select?: Prisma.disciplinesSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the disciplines
+   */
+  omit?: Prisma.disciplinesOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.disciplinesInclude<ExtArgs> | null
+  where?: Prisma.disciplinesWhereInput
+  orderBy?: Prisma.disciplinesOrderByWithRelationInput | Prisma.disciplinesOrderByWithRelationInput[]
+  cursor?: Prisma.disciplinesWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.DisciplinesScalarFieldEnum | Prisma.DisciplinesScalarFieldEnum[]
 }
 
 /**

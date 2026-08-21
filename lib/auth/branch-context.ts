@@ -17,14 +17,25 @@ import "server-only";
 import { getAuthenticatedContext } from "@/lib/auth/identity-resolver";
 import { withAuthenticatedUser } from "@/lib/auth/server-context";
 import type { AppRoleAssignment } from "@/lib/auth/authorize";
+import {
+  ECUADOR_TIME_ZONE_VALUES,
+  type EcuadorTimeZone,
+} from "@/lib/domain/branches/schema";
 
 // --- Result types ---
+
+interface ActiveBranch {
+  id: string;
+  name: string;
+  timeZone: EcuadorTimeZone;
+}
 
 export type BranchContextResult =
   | {
       type: "valid";
       branchId: string;
       branchName: string;
+      timeZone: EcuadorTimeZone;
       canManage: boolean;
     }
   | { type: "redirect"; branchId: string }
@@ -35,6 +46,14 @@ export type BranchContextResult =
 
 /** Roles that qualify for operational branch context. */
 const OPERATIONAL_ROLES: Set<string> = new Set(["admin", "teacher"]);
+
+function normalizeEcuadorTimeZone(
+  timeZone: string
+): EcuadorTimeZone | undefined {
+  return ECUADOR_TIME_ZONE_VALUES.find(
+    (allowedTimeZone) => allowedTimeZone === timeZone
+  );
+}
 
 /**
  * Extract unique branch IDs from assignments that have an operational role
@@ -90,15 +109,23 @@ export async function resolveBranchContext(
     return { type: "error" };
   }
 
-  // Validate branches are active in DB (fetch names at the same time)
+  // Validate branches are active in DB (fetch names and time zones at the same time)
   const namesResult = await withAuthenticatedUser(async (tx) => {
     return tx.branches.findMany({
       where: { id: { in: branchIds }, is_active: true },
-      select: { id: true, name: true },
+      select: { id: true, name: true, time_zone: true },
     });
   });
 
-  const activeBranches = namesResult.success ? namesResult.data : [];
+  const activeBranches: ActiveBranch[] = namesResult.success
+    ? namesResult.data.flatMap((branch) => {
+        const timeZone = normalizeEcuadorTimeZone(branch.time_zone);
+
+        return timeZone === undefined
+          ? []
+          : [{ id: branch.id, name: branch.name, timeZone }];
+      })
+    : [];
 
   // No active branches found
   if (activeBranches.length === 0) {
@@ -119,6 +146,7 @@ export async function resolveBranchContext(
         type: "valid",
         branchId: singleBranch.id,
         branchName: singleBranch.name,
+        timeZone: singleBranch.timeZone,
         canManage: hasAdminForBranch(assignments, singleBranch.id),
       };
     }
@@ -134,6 +162,7 @@ export async function resolveBranchContext(
       type: "valid",
       branchId: selectedBranch.id,
       branchName: selectedBranch.name,
+      timeZone: selectedBranch.timeZone,
       canManage: hasAdminForBranch(assignments, selectedBranch.id),
     };
   }

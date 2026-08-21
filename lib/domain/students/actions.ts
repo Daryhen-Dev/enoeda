@@ -1,6 +1,7 @@
 "use server";
 
 import { withAuthenticatedUser } from "@/lib/auth/server-context";
+import { formatDatabaseDateOnly } from "@/lib/date";
 import {
   assertCallerBranchContext,
   BRANCH_ASSERTION_MESSAGES,
@@ -49,6 +50,12 @@ export interface StudentProfile {
   is_active: boolean;
 }
 
+export interface ActiveStudentDiscipline {
+  id: string;
+  discipline_name: string;
+  next_due_date: string | null;
+}
+
 export interface StudentListItem {
   id: string;
   branch_id: string;
@@ -56,6 +63,7 @@ export interface StudentListItem {
   surname: string;
   national_id: string;
   active_discipline_names: string[];
+  active_disciplines: ActiveStudentDiscipline[];
 }
 
 export interface StudentListPage {
@@ -128,7 +136,11 @@ export async function listStudents(
         national_id: true,
         student_disciplines: {
           where: { is_active: true },
-          select: { disciplines: { select: { name: true } } },
+          select: {
+            id: true,
+            next_due_date: true,
+            disciplines: { select: { name: true } },
+          },
         },
       },
       ...(listInput.cursor === undefined
@@ -146,16 +158,34 @@ export async function listStudents(
 
   const rows = result.data as Exclude<typeof result.data, { __branchError: string }>;
   const hasExtraItem = rows.length > listInput.page_size;
-  const items = rows.slice(0, listInput.page_size).map((student) => ({
-    id: student.id,
-    branch_id: student.branch_id,
-    first_name: student.first_name,
-    surname: student.surname,
-    national_id: student.national_id,
-    active_discipline_names: student.student_disciplines
-      .map((studentDiscipline) => studentDiscipline.disciplines.name)
-      .sort((firstName, secondName) => firstName.localeCompare(secondName)),
-  }));
+  const items = rows.slice(0, listInput.page_size).map((student) => {
+    const activeDisciplines = student.student_disciplines
+      .map((studentDiscipline) => ({
+        id: studentDiscipline.id,
+        discipline_name: studentDiscipline.disciplines.name,
+        next_due_date:
+          studentDiscipline.next_due_date === null
+            ? null
+            : formatDatabaseDateOnly(studentDiscipline.next_due_date),
+      }))
+      .sort((firstDiscipline, secondDiscipline) =>
+        firstDiscipline.discipline_name.localeCompare(
+          secondDiscipline.discipline_name
+        )
+      );
+
+    return {
+      id: student.id,
+      branch_id: student.branch_id,
+      first_name: student.first_name,
+      surname: student.surname,
+      national_id: student.national_id,
+      active_discipline_names: activeDisciplines.map(
+        (discipline) => discipline.discipline_name
+      ),
+      active_disciplines: activeDisciplines,
+    };
+  });
   const lastItem = items.at(-1);
 
   return {

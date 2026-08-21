@@ -181,7 +181,7 @@ export function RegisterMonthlyPaymentDialog({
           </SheetDescription>
         </SheetHeader>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col gap-4 px-4">
           <FieldGroup>
             <Field>
               <FieldLabel htmlFor="pay-amount">
@@ -204,14 +204,20 @@ export function RegisterMonthlyPaymentDialog({
                   {PAYMENT_MESSAGES.CALENDAR_YEAR_LABEL} inicial
                 </FieldLabel>
                 <Select value={startYear} onValueChange={(value) => setStartYear(value ?? "")}>
-                  <SelectTrigger id="pay-start-year"><SelectValue /></SelectTrigger>
+                  <SelectTrigger id="pay-start-year" className="w-full"><SelectValue className="min-w-0" /></SelectTrigger>
                   <SelectContent>{calendarYears.map((year) => <SelectItem key={year} value={String(year)}>{year}</SelectItem>)}</SelectContent>
                 </Select>
               </Field>
               <Field>
                 <FieldLabel htmlFor="pay-first-month">{PAYMENT_MESSAGES.FIRST_MONTH_LABEL}</FieldLabel>
                 <Select value={startMonth} onValueChange={(value) => setStartMonth(value ?? "")}>
-                  <SelectTrigger id="pay-first-month" aria-invalid={isMonthRangeInvalid}><SelectValue placeholder={PAYMENT_MESSAGES.FIRST_MONTH_LABEL} /></SelectTrigger>
+                  <SelectTrigger id="pay-first-month" className="w-full" aria-invalid={isMonthRangeInvalid}>
+                    <span data-slot="select-value" className="min-w-0 flex-1 truncate text-left">
+                      {startMonth
+                        ? formatMonth(startMonth)
+                        : PAYMENT_MESSAGES.FIRST_MONTH_LABEL}
+                    </span>
+                  </SelectTrigger>
                   <SelectContent>{MONTH_VALUES.map((month) => <SelectItem key={month} value={month}>{formatMonth(month)}</SelectItem>)}</SelectContent>
                 </Select>
               </Field>
@@ -220,14 +226,20 @@ export function RegisterMonthlyPaymentDialog({
                   {PAYMENT_MESSAGES.CALENDAR_YEAR_LABEL} final
                 </FieldLabel>
                 <Select value={endYear} onValueChange={(value) => setEndYear(value ?? "")}>
-                  <SelectTrigger id="pay-end-year"><SelectValue /></SelectTrigger>
+                  <SelectTrigger id="pay-end-year" className="w-full"><SelectValue className="min-w-0" /></SelectTrigger>
                   <SelectContent>{calendarYears.map((year) => <SelectItem key={year} value={String(year)}>{year}</SelectItem>)}</SelectContent>
                 </Select>
               </Field>
               <Field>
                 <FieldLabel htmlFor="pay-last-month">{PAYMENT_MESSAGES.LAST_MONTH_LABEL}</FieldLabel>
                 <Select value={endMonth} onValueChange={(value) => setEndMonth(value ?? "")}>
-                  <SelectTrigger id="pay-last-month" aria-invalid={isMonthRangeInvalid} aria-describedby="pay-month-range-error"><SelectValue placeholder={PAYMENT_MESSAGES.LAST_MONTH_LABEL} /></SelectTrigger>
+                  <SelectTrigger id="pay-last-month" className="w-full" aria-invalid={isMonthRangeInvalid} aria-describedby="pay-month-range-error">
+                    <span data-slot="select-value" className="min-w-0 flex-1 truncate text-left">
+                      {endMonth
+                        ? formatMonth(endMonth)
+                        : PAYMENT_MESSAGES.LAST_MONTH_LABEL}
+                    </span>
+                  </SelectTrigger>
                   <SelectContent>{MONTH_VALUES.map((month) => <SelectItem key={month} value={month}>{formatMonth(month)}</SelectItem>)}</SelectContent>
                 </Select>
               </Field>
@@ -274,7 +286,7 @@ export function RegisterMonthlyPaymentDialog({
             {error && <FieldError id="pay-payment-error">{error}</FieldError>}
           </FieldGroup>
 
-          <SheetFooter>
+          <SheetFooter className="-mx-4">
             <SheetClose
               render={
                 <Button type="button" variant="outline" disabled={isPending} />

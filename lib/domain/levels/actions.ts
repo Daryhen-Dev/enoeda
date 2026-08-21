@@ -1,15 +1,20 @@
 "use server";
 
 import { withAuthenticatedUser } from "@/lib/auth/server-context";
-import { COMMON_MESSAGES } from "@/lib/localization/es-ec";
+import {
+  COMMON_MESSAGES,
+  DISCIPLINE_MESSAGES,
+  LEVEL_MESSAGES,
+} from "@/lib/localization/es-ec";
 import {
   levelCreateSchema,
   levelUpdateSchema,
   levelsQuerySchema,
-  LEVEL_MESSAGES,
+  setInitialLevelSchema,
   type LevelCreateInput,
   type LevelUpdateInput,
   type LevelsQueryInput,
+  type SetInitialLevelInput,
 } from "./schema";
 
 export interface ActionResult<T = unknown> {
@@ -25,6 +30,11 @@ export interface LevelRecord {
   color: string | null;
   sort_order: number;
   required_attended_sessions: number;
+}
+
+export interface DisciplineLevelCatalog {
+  initial_level_id: string | null;
+  levels: LevelRecord[];
 }
 
 /**
@@ -62,9 +72,57 @@ export async function getLevels(
   }
 }
 
-/**
- * Create a level for a discipline. Owner-only (RLS enforced).
- */
+/** Get a discipline's initial-level configuration and ordered catalog together. */
+export async function getDisciplineLevelCatalog(
+  input: LevelsQueryInput
+): Promise<ActionResult<DisciplineLevelCatalog>> {
+  const parsed = levelsQuerySchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message };
+  }
+
+  try {
+    const result = await withAuthenticatedUser(async (tx) => {
+      const [discipline, levels] = await Promise.all([
+        tx.disciplines.findUnique({
+          where: { id: parsed.data.discipline_id },
+          select: { initial_level_id: true },
+        }),
+        tx.discipline_levels.findMany({
+          where: { discipline_id: parsed.data.discipline_id },
+          select: {
+            id: true,
+            discipline_id: true,
+            name: true,
+            color: true,
+            sort_order: true,
+            required_attended_sessions: true,
+          },
+          orderBy: { sort_order: "asc" },
+        }),
+      ]);
+
+      return { discipline, levels };
+    });
+
+    if (!result.success) return result;
+    if (!result.data.discipline) {
+      return { success: false, error: DISCIPLINE_MESSAGES.NOT_FOUND };
+    }
+
+    return {
+      success: true,
+      data: {
+        initial_level_id: result.data.discipline.initial_level_id,
+        levels: result.data.levels,
+      },
+    };
+  } catch {
+    return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
+  }
+}
+
+/** Create a level for a discipline. Owner-only (RLS enforced). */
 export async function createLevel(
   input: LevelCreateInput
 ): Promise<ActionResult<{ id: string }>> {
@@ -100,9 +158,7 @@ export async function createLevel(
   }
 }
 
-/**
- * Update an existing level. Owner-only (RLS enforced).
- */
+/** Update an existing level. Owner-only (RLS enforced). */
 export async function updateLevel(
   input: LevelUpdateInput
 ): Promise<ActionResult<{ id: string }>> {
@@ -140,6 +196,63 @@ export async function updateLevel(
     ) {
       return { success: false, error: LEVEL_MESSAGES.SORT_ORDER_TAKEN };
     }
+    return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
+  }
+}
+
+/** Set the explicitly configured initial level for a discipline. Owner-only. */
+export async function setInitialLevel(
+  input: SetInitialLevelInput
+): Promise<ActionResult<{ id: string }>> {
+  const parsed = setInitialLevelSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message };
+  }
+
+  try {
+    const result = await withAuthenticatedUser(async (tx, ctx) => {
+      if (!ctx.roles.includes("owner")) {
+        return { id: null, error: COMMON_MESSAGES.INSUFFICIENT_PERMISSIONS };
+      }
+
+      const [discipline, level] = await Promise.all([
+        tx.disciplines.findUnique({
+          where: { id: parsed.data.discipline_id },
+          select: { id: true },
+        }),
+        tx.discipline_levels.findUnique({
+          where: { id: parsed.data.level_id },
+          select: { discipline_id: true },
+        }),
+      ]);
+
+      if (!discipline) {
+        return { id: null, error: DISCIPLINE_MESSAGES.NOT_FOUND };
+      }
+      if (!level) {
+        return { id: null, error: LEVEL_MESSAGES.NOT_FOUND };
+      }
+      if (level.discipline_id !== discipline.id) {
+        return { id: null, error: LEVEL_MESSAGES.DISCIPLINE_MISMATCH };
+      }
+
+      const updated = await tx.disciplines.update({
+        where: { id: discipline.id },
+        data: { initial_level_id: parsed.data.level_id },
+        select: { id: true },
+      });
+      return { id: updated.id, error: null };
+    });
+
+    if (!result.success) return result;
+    if (result.data.error || !result.data.id) {
+      return {
+        success: false,
+        error: result.data.error ?? COMMON_MESSAGES.UNEXPECTED_ERROR,
+      };
+    }
+    return { success: true, data: { id: result.data.id } };
+  } catch {
     return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
   }
 }

@@ -147,9 +147,12 @@ export function CreateNoteDialog({
               <FieldLabel>{NOTES_MESSAGES.DISCIPLINE_LABEL}</FieldLabel>
               <Select value={disciplineId} onValueChange={(v) => setDisciplineId(v ?? "")}>
                 <SelectTrigger className="w-full">
-                  <SelectValue
-                    placeholder={NOTES_MESSAGES.DISCIPLINE_PLACEHOLDER}
-                  />
+                  <span data-slot="select-value" className="min-w-0 flex-1 truncate text-left">
+                    {disciplineId && disciplineId !== NO_DISCIPLINE_VALUE
+                      ? disciplines.find((discipline) => discipline.id === disciplineId)
+                          ?.name ?? NOTES_MESSAGES.DISCIPLINE_PLACEHOLDER
+                      : NOTES_MESSAGES.DISCIPLINE_PLACEHOLDER}
+                  </span>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value={NO_DISCIPLINE_VALUE}>

@@ -71,6 +71,7 @@ export function DisciplineList({ disciplines }: DisciplineListProps) {
             </TableCell>
             <TableCell>
               <Button
+                nativeButton={false}
                 variant="ghost"
                 size="sm"
                 render={

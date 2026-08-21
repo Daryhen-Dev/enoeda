@@ -1,12 +1,11 @@
-import { AlertCircleIcon, LayersIcon } from "lucide-react"
+import { AlertCircleIcon, ArrowLeftIcon, LayersIcon } from "lucide-react"
 import Link from "next/link"
-import { ArrowLeftIcon } from "lucide-react"
 
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Button } from "@/components/ui/button"
-import { getLevels } from "@/lib/domain/levels/actions"
 import { LevelCatalogList } from "@/components/levels/level-catalog-list"
 import { LevelFormDialog } from "@/components/levels/level-form-dialog"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Button } from "@/components/ui/button"
+import { getDisciplineLevelCatalog } from "@/lib/domain/levels/actions"
 import { LEVEL_MESSAGES } from "@/lib/localization/es-ec"
 
 interface LevelsPageProps {
@@ -17,13 +16,14 @@ export default async function OwnerDisciplineLevelsPage({
   params,
 }: LevelsPageProps) {
   const { id: disciplineId } = await params
-  const result = await getLevels({ discipline_id: disciplineId })
+  const result = await getDisciplineLevelCatalog({ discipline_id: disciplineId })
 
   return (
     <div className="flex flex-col gap-4 p-4 md:gap-6 md:p-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Button
+            nativeButton={false}
             variant="ghost"
             size="icon-sm"
             render={<Link href="/owner/disciplines" aria-label="Back" />}
@@ -42,7 +42,9 @@ export default async function OwnerDisciplineLevelsPage({
             </p>
           </div>
         </div>
-        <LevelFormDialog disciplineId={disciplineId} mode="create" />
+        {result.success && (
+          <LevelFormDialog disciplineId={disciplineId} mode="create" />
+        )}
       </div>
 
       {!result.success ? (
@@ -53,8 +55,9 @@ export default async function OwnerDisciplineLevelsPage({
         </Alert>
       ) : (
         <LevelCatalogList
-          levels={result.data ?? []}
+          levels={result.data?.levels ?? []}
           disciplineId={disciplineId}
+          initialLevelId={result.data?.initial_level_id ?? null}
         />
       )}
     </div>

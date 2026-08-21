@@ -50,6 +50,216 @@ export interface ProgressRecord {
   observations: string | null;
 }
 
+export interface StudentProgressSummary {
+  discipline_id: string;
+  discipline_name: string;
+  current_level_id: string | null;
+  current_level_name: string | null;
+  current_level_color: string | null;
+  next_level_id: string | null;
+  next_level_name: string | null;
+  next_level_color: string | null;
+  next_level_required_sessions: number | null;
+  period_started_at: Date | null;
+  attended_sessions: number;
+  is_max_level: boolean;
+}
+
+/**
+ * Gets the current progression summary for every active enrollment of a student.
+ * Attendance is batched across both recurring and one-time classes, and only
+ * records linked to a class in the enrolled discipline are counted.
+ */
+export async function getStudentProgressSummary(
+  input: ProgressQueryInput
+): Promise<ActionResult<StudentProgressSummary[]>> {
+  const parsed = progressQuerySchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message };
+  }
+
+  try {
+    const result = await withAuthenticatedUser(async (tx, ctx) => {
+      const branchError = assertCallerBranchContext(ctx, parsed.data.branch_id);
+      if (branchError) {
+        return { __branchError: branchError } as const;
+      }
+
+      const student = await tx.students.findUnique({
+        where: { id: parsed.data.student_id },
+        select: {
+          branch_id: true,
+          student_disciplines: {
+            where: { is_active: true },
+            select: {
+              discipline_id: true,
+              disciplines: { select: { name: true } },
+            },
+          },
+        },
+      });
+      if (!student || student.branch_id !== parsed.data.branch_id) {
+        return { __branchError: BRANCH_ASSERTION_MESSAGES.CROSS_BRANCH_DENIED } as const;
+      }
+
+      const enrolledDisciplines = student.student_disciplines;
+      const disciplineIds = enrolledDisciplines.map(
+        (enrollment) => enrollment.discipline_id
+      );
+      if (disciplineIds.length === 0) {
+        return [];
+      }
+
+      const [progressRecords, levels, attendanceRecords] = await Promise.all([
+        tx.student_progress.findMany({
+          where: {
+            student_id: parsed.data.student_id,
+            discipline_id: { in: disciplineIds },
+          },
+          select: {
+            id: true,
+            discipline_id: true,
+            level_id: true,
+            promoted_at: true,
+            created_at: true,
+          },
+          orderBy: [
+            { promoted_at: "desc" },
+            { created_at: "desc" },
+            { id: "desc" },
+          ],
+        }),
+        tx.discipline_levels.findMany({
+          where: { discipline_id: { in: disciplineIds } },
+          select: {
+            id: true,
+            discipline_id: true,
+            name: true,
+            color: true,
+            sort_order: true,
+            required_attended_sessions: true,
+          },
+          orderBy: [{ discipline_id: "asc" }, { sort_order: "asc" }],
+        }),
+        tx.attendance.findMany({
+          where: {
+            student_id: parsed.data.student_id,
+            attended: true,
+            OR: [
+              {
+                scheduled_classes: {
+                  branch_id: parsed.data.branch_id,
+                  discipline_id: { in: disciplineIds },
+                },
+              },
+              {
+                one_time_classes: {
+                  branch_id: parsed.data.branch_id,
+                  discipline_id: { in: disciplineIds },
+                },
+              },
+            ],
+          },
+          select: {
+            session_date: true,
+            scheduled_classes: { select: { discipline_id: true } },
+            one_time_classes: { select: { discipline_id: true } },
+          },
+        }),
+      ]);
+
+      const currentProgressByDiscipline = new Map<
+        string,
+        (typeof progressRecords)[number]
+      >();
+      for (const record of progressRecords) {
+        if (!currentProgressByDiscipline.has(record.discipline_id)) {
+          currentProgressByDiscipline.set(record.discipline_id, record);
+        }
+      }
+
+      const levelsByDiscipline = new Map<
+        string,
+        Array<(typeof levels)[number]>
+      >();
+      for (const level of levels) {
+        const disciplineLevels = levelsByDiscipline.get(level.discipline_id) ?? [];
+        disciplineLevels.push(level);
+        levelsByDiscipline.set(level.discipline_id, disciplineLevels);
+      }
+
+      const attendedByDiscipline = new Map<string, number>();
+      for (const attendance of attendanceRecords) {
+        const disciplineId =
+          attendance.scheduled_classes?.discipline_id ??
+          attendance.one_time_classes?.discipline_id;
+        if (!disciplineId) continue;
+
+        const currentProgress = currentProgressByDiscipline.get(disciplineId);
+        if (
+          currentProgress &&
+          attendance.session_date >= currentProgress.promoted_at
+        ) {
+          attendedByDiscipline.set(
+            disciplineId,
+            (attendedByDiscipline.get(disciplineId) ?? 0) + 1
+          );
+        }
+      }
+
+      return enrolledDisciplines.map((enrollment) => {
+        const currentProgress = currentProgressByDiscipline.get(
+          enrollment.discipline_id
+        );
+        const disciplineLevels =
+          levelsByDiscipline.get(enrollment.discipline_id) ?? [];
+        const currentLevelIndex = currentProgress
+          ? disciplineLevels.findIndex(
+              (level) => level.id === currentProgress.level_id
+            )
+          : -1;
+        const currentLevel =
+          currentLevelIndex >= 0 ? disciplineLevels[currentLevelIndex] : null;
+        const nextLevel =
+          currentLevelIndex >= 0
+            ? (disciplineLevels[currentLevelIndex + 1] ?? null)
+            : null;
+
+        return {
+          discipline_id: enrollment.discipline_id,
+          discipline_name: enrollment.disciplines.name,
+          current_level_id: currentLevel?.id ?? null,
+          current_level_name: currentLevel?.name ?? null,
+          current_level_color: currentLevel?.color ?? null,
+          next_level_id: nextLevel?.id ?? null,
+          next_level_name: nextLevel?.name ?? null,
+          next_level_color: nextLevel?.color ?? null,
+          next_level_required_sessions:
+            nextLevel?.required_attended_sessions ?? null,
+          period_started_at: currentProgress?.promoted_at ?? null,
+          attended_sessions:
+            currentProgress === undefined
+              ? 0
+              : (attendedByDiscipline.get(enrollment.discipline_id) ?? 0),
+          is_max_level: currentLevel !== null && nextLevel === null,
+        } satisfies StudentProgressSummary;
+      });
+    });
+
+    if (!result.success) return result;
+    if ("__branchError" in result.data) {
+      return {
+        success: false,
+        error: (result.data as { __branchError: string }).__branchError,
+      };
+    }
+
+    return { success: true, data: result.data as StudentProgressSummary[] };
+  } catch {
+    return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
+  }
+}
+
 export interface NoteRecord {
   id: string;
   discipline_id: string | null;

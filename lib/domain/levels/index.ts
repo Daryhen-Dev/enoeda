@@ -5,4 +5,4 @@ export type {
   LevelUpdateInput,
   LevelsQueryInput,
 } from "./schema";
-export { LEVEL_MESSAGES } from "./schema";
+export { LEVEL_MESSAGES } from "@/lib/localization/es-ec";

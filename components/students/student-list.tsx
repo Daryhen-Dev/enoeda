@@ -30,6 +30,7 @@ import {
   type StudentListInput,
   type StudentListItem,
 } from "@/lib/domain/students"
+import type { EcuadorTimeZone } from "@/lib/domain/branches/schema"
 import {
   COMMON_MESSAGES,
   STUDENT_DIRECTORY_MESSAGES,
@@ -50,6 +51,8 @@ interface StudentListProps {
   disciplines?: DisciplineOption[]
   lockedBranchId?: string
   branchId: string
+  canManage: boolean
+  timeZone: EcuadorTimeZone
 }
 
 export function StudentList({
@@ -63,6 +66,8 @@ export function StudentList({
   disciplines = [],
   lockedBranchId,
   branchId,
+  canManage,
+  timeZone,
 }: StudentListProps) {
   const searchInputId = useId()
   const searchSuggestionsId = useId()
@@ -99,6 +104,8 @@ export function StudentList({
     branchId,
     branches,
     status: selectedTab,
+    canManage,
+    timeZone,
   })
 
   function resetPage(status: StudentStatus) {

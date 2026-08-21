@@ -101,6 +101,8 @@ export default async function StudentsPage({ searchParams }: StudentsPageProps) 
         disciplines={disciplines}
         lockedBranchId={branchId}
         branchId={branchId}
+        canManage={branchResult.canManage}
+        timeZone={branchResult.timeZone}
       />
     </main>
   )

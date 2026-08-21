@@ -589,15 +589,18 @@ model disciplines {
   code                String
   is_active           Boolean               @default(true)
   class_price         Decimal?              @db.Decimal(10, 2)
+  initial_level_id    String?               @db.Uuid
   created_at          DateTime              @default(now()) @db.Timestamptz(6)
   updated_at          DateTime              @default(now()) @db.Timestamptz(6)
   student_disciplines student_disciplines[]
   scheduled_classes   scheduled_classes[]
-  discipline_levels   discipline_levels[]
+  discipline_levels   discipline_levels[]   @relation("DisciplineCatalogLevels")
+  initial_level       discipline_levels?    @relation("DisciplineInitialLevel", fields: [initial_level_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   student_progress    student_progress[]
   student_notes       student_notes[]
   one_time_classes    one_time_classes[]
 
+  @@index([initial_level_id], map: "disciplines_initial_level_id_idx")
   @@schema("public")
 }
 
@@ -743,7 +746,8 @@ model discipline_levels {
   required_attended_sessions Int                @default(0)
   created_at                 DateTime           @default(now()) @db.Timestamptz(6)
   updated_at                 DateTime           @default(now()) @db.Timestamptz(6)
-  disciplines                disciplines        @relation(fields: [discipline_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  disciplines                disciplines        @relation("DisciplineCatalogLevels", fields: [discipline_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  initial_for_disciplines    disciplines[]      @relation("DisciplineInitialLevel")
   student_progress           student_progress[]
 
   @@unique([discipline_id, sort_order], map: "discipline_levels_discipline_sort_uq")

@@ -10,7 +10,11 @@ import {
   getEnrollmentHistory,
 } from "@/lib/domain/disciplines/actions"
 import { getAttendanceStats } from "@/lib/domain/attendance/actions"
-import { listProgress, listNotes } from "@/lib/domain/progress/actions"
+import {
+  getStudentProgressSummary,
+  listProgress,
+  listNotes,
+} from "@/lib/domain/progress/actions"
 import { getLevels } from "@/lib/domain/levels/actions"
 import { getStudentPayments } from "@/lib/domain/payments/actions"
 import { getBranchPaymentSettings } from "@/lib/domain/branches/actions"
@@ -132,15 +136,24 @@ export default async function StudentDetailPage({
     }
   })
 
-  // Fetch progress and notes data
-  const [progressResult, notesResult, paymentsResult] = await Promise.all([
-    listProgress({ student_id: id, branch_id: branchResult.branchId }),
-    listNotes({ student_id: id, branch_id: branchResult.branchId }),
-    getStudentPayments({ student_id: id, branch_id: branchResult.branchId }),
-  ])
+  // Fetch progress, progression summary, notes, and payments data
+  const [progressResult, progressSummaryResult, notesResult, paymentsResult] =
+    await Promise.all([
+      listProgress({ student_id: id, branch_id: branchResult.branchId }),
+      getStudentProgressSummary({
+        student_id: id,
+        branch_id: branchResult.branchId,
+      }),
+      listNotes({ student_id: id, branch_id: branchResult.branchId }),
+      getStudentPayments({ student_id: id, branch_id: branchResult.branchId }),
+    ])
 
   const progressData =
     progressResult.success && progressResult.data ? progressResult.data : []
+  const progressSummaryData =
+    progressSummaryResult.success && progressSummaryResult.data
+      ? progressSummaryResult.data
+      : []
   const notesData =
     notesResult.success && notesResult.data ? notesResult.data : []
   const paymentsData =
@@ -224,9 +237,12 @@ export default async function StudentDetailPage({
       <EnrollmentHistory events={history} />
 
       {/* Progress panel + promotion dialogs */}
-      {progressData.length > 0 || canManage ? (
+      {progressSummaryData.length > 0 || canManage ? (
         <div className="flex flex-col gap-3">
-          <StudentProgressPanel progress={progressData} canPromote={canManage} />
+          <StudentProgressPanel
+            progress={progressData}
+            summaries={progressSummaryData}
+          />
           {canManage && activeDisciplineLevels.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {activeDisciplineLevels.map(({ disciplineId, disciplineName, levels: dLevels }) => (

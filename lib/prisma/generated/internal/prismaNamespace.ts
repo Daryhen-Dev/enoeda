@@ -3809,6 +3809,7 @@ export const DisciplinesScalarFieldEnum = {
   code: 'code',
   is_active: 'is_active',
   class_price: 'class_price',
+  initial_level_id: 'initial_level_id',
   created_at: 'created_at',
   updated_at: 'updated_at'
 } as const

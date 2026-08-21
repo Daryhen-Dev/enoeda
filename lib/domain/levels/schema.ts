@@ -2,17 +2,7 @@
 
 import { z } from "zod";
 
-export const LEVEL_MESSAGES = {
-  INVALID_ID: "Identificador de nivel inválido.",
-  INVALID_DISCIPLINE_ID: "Identificador de disciplina inválido.",
-  NAME_REQUIRED: "El nombre del nivel es obligatorio.",
-  NAME_MAX_LENGTH: "El nombre del nivel no puede superar 100 caracteres.",
-  COLOR_MAX_LENGTH: "El color no puede superar 30 caracteres.",
-  SORT_ORDER_NONNEG: "El orden debe ser un entero mayor o igual a 0.",
-  REQUIRED_SESSIONS_NONNEG:
-    "Las sesiones requeridas deben ser un entero mayor o igual a 0.",
-  SORT_ORDER_TAKEN: "Ya existe un nivel con ese orden en esta disciplina.",
-} as const;
+import { LEVEL_MESSAGES } from "@/lib/localization/es-ec";
 
 export const levelCreateSchema = z
   .object({
@@ -70,6 +60,14 @@ export const levelsQuerySchema = z
   })
   .strict();
 
+export const setInitialLevelSchema = z
+  .object({
+    discipline_id: z.uuid({ error: LEVEL_MESSAGES.INVALID_DISCIPLINE_ID }),
+    level_id: z.uuid({ error: LEVEL_MESSAGES.INVALID_ID }),
+  })
+  .strict();
+
 export type LevelCreateInput = z.infer<typeof levelCreateSchema>;
 export type LevelUpdateInput = z.infer<typeof levelUpdateSchema>;
 export type LevelsQueryInput = z.infer<typeof levelsQuerySchema>;
+export type SetInitialLevelInput = z.infer<typeof setInitialLevelSchema>;
