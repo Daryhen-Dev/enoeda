@@ -5,7 +5,10 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { getSessionsForRange } from "@/lib/domain/classes/actions";
 import { parseDateOnly, formatDateOnly } from "@/lib/date";
 import { listDisciplines } from "@/lib/domain/disciplines/actions";
-import { listBranchTeacherOptions } from "@/lib/domain/roles/actions";
+import {
+  getBranchDefaultTeacher,
+  listBranchTeacherOptions,
+} from "@/lib/domain/roles/actions";
 import { CalendarHeader } from "@/components/calendar/calendar-header";
 import { CalendarDayView } from "@/components/calendar/calendar-day-view";
 import { CalendarMonthView } from "@/components/calendar/calendar-month-view";
@@ -128,18 +131,20 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
     ? params.disciplines.split(",").filter(Boolean)
     : undefined;
 
-  const [sessionsResult, disciplinesResult, teachersResult] = await Promise.all([
-    getSessionsForRange({
-      branch_id: branchId,
-      start_date: startStr,
-      end_date: endStr,
-      discipline_ids: disciplineIds,
-    }),
-    canManage ? listDisciplines() : Promise.resolve({ success: true, data: [] }),
-    canManage
-      ? listBranchTeacherOptions({ branchId })
-      : Promise.resolve({ success: true, data: [] }),
-  ]);
+  const [sessionsResult, disciplinesResult, teachersResult, defaultTeacherId] =
+    await Promise.all([
+      getSessionsForRange({
+        branch_id: branchId,
+        start_date: startStr,
+        end_date: endStr,
+        discipline_ids: disciplineIds,
+      }),
+      canManage ? listDisciplines() : Promise.resolve({ success: true, data: [] }),
+      canManage
+        ? listBranchTeacherOptions({ branchId })
+        : Promise.resolve({ success: true, data: [] }),
+      canManage ? getBranchDefaultTeacher(branchId) : Promise.resolve(null),
+    ]);
 
   const sessions = sessionsResult.success ? (sessionsResult.data ?? []) : [];
   const disciplines = disciplinesResult.success ? (disciplinesResult.data ?? []) : [];
@@ -155,6 +160,7 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
               branchId={branchId}
               disciplines={disciplines}
               teachers={teachers}
+              defaultTeacherId={defaultTeacherId}
             />
             <ScheduledClassCreateDialog
               branchId={branchId}

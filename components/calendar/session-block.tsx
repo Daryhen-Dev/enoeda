@@ -184,7 +184,7 @@ export function SessionBlock({
           )}
           {isOneTime && (
             <span className="rounded bg-sky-200 px-0.5 text-xs">
-              {ONE_TIME_CLASS_MESSAGES.ONE_TIME_BADGE.slice(0, 3)}
+              {ONE_TIME_CLASS_MESSAGES.ONE_TIME_BADGE}
             </span>
           )}
           {hasAttendanceRecords && !isSuspended && (

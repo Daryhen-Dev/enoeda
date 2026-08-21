@@ -35,6 +35,7 @@ interface OneTimeClassCreateDialogProps {
   branchId: string;
   disciplines: Array<{ id: string; name: string }>;
   teachers: Array<{ id: string; name: string }>;
+  defaultTeacherId: string | null;
 }
 
 /** Sentinel value for the "no teacher yet" option — Select items cannot use an empty string value. */
@@ -44,6 +45,7 @@ export function OneTimeClassCreateDialog({
   branchId,
   disciplines,
   teachers,
+  defaultTeacherId,
 }: OneTimeClassCreateDialogProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -54,11 +56,17 @@ export function OneTimeClassCreateDialog({
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
+  function getInitialTeacherId() {
+    return defaultTeacherId && teachers.some((teacher) => teacher.id === defaultTeacherId)
+      ? defaultTeacherId
+      : NO_TEACHER_VALUE;
+  }
+
   function resetForm() {
     setDisciplineId("");
     setClassDate("");
     setStartTime("09:00");
-    setTeacherId(NO_TEACHER_VALUE);
+    setTeacherId(getInitialTeacherId());
     setError(null);
   }
 
@@ -88,7 +96,7 @@ export function OneTimeClassCreateDialog({
       open={open}
       onOpenChange={(nextOpen) => {
         setOpen(nextOpen);
-        if (!nextOpen) resetForm();
+        resetForm();
       }}
     >
       <SheetTrigger render={<Button variant="outline" size="default" />}>
