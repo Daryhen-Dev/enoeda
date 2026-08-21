@@ -31,16 +31,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { revokeBranchTeacher } from "@/lib/domain/roles/actions"
-import { enableSelfAsTeacher } from "@/lib/domain/roles/actions"
-import type { StaffAssignment } from "@/lib/domain/roles/actions"
-import type { RevokeTeacherResult } from "@/lib/domain/roles/schema"
+import {
+  assignBranchTeacher,
+  enableSelfAsTeacher,
+  revokeBranchTeacher,
+  type StaffAssignment,
+} from "@/lib/domain/roles/actions"
 import { isSelfEnableEligibleRow } from "@/lib/domain/roles/self-enable-eligibility"
 import {
   COMMON_MESSAGES,
   formatDate,
   TEACHER_MANAGEMENT_MESSAGES,
-  TOAST_MESSAGES,
 } from "@/lib/localization/es-ec"
 
 import { groupStaffAssignmentsByBranchAndUser } from "./staff-list-model"
@@ -49,6 +50,16 @@ interface StaffListProps {
   assignments: StaffAssignment[]
   branchId: string
   currentUserId?: string
+}
+
+function getRoleLabel(assignment: StaffAssignment): string {
+  if (assignment.role === "teacher") {
+    return assignment.revoked_at === null
+      ? TEACHER_MANAGEMENT_MESSAGES.TEACHER_ROLE_LABEL
+      : TEACHER_MANAGEMENT_MESSAGES.DEACTIVATED_TEACHER_ROLE_LABEL
+  }
+
+  return TEACHER_MANAGEMENT_MESSAGES.SELF_ADMIN_ROLE_LABEL
 }
 
 /**
@@ -86,10 +97,23 @@ export function StaffList({ assignments, branchId, currentUserId }: StaffListPro
           const adminAssignment = member.assignments.find(
             (assignment) => assignment.role === "admin"
           )
-          const includesTeacher = member.assignments.some(
-            (assignment) => assignment.role === "teacher"
+          const hasActiveTeacher = member.assignments.some(
+            (assignment) =>
+              assignment.role === "teacher" && assignment.revoked_at === null
           )
+          const hasDeactivatedTeacher = member.assignments.some(
+            (assignment) =>
+              assignment.role === "teacher" && assignment.revoked_at !== null
+          )
+          const displayedAssignments = hasActiveTeacher
+            ? member.assignments.filter(
+                (assignment) =>
+                  assignment.role !== "teacher" || assignment.revoked_at === null
+              )
+            : member.assignments
+          const showReactivateTeacher = !hasActiveTeacher && hasDeactivatedTeacher
           const showSelfEnable =
+            !hasDeactivatedTeacher &&
             currentUserId !== undefined &&
             adminAssignment !== undefined &&
             isSelfEnableEligibleRow(
@@ -104,18 +128,18 @@ export function StaffList({ assignments, branchId, currentUserId }: StaffListPro
               <TableCell>
                 {member.displayName ?? TEACHER_MANAGEMENT_MESSAGES.PROFILE_UNAVAILABLE}
               </TableCell>
-              <TableCell className="capitalize">
+              <TableCell>
                 <ul>
-                  {member.assignments.map((assignment, index) => (
+                  {displayedAssignments.map((assignment, index) => (
                     <li key={`${assignment.role}-${assignment.assigned_at}-${index}`}>
-                      {assignment.role}
+                      {getRoleLabel(assignment)}
                     </li>
                   ))}
                 </ul>
               </TableCell>
               <TableCell>
                 <ul>
-                  {member.assignments.map((assignment, index) => (
+                  {displayedAssignments.map((assignment, index) => (
                     <li key={`${assignment.role}-${assignment.assigned_at}-${index}`}>
                       {formatDate(new Date(assignment.assigned_at))}
                     </li>
@@ -124,8 +148,14 @@ export function StaffList({ assignments, branchId, currentUserId }: StaffListPro
               </TableCell>
               <TableCell>
                 <div className="flex flex-wrap gap-1">
-                  {includesTeacher && (
-                    <RevokeTeacherDialog
+                  {hasActiveTeacher && (
+                    <DeactivateTeacherDialog
+                      userId={member.userId}
+                      branchId={branchId}
+                    />
+                  )}
+                  {showReactivateTeacher && (
+                    <ReactivateTeacherAction
                       userId={member.userId}
                       branchId={branchId}
                     />
@@ -143,7 +173,7 @@ export function StaffList({ assignments, branchId, currentUserId }: StaffListPro
   )
 }
 
-function RevokeTeacherDialog({
+function DeactivateTeacherDialog({
   userId,
   branchId,
 }: {
@@ -152,44 +182,48 @@ function RevokeTeacherDialog({
 }) {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
-  const [summary, setSummary] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
-  function handleRevoke() {
+  function handleDeactivate() {
     startTransition(async () => {
       const result = await revokeBranchTeacher({
         targetUserId: userId,
         branchId,
       })
-      if (!result.success) {
-        setError(result.error ?? COMMON_MESSAGES.UNEXPECTED_ERROR)
-        setSummary(null)
+      if (!result.success || !result.data) {
+        setError(result.error ?? TEACHER_MANAGEMENT_MESSAGES.DEACTIVATE_FAILURE)
         return
       }
-      const data = result.data as RevokeTeacherResult
-      if (data.status === "revoked") {
+
+      if (result.data.status === "revoked") {
         setError(null)
-        setSummary(
-          `Profesor revocado. ${data.reassignedClassCount} clase(s) reasignada(s).`
+        toast.success(
+          TEACHER_MANAGEMENT_MESSAGES.DEACTIVATE_SUCCESS_TOAST(
+            result.data.reassignedClassCount
+          )
         )
-        toast.success(TOAST_MESSAGES.TEACHER_REVOKED)
         router.refresh()
+        return
+      }
+
+      if (result.data.reason === "no_default_teacher") {
+        setError(TEACHER_MANAGEMENT_MESSAGES.DEACTIVATE_NO_DEFAULT_TEACHER)
+      } else if (result.data.reason === "revoked_is_default") {
+        setError(TEACHER_MANAGEMENT_MESSAGES.DEACTIVATE_DEFAULT_TEACHER)
+      } else if (result.data.reason === "no_active_admin") {
+        setError(TEACHER_MANAGEMENT_MESSAGES.DEACTIVATE_NO_ACTIVE_ADMIN)
+      } else if (result.data.reason === "conflict" && result.data.conflicts) {
+        const details = result.data.conflicts
+          .map((conflict) =>
+            TEACHER_MANAGEMENT_MESSAGES.DEACTIVATE_CONFLICT_DETAIL(
+              conflict.dayOfWeek,
+              conflict.startTime
+            )
+          )
+          .join("; ")
+        setError(TEACHER_MANAGEMENT_MESSAGES.DEACTIVATE_CONFLICT(details))
       } else {
-        setSummary(null)
-        if (data.reason === "no_default_teacher") {
-          setError("No hay profesor predeterminado configurado para esta sucursal.")
-        } else if (data.reason === "revoked_is_default") {
-          setError("No se puede revocar al profesor predeterminado. Cambie el predeterminado primero.")
-        } else if (data.reason === "no_active_admin") {
-          setError("No se puede revocar porque no hay otro admin activo para asumir el rol docente predeterminado.")
-        } else if (data.reason === "conflict" && data.conflicts) {
-          const details = data.conflicts
-            .map((c) => `Día ${c.dayOfWeek} a las ${c.startTime}`)
-            .join("; ")
-          setError(`Conflicto de horario con el reemplazante: ${details}`)
-        } else {
-          setError(COMMON_MESSAGES.UNEXPECTED_ERROR)
-        }
+        setError(TEACHER_MANAGEMENT_MESSAGES.DEACTIVATE_FAILURE)
       }
     })
   }
@@ -197,29 +231,22 @@ function RevokeTeacherDialog({
   return (
     <AlertDialog>
       <AlertDialogTrigger render={<Button variant="destructive" size="xs" />}>
-        {TEACHER_MANAGEMENT_MESSAGES.REVOKE_ACTION}
+        {TEACHER_MANAGEMENT_MESSAGES.DEACTIVATE_ACTION}
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>
-            {TEACHER_MANAGEMENT_MESSAGES.REVOKE_CONFIRMATION_TITLE}
+            {TEACHER_MANAGEMENT_MESSAGES.DEACTIVATE_CONFIRMATION_TITLE}
           </AlertDialogTitle>
           <AlertDialogDescription>
-            {TEACHER_MANAGEMENT_MESSAGES.REVOKE_CONFIRMATION_DESCRIPTION}
+            {TEACHER_MANAGEMENT_MESSAGES.DEACTIVATE_CONFIRMATION_DESCRIPTION}
           </AlertDialogDescription>
         </AlertDialogHeader>
 
         {error && (
           <Alert variant="destructive">
-            <AlertTitle>{TEACHER_MANAGEMENT_MESSAGES.REVOKE_ERROR}</AlertTitle>
+            <AlertTitle>{TEACHER_MANAGEMENT_MESSAGES.DEACTIVATE_ERROR}</AlertTitle>
             <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
-        {summary && (
-          <Alert>
-            <AlertTitle>Revocación exitosa</AlertTitle>
-            <AlertDescription>{summary}</AlertDescription>
           </Alert>
         )}
 
@@ -230,15 +257,55 @@ function RevokeTeacherDialog({
           <AlertDialogAction
             variant="destructive"
             disabled={isPending}
-            onClick={handleRevoke}
+            onClick={handleDeactivate}
           >
             {isPending
-              ? TEACHER_MANAGEMENT_MESSAGES.REVOKING
-              : TEACHER_MANAGEMENT_MESSAGES.REVOKE_ACTION}
+              ? TEACHER_MANAGEMENT_MESSAGES.DEACTIVATING
+              : TEACHER_MANAGEMENT_MESSAGES.DEACTIVATE_ACTION}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+  )
+}
+
+function ReactivateTeacherAction({
+  userId,
+  branchId,
+}: {
+  userId: string
+  branchId: string
+}) {
+  const router = useRouter()
+  const [isPending, startTransition] = useTransition()
+
+  function handleReactivate() {
+    startTransition(async () => {
+      const result = await assignBranchTeacher({
+        targetUserId: userId,
+        branchId,
+      })
+      if (result.success) {
+        toast.success(TEACHER_MANAGEMENT_MESSAGES.REACTIVATE_SUCCESS_TOAST)
+        router.refresh()
+        return
+      }
+
+      toast.error(result.error ?? TEACHER_MANAGEMENT_MESSAGES.REACTIVATE_FAILURE)
+    })
+  }
+
+  return (
+    <Button
+      variant="outline"
+      size="xs"
+      disabled={isPending}
+      onClick={handleReactivate}
+    >
+      {isPending
+        ? TEACHER_MANAGEMENT_MESSAGES.REACTIVATING
+        : TEACHER_MANAGEMENT_MESSAGES.REACTIVATE_ACTION}
+    </Button>
   )
 }
 

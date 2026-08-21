@@ -50,11 +50,16 @@ export function DefaultTeacherSelector({ branchId, teachers, currentDefaultId }:
         <div className="flex items-center gap-2">
           <Select value={selected} onValueChange={(value) => { if (value) setSelected(value) }}>
             <SelectTrigger id="default-teacher-select" className="w-64">
-              <SelectValue placeholder={MESSAGES.PLACEHOLDER} />
+              <SelectValue placeholder={MESSAGES.PLACEHOLDER}>
+                {(value) =>
+                  teachers.find((teacher) => teacher.id === value)?.name ??
+                  MESSAGES.PLACEHOLDER
+                }
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {teachers.map((t) => (
-                <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                <SelectItem key={t.id} value={t.id} label={t.name}>{t.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>

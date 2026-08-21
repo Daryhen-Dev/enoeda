@@ -35,9 +35,9 @@ export default async function AdminsPage({ params }: AdminsPageProps) {
     notFound()
   }
 
-  const staffResult = await listBranchStaff()
+  const staffResult = await listBranchStaff({ branchId: id })
   const admins = (staffResult.success ? staffResult.data ?? [] : []).filter(
-    (a) => a.branch_id === id && a.role === "admin"
+    (assignment) => assignment.role === "admin"
   )
 
   return (

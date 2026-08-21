@@ -12,6 +12,7 @@ export interface StaffAssignmentRow {
   user_id: string;
   role: string;
   branch_id: string | null;
+  revoked_at?: string | null;
 }
 
 /**
@@ -36,10 +37,11 @@ export function isSelfEnableEligibleRow(
 
   // Must NOT already have a teacher role in this branch
   const alreadyTeacher = allAssignments.some(
-    (a) =>
-      a.user_id === currentUserId &&
-      a.role === "teacher" &&
-      a.branch_id === branchId
+    (assignment) =>
+      assignment.user_id === currentUserId &&
+      assignment.role === "teacher" &&
+      assignment.branch_id === branchId &&
+      (assignment.revoked_at === undefined || assignment.revoked_at === null)
   );
 
   return !alreadyTeacher;

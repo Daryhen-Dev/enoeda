@@ -5,16 +5,28 @@ import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { CheckCircleIcon, RotateCcwIcon } from "lucide-react"
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import type { NoteRecord } from "@/lib/domain/progress/actions"
 import { completeNote, reopenNote } from "@/lib/domain/progress/actions"
 import {
-  NOTES_MESSAGES,
-  TOAST_MESSAGES,
   COMMON_MESSAGES,
   formatDate,
+  formatDateTime,
+  NOTES_MESSAGES,
+  TOAST_MESSAGES,
 } from "@/lib/localization/es-ec"
+import { cn } from "@/lib/utils"
 
 const CATEGORY_LABELS: Record<string, string> = {
   tecnica: NOTES_MESSAGES.CATEGORY_TECNICA,
@@ -33,7 +45,8 @@ interface StudentNotesPanelProps {
 
 export function StudentNotesPanel({ notes, branchId }: StudentNotesPanelProps) {
   const router = useRouter()
-  const [filter, setFilter] = useState<FilterState>("all")
+  const [filter, setFilter] = useState<FilterState>("open")
+  const [noteToReopen, setNoteToReopen] = useState<NoteRecord | null>(null)
   const [isPending, startTransition] = useTransition()
 
   const filteredNotes = notes.filter((note) => {
@@ -54,10 +67,16 @@ export function StudentNotesPanel({ notes, branchId }: StudentNotesPanelProps) {
     })
   }
 
-  function handleReopen(noteId: string) {
+  function handleReopen() {
+    if (!noteToReopen) return
+
     startTransition(async () => {
-      const result = await reopenNote({ id: noteId, branch_id: branchId })
+      const result = await reopenNote({
+        id: noteToReopen.id,
+        branch_id: branchId,
+      })
       if (result.success) {
+        setNoteToReopen(null)
         toast.success(TOAST_MESSAGES.NOTE_REOPENED)
         router.refresh()
       } else {
@@ -66,8 +85,14 @@ export function StudentNotesPanel({ notes, branchId }: StudentNotesPanelProps) {
     })
   }
 
+  function handleReopenDialogOpenChange(open: boolean) {
+    if (!open && !isPending) {
+      setNoteToReopen(null)
+    }
+  }
+
   return (
-    <section className="flex flex-col gap-3">
+    <section className="flex w-full flex-col gap-3">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-medium text-muted-foreground">
           {NOTES_MESSAGES.PANEL_TITLE}
@@ -97,11 +122,14 @@ export function StudentNotesPanel({ notes, branchId }: StudentNotesPanelProps) {
           {NOTES_MESSAGES.EMPTY_STATE}
         </p>
       ) : (
-        <div className="flex flex-col gap-2">
+        <div className="grid w-full grid-cols-1 gap-3 min-[480px]:grid-cols-2">
           {filteredNotes.map((note) => (
             <div
               key={note.id}
-              className="flex items-start gap-3 rounded-md border p-3"
+              className={cn(
+                "flex h-full items-start gap-3 rounded-md border p-3",
+                note.is_completed && "bg-green-50 dark:bg-green-950/30"
+              )}
             >
               <div className="flex flex-1 flex-col gap-1">
                 <div className="flex items-center gap-2">
@@ -115,9 +143,14 @@ export function StudentNotesPanel({ notes, branchId }: StudentNotesPanelProps) {
                   )}
                 </div>
                 <p className="text-sm">{note.content}</p>
-                <span className="text-xs text-muted-foreground">
-                  {formatDate(new Date(note.created_at))}
-                </span>
+                <div className="flex flex-col text-xs text-muted-foreground">
+                  <span>
+                    {NOTES_MESSAGES.CREATED_AT_LABEL}: {formatDate(new Date(note.created_at))}
+                  </span>
+                  <span>
+                    {NOTES_MESSAGES.LAST_UPDATED_AT_LABEL}: {formatDateTime(new Date(note.updated_at))}
+                  </span>
+                </div>
               </div>
               <div className="flex gap-1">
                 {!note.is_completed ? (
@@ -134,7 +167,7 @@ export function StudentNotesPanel({ notes, branchId }: StudentNotesPanelProps) {
                   <Button
                     variant="ghost"
                     size="icon-sm"
-                    onClick={() => handleReopen(note.id)}
+                    onClick={() => setNoteToReopen(note)}
                     disabled={isPending}
                     aria-label={NOTES_MESSAGES.REOPEN_ACTION}
                   >
@@ -146,6 +179,41 @@ export function StudentNotesPanel({ notes, branchId }: StudentNotesPanelProps) {
           ))}
         </div>
       )}
+
+      <AlertDialog
+        open={noteToReopen !== null}
+        onOpenChange={handleReopenDialogOpenChange}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {NOTES_MESSAGES.REOPEN_CONFIRMATION_TITLE}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {NOTES_MESSAGES.REOPEN_CONFIRMATION_DESCRIPTION}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {isPending && (
+            <p role="status" aria-live="polite" className="text-sm text-muted-foreground">
+              {NOTES_MESSAGES.REOPENING}
+            </p>
+          )}
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isPending}>
+              {COMMON_MESSAGES.CANCEL}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              type="button"
+              disabled={isPending || noteToReopen === null}
+              onClick={handleReopen}
+            >
+              {isPending
+                ? NOTES_MESSAGES.REOPENING
+                : NOTES_MESSAGES.REOPEN_CONFIRM_ACTION}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </section>
   )
 }

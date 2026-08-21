@@ -39,6 +39,7 @@ export interface StaffAssignment {
   role: AppRole;
   branch_id: string | null;
   assigned_at: string;
+  revoked_at: string | null;
   display_name?: string;
 }
 
@@ -375,21 +376,22 @@ export async function createBranchTeacher(
 /**
  * List staff assignments authorized by user_roles RLS, then resolve canonical
  * display names through the service client. Missing profiles remain unnamed.
- * Scoped to a specific branch when branchId is provided.
+ * Requires a specific branch and never returns unscoped staff assignments.
  */
 export async function listBranchStaff(
   options?: { branchId?: string }
 ): Promise<ActionResult<StaffAssignment[]>> {
-  const supabase = await createClient();
-  let query = supabase
-    .from("user_roles")
-    .select("user_id, role, branch_id, assigned_at")
-    .is("revoked_at", null)
-    .neq("role", "owner");
-
-  if (options?.branchId) {
-    query = query.eq("branch_id", options.branchId);
+  if (!options?.branchId) {
+    return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
   }
+
+  const supabase = await createClient();
+  const query = supabase
+    .from("user_roles")
+    .select("user_id, role, branch_id, assigned_at, revoked_at")
+    .eq("branch_id", options.branchId)
+    .neq("role", "owner")
+    .or("role.eq.teacher,revoked_at.is.null");
 
   const { data, error } = await query.order("assigned_at", { ascending: false });
 

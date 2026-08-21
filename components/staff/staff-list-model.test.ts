@@ -15,6 +15,7 @@ function createAssignment(
     role: "admin",
     branch_id: BRANCH_A,
     assigned_at: "2025-01-01T00:00:00.000Z",
+    revoked_at: null,
     display_name: "Ana López",
     ...overrides,
   }

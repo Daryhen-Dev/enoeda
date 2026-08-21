@@ -276,6 +276,7 @@ export interface NoteRecord {
   completed_by: string | null;
   created_by: string;
   created_at: Date;
+  updated_at: Date;
 }
 
 const LATEST_PROGRESS_ORDER = [
@@ -870,6 +871,7 @@ export async function listNotes(
           completed_by: true,
           created_by: true,
           created_at: true,
+          updated_at: true,
         },
         orderBy: { created_at: "desc" },
       });

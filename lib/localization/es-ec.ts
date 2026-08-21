@@ -271,8 +271,17 @@ const DATE_FORMAT_OPTIONS = {
   dateStyle: "medium",
 } as const satisfies Intl.DateTimeFormatOptions
 
+const DATE_TIME_FORMAT_OPTIONS = {
+  dateStyle: "medium",
+  timeStyle: "short",
+} as const satisfies Intl.DateTimeFormatOptions
+
 export function formatDate(value: Date): string {
   return new Intl.DateTimeFormat(USER_LOCALE, DATE_FORMAT_OPTIONS).format(value)
+}
+
+export function formatDateTime(value: Date): string {
+  return new Intl.DateTimeFormat(USER_LOCALE, DATE_TIME_FORMAT_OPTIONS).format(value)
 }
 
 export function formatNumber(value: number): string {
@@ -396,11 +405,33 @@ export const TEACHER_MANAGEMENT_MESSAGES = {
   ASSIGN_DIALOG_DESCRIPTION: "Ingrese el UUID del usuario que será profesor en esta sucursal.",
   TARGET_USER_LABEL: "ID de usuario (UUID)",
   ASSIGNING: "Asignando…",
-  REVOKE_ACTION: "Revocar",
-  REVOKE_CONFIRMATION_TITLE: "¿Revocar acceso de profesor?",
-  REVOKE_CONFIRMATION_DESCRIPTION: "El usuario perderá acceso de profesor a esta sucursal.",
-  REVOKE_ERROR: "No se pudo revocar el acceso.",
-  REVOKING: "Revocando…",
+  DEACTIVATE_ACTION: "Desactivar",
+  DEACTIVATE_CONFIRMATION_TITLE: "¿Desactivar acceso de profesor?",
+  DEACTIVATE_CONFIRMATION_DESCRIPTION:
+    "Las clases futuras asignadas a este profesor se reasignarán al profesor predeterminado de la sucursal.",
+  DEACTIVATE_ERROR: "No se pudo desactivar el acceso de profesor.",
+  DEACTIVATE_FAILURE: "No se pudo desactivar el profesor.",
+  DEACTIVATING: "Desactivando…",
+  DEACTIVATE_SUCCESS_TOAST: (reassignedClassCount: number) =>
+    reassignedClassCount === 1
+      ? "Profesor desactivado. Se reasignó 1 clase futura."
+      : `Profesor desactivado. Se reasignaron ${reassignedClassCount} clases futuras.`,
+  DEACTIVATE_NO_DEFAULT_TEACHER:
+    "No hay un profesor predeterminado configurado para esta sucursal.",
+  DEACTIVATE_DEFAULT_TEACHER:
+    "No se puede desactivar al profesor predeterminado. Cambie el profesor predeterminado primero.",
+  DEACTIVATE_NO_ACTIVE_ADMIN:
+    "No se puede desactivar porque no hay otro administrador activo para asumir el rol docente predeterminado.",
+  DEACTIVATE_CONFLICT_DETAIL: (dayOfWeek: number, startTime: string) =>
+    `Día ${dayOfWeek} a las ${startTime}`,
+  DEACTIVATE_CONFLICT: (details: string) =>
+    `Existe un conflicto de horario con el profesor predeterminado: ${details}`,
+  REACTIVATE_ACTION: "Reactivar",
+  REACTIVATING: "Reactivando…",
+  REACTIVATE_FAILURE: "No se pudo reactivar el profesor.",
+  REACTIVATE_SUCCESS_TOAST: "Profesor reactivado correctamente.",
+  TEACHER_ROLE_LABEL: "Profesor",
+  DEACTIVATED_TEACHER_ROLE_LABEL: "Profesor desactivado",
   SELF_ENABLE_ACTION: "También soy profesor",
   SELF_ENABLE_ENABLING: "Activando…",
   SELF_ENABLE_SUCCESS: "Ahora también es profesor en esta sucursal.",
@@ -681,6 +712,13 @@ export const NOTES_MESSAGES = {
   EMPTY_STATE: "Sin notas registradas.",
   COMPLETE_ACTION: "Completar",
   REOPEN_ACTION: "Reabrir",
+  CREATED_AT_LABEL: "Creada",
+  LAST_UPDATED_AT_LABEL: "Última actualización",
+  REOPEN_CONFIRMATION_TITLE: "¿Reabrir esta nota?",
+  REOPEN_CONFIRMATION_DESCRIPTION:
+    "La nota volverá al estado abierto.",
+  REOPEN_CONFIRM_ACTION: "Reabrir nota",
+  REOPENING: "Reabriendo…",
   SAVING: "Guardando…",
   CATEGORY_TECNICA: "Técnica",
   CATEGORY_FISICO: "Físico",

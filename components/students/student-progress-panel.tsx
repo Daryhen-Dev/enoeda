@@ -29,7 +29,7 @@ export function StudentProgressPanel({
           {PROGRESS_MESSAGES.NO_PROGRESS}
         </p>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="flex flex-col gap-3">
           {summaries.map((summary) => (
             <article
               key={summary.discipline_id}

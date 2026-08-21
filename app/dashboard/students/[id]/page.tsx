@@ -262,7 +262,7 @@ export default async function StudentDetailPage({
 
       {/* Notes panel */}
       <div className="flex flex-col gap-3">
-        <div className="flex items-center justify-between">
+        <div className="w-full">
           <StudentNotesPanel notes={notesData} branchId={branchResult.branchId} />
         </div>
         {canManage && (

@@ -54,6 +54,7 @@ describe("listBranchStaff — branch scoping", () => {
     chain.is = vi.fn().mockReturnValue(chain);
     chain.neq = vi.fn().mockReturnValue(chain);
     chain.eq = vi.fn().mockReturnValue(chain);
+    chain.or = vi.fn().mockReturnValue(chain);
     // order() is the terminal call, awaited — returns a thenable with data/error
     chain.order = vi.fn().mockReturnValue(Promise.resolve({ data: [], error: null }));
     return chain;
@@ -76,15 +77,17 @@ describe("listBranchStaff — branch scoping", () => {
     });
   });
 
-  it("includes branch_id eq filter in query when branchId is provided", async () => {
+  it("includes the branch and active-or-historical-teacher filters", async () => {
     await listBranchStaff({ branchId: "branch-xyz" });
 
     expect(mockQuery.eq).toHaveBeenCalledWith("branch_id", "branch-xyz");
+    expect(mockQuery.or).toHaveBeenCalledWith("role.eq.teacher,revoked_at.is.null");
   });
 
-  it("does not include branch_id eq filter when no branchId provided", async () => {
-    await listBranchStaff();
+  it("fails closed when no branch is provided", async () => {
+    const result = await listBranchStaff();
 
-    expect(mockQuery.eq).not.toHaveBeenCalled();
+    expect(result.success).toBe(false);
+    expect(mockCreateClient).not.toHaveBeenCalled();
   });
 });
