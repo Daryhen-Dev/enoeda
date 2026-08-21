@@ -41,6 +41,7 @@ export interface StaffAssignment {
   assigned_at: string;
   revoked_at: string | null;
   display_name?: string;
+  email?: string | null;
 }
 
 export interface CreatedAccountCredentials {
@@ -421,11 +422,37 @@ export async function listBranchStaff(
       `${profile.first_name} ${profile.surname}`,
     ])
   );
+  const emailsByUserId = new Map<string, string>();
+  const unresolvedUserIds = new Set(userIds);
+  let page = 1;
+
+  while (unresolvedUserIds.size > 0) {
+    const { data: users, error: usersError } = await admin.auth.admin.listUsers({
+      page,
+      perPage: 1000,
+    });
+    if (usersError) return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
+
+    for (const user of users.users) {
+      if (!unresolvedUserIds.has(user.id)) continue;
+
+      unresolvedUserIds.delete(user.id);
+      const email = user.email?.trim();
+      if (email) {
+        emailsByUserId.set(user.id, email);
+      }
+    }
+
+    if (users.users.length < 1000) break;
+    page += 1;
+  }
+
   return {
     success: true,
     data: assignments.map((assignment) => ({
       ...assignment,
       display_name: namesByUserId.get(assignment.user_id),
+      email: emailsByUserId.get(assignment.user_id) ?? null,
     })),
   };
 }

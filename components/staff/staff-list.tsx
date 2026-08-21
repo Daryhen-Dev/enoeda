@@ -87,6 +87,7 @@ export function StaffList({ assignments, branchId, currentUserId }: StaffListPro
       <TableHeader>
         <TableRow>
           <TableHead>{TEACHER_MANAGEMENT_MESSAGES.NAME_LABEL}</TableHead>
+          <TableHead>{TEACHER_MANAGEMENT_MESSAGES.EMAIL_LABEL}</TableHead>
           <TableHead>{TEACHER_MANAGEMENT_MESSAGES.ROLE_LABEL}</TableHead>
           <TableHead>{TEACHER_MANAGEMENT_MESSAGES.ASSIGNED_AT_LABEL}</TableHead>
           <TableHead>{TEACHER_MANAGEMENT_MESSAGES.ACTIONS_LABEL}</TableHead>
@@ -127,6 +128,9 @@ export function StaffList({ assignments, branchId, currentUserId }: StaffListPro
             <TableRow key={`${member.branchId}-${member.userId}`}>
               <TableCell>
                 {member.displayName ?? TEACHER_MANAGEMENT_MESSAGES.PROFILE_UNAVAILABLE}
+              </TableCell>
+              <TableCell>
+                {member.email ?? TEACHER_MANAGEMENT_MESSAGES.EMAIL_UNAVAILABLE}
               </TableCell>
               <TableCell>
                 <ul>

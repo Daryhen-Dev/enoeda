@@ -396,6 +396,8 @@ export const TEACHER_MANAGEMENT_MESSAGES = {
   LOAD_FAILURE: "No se pudieron cargar los profesores.",
   EMPTY_STATE: "Sin profesores",
   NAME_LABEL: "Nombre",
+  EMAIL_LABEL: "Correo electrónico",
+  EMAIL_UNAVAILABLE: "Correo electrónico no disponible",
   PROFILE_UNAVAILABLE: "Perfil pendiente",
   ASSIGNED_AT_LABEL: "Asignado",
   ACTIONS_LABEL: "Acciones",

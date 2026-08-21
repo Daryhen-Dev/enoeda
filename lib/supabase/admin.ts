@@ -11,12 +11,12 @@ import type { Database } from "./database.types";
  * etc.). This module MUST NEVER be imported from a Client Component,
  * middleware, or any Edge Runtime entrypoint.
  *
- * Restricted to exactly one purpose in this codebase: the owner creating
- * a branch admin, or a branch admin creating a teacher within their own
- * branch, both via Auth admin `createUser` with a temporary password.
- * Callers MUST verify authorization themselves via the trusted identity
- * resolver / branch-scoped RPC guards BEFORE invoking any admin method —
- * this client performs no authorization of its own.
+ * Restricted to account creation with Auth admin `createUser` and to
+ * batch email reads with Auth admin `listUsers`. A caller may read emails
+ * by batch only after obtaining an authorized roster. Callers MUST verify
+ * authorization themselves via the trusted identity resolver / branch-scoped
+ * RPC guards BEFORE invoking any admin method — this client performs no
+ * authorization of its own.
  */
 export function createAdminClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;

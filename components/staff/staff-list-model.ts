@@ -4,6 +4,7 @@ export interface StaffListMember {
   userId: string
   branchId: string | null
   displayName: string | undefined
+  email: StaffAssignment["email"]
   assignments: StaffAssignment[]
 }
 
@@ -26,6 +27,7 @@ export function groupStaffAssignmentsByBranchAndUser(
       userId: assignment.user_id,
       branchId: assignment.branch_id,
       displayName: assignment.display_name,
+      email: assignment.email,
       assignments: [assignment],
     })
   }
