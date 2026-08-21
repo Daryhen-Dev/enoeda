@@ -38,7 +38,7 @@ function getDisciplineColors(code: string): DisciplineColors {
     case "karate":
       return { bg: "bg-blue-100", text: "text-blue-800", border: "border-blue-300" };
     case "kickboxing":
-      return { bg: "bg-red-100", text: "text-red-800", border: "border-red-300" };
+      return { bg: "bg-amber-50", text: "text-amber-950", border: "border-amber-200" };
     default:
       return { bg: "bg-gray-100", text: "text-gray-800", border: "border-gray-300" };
   }
@@ -241,8 +241,8 @@ export function SessionBlock({
         <div
           className={`flex items-center gap-1 text-sm ${
             hasNoTeacher
-              ? "text-amber-600"
-              : "text-muted-foreground dark:text-slate-950"
+              ? "text-amber-700"
+              : "font-medium text-slate-950 dark:text-slate-950"
           }`}
         >
           {hasNoTeacher ? <AlertTriangleIcon className="size-3" /> : <UserIcon className="size-3" />}
