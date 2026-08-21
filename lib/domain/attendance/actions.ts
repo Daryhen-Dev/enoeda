@@ -1,6 +1,10 @@
 "use server";
 
-import { withAuthenticatedUser } from "@/lib/auth/server-context";
+import {
+  withAuthenticatedUser,
+  type AuthenticatedContext,
+} from "@/lib/auth/server-context";
+import type { TransactionClient } from "@/lib/prisma/client";
 import {
   assertCallerBranchContext,
   BRANCH_ASSERTION_MESSAGES,
@@ -45,6 +49,109 @@ function jsToIsoDayOfWeek(jsDay: number): number {
   return (jsDay + 6) % 7;
 }
 
+const ATTENDANCE_SESSION_AUTHORIZATION = {
+  AUTHORIZED: "authorized",
+  DENIED: "denied",
+  INVALID: "invalid",
+} as const;
+
+interface AuthorizedAttendanceSession {
+  status: typeof ATTENDANCE_SESSION_AUTHORIZATION.AUTHORIZED;
+  branchId: string;
+  disciplineId: string;
+  sessionDate: Date;
+}
+
+interface DeniedAttendanceSession {
+  status: typeof ATTENDANCE_SESSION_AUTHORIZATION.DENIED;
+}
+
+interface InvalidAttendanceSession {
+  status: typeof ATTENDANCE_SESSION_AUTHORIZATION.INVALID;
+}
+
+type AttendanceSessionAuthorization =
+  | AuthorizedAttendanceSession
+  | DeniedAttendanceSession
+  | InvalidAttendanceSession;
+
+interface AttendanceSessionInput {
+  scheduled_class_id?: string;
+  one_time_class_id?: string;
+  session_date?: string;
+}
+
+async function authorizeAttendanceSession(
+  tx: TransactionClient,
+  ctx: AuthenticatedContext,
+  input: AttendanceSessionInput,
+  branchId: string
+): Promise<AttendanceSessionAuthorization> {
+  const isActiveBranchAdmin = ctx.assignments.some(
+    (assignment) =>
+      assignment.role === "admin" && assignment.branchId === branchId
+  );
+
+  if (input.scheduled_class_id) {
+    const sessionDate = parseDateOnly(input.session_date!);
+    const scheduledClass = await tx.scheduled_classes.findUnique({
+      where: { id: input.scheduled_class_id },
+      select: { branch_id: true, discipline_id: true, day_of_week: true },
+    });
+
+    if (
+      !scheduledClass ||
+      scheduledClass.branch_id !== branchId ||
+      scheduledClass.day_of_week !== jsToIsoDayOfWeek(sessionDate.getDay())
+    ) {
+      return { status: ATTENDANCE_SESSION_AUTHORIZATION.INVALID };
+    }
+
+    if (!isActiveBranchAdmin) {
+      const [effectiveTeacher] = await tx.$queryRaw<
+        { teacher_id: string | null }[]
+      >`SELECT private.resolve_effective_teacher(
+          ${input.scheduled_class_id}::uuid,
+          ${sessionDate}::date
+        ) AS teacher_id`;
+
+      if (effectiveTeacher?.teacher_id !== ctx.userId) {
+        return { status: ATTENDANCE_SESSION_AUTHORIZATION.DENIED };
+      }
+    }
+
+    return {
+      status: ATTENDANCE_SESSION_AUTHORIZATION.AUTHORIZED,
+      branchId: scheduledClass.branch_id,
+      disciplineId: scheduledClass.discipline_id,
+      sessionDate,
+    };
+  }
+
+  const oneTimeClass = await tx.one_time_classes.findUnique({
+    where: { id: input.one_time_class_id! },
+    select: { branch_id: true, discipline_id: true, class_date: true, teacher_id: true },
+  });
+
+  if (!oneTimeClass || oneTimeClass.branch_id !== branchId) {
+    return { status: ATTENDANCE_SESSION_AUTHORIZATION.INVALID };
+  }
+
+  if (!isActiveBranchAdmin && oneTimeClass.teacher_id !== ctx.userId) {
+    return { status: ATTENDANCE_SESSION_AUTHORIZATION.DENIED };
+  }
+
+  const sessionDate = new Date(oneTimeClass.class_date);
+  sessionDate.setHours(0, 0, 0, 0);
+
+  return {
+    status: ATTENDANCE_SESSION_AUTHORIZATION.AUTHORIZED,
+    branchId: oneTimeClass.branch_id,
+    disciplineId: oneTimeClass.discipline_id,
+    sessionDate,
+  };
+}
+
 /**
  * takeAttendance — Bulk upsert attendance records for a session.
  *
@@ -80,35 +187,22 @@ export async function takeAttendance(
       return { count: -1, error: branchError };
     }
 
-    let branchId: string;
-    let disciplineId: string;
-    let sessionDate: Date;
+    const attendanceSession = await authorizeAttendanceSession(
+      tx,
+      ctx,
+      parsed.data,
+      branch_id
+    );
+    if (attendanceSession.status === ATTENDANCE_SESSION_AUTHORIZATION.INVALID) {
+      return { count: -1, error: ATTENDANCE_MESSAGES.INVALID_SESSION };
+    }
+    if (attendanceSession.status === ATTENDANCE_SESSION_AUTHORIZATION.DENIED) {
+      return { count: -1, error: COMMON_MESSAGES.INSUFFICIENT_PERMISSIONS };
+    }
+
+    const { branchId, disciplineId, sessionDate } = attendanceSession;
 
     if (scheduled_class_id) {
-      const session_date = parsed.data.session_date!;
-      sessionDate = new Date(session_date + "T00:00:00");
-
-      // Step 3: Class lookup
-      const cls = await tx.scheduled_classes.findUnique({
-        where: { id: scheduled_class_id },
-        select: {
-          branch_id: true,
-          discipline_id: true,
-          day_of_week: true,
-          is_active: true,
-        },
-      });
-
-      if (cls === null) {
-        return { count: -1, error: ATTENDANCE_MESSAGES.INVALID_SESSION };
-      }
-
-      // Step 4: Weekday integrity
-      const expectedDay = jsToIsoDayOfWeek(sessionDate.getDay());
-      if (expectedDay !== cls.day_of_week) {
-        return { count: -1, error: ATTENDANCE_MESSAGES.INVALID_SESSION };
-      }
-
       // Step 5: Suspension check (only recurring classes can be suspended)
       const sessionOverride = await tx.class_sessions.findUnique({
         where: {
@@ -123,36 +217,6 @@ export async function takeAttendance(
       if (sessionOverride?.status === "suspended") {
         return { count: -1, error: ATTENDANCE_MESSAGES.SESSION_SUSPENDED };
       }
-
-      branchId = cls.branch_id;
-      disciplineId = cls.discipline_id;
-
-      // Cross-branch guard: class must belong to the caller's branch
-      if (branchId !== branch_id) {
-        return { count: -1, error: ATTENDANCE_MESSAGES.INVALID_SESSION };
-      }
-    } else {
-      // One-time (recovery) class — its date is fixed at creation, no
-      // weekday/suspension checks apply.
-      const otc = await tx.one_time_classes.findUnique({
-        where: { id: one_time_class_id! },
-        select: { branch_id: true, discipline_id: true, class_date: true },
-      });
-
-      if (otc === null) {
-        return { count: -1, error: ATTENDANCE_MESSAGES.INVALID_SESSION };
-      }
-
-      branchId = otc.branch_id;
-      disciplineId = otc.discipline_id;
-
-      // Cross-branch guard: one-time class must belong to the caller's branch
-      if (branchId !== branch_id) {
-        return { count: -1, error: ATTENDANCE_MESSAGES.INVALID_SESSION };
-      }
-
-      sessionDate = new Date(otc.class_date);
-      sessionDate.setHours(0, 0, 0, 0);
     }
 
     // Future date guard (applies to both kinds)
@@ -299,47 +363,17 @@ export async function getAttendanceForSession(
       return null;
     }
 
-    let branchId: string;
-    let disciplineId: string;
-    let sessionDate: Date;
-
-    if (scheduled_class_id) {
-      const session_date = parsed.data.session_date!;
-      sessionDate = new Date(session_date + "T00:00:00");
-
-      const cls = await tx.scheduled_classes.findUnique({
-        where: { id: scheduled_class_id },
-        select: { branch_id: true, discipline_id: true, day_of_week: true },
-      });
-
-      if (cls === null) return null;
-
-      // Weekday integrity
-      const expectedDay = jsToIsoDayOfWeek(sessionDate.getDay());
-      if (expectedDay !== cls.day_of_week) return null;
-
-      branchId = cls.branch_id;
-      disciplineId = cls.discipline_id;
-
-      // Cross-branch guard
-      if (branchId !== branch_id) return null;
-    } else {
-      const otc = await tx.one_time_classes.findUnique({
-        where: { id: one_time_class_id! },
-        select: { branch_id: true, discipline_id: true, class_date: true },
-      });
-
-      if (otc === null) return null;
-
-      branchId = otc.branch_id;
-      disciplineId = otc.discipline_id;
-
-      // Cross-branch guard
-      if (branchId !== branch_id) return null;
-
-      sessionDate = new Date(otc.class_date);
-      sessionDate.setHours(0, 0, 0, 0);
+    const attendanceSession = await authorizeAttendanceSession(
+      tx,
+      ctx,
+      parsed.data,
+      branch_id
+    );
+    if (attendanceSession.status !== ATTENDANCE_SESSION_AUTHORIZATION.AUTHORIZED) {
+      return attendanceSession;
     }
+
+    const { branchId, disciplineId, sessionDate } = attendanceSession;
 
     // Resolve eligible students (A7)
     const eligibleEnrollments = await tx.student_disciplines.findMany({
@@ -400,7 +434,10 @@ export async function getAttendanceForSession(
   });
 
   if (!result.success) return result;
-  if (result.data === null) {
+  if (!Array.isArray(result.data)) {
+    if (result.data?.status === ATTENDANCE_SESSION_AUTHORIZATION.DENIED) {
+      return { success: false, error: COMMON_MESSAGES.INSUFFICIENT_PERMISSIONS };
+    }
     return { success: false, error: ATTENDANCE_MESSAGES.INVALID_SESSION };
   }
 

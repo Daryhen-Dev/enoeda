@@ -50,6 +50,7 @@ export interface SessionView {
   end_time: string;
   teacher_id: string | null;
   effective_teacher_name?: string | null;
+  can_take_attendance?: boolean;
   attendance: SessionAttendanceSummary;
   status: "scheduled" | "suspended";
   suspension_category: string | null;
@@ -756,6 +757,22 @@ export async function getSessionsForRange(
         });
       }
 
+      const canManageAttendance = ctx.assignments.some(
+        (assignment) =>
+          assignment.role === "admin" && assignment.branchId === branch_id
+      );
+      if (!canManageAttendance) {
+        const assignedSessions = sessions.filter(
+          (session) => session.teacher_id === ctx.userId
+        );
+        sessions.splice(0, sessions.length, ...assignedSessions);
+      }
+
+      for (const session of sessions) {
+        session.can_take_attendance =
+          canManageAttendance || session.teacher_id === ctx.userId;
+      }
+
       const teacherIds = [
         ...new Set(
           sessions
@@ -803,18 +820,17 @@ export async function getSessionsForRange(
           : null;
       }
 
-      const oneTimeClassIds = oneTimeClasses.map((oneTimeClass) => oneTimeClass.id);
-      const attendanceRows = sessions.length > 0
+      const attendanceSessionFilters = sessions.map((session) =>
+        session.is_one_time
+          ? { one_time_class_id: session.scheduled_class_id }
+          : {
+              scheduled_class_id: session.scheduled_class_id,
+              session_date: parseDateOnly(session.session_date),
+            }
+      );
+      const attendanceRows = attendanceSessionFilters.length > 0
         ? await tx.attendance.findMany({
-            where: {
-              OR: [
-                {
-                  scheduled_class_id: { in: classIds },
-                  session_date: { gte: start, lte: end },
-                },
-                { one_time_class_id: { in: oneTimeClassIds } },
-              ],
-            },
+            where: { OR: attendanceSessionFilters },
             select: {
               scheduled_class_id: true,
               one_time_class_id: true,

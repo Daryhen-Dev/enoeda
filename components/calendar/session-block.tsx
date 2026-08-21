@@ -259,7 +259,7 @@ export function SessionBlock({
               oneTimeClassId={session.scheduled_class_id}
               sessionDate={session.session_date}
               branchId={branchId ?? ""}
-              disabled={isSuspended || !branchId}
+              disabled={isSuspended || !branchId || !session.can_take_attendance}
               triggerClassName="inline-flex h-8 w-full items-center justify-center gap-1 rounded-full border border-sky-600 bg-sky-600 px-2 text-sm font-medium whitespace-nowrap text-white shadow-sm transition-colors hover:bg-sky-700 hover:text-white focus-visible:border-sky-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-950/50 disabled:pointer-events-none disabled:opacity-50"
             />
           ) : (
@@ -268,7 +268,7 @@ export function SessionBlock({
                 scheduledClassId={session.scheduled_class_id}
                 sessionDate={session.session_date}
                 branchId={branchId ?? ""}
-                disabled={isSuspended || !branchId}
+                disabled={isSuspended || !branchId || !session.can_take_attendance}
                 triggerClassName="inline-flex h-8 w-full items-center justify-center gap-1 rounded-full border border-sky-600 bg-sky-600 px-2 text-sm font-medium whitespace-nowrap text-white shadow-sm transition-colors hover:bg-sky-700 hover:text-white focus-visible:border-sky-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-950/50 disabled:pointer-events-none disabled:opacity-50"
               />
               {canManage && branchId && (
