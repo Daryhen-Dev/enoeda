@@ -1,6 +1,7 @@
 export {
   getPromotionReadiness,
   promoteStudent,
+  reverseLatestPromotion,
   listProgress,
   createNote,
   completeNote,
@@ -11,11 +12,13 @@ export type {
   ActionResult,
   ReadinessResult,
   PromoteResult,
+  ReverseLatestPromotionResult,
   ProgressRecord,
   NoteRecord,
 } from "./actions";
 export type {
   PromoteStudentInput,
+  ReverseLatestPromotionInput,
   ReadinessQueryInput,
   ProgressQueryInput,
   CreateNoteInput,

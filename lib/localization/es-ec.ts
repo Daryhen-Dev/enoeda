@@ -58,6 +58,7 @@ export const TOAST_MESSAGES = {
   LEVEL_CREATED: "Nivel creado correctamente.",
   LEVEL_UPDATED: "Nivel actualizado correctamente.",
   STUDENT_PROMOTED: "Estudiante promovido correctamente.",
+  STUDENT_PROMOTION_CORRECTED: "Promoción corregida correctamente.",
   NOTE_CREATED: "Nota creada correctamente.",
   NOTE_COMPLETED: "Nota completada.",
   NOTE_REOPENED: "Nota reabierta.",
@@ -627,6 +628,17 @@ export const PROGRESS_MESSAGES = {
   NEXT_LEVEL: "Siguiente nivel",
   MAX_LEVEL: "Nivel máximo",
   NO_LEVEL_ASSIGNED: "Sin nivel asignado.",
+  PROMOTION_REQUIREMENT_NOT_MET:
+    "No se puede promover porque aún no se cumple el número de sesiones requeridas.",
+  PROMOTION_CORRECTION_UNAVAILABLE:
+    "No existe un nivel anterior registrado para corregir esta promoción.",
+  PROMOTION_CORRECTION_OBSERVATION:
+    "Corrección de promoción: se restauró el nivel anterior.",
+  CORRECT_PROMOTION_ACTION: "Corregir última promoción",
+  CORRECT_PROMOTION_TITLE: "¿Corregir la última promoción?",
+  CORRECT_PROMOTION_DESCRIPTION:
+    "El estudiante volverá al nivel registrado antes de la última promoción. El historial se conservará.",
+  CORRECTING_PROMOTION: "Corrigiendo promoción…",
   CLASSES_TO_NEXT_LEVEL: (attended: string, required: string) =>
     `${attended} / ${required} clases`,
   ACCUMULATED_CLASSES: (attended: string) =>

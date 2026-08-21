@@ -81,6 +81,19 @@ export function StudentPaymentHistory({
 
   const columns: ColumnDef<TableFeatures, CombinedPaymentEntry>[] = [
     {
+      id: "actions",
+      header: PAYMENT_MESSAGES.ACTIONS_LABEL,
+      cell: ({ row }) => (
+        <PaymentHistoryActions
+          record={row.original.record}
+          branchId={branchId}
+          canManage={canManage}
+          paymentSettingsAvailable={paymentSettingsAvailable}
+          paymentEditWindowDays={paymentEditWindowDays}
+        />
+      ),
+    },
+    {
       accessorKey: "date",
       header: PAYMENT_MESSAGES.PAYMENT_DATE_LABEL,
       cell: ({ row }) => formatDate(row.original.date),
@@ -97,19 +110,6 @@ export function StudentPaymentHistory({
       cell: ({ row }) => row.original.detail
         ? `${row.original.type} (${row.original.detail})`
         : row.original.type,
-    },
-    {
-      id: "actions",
-      header: PAYMENT_MESSAGES.ACTIONS_LABEL,
-      cell: ({ row }) => (
-        <PaymentHistoryActions
-          record={row.original.record}
-          branchId={branchId}
-          canManage={canManage}
-          paymentSettingsAvailable={paymentSettingsAvailable}
-          paymentEditWindowDays={paymentEditWindowDays}
-        />
-      ),
     },
   ]
 

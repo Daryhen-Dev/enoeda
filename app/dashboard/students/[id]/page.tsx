@@ -234,8 +234,6 @@ export default async function StudentDetailPage({
         </section>
       )}
 
-      <EnrollmentHistory events={history} />
-
       {/* Progress panel + promotion dialogs */}
       {progressSummaryData.length > 0 || canManage ? (
         <div className="flex flex-col gap-3">
@@ -311,6 +309,8 @@ export default async function StudentDetailPage({
           </div>
         )}
       </div>
+
+      <EnrollmentHistory events={history} />
     </main>
   )
 }

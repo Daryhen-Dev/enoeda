@@ -82,6 +82,14 @@ export const promoteStudentSchema = z
   })
   .strict();
 
+export const reverseLatestPromotionSchema = z
+  .object({
+    student_id: z.uuid({ error: PROGRESS_MESSAGES.INVALID_STUDENT_ID }),
+    discipline_id: z.uuid({ error: PROGRESS_MESSAGES.INVALID_DISCIPLINE_ID }),
+    branch_id: z.uuid({ error: PROGRESS_MESSAGES.BRANCH_REQUIRED }),
+  })
+  .strict();
+
 export const readinessQuerySchema = z
   .object({
     student_id: z.uuid({ error: PROGRESS_MESSAGES.INVALID_STUDENT_ID }),
@@ -130,6 +138,9 @@ export const notesQuerySchema = z
   .strict();
 
 export type PromoteStudentInput = z.infer<typeof promoteStudentSchema>;
+export type ReverseLatestPromotionInput = z.infer<
+  typeof reverseLatestPromotionSchema
+>;
 export type ReadinessQueryInput = z.infer<typeof readinessQuerySchema>;
 export type ProgressQueryInput = z.infer<typeof progressQuerySchema>;
 export type CreateNoteInput = z.infer<typeof createNoteSchema>;

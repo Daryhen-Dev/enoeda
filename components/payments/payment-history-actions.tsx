@@ -175,12 +175,12 @@ export function PaymentHistoryActions({
   }
 
   return (
-    <div className="flex justify-end gap-1">
-      <Button variant="ghost" size="icon-sm" aria-label={PAYMENT_MESSAGES.EDIT_ACTION} onClick={() => setEditing(true)}>
+    <div className="flex items-center gap-2">
+      <Button variant="outline" size="icon-sm" aria-label={PAYMENT_MESSAGES.EDIT_ACTION} onClick={() => setEditing(true)}>
         <PencilIcon className="size-4" />
       </Button>
-      <Button variant="ghost" size="icon-sm" aria-label={PAYMENT_MESSAGES.DELETE_ACTION} onClick={() => { setDeleting(true); setError(null) }}>
-        <Trash2Icon className="size-4" />
+      <Button variant="outline" size="icon-sm" aria-label={PAYMENT_MESSAGES.DELETE_ACTION} onClick={() => { setDeleting(true); setError(null) }}>
+        <Trash2Icon className="size-4 text-destructive" />
       </Button>
 
       <Sheet open={editing} onOpenChange={(open) => { if (!isPending) { setEditing(open); if (!open) reset() } }}>
@@ -189,7 +189,7 @@ export function PaymentHistoryActions({
             <SheetTitle>{PAYMENT_MESSAGES.CORRECTION_TITLE}</SheetTitle>
             <SheetDescription>{PAYMENT_MESSAGES.REGISTER_MONTHLY_DESCRIPTION}</SheetDescription>
           </SheetHeader>
-          <form onSubmit={handleEdit} className="flex flex-col gap-4">
+          <form onSubmit={handleEdit} className="flex flex-col gap-4 px-4">
             <FieldGroup>
               <Field>
                 <FieldLabel htmlFor={`payment-amount-${record.id}`}>{PAYMENT_MESSAGES.AMOUNT_LABEL}</FieldLabel>
@@ -222,7 +222,7 @@ export function PaymentHistoryActions({
               )}
               {error && <FieldError>{error}</FieldError>}
             </FieldGroup>
-            <SheetFooter>
+            <SheetFooter className="px-0">
               <SheetClose render={<Button type="button" variant="outline" disabled={isPending} />}>{COMMON_MESSAGES.CANCEL}</SheetClose>
               <Button type="submit" disabled={isPending}>{isPending ? PAYMENT_MESSAGES.SAVING : COMMON_MESSAGES.SAVE}</Button>
             </SheetFooter>

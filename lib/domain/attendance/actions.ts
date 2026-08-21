@@ -532,12 +532,9 @@ export async function getAttendanceStats(
     }
 
     // Build where clause. Deliberately excludes one_time_classes
-    // (recovery/makeup class) attendance — by product decision, those
-    // sessions do NOT count toward the student's regular attendance
-    // stats or the minimum-hours promotion requirement (see
-    // getPromotionReadiness in lib/domain/progress/actions.ts, which
-    // achieves the same exclusion naturally via its scheduled_classes
-    // relation filter).
+    // (recovery/makeup class) attendance from the student's regular
+    // attendance statistics. Promotion eligibility evaluates its own
+    // branch-scoped recurring and one-time class records.
     const where: Record<string, unknown> = {
       student_id,
       scheduled_class_id: { not: null },

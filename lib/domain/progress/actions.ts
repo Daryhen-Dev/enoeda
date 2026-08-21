@@ -5,9 +5,14 @@ import {
   assertCallerBranchContext,
   BRANCH_ASSERTION_MESSAGES,
 } from "@/lib/auth/branch-assertion";
-import { COMMON_MESSAGES } from "@/lib/localization/es-ec";
+import {
+  COMMON_MESSAGES,
+  PROGRESS_MESSAGES as PROGRESS_COPY,
+} from "@/lib/localization/es-ec";
+import type { TransactionClient } from "@/lib/prisma/client";
 import {
   promoteStudentSchema,
+  reverseLatestPromotionSchema,
   readinessQuerySchema,
   progressQuerySchema,
   createNoteSchema,
@@ -16,6 +21,7 @@ import {
   PROGRESS_MESSAGES,
   NOTES_MESSAGES,
   type PromoteStudentInput,
+  type ReverseLatestPromotionInput,
   type ReadinessQueryInput,
   type ProgressQueryInput,
   type CreateNoteInput,
@@ -272,6 +278,100 @@ export interface NoteRecord {
   created_at: Date;
 }
 
+const LATEST_PROGRESS_ORDER = [
+  { promoted_at: "desc" as const },
+  { created_at: "desc" as const },
+  { id: "desc" as const },
+];
+
+interface PromotionEligibilityInput {
+  student_id: string;
+  discipline_id: string;
+  level_id: string;
+  branch_id: string;
+}
+
+interface PromotionEligibilityResult extends ReadinessResult {
+  error: string | null;
+}
+
+async function getPromotionEligibility(
+  tx: TransactionClient,
+  { student_id, discipline_id, level_id, branch_id }: PromotionEligibilityInput
+): Promise<PromotionEligibilityResult> {
+  const student = await tx.students.findUnique({
+    where: { id: student_id },
+    select: { branch_id: true },
+  });
+  if (!student || student.branch_id !== branch_id) {
+    return {
+      attended: 0,
+      required: 0,
+      meets_requirement: false,
+      error: BRANCH_ASSERTION_MESSAGES.CROSS_BRANCH_DENIED,
+    };
+  }
+
+  const level = await tx.discipline_levels.findUnique({
+    where: { id: level_id },
+    select: { discipline_id: true, required_attended_sessions: true },
+  });
+  if (!level) {
+    return {
+      attended: 0,
+      required: 0,
+      meets_requirement: false,
+      error: PROGRESS_MESSAGES.INVALID_LEVEL,
+    };
+  }
+  if (level.discipline_id !== discipline_id) {
+    return {
+      attended: 0,
+      required: 0,
+      meets_requirement: false,
+      error: PROGRESS_MESSAGES.LEVEL_DISCIPLINE_MISMATCH,
+    };
+  }
+
+  const latestProgress = await tx.student_progress.findFirst({
+    where: { student_id, discipline_id },
+    orderBy: LATEST_PROGRESS_ORDER,
+    select: { promoted_at: true },
+  });
+
+  const attended = await tx.attendance.count({
+    where: {
+      student_id,
+      attended: true,
+      OR: [
+        {
+          scheduled_classes: {
+            branch_id,
+            discipline_id,
+          },
+        },
+        {
+          one_time_classes: {
+            branch_id,
+            discipline_id,
+          },
+        },
+      ],
+      ...(latestProgress
+        ? { session_date: { gte: latestProgress.promoted_at } }
+        : {}),
+    },
+  });
+
+  const required = level.required_attended_sessions;
+  return {
+    attended,
+    required,
+    meets_requirement: attended >= required,
+    error: null,
+  };
+}
+
 /**
  * Get promotion readiness: attended sessions vs. required for a target level.
  * Read-only preview for the admin promotion dialog indicator.
@@ -285,80 +385,41 @@ export async function getPromotionReadiness(
     return { success: false, error: parsed.error.issues[0].message };
   }
 
-  const { student_id, discipline_id, level_id, branch_id } = parsed.data;
-
   try {
     const result = await withAuthenticatedUser(async (tx, ctx) => {
-      // Branch context validation
-      const branchError = assertCallerBranchContext(ctx, branch_id);
+      const branchError = assertCallerBranchContext(ctx, parsed.data.branch_id);
       if (branchError) {
-        return { error: branchError } as const;
+        return {
+          attended: 0,
+          required: 0,
+          meets_requirement: false,
+          error: branchError,
+        };
       }
 
-      // Validate student belongs to branch
-      const student = await tx.students.findUnique({
-        where: { id: student_id },
-        select: { branch_id: true },
-      });
-      if (!student || student.branch_id !== branch_id) {
-        return { error: BRANCH_ASSERTION_MESSAGES.CROSS_BRANCH_DENIED } as const;
-      }
-
-      // Load target level
-      const level = await tx.discipline_levels.findUnique({
-        where: { id: level_id },
-        select: { discipline_id: true, required_attended_sessions: true },
-      });
-      if (!level) {
-        return { error: PROGRESS_MESSAGES.INVALID_LEVEL } as const;
-      }
-      if (level.discipline_id !== discipline_id) {
-        return { error: PROGRESS_MESSAGES.LEVEL_DISCIPLINE_MISMATCH } as const;
-      }
-
-      // Get last promotion boundary
-      const last = await tx.student_progress.findFirst({
-        where: { student_id, discipline_id },
-        orderBy: { promoted_at: "desc" },
-        select: { promoted_at: true },
-      });
-
-      // Count attended sessions since last promotion
-      const attended = await tx.attendance.count({
-        where: {
-          student_id,
-          attended: true,
-          scheduled_classes: { discipline_id },
-          ...(last ? { session_date: { gt: last.promoted_at } } : {}),
-        },
-      });
-
-      const required = level.required_attended_sessions;
-      const meets_requirement = attended >= required;
-
-      return { attended, required, meets_requirement, error: null } as const;
+      return getPromotionEligibility(tx, parsed.data);
     });
 
     if (!result.success) return result;
-    if ("error" in result.data && result.data.error) {
+    if (result.data.error) {
       return { success: false, error: result.data.error };
     }
 
-    const { attended, required, meets_requirement } = result.data as {
-      attended: number;
-      required: number;
-      meets_requirement: boolean;
-      error: null;
+    return {
+      success: true,
+      data: {
+        attended: result.data.attended,
+        required: result.data.required,
+        meets_requirement: result.data.meets_requirement,
+      },
     };
-    return { success: true, data: { attended, required, meets_requirement } };
   } catch {
     return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
   }
 }
 
 /**
- * Promote a student to a level. Admin/Owner only via RLS (policy 6d/6e).
- * Informative: promotion always succeeds regardless of meets_requirement.
+ * Promote a student to a level after their attendance requirement is met.
  * Requires branch context; validates student belongs to caller's branch.
  */
 export async function promoteStudent(
@@ -374,54 +435,29 @@ export async function promoteStudent(
 
   try {
     const result = await withAuthenticatedUser(async (tx, ctx) => {
-      // Branch context validation
       const branchError = assertCallerBranchContext(ctx, branch_id);
       if (branchError) {
-        return { error: branchError } as const;
+        return {
+          id: null,
+          attended: 0,
+          required: 0,
+          meets_requirement: false,
+          error: branchError,
+        };
       }
 
-      // Validate student belongs to branch
-      const student = await tx.students.findUnique({
-        where: { id: student_id },
-        select: { branch_id: true },
-      });
-      if (!student || student.branch_id !== branch_id) {
-        return { error: BRANCH_ASSERTION_MESSAGES.CROSS_BRANCH_DENIED } as const;
+      const eligibility = await getPromotionEligibility(tx, parsed.data);
+      if (eligibility.error) {
+        return { id: null, ...eligibility };
+      }
+      if (!eligibility.meets_requirement) {
+        return {
+          id: null,
+          ...eligibility,
+          error: PROGRESS_COPY.PROMOTION_REQUIREMENT_NOT_MET,
+        };
       }
 
-      // Load target level
-      const level = await tx.discipline_levels.findUnique({
-        where: { id: level_id },
-        select: { discipline_id: true, required_attended_sessions: true },
-      });
-      if (!level) {
-        return { error: PROGRESS_MESSAGES.INVALID_LEVEL } as const;
-      }
-      if (level.discipline_id !== discipline_id) {
-        return { error: PROGRESS_MESSAGES.LEVEL_DISCIPLINE_MISMATCH } as const;
-      }
-
-      // Last promotion boundary
-      const last = await tx.student_progress.findFirst({
-        where: { student_id, discipline_id },
-        orderBy: { promoted_at: "desc" },
-        select: { promoted_at: true },
-      });
-
-      // Count attended sessions
-      const attended = await tx.attendance.count({
-        where: {
-          student_id,
-          attended: true,
-          scheduled_classes: { discipline_id },
-          ...(last ? { session_date: { gt: last.promoted_at } } : {}),
-        },
-      });
-
-      const required = level.required_attended_sessions;
-      const meets_requirement = attended >= required;
-
-      // INSERT (regardless of meets_requirement)
       const record = await tx.student_progress.create({
         data: {
           student_id,
@@ -436,30 +472,109 @@ export async function promoteStudent(
         select: { id: true },
       });
 
-      return {
-        id: record.id,
-        attended,
-        required,
-        meets_requirement,
-        error: null,
-      } as const;
+      return { id: record.id, ...eligibility };
     });
 
     if (!result.success) return result;
-    if ("error" in result.data && result.data.error) {
-      return { success: false, error: result.data.error };
+    if (result.data.error || result.data.id === null) {
+      return {
+        success: false,
+        error: result.data.error ?? COMMON_MESSAGES.UNEXPECTED_ERROR,
+      };
     }
 
-    const { id, attended, required, meets_requirement } = result.data as {
-      id: string;
-      attended: number;
-      required: number;
-      meets_requirement: boolean;
-      error: null;
-    };
     return {
       success: true,
-      data: { id, attended, required, meets_requirement },
+      data: {
+        id: result.data.id,
+        attended: result.data.attended,
+        required: result.data.required,
+        meets_requirement: result.data.meets_requirement,
+      },
+    };
+  } catch {
+    return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
+  }
+}
+
+export interface ReverseLatestPromotionResult {
+  id: string;
+  level_id: string;
+}
+
+/**
+ * Correct the latest promotion by appending a new record for the preceding
+ * level. History remains immutable for auditability.
+ */
+export async function reverseLatestPromotion(
+  input: ReverseLatestPromotionInput
+): Promise<ActionResult<ReverseLatestPromotionResult>> {
+  const parsed = reverseLatestPromotionSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message };
+  }
+
+  const { student_id, discipline_id, branch_id } = parsed.data;
+
+  try {
+    const result = await withAuthenticatedUser(async (tx, ctx) => {
+      const branchError = assertCallerBranchContext(ctx, branch_id);
+      if (branchError) {
+        return { id: null, level_id: null, error: branchError };
+      }
+
+      const student = await tx.students.findUnique({
+        where: { id: student_id },
+        select: { branch_id: true },
+      });
+      if (!student || student.branch_id !== branch_id) {
+        return {
+          id: null,
+          level_id: null,
+          error: BRANCH_ASSERTION_MESSAGES.CROSS_BRANCH_DENIED,
+        };
+      }
+
+      const latestProgress = await tx.student_progress.findMany({
+        where: { student_id, discipline_id },
+        orderBy: LATEST_PROGRESS_ORDER,
+        take: 2,
+        select: { level_id: true },
+      });
+      const previousProgress = latestProgress[1];
+      if (!previousProgress) {
+        return {
+          id: null,
+          level_id: null,
+          error: PROGRESS_COPY.PROMOTION_CORRECTION_UNAVAILABLE,
+        };
+      }
+
+      const record = await tx.student_progress.create({
+        data: {
+          student_id,
+          discipline_id,
+          level_id: previousProgress.level_id,
+          observations: PROGRESS_COPY.PROMOTION_CORRECTION_OBSERVATION,
+          created_by: ctx.userId,
+        },
+        select: { id: true, level_id: true },
+      });
+
+      return { ...record, error: null };
+    });
+
+    if (!result.success) return result;
+    if (result.data.error || result.data.id === null || result.data.level_id === null) {
+      return {
+        success: false,
+        error: result.data.error ?? COMMON_MESSAGES.UNEXPECTED_ERROR,
+      };
+    }
+
+    return {
+      success: true,
+      data: { id: result.data.id, level_id: result.data.level_id },
     };
   } catch {
     return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
