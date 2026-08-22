@@ -6,6 +6,10 @@ import {
   assertCallerBranchContext,
   BRANCH_ASSERTION_MESSAGES,
 } from "@/lib/auth/branch-assertion";
+import {
+  authorizeBranchRead,
+  BRANCH_READ_ACCESS,
+} from "@/lib/auth/branch-read-access";
 import { formatDatabaseDateOnly, formatDateOnly, parseDateOnly } from "@/lib/date";
 import type { TransactionClient } from "@/lib/prisma/client";
 import { BRANCH_MESSAGES, COMMON_MESSAGES, PAYMENT_MESSAGES } from "@/lib/localization/es-ec";
@@ -459,7 +463,16 @@ export async function getOverdueStudents(
     const result = await withAuthenticatedUser(async (tx, ctx) => {
       const branchError = assertCallerBranchContext(ctx, parsed.data.branch_id);
       if (branchError) {
-        return { __branchError: branchError } as const;
+        if (parsed.data.allow_global_admin_read !== true) {
+          return { __branchError: branchError } as const;
+        }
+
+        const branchRead = await authorizeBranchRead(tx, ctx, parsed.data.branch_id, {
+          allowGlobalAdminRead: true,
+        });
+        if (branchRead.access === BRANCH_READ_ACCESS.DENIED) {
+          return { __branchError: branchError } as const;
+        }
       }
       return {
         rows: await listOverdueStudents(
@@ -496,7 +509,16 @@ export async function getMonthlyPaymentSummary(
     const result = await withAuthenticatedUser(async (tx, ctx) => {
       const branchError = assertCallerBranchContext(ctx, parsed.data.branch_id);
       if (branchError) {
-        return { __branchError: branchError } as const;
+        if (parsed.data.allow_global_admin_read !== true) {
+          return { __branchError: branchError } as const;
+        }
+
+        const branchRead = await authorizeBranchRead(tx, ctx, parsed.data.branch_id, {
+          allowGlobalAdminRead: true,
+        });
+        if (branchRead.access === BRANCH_READ_ACCESS.DENIED) {
+          return { __branchError: branchError } as const;
+        }
       }
 
       return {

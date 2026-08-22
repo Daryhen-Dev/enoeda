@@ -26,6 +26,7 @@ interface BranchInfo {
 interface SiteHeaderProps {
   displayName: string
   branches?: BranchInfo[]
+  globalReadBranches?: BranchInfo[]
 }
 
 /**
@@ -57,11 +58,18 @@ export function getSwitcherMode(
 export function SiteHeader({
   displayName,
   branches,
+  globalReadBranches,
 }: SiteHeaderProps) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const isGlobalReadPage =
+    pathname === "/dashboard/calendar" || pathname === "/dashboard/payments"
+  const availableBranches =
+    isGlobalReadPage && globalReadBranches && globalReadBranches.length > 0
+      ? globalReadBranches
+      : branches
 
   // Derive current branch exclusively from URL search params
   const currentBranchId = searchParams.get("branch") ?? undefined
@@ -76,8 +84,8 @@ export function SiteHeader({
     setDrawerOpen(false)
   }
 
-  const currentBranch = branches?.find((b) => b.id === currentBranchId)
-  const mode = getSwitcherMode(branches)
+  const currentBranch = availableBranches?.find((b) => b.id === currentBranchId)
+  const mode = getSwitcherMode(availableBranches)
   const pageTitle =
     pathname === "/dashboard/calendar"
       ? DASHBOARD_SHELL_MESSAGES.CALENDAR
@@ -98,7 +106,7 @@ export function SiteHeader({
         </div>
 
         <div className="flex min-w-0 flex-wrap items-center gap-1 sm:ml-auto sm:gap-2">
-          {mode === "select" && branches && (
+          {mode === "select" && availableBranches && (
             <>
               {/* Desktop: native select (compact, accessible) */}
               <div className="relative hidden sm:block">
@@ -112,7 +120,7 @@ export function SiteHeader({
                   aria-label="Sucursal activa"
                   className="appearance-none truncate rounded-md border bg-background py-1 pl-8 pr-7 text-sm font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
-                  {branches.map((branch) => (
+                  {availableBranches.map((branch) => (
                     <option key={branch.id} value={branch.id}>
                       {branch.name}
                     </option>
@@ -157,7 +165,7 @@ export function SiteHeader({
                       className="flex flex-col gap-1 p-4"
                       aria-label="Sucursales disponibles"
                     >
-                      {branches.map((branch) => (
+                      {availableBranches.map((branch) => (
                         <DrawerClose
                           key={branch.id}
                           render={

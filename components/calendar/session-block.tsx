@@ -58,6 +58,14 @@ function isMobileCalendarViewport(): boolean {
   return window.matchMedia("(max-width: 1023px)").matches;
 }
 
+function hasSessionAttendance(
+  session: SessionView
+): session is SessionView & {
+  attendance: NonNullable<SessionView["attendance"]>;
+} {
+  return session.attendance !== undefined;
+}
+
 export function SessionBlock({
   session,
   compact = false,
@@ -73,7 +81,9 @@ export function SessionBlock({
   const hasNoTeacher = !session.teacher_id;
   const isSubstitute = session.is_substitute;
   const isOneTime = session.is_one_time;
-  const hasAttendanceRecords = session.attendance.record_count > 0;
+  const canViewAttendance = session.can_view_attendance === true;
+  const hasAttendanceRecords =
+    canViewAttendance && (session.attendance?.record_count ?? 0) > 0;
   const teacherLabel = hasNoTeacher
     ? CALENDAR_MESSAGES.NO_TEACHER
     : session.effective_teacher_name
@@ -86,22 +96,28 @@ export function SessionBlock({
   );
 
   function openSessionInfoIfAllowed(target: EventTarget | null) {
-    if (isInteractiveTarget(target)) return;
+    if (!canViewAttendance || isInteractiveTarget(target)) return;
     setIsSessionInfoOpen(true);
   }
 
   function handleCardClick(event: MouseEvent<HTMLDivElement>) {
-    if (!isMobileCalendarViewport() || event.defaultPrevented) return;
+    if (!canViewAttendance || !isMobileCalendarViewport() || event.defaultPrevented) return;
     openSessionInfoIfAllowed(event.target);
   }
 
   function handleCardDoubleClick(event: MouseEvent<HTMLDivElement>) {
-    if (isMobileCalendarViewport() || event.defaultPrevented) return;
+    if (!canViewAttendance || isMobileCalendarViewport() || event.defaultPrevented) return;
     openSessionInfoIfAllowed(event.target);
   }
 
   function handleCardKeyDown(event: KeyboardEvent<HTMLDivElement>) {
-    if (event.defaultPrevented || event.currentTarget !== event.target) return;
+    if (
+      !canViewAttendance ||
+      event.defaultPrevented ||
+      event.currentTarget !== event.target
+    ) {
+      return;
+    }
     if (event.key !== "Enter" && event.key !== " ") return;
 
     event.preventDefault();
@@ -153,7 +169,9 @@ export function SessionBlock({
     `${session.discipline_name} ${session.start_time}–${session.end_time}`,
     compactStatus,
     hasAttendanceRecords && !isSuspended
-      ? CALENDAR_MESSAGES.ATTENDANCE_PRESENT_COUNT(session.attendance.present_count)
+      ? CALENDAR_MESSAGES.ATTENDANCE_PRESENT_COUNT(
+          session.attendance?.present_count ?? 0
+        )
       : undefined,
   ]
     .filter(Boolean)
@@ -189,16 +207,20 @@ export function SessionBlock({
           )}
           {hasAttendanceRecords && !isSuspended && (
             <span className="rounded bg-emerald-200/70 px-1 text-sm font-medium text-emerald-950 dark:bg-emerald-900/70 dark:text-emerald-100">
-              {CALENDAR_MESSAGES.ATTENDANCE_PRESENT_COUNT(session.attendance.present_count)}
+              {CALENDAR_MESSAGES.ATTENDANCE_PRESENT_COUNT(
+                session.attendance?.present_count ?? 0
+              )}
             </span>
           )}
         </div>
-        <SessionInfoSheetDialog
-          session={session}
-          branchId={branchId ?? ""}
-          open={isSessionInfoOpen}
-          onOpenChange={setIsSessionInfoOpen}
-        />
+        {canViewAttendance && hasSessionAttendance(session) && (
+          <SessionInfoSheetDialog
+            session={session}
+            branchId={branchId ?? ""}
+            open={isSessionInfoOpen}
+            onOpenChange={setIsSessionInfoOpen}
+          />
+        )}
       </>
     );
   }
@@ -248,29 +270,35 @@ export function SessionBlock({
           {hasNoTeacher ? <AlertTriangleIcon className="size-3" /> : <UserIcon className="size-3" />}
           <span>{teacherLabel}</span>
         </div>
-        {!isSuspended && (
+        {canViewAttendance && !isSuspended && (
           <div className="rounded bg-white/70 px-2 py-1 text-sm font-medium text-slate-900 shadow-sm dark:bg-slate-950/80 dark:text-slate-100">
-            {CALENDAR_MESSAGES.ATTENDANCE_PRESENT_COUNT(session.attendance.present_count)}
+            {CALENDAR_MESSAGES.ATTENDANCE_PRESENT_COUNT(
+              session.attendance?.present_count ?? 0
+            )}
           </div>
         )}
         <div className="mt-1 flex flex-col items-stretch gap-2">
           {isOneTime ? (
-            <AttendanceSheetDialog
-              oneTimeClassId={session.scheduled_class_id}
-              sessionDate={session.session_date}
-              branchId={branchId ?? ""}
-              disabled={isSuspended || !branchId || !session.can_take_attendance}
-              triggerClassName="inline-flex h-8 w-full items-center justify-center gap-1 rounded-full border border-sky-600 bg-sky-600 px-2 text-sm font-medium whitespace-nowrap text-white shadow-sm transition-colors hover:bg-sky-700 hover:text-white focus-visible:border-sky-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-950/50 disabled:pointer-events-none disabled:opacity-50"
-            />
-          ) : (
-            <>
+            canViewAttendance && (
               <AttendanceSheetDialog
-                scheduledClassId={session.scheduled_class_id}
+                oneTimeClassId={session.scheduled_class_id}
                 sessionDate={session.session_date}
                 branchId={branchId ?? ""}
                 disabled={isSuspended || !branchId || !session.can_take_attendance}
                 triggerClassName="inline-flex h-8 w-full items-center justify-center gap-1 rounded-full border border-sky-600 bg-sky-600 px-2 text-sm font-medium whitespace-nowrap text-white shadow-sm transition-colors hover:bg-sky-700 hover:text-white focus-visible:border-sky-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-950/50 disabled:pointer-events-none disabled:opacity-50"
               />
+            )
+          ) : (
+            <>
+              {canViewAttendance && (
+                <AttendanceSheetDialog
+                  scheduledClassId={session.scheduled_class_id}
+                  sessionDate={session.session_date}
+                  branchId={branchId ?? ""}
+                  disabled={isSuspended || !branchId || !session.can_take_attendance}
+                  triggerClassName="inline-flex h-8 w-full items-center justify-center gap-1 rounded-full border border-sky-600 bg-sky-600 px-2 text-sm font-medium whitespace-nowrap text-white shadow-sm transition-colors hover:bg-sky-700 hover:text-white focus-visible:border-sky-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-950/50 disabled:pointer-events-none disabled:opacity-50"
+                />
+              )}
               {canManage && branchId && (
                 <>
                   {session.status === "scheduled" ? (
@@ -318,12 +346,14 @@ export function SessionBlock({
           )}
         </div>
       </div>
-      <SessionInfoSheetDialog
-        session={session}
-        branchId={branchId ?? ""}
-        open={isSessionInfoOpen}
-        onOpenChange={setIsSessionInfoOpen}
-      />
+      {canViewAttendance && hasSessionAttendance(session) && (
+        <SessionInfoSheetDialog
+          session={session}
+          branchId={branchId ?? ""}
+          open={isSessionInfoOpen}
+          onOpenChange={setIsSessionInfoOpen}
+        />
+      )}
     </>
   );
 }

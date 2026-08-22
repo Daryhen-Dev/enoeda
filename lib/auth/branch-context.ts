@@ -4,12 +4,6 @@
  * Resolves and validates the `?branch=<uuid>` search param against the
  * current user's active role assignments. Called by each operating RSC page
  * (never in layout or middleware).
- *
- * Returns a discriminated union the page acts on:
- * - valid: branch confirmed, proceed with scoped data
- * - redirect: single branch user, page should redirect preserving path+query
- * - selector: multi-branch user without valid param, show picker
- * - error: no branch assignments or unauthenticated
  */
 
 import "server-only";
@@ -18,16 +12,25 @@ import { getAuthenticatedContext } from "@/lib/auth/identity-resolver";
 import { withAuthenticatedUser } from "@/lib/auth/server-context";
 import type { AppRoleAssignment } from "@/lib/auth/authorize";
 import {
+  ECUADOR_TIME_ZONES,
   ECUADOR_TIME_ZONE_VALUES,
   type EcuadorTimeZone,
 } from "@/lib/domain/branches/schema";
-
-// --- Result types ---
 
 interface ActiveBranch {
   id: string;
   name: string;
   timeZone: EcuadorTimeZone;
+}
+
+interface ActiveBranchRow {
+  id: string;
+  name: string;
+  time_zone?: string | null;
+}
+
+export interface ResolveBranchContextOptions {
+  allowGlobalAdminRead?: boolean;
 }
 
 export type BranchContextResult =
@@ -37,14 +40,12 @@ export type BranchContextResult =
       branchName: string;
       timeZone: EcuadorTimeZone;
       canManage: boolean;
+      isGlobalAdminReadOnly?: true;
     }
   | { type: "redirect"; branchId: string }
   | { type: "selector"; branches: { id: string; name: string }[] }
   | { type: "error" };
 
-// --- Helpers ---
-
-/** Roles that qualify for operational branch context. */
 const OPERATIONAL_ROLES: Set<string> = new Set(["admin", "teacher"]);
 
 function normalizeEcuadorTimeZone(
@@ -55,121 +56,124 @@ function normalizeEcuadorTimeZone(
   );
 }
 
-/**
- * Extract unique branch IDs from assignments that have an operational role
- * (admin or teacher) and a non-null branchId. Owner and other roles are excluded.
- */
 function uniqueOperationalBranchIds(assignments: AppRoleAssignment[]): string[] {
   const ids = new Set<string>();
-  for (const a of assignments) {
-    if (a.branchId && OPERATIONAL_ROLES.has(a.role)) {
-      ids.add(a.branchId);
+  for (const assignment of assignments) {
+    if (assignment.branchId && OPERATIONAL_ROLES.has(assignment.role)) {
+      ids.add(assignment.branchId);
     }
   }
   return [...ids];
 }
 
-/** Check if admin assignment exists for a given branch. */
 function hasAdminForBranch(
   assignments: AppRoleAssignment[],
   branchId: string
 ): boolean {
   return assignments.some(
-    (a) => a.role === "admin" && a.branchId === branchId
+    (assignment) => assignment.role === "admin" && assignment.branchId === branchId
   );
 }
 
-// --- Core resolver ---
-
-/**
- * Resolves branch context from the URL `?branch` parameter against the
- * authenticated user's role assignments.
- *
- * Logic:
- * - Only admin/teacher assignments are considered (owner excluded)
- * - 0 unique operational branches → error
- * - 1 unique branch → validate active → match param → valid; else → redirect
- * - N>1 unique branches → validate active → match param → valid; else → selector
- * - Inactive branches are excluded; no UUID fallback for display names
- */
-export async function resolveBranchContext(
-  branchParam: string | undefined
-): Promise<BranchContextResult> {
-  const identity = await getAuthenticatedContext();
-
-  if (!identity.ok) {
-    return { type: "error" };
-  }
-
-  const { assignments } = identity.ctx;
-  const branchIds = uniqueOperationalBranchIds(assignments);
-
-  // 0 operational branches (e.g. owner-only with null branch_id)
-  if (branchIds.length === 0) {
-    return { type: "error" };
-  }
-
-  // Validate branches are active in DB (fetch names and time zones at the same time)
-  const namesResult = await withAuthenticatedUser(async (tx) => {
-    return tx.branches.findMany({
-      where: { id: { in: branchIds }, is_active: true },
-      select: { id: true, name: true, time_zone: true },
-    });
-  });
-
-  const activeBranches: ActiveBranch[] = namesResult.success
-    ? namesResult.data.flatMap((branch) => {
-        const timeZone = normalizeEcuadorTimeZone(branch.time_zone);
-
-        return timeZone === undefined
-          ? []
-          : [{ id: branch.id, name: branch.name, timeZone }];
-      })
-    : [];
-
-  // No active branches found
-  if (activeBranches.length === 0) {
-    return { type: "error" };
-  }
-
-  const activeBranchIds = activeBranches.map((b) => b.id);
-
-  // 1 active branch
-  if (activeBranchIds.length === 1) {
-    const singleBranch = activeBranches[0];
-    if (singleBranch === undefined) {
-      return { type: "error" };
-    }
-
-    if (branchParam === singleBranch.id) {
-      return {
-        type: "valid",
-        branchId: singleBranch.id,
-        branchName: singleBranch.name,
-        timeZone: singleBranch.timeZone,
-        canManage: hasAdminForBranch(assignments, singleBranch.id),
-      };
-    }
-    return { type: "redirect", branchId: singleBranch.id };
-  }
-
-  // N>1 active branches — check param match
-  const selectedBranch = activeBranches.find(
-    (branch) => branch.id === branchParam
+function hasOperationalAssignmentForBranch(
+  assignments: AppRoleAssignment[],
+  branchId: string
+): boolean {
+  return assignments.some(
+    (assignment) =>
+      assignment.branchId === branchId && OPERATIONAL_ROLES.has(assignment.role)
   );
+}
+
+function toActiveBranches(branches: ActiveBranchRow[]): ActiveBranch[] {
+  return branches.flatMap((branch) => {
+    const timeZone = normalizeEcuadorTimeZone(
+      branch.time_zone ?? ECUADOR_TIME_ZONES.CONTINENTAL
+    );
+
+    return timeZone === undefined
+      ? []
+      : [{ id: branch.id, name: branch.name, timeZone }];
+  });
+}
+
+function resolveActiveBranchContext(
+  activeBranches: ActiveBranch[],
+  branchParam: string | undefined,
+  assignments: AppRoleAssignment[],
+  isGlobalAdminReadMode: boolean
+): BranchContextResult {
+  const selectedBranch = activeBranches.find((branch) => branch.id === branchParam);
   if (selectedBranch !== undefined) {
-    return {
-      type: "valid",
+    const result = {
+      type: "valid" as const,
       branchId: selectedBranch.id,
       branchName: selectedBranch.name,
       timeZone: selectedBranch.timeZone,
       canManage: hasAdminForBranch(assignments, selectedBranch.id),
     };
+
+    return isGlobalAdminReadMode &&
+      !hasOperationalAssignmentForBranch(assignments, selectedBranch.id)
+      ? { ...result, isGlobalAdminReadOnly: true }
+      : result;
   }
 
-  // No match → selector (only active branches with real names, never UUID fallback)
+  if (activeBranches.length === 1) {
+    const [singleBranch] = activeBranches;
+    if (!singleBranch) return { type: "error" };
+    return { type: "redirect", branchId: singleBranch.id };
+  }
+
   return {
     type: "selector",
-    branches: activeBranches.map((b) => ({ id: b.id, name: b.name })),
+    branches: activeBranches.map((branch) => ({
+      id: branch.id,
+      name: branch.name,
+    })),
   };
+}
+
+export async function resolveBranchContext(
+  branchParam: string | undefined,
+  options: ResolveBranchContextOptions = {}
+): Promise<BranchContextResult> {
+  const identity = await getAuthenticatedContext();
+  if (!identity.ok) return { type: "error" };
+
+  const { assignments } = identity.ctx;
+  const operationalBranchIds = uniqueOperationalBranchIds(assignments);
+  if (operationalBranchIds.length === 0) return { type: "error" };
+
+  const branchesResult = await withAuthenticatedUser(async (tx) => {
+    const localBranches = await tx.branches.findMany({
+      where: { id: { in: operationalBranchIds }, is_active: true },
+      select: { id: true, name: true, time_zone: true },
+    });
+
+    const hasActiveAdminAssignment = localBranches.some((branch) =>
+      hasAdminForBranch(assignments, branch.id)
+    );
+    if (options.allowGlobalAdminRead !== true || !hasActiveAdminAssignment) {
+      return { branches: localBranches, isGlobalAdminReadMode: false };
+    }
+
+    const globalBranches = await tx.branches.findMany({
+      where: { is_active: true },
+      select: { id: true, name: true, time_zone: true },
+    });
+    return { branches: globalBranches, isGlobalAdminReadMode: true };
+  });
+
+  if (!branchesResult.success) return { type: "error" };
+
+  const activeBranches = toActiveBranches(branchesResult.data.branches);
+  if (activeBranches.length === 0) return { type: "error" };
+
+  return resolveActiveBranchContext(
+    activeBranches,
+    branchParam,
+    assignments,
+    branchesResult.data.isGlobalAdminReadMode
+  );
 }

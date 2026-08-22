@@ -4,11 +4,6 @@ import {
 } from "@/lib/localization/es-ec";
 import { z } from "zod";
 
-/**
- * Class scheduling validation schemas (Zod 4).
- * Used by server actions for input validation.
- */
-
 export const suspensionCategoryEnum = z.enum([
   "feriado",
   "evento",
@@ -26,12 +21,6 @@ export const createScheduledClassSchema = z.object({
   start_time: z.string().regex(/^\d{2}:\d{2}$/),
 });
 
-/**
- * Batch variant of createScheduledClassSchema: same class (discipline,
- * teacher, time) repeated across multiple weekdays in one submission, so
- * the admin can build a whole week's schedule without repeating the
- * create action per day.
- */
 export const createScheduledClassBatchSchema = z.object({
   branch_id: z.uuid(),
   discipline_id: z.uuid(),
@@ -40,10 +29,6 @@ export const createScheduledClassBatchSchema = z.object({
   start_time: z.string().regex(/^\d{2}:\d{2}$/),
 });
 
-/**
- * A single-occurrence class on a specific date — outside the weekly
- * recurring pattern (e.g. an extra class held once this month only).
- */
 export const createOneTimeClassSchema = z.object({
   branch_id: z.uuid(),
   discipline_id: z.uuid(),
@@ -56,7 +41,7 @@ export const updateScheduledClassSchema = createScheduledClassSchema
   .partial()
   .extend({
     id: z.uuid(),
-    branch_id: z.uuid(), // Required: caller's validated active branch context
+    branch_id: z.uuid(),
   });
 
 export type CreateScheduledClassBatchInput = z.infer<
@@ -66,7 +51,7 @@ export type CreateOneTimeClassInput = z.infer<typeof createOneTimeClassSchema>;
 
 export const deactivateScheduledClassSchema = z.object({
   id: z.uuid(),
-  branch_id: z.uuid(), // Required: caller's validated active branch context
+  branch_id: z.uuid(),
 });
 
 export const getSessionsForRangeSchema = z.object({
@@ -74,6 +59,7 @@ export const getSessionsForRangeSchema = z.object({
   start_date: z.string().date(),
   end_date: z.string().date(),
   discipline_ids: z.array(z.uuid()).optional(),
+  allow_global_admin_read: z.boolean().optional(),
 });
 
 export const suspendSessionSchema = z
@@ -82,10 +68,10 @@ export const suspendSessionSchema = z
     session_date: z.string().date(),
     suspension_category: suspensionCategoryEnum,
     suspension_reason: z.string().min(1).optional(),
-    branch_id: z.uuid(), // Required: caller's validated active branch context
+    branch_id: z.uuid(),
   })
   .refine(
-    (d) => d.suspension_category !== "otro" || !!d.suspension_reason,
+    (data) => data.suspension_category !== "otro" || !!data.suspension_reason,
     {
       message: SUSPENSION_MESSAGES.REASON_REQUIRED_OTRO,
       path: ["suspension_reason"],
@@ -95,7 +81,7 @@ export const suspendSessionSchema = z
 export const reinstateSessionSchema = z.object({
   scheduled_class_id: z.uuid(),
   session_date: z.string().date(),
-  branch_id: z.uuid(), // Required: caller's validated active branch context
+  branch_id: z.uuid(),
 });
 
 export const assignTeacherSchema = z
@@ -105,15 +91,12 @@ export const assignTeacherSchema = z
     session_date: z.string().date().optional(),
     teacher_id: z.uuid(),
     force: z.boolean().default(false),
-    branch_id: z.uuid(), // Required: caller's validated active branch context
+    branch_id: z.uuid(),
   })
-  .refine(
-    (d) => d.target_type !== "session" || !!d.session_date,
-    {
-      message: CLASS_MESSAGES.SESSION_DATE_REQUIRED,
-      path: ["session_date"],
-    }
-  );
+  .refine((data) => data.target_type !== "session" || !!data.session_date, {
+    message: CLASS_MESSAGES.SESSION_DATE_REQUIRED,
+    path: ["session_date"],
+  });
 
 export const getSuspensionReportSchema = z.object({
   branch_id: z.uuid().optional(),

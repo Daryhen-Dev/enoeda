@@ -1,7 +1,7 @@
 export const USER_LOCALE = "es-EC" as const
 
 export const APPLICATION_METADATA_MESSAGES = {
-  TITLE: "Enoeda Academy",
+  TITLE: "Enoeda Dojo",
   DESCRIPTION: "Plataforma de gestión académica.",
 } as const
 
@@ -107,7 +107,7 @@ export const DIALOG_ACCESSIBILITY_MESSAGES = {
 
 export const DASHBOARD_OVERVIEW_MESSAGES = {
   NO_BRANCH_CONTEXT: "No tiene una sucursal activa asignada. Contacte al administrador.",
-  WELCOME: "Le damos la bienvenida a Enoeda Academy",
+  WELCOME: "Le damos la bienvenida a Enoeda Dojo",
   WORKSPACE_READY: "Su espacio de gestión académica está listo.",
   DATA_UNAVAILABLE_ALERT:
     "Los datos del resumen no están disponibles temporalmente. Aún puede abrir cada área de gestión directamente.",

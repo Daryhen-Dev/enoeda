@@ -117,11 +117,15 @@ export function CalendarMonthView({
             const hasSuspended = daySessions.some((session) => session.status === "suspended");
             const hasCompleted = daySessions.some(
               (session) =>
-                session.status !== "suspended" && session.attendance.record_count > 0
+                session.can_view_attendance === true &&
+                session.status !== "suspended" &&
+                (session.attendance?.record_count ?? 0) > 0
             );
             const hasScheduled = daySessions.some(
               (session) =>
-                session.status !== "suspended" && session.attendance.record_count === 0
+                session.status !== "suspended" &&
+                (session.can_view_attendance !== true ||
+                  (session.attendance?.record_count ?? 0) === 0)
             );
 
             return (

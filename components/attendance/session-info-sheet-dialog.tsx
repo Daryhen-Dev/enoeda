@@ -6,7 +6,10 @@ import {
   getPresentStudentsForSession,
   type PresentStudent,
 } from "@/lib/domain/attendance/actions";
-import type { SessionView } from "@/lib/domain/classes/actions";
+import type {
+  SessionAttendanceSummary,
+  SessionView,
+} from "@/lib/domain/classes/actions";
 import {
   Sheet,
   SheetContent,
@@ -17,7 +20,7 @@ import {
 import { SESSION_INFO_MESSAGES } from "@/lib/localization/es-ec";
 
 interface SessionInfoSheetDialogProps {
-  session: SessionView;
+  session: SessionView & { attendance: SessionAttendanceSummary };
   branchId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;

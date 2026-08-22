@@ -6,6 +6,10 @@ import {
   BRANCH_ASSERTION_MESSAGES,
 } from "@/lib/auth/branch-assertion";
 import {
+  authorizeBranchRead,
+  BRANCH_READ_ACCESS,
+} from "@/lib/auth/branch-read-access";
+import {
   COMMON_MESSAGES,
   DISCIPLINE_MESSAGES,
   ENROLLMENT_MESSAGES,
@@ -99,7 +103,16 @@ export async function listActiveDisciplinesForBranch(
     const result = await withAuthenticatedUser(async (tx, ctx) => {
       const branchError = assertCallerBranchContext(ctx, parsed.data.branch_id);
       if (branchError) {
-        return { records: [], error: branchError };
+        if (parsed.data.allow_global_admin_read !== true) {
+          return { records: [], error: branchError };
+        }
+
+        const branchRead = await authorizeBranchRead(tx, ctx, parsed.data.branch_id, {
+          allowGlobalAdminRead: true,
+        });
+        if (branchRead.access === BRANCH_READ_ACCESS.DENIED) {
+          return { records: [], error: branchError };
+        }
       }
 
       const rows = await tx.disciplines.findMany({
@@ -330,7 +343,10 @@ export async function enrollStudent(
             enrolled_at: enrolled_at ? new Date(enrolled_at) : undefined,
             is_active: true,
           },
-          select: { id: true },
+          select: {
+            id: true,
+            disciplines: { select: { initial_level_id: true } },
+          },
         });
 
         await tx.discipline_events.create({
@@ -341,16 +357,12 @@ export async function enrollStudent(
           },
         });
 
-        const discipline = await tx.disciplines.findUnique({
-          where: { id: discipline_id },
-          select: { initial_level_id: true },
-        });
-        if (discipline?.initial_level_id) {
+        if (enrollment.disciplines?.initial_level_id) {
           await tx.student_progress.create({
             data: {
               student_id,
               discipline_id,
-              level_id: discipline.initial_level_id,
+              level_id: enrollment.disciplines.initial_level_id,
               created_by: ctx.userId,
             },
           });

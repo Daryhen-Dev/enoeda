@@ -2,6 +2,10 @@
 
 import { withAuthenticatedUser } from "@/lib/auth/server-context";
 import { assertActiveBranchAssignment } from "@/lib/auth/assert-branch-assignment";
+import {
+  authorizeBranchRead,
+  BRANCH_READ_ACCESS,
+} from "@/lib/auth/branch-read-access";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { TransactionClient } from "@/lib/prisma/client";
 import { assertClassInContext } from "@/lib/domain/classes/branch-guard";
@@ -50,8 +54,9 @@ export interface SessionView {
   end_time: string;
   teacher_id: string | null;
   effective_teacher_name?: string | null;
+  can_view_attendance?: boolean;
   can_take_attendance?: boolean;
-  attendance: SessionAttendanceSummary;
+  attendance?: SessionAttendanceSummary;
   status: "scheduled" | "suspended";
   suspension_category: string | null;
   suspension_reason: string | null;
@@ -609,14 +614,33 @@ export async function getSessionsForRange(
     return { success: false, error: parsed.error.issues[0].message };
   }
 
-  const { branch_id, start_date, end_date, discipline_ids } = parsed.data;
+  const {
+    branch_id,
+    start_date,
+    end_date,
+    discipline_ids,
+    allow_global_admin_read,
+  } = parsed.data;
 
   try {
     const result = await withAuthenticatedUser(async (tx, ctx) => {
-      // Validate caller has active assignment for this branch
       const branchCheck = assertActiveBranchAssignment(ctx, branch_id);
+      let isGlobalAdminReadOnly = false;
+
       if (!branchCheck.ok) {
-        return { __branchError: branchCheck.error } as const;
+        if (allow_global_admin_read !== true) {
+          return { __branchError: branchCheck.error } as const;
+        }
+
+        const branchRead = await authorizeBranchRead(tx, ctx, branch_id, {
+          allowGlobalAdminRead: true,
+        });
+        if (branchRead.access === BRANCH_READ_ACCESS.DENIED) {
+          return { __branchError: branchCheck.error } as const;
+        }
+
+        isGlobalAdminReadOnly =
+          branchRead.access === BRANCH_READ_ACCESS.GLOBAL_ADMIN_READ_ONLY;
       }
 
       const start = parseDateOnly(start_date);
@@ -652,7 +676,9 @@ export async function getSessionsForRange(
               start_time: timeStr,
               end_time: addOneHour(timeStr),
               teacher_id: cls.default_teacher_id,
-              attendance: { record_count: 0, present_count: 0 },
+              ...(isGlobalAdminReadOnly
+                ? {}
+                : { can_view_attendance: true }),
               status: "scheduled",
               suspension_category: null,
               suspension_reason: null,
@@ -748,7 +774,9 @@ export async function getSessionsForRange(
           start_time: timeStr,
           end_time: addOneHour(timeStr),
           teacher_id: oneTimeClass.teacher_id,
-          attendance: { record_count: 0, present_count: 0 },
+          ...(isGlobalAdminReadOnly
+            ? {}
+            : { can_view_attendance: true }),
           status: "scheduled",
           suspension_category: null,
           suspension_reason: null,
@@ -761,16 +789,18 @@ export async function getSessionsForRange(
         (assignment) =>
           assignment.role === "admin" && assignment.branchId === branch_id
       );
-      if (!canManageAttendance) {
+      if (!isGlobalAdminReadOnly && !canManageAttendance) {
         const assignedSessions = sessions.filter(
           (session) => session.teacher_id === ctx.userId
         );
         sessions.splice(0, sessions.length, ...assignedSessions);
       }
 
-      for (const session of sessions) {
-        session.can_take_attendance =
-          canManageAttendance || session.teacher_id === ctx.userId;
+      if (!isGlobalAdminReadOnly) {
+        for (const session of sessions) {
+          session.can_take_attendance =
+            canManageAttendance || session.teacher_id === ctx.userId;
+        }
       }
 
       const teacherIds = [
@@ -781,7 +811,7 @@ export async function getSessionsForRange(
         ),
       ];
       const teacherNameById = new Map<string, string>();
-      if (teacherIds.length > 0) {
+      if (!isGlobalAdminReadOnly && teacherIds.length > 0) {
         const admin = createAdminClient();
         const { data: teacherRoles, error: teacherRolesError } = await admin
           .from("user_roles")
@@ -820,52 +850,54 @@ export async function getSessionsForRange(
           : null;
       }
 
-      const attendanceSessionFilters = sessions.map((session) =>
-        session.is_one_time
-          ? { one_time_class_id: session.scheduled_class_id }
-          : {
-              scheduled_class_id: session.scheduled_class_id,
-              session_date: parseDateOnly(session.session_date),
-            }
-      );
-      const attendanceRows = attendanceSessionFilters.length > 0
-        ? await tx.attendance.findMany({
-            where: { OR: attendanceSessionFilters },
-            select: {
-              scheduled_class_id: true,
-              one_time_class_id: true,
-              session_date: true,
-              attended: true,
-            },
-          })
-        : [];
-      const attendanceBySessionKey = new Map<string, SessionAttendanceSummary>();
-      for (const attendance of attendanceRows) {
-        const key = attendance.scheduled_class_id
-          ? `recurring:${attendance.scheduled_class_id}:${formatDatabaseDateOnly(attendance.session_date)}`
-          : attendance.one_time_class_id
-            ? `one-time:${attendance.one_time_class_id}`
-            : null;
-        if (!key) continue;
+      if (!isGlobalAdminReadOnly) {
+        const attendanceSessionFilters = sessions.map((session) =>
+          session.is_one_time
+            ? { one_time_class_id: session.scheduled_class_id }
+            : {
+                scheduled_class_id: session.scheduled_class_id,
+                session_date: parseDateOnly(session.session_date),
+              }
+        );
+        const attendanceRows = attendanceSessionFilters.length > 0
+          ? await tx.attendance.findMany({
+              where: { OR: attendanceSessionFilters },
+              select: {
+                scheduled_class_id: true,
+                one_time_class_id: true,
+                session_date: true,
+                attended: true,
+              },
+            })
+          : [];
+        const attendanceBySessionKey = new Map<string, SessionAttendanceSummary>();
+        for (const attendance of attendanceRows) {
+          const key = attendance.scheduled_class_id
+            ? `recurring:${attendance.scheduled_class_id}:${formatDatabaseDateOnly(attendance.session_date)}`
+            : attendance.one_time_class_id
+              ? `one-time:${attendance.one_time_class_id}`
+              : null;
+          if (!key) continue;
 
-        const summary = attendanceBySessionKey.get(key) ?? {
-          record_count: 0,
-          present_count: 0,
-        };
-        summary.record_count += 1;
-        if (attendance.attended) {
-          summary.present_count += 1;
+          const summary = attendanceBySessionKey.get(key) ?? {
+            record_count: 0,
+            present_count: 0,
+          };
+          summary.record_count += 1;
+          if (attendance.attended) {
+            summary.present_count += 1;
+          }
+          attendanceBySessionKey.set(key, summary);
         }
-        attendanceBySessionKey.set(key, summary);
-      }
-      for (const session of sessions) {
-        const key = session.is_one_time
-          ? `one-time:${session.scheduled_class_id}`
-          : `recurring:${session.scheduled_class_id}:${session.session_date}`;
-        session.attendance = attendanceBySessionKey.get(key) ?? {
-          record_count: 0,
-          present_count: 0,
-        };
+        for (const session of sessions) {
+          const key = session.is_one_time
+            ? `one-time:${session.scheduled_class_id}`
+            : `recurring:${session.scheduled_class_id}:${session.session_date}`;
+          session.attendance = attendanceBySessionKey.get(key) ?? {
+            record_count: 0,
+            present_count: 0,
+          };
+        }
       }
 
       sessions.sort((a, b) => {

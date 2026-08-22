@@ -4,7 +4,6 @@ import type { ComponentProps } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
-  BuildingIcon,
   CalendarDaysIcon,
   CreditCardIcon,
   LayoutDashboardIcon,
@@ -40,7 +39,6 @@ interface NavigationItem {
 
 const navigationItems: NavigationItem[] = [
   { title: DASHBOARD_SHELL_MESSAGES.OVERVIEW, url: "/dashboard", icon: LayoutDashboardIcon, available: true, hiddenForTeacherOnly: true },
-  { title: DASHBOARD_SHELL_MESSAGES.BRANCHES, url: "/dashboard/branches", icon: BuildingIcon, available: true, hiddenForTeacherOnly: true },
   { title: DASHBOARD_SHELL_MESSAGES.STUDENTS, url: "/dashboard/students", icon: UsersIcon, available: true },
   { title: DASHBOARD_SHELL_MESSAGES.STAFF, url: "/dashboard/staff", icon: ShieldIcon, available: true, adminOnly: true, hiddenForTeacherOnly: true },
   { title: DASHBOARD_SHELL_MESSAGES.CALENDAR, url: "/dashboard/calendar", icon: CalendarDaysIcon, available: true },
@@ -82,7 +80,7 @@ export function AppSidebar({
               render={<Link href="/dashboard" />}
             >
               <ShieldIcon className="size-5!" />
-              <span className="text-base font-semibold">Enoeda Academy</span>
+              <span className="text-base font-semibold">Enoeda Dojo</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

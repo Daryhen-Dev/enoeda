@@ -72,7 +72,9 @@ function MetricCard({ label, value }: MetricCardProps) {
 
 export default async function PaymentsPage({ searchParams }: PaymentsPageProps) {
   const params = await searchParams
-  const branchResult = await resolveBranchContext(params.branch)
+  const branchResult = await resolveBranchContext(params.branch, {
+    allowGlobalAdminRead: true,
+  })
 
   if (branchResult.type === "error") {
     return (
@@ -111,9 +113,11 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
     )
   }
 
+  const allowGlobalAdminRead = branchResult.isGlobalAdminReadOnly === true
   const disciplineParam = disciplineIdSchema.safeParse(params.discipline)
   const disciplinesResult = await listActiveDisciplinesForBranch({
     branch_id: branchResult.branchId,
+    allow_global_admin_read: allowGlobalAdminRead,
   })
   const disciplines =
     disciplinesResult.success && disciplinesResult.data
@@ -125,8 +129,15 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
       ? disciplineParam.data
       : undefined
   const paymentFilter = selectedDisciplineId
-    ? { branch_id: branchResult.branchId, discipline_id: selectedDisciplineId }
-    : { branch_id: branchResult.branchId }
+    ? {
+        branch_id: branchResult.branchId,
+        discipline_id: selectedDisciplineId,
+        allow_global_admin_read: allowGlobalAdminRead,
+      }
+    : {
+        branch_id: branchResult.branchId,
+        allow_global_admin_read: allowGlobalAdminRead,
+      }
   const [summaryResult, overdueResult] = await Promise.all([
     getMonthlyPaymentSummary(paymentFilter),
     getOverdueStudents(paymentFilter),
@@ -160,7 +171,15 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
           </p>
         </div>
         {branchResult.canManage && (
-          <Button variant="outline" nativeButton={false} render={<Link href={`/dashboard/payments/settings?branch=${branchResult.branchId}`} />}>
+          <Button
+            variant="outline"
+            nativeButton={false}
+            render={
+              <Link
+                href={`/dashboard/payments/settings?branch=${branchResult.branchId}`}
+              />
+            }
+          >
             <SettingsIcon className="size-4" />
             {PAYMENT_MESSAGES.SETTINGS_LINK}
           </Button>
@@ -174,7 +193,10 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
       />
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <MetricCard label={PAYMENT_CONSOLE_MESSAGES.TOTAL_COLLECTED} value={totalAmount} />
+        <MetricCard
+          label={PAYMENT_CONSOLE_MESSAGES.TOTAL_COLLECTED}
+          value={totalAmount}
+        />
         <MetricCard
           label={PAYMENT_CONSOLE_MESSAGES.MONTHLY_PAYMENT_COUNT}
           value={summary.monthlyPaymentCount}
@@ -197,6 +219,7 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
           students={overdueStudents}
           branchId={branchResult.branchId}
           canManage={branchResult.canManage}
+          canOpenStudents={!allowGlobalAdminRead}
         />
       </section>
 
@@ -207,6 +230,7 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
         <RecentPaymentActivityList
           activity={summary.recentActivity}
           branchId={branchResult.branchId}
+          canOpenStudents={!allowGlobalAdminRead}
         />
       </section>
 
