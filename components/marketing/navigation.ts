@@ -1,4 +1,5 @@
 export const MARKETING_NAVIGATION = [
-  { href: "#historia", label: "Historia" },
+  { href: "#dojo", label: "El dojo" },
   { href: "#maestros", label: "Maestros" },
+  { href: "#sedes", label: "Sedes" },
 ] as const

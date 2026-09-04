@@ -10,6 +10,27 @@
   background: linear-gradient(to right, var(--marketing-surface), transparent);
 }
 
+.heroTriangleLabel {
+  position: relative;
+  z-index: 0;
+  display: inline-block;
+  padding: 0.5rem 1rem 0.75rem;
+  color: var(--marketing-foreground);
+}
+
+.heroTriangleLabel::before {
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  left: 0;
+  width: 300%;
+  height: 100%;
+  background-color: var(--marketing-deep-accent);
+  clip-path: polygon(0 0, 100% 0, 0 100%);
+  content: "";
+  pointer-events: none;
+}
+
 .hardShadow {
   box-shadow: 8px 8px 0 var(--marketing-foreground);
 }
@@ -43,7 +64,14 @@
 .historyGrid {
   position: relative;
   z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 3rem;
   align-items: start;
+}
+
+.historyNarrative {
+  min-width: 0;
 }
 
 .historyContent {
@@ -89,10 +117,6 @@
   margin: 0;
 }
 
-.historyManifest {
-  margin: 1.75rem 0 0 -1.75rem;
-}
-
 .historyPhoto {
   position: relative;
   z-index: 1;
@@ -128,6 +152,47 @@
   object-position: center;
 }
 
+.journeyList {
+  display: grid;
+  margin: 3rem 0 0;
+  border-top: 2px solid var(--marketing-foreground);
+  padding: 0;
+  list-style: none;
+}
+
+.journeyStep {
+  display: grid;
+  grid-template-columns: 3.5rem minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+  border-bottom: 2px solid var(--marketing-foreground);
+  padding: 1.5rem 0;
+}
+
+.journeyIndex {
+  color: var(--marketing-accent);
+  font-family: var(--font-bebas-neue);
+  font-size: 2rem;
+  line-height: 0.85;
+}
+
+.locationsSection {
+  background-color: var(--marketing-muted);
+}
+
+.locationsList {
+  display: grid;
+  margin-top: 3rem;
+  border-top: 2px solid var(--marketing-foreground);
+}
+
+.locationItem {
+  display: grid;
+  gap: 1.5rem;
+  border-bottom: 2px solid var(--marketing-foreground);
+  padding: 2rem 0;
+}
+
 @media (min-width: 640px) {
   .historyContent {
     grid-template-columns: 0.625rem minmax(0, 1fr);
@@ -135,10 +200,6 @@
   }
 
   .historyText {
-    margin-left: -2.125rem;
-  }
-
-  .historyManifest {
     margin-left: -2.125rem;
   }
 
@@ -154,12 +215,69 @@
   .historyPhotoFrame {
     border-width: 1rem;
   }
+
+  .journeyStep {
+    grid-template-columns: 5.5rem minmax(0, 1fr);
+    padding: 2rem 0;
+  }
+
+  .journeyIndex {
+    font-size: 3rem;
+  }
+}
+
+@media (min-width: 480px), (min-width: 360px) and (min-aspect-ratio: 3 / 2) {
+  .historyGrid {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    column-gap: 2rem;
+    row-gap: 0;
+  }
+
+  .historyNarrative {
+    grid-column: span 7 / span 7;
+  }
+
+  .historyContent {
+    gap: 2rem;
+  }
+
+  .historyCopy {
+    max-width: 24rem;
+  }
+
+  .historyText {
+    max-width: 24rem;
+    margin-left: 0;
+  }
+
+  .historyPhoto {
+    grid-column: span 5 / span 5;
+    grid-row: 1;
+    margin-left: auto;
+    max-width: 56rem;
+  }
 }
 
 @media (min-width: 1024px) {
-  .historyPhoto {
-    margin-left: auto;
-    max-width: 56rem;
+  .locationsList {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: 2rem;
+  }
+
+  .locationItem {
+    min-width: 0;
+    border-right: 2px solid var(--marketing-foreground);
+    border-bottom: 0;
+    padding: 0 2rem 0 0;
+  }
+
+  .locationItem:not(:first-child) {
+    padding-left: 2rem;
+  }
+
+  .locationItem:last-child {
+    border-right: 0;
+    padding-right: 0;
   }
 }
 
@@ -178,37 +296,6 @@
   overflow: hidden;
   border: 2px solid var(--marketing-foreground);
   background-color: var(--marketing-surface);
-}
-
-.masterSquare {
-  position: absolute;
-  top: 2rem;
-  right: 3rem;
-  width: 8rem;
-  height: 8rem;
-  border: 2px solid var(--marketing-foreground);
-  background-color: var(--marketing-accent);
-  transform: rotate(15deg);
-}
-
-.masterBar {
-  position: absolute;
-  bottom: 3rem;
-  left: -2rem;
-  width: 14rem;
-  height: 2.5rem;
-  background-color: var(--marketing-foreground);
-  transform: rotate(-15deg);
-}
-
-.masterIndex {
-  position: absolute;
-  right: 1rem;
-  bottom: 0.5rem;
-  font-family: var(--font-bebas-neue);
-  font-size: 5rem;
-  line-height: 1;
-  color: var(--marketing-foreground);
 }
 
 @media (prefers-reduced-motion: reduce) {

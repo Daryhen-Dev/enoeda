@@ -6,6 +6,7 @@ import { Menu, X } from "lucide-react"
 import { useEffect, useRef, useState, type KeyboardEvent } from "react"
 
 import enoedaLogo from "@/assets/Logo Enoeda Dojo_Rojo.png"
+import { MARKETING_WHATSAPP_URL } from "@/components/marketing/contact"
 import { MARKETING_NAVIGATION } from "@/components/marketing/navigation"
 
 const MOBILE_MENU_ID = "marketing-mobile-menu"
@@ -60,7 +61,7 @@ export function MarketingHeader() {
   }
 
   return (
-    <header className="fixed inset-x-0 top-0 z-40 border-b-2 border-marketing-section-border bg-marketing-surface/85 backdrop-blur-lg">
+    <header className="fixed inset-x-0 top-0 z-40 border-b-4 border-marketing-menu-border bg-marketing-surface/85 backdrop-blur-lg">
       <div className="mx-auto flex h-18 max-w-360 items-center justify-between px-5 sm:px-8 lg:px-16">
         <Link
           aria-label="Ir al inicio de ENOEDA Dojo"
@@ -75,26 +76,35 @@ export function MarketingHeader() {
           />
         </Link>
 
-        <nav aria-label="Navegación principal" className="hidden md:block">
-          <ul className="flex items-center gap-8">
-            {MARKETING_NAVIGATION.map((item) => (
-              <li key={item.href}>
-                <a
-                  className="font-marketing-body text-sm font-bold uppercase tracking-[0.14em] text-marketing-menu-foreground underline-offset-6 transition-colors hover:text-marketing-accent focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-marketing-menu-foreground"
-                  href={item.href}
-                >
-                  {item.label}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </nav>
+        <div className="hidden items-center gap-5 md:flex">
+          <nav aria-label="Navegación principal">
+            <ul className="flex items-center gap-8">
+              {MARKETING_NAVIGATION.map((item) => (
+                <li key={item.href}>
+                  <a
+                    className="relative inline-block font-marketing-body text-sm font-bold uppercase tracking-[0.14em] text-marketing-menu-foreground transition-colors motion-reduce:transition-none after:absolute after:inset-x-0 after:-bottom-1 after:h-px after:origin-left after:scale-x-0 after:bg-marketing-menu-border after:opacity-80 after:transition-transform after:duration-300 after:ease-out motion-reduce:after:transition-none hover:text-marketing-menu-border hover:after:scale-x-100 focus-visible:after:scale-x-100 focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-marketing-menu-foreground"
+                    href={item.href}
+                  >
+                    {item.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+          <a
+            aria-label="Escribir por WhatsApp"
+            className="inline-flex min-h-11 items-center border-2 border-marketing-menu-border bg-marketing-accent px-3 py-2 font-marketing-display text-xl tracking-[0.04em] text-marketing-foreground transition-colors hover:bg-marketing-menu-foreground hover:text-marketing-surface focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-marketing-menu-foreground motion-reduce:transition-none"
+            href={MARKETING_WHATSAPP_URL}
+          >
+            ESCRIBIR
+          </a>
+        </div>
 
         <button
           aria-controls={MOBILE_MENU_ID}
           aria-expanded={isMenuOpen}
           aria-label={isMenuOpen ? "Cerrar navegación" : "Abrir navegación"}
-          className="grid size-11 place-items-center border-2 border-marketing-menu-border text-marketing-menu-foreground transition-colors hover:bg-marketing-accent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-marketing-menu-foreground md:hidden"
+          className="grid size-11 place-items-center border-2 border-marketing-menu-border text-marketing-menu-foreground transition-colors hover:text-marketing-menu-border focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-marketing-menu-foreground motion-reduce:transition-none md:hidden"
           onClick={() => setIsMenuOpen((isOpen) => !isOpen)}
           ref={menuButtonRef}
           type="button"
@@ -114,7 +124,7 @@ export function MarketingHeader() {
           <div className="flex items-center justify-between border-b-2 border-marketing-menu-border pb-5">
             <Link
               aria-label="Ir al inicio de ENOEDA Dojo"
-              className="inline-flex shrink-0 items-center focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-marketing-menu-foreground"
+              className="inline-flex shrink-0 items-center focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-marketing-menu-border"
               href="/"
               onClick={closeMenuAfterNavigation}
               onKeyDown={trapFocusFromMobileHomeLink}
@@ -129,7 +139,7 @@ export function MarketingHeader() {
             </Link>
             <button
               aria-label="Cerrar navegación"
-              className="grid size-11 place-items-center border-2 border-marketing-menu-border text-marketing-menu-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-marketing-surface"
+              className="grid size-11 place-items-center border-2 border-marketing-menu-border text-marketing-menu-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-marketing-menu-border"
               onClick={() => setIsMenuOpen(false)}
               type="button"
             >
@@ -142,7 +152,7 @@ export function MarketingHeader() {
               {MARKETING_NAVIGATION.map((item, index) => (
                 <li key={item.href}>
                   <a
-                    className="block border-b-2 border-marketing-menu-border pb-4 font-marketing-display text-6xl leading-none tracking-[0.02em] text-marketing-menu-foreground focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-marketing-surface"
+                    className="block border-b-2 border-marketing-menu-border pb-4 font-marketing-display text-6xl leading-none tracking-[0.02em] text-marketing-menu-foreground transition-colors hover:text-marketing-menu-border focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-marketing-menu-border motion-reduce:transition-none"
                     href={item.href}
                     onClick={closeMenuAfterNavigation}
                     onKeyDown={

@@ -1,6 +1,7 @@
 import Image from "next/image"
 
 import heroImage from "@/assets/enoeda-hero.png"
+import { MARKETING_WHATSAPP_URL } from "@/components/marketing/contact"
 import styles from "@/components/marketing/marketing.module.css"
 
 export function MarketingHero() {
@@ -22,28 +23,30 @@ export function MarketingHero() {
 
       <div className="relative z-10 mx-auto grid max-w-360 grid-cols-1 gap-10 lg:grid-cols-12 lg:items-end lg:gap-8">
         <div className="relative lg:col-span-8">
-          <p className="mb-6 font-marketing-body text-sm font-bold uppercase tracking-[0.18em] text-marketing-accent">
-            Práctica marcial // enfoque presente
+          <p
+            className={`mb-6 font-marketing-body text-sm font-bold uppercase tracking-[0.18em] ${styles.heroTriangleLabel}`}
+          >
+            KARATE // KICKBOXING
           </p>
           <h1
             className="font-marketing-display text-[clamp(4.75rem,12vw,10.5rem)] leading-[0.76] tracking-[-0.025em] text-marketing-foreground"
             id="hero-heading"
           >
             <span className="block">DISCIPLINA.</span>
-            <span className="block pl-[10%] text-marketing-accent">PODER.</span>
+            <span className="block pl-[10%] text-marketing-menu-border">PODER.</span>
             <span className="block">FUERZA.</span>
           </h1>
         </div>
 
         <div className="relative border-l-2 border-marketing-foreground pl-5 lg:col-span-4 lg:mb-4 lg:pl-8">
           <p className="max-w-72 font-marketing-body text-lg leading-7 text-marketing-foreground">
-            Un lugar para poner el cuerpo en práctica y avanzar con intención.
+            Karate y Kickboxing para entrenar con técnica, constancia e intención.
           </p>
           <a
-            className={`${styles.hardShadow} mt-8 inline-flex border-2 border-marketing-surface bg-marketing-accent px-6 py-4 font-marketing-display text-2xl tracking-[0.04em] text-marketing-foreground transition-transform hover:-translate-x-1 hover:-translate-y-1 focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-marketing-foreground`}
-            href="#historia"
+            className={`${styles.hardShadow} mt-8 inline-flex min-h-11 items-center border-2 border-marketing-surface bg-marketing-accent px-6 py-4 font-marketing-display text-2xl tracking-[0.04em] text-marketing-foreground transition-transform hover:-translate-x-1 hover:-translate-y-1 focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-marketing-foreground motion-reduce:transition-none motion-reduce:hover:translate-x-0 motion-reduce:hover:translate-y-0`}
+            href={MARKETING_WHATSAPP_URL}
           >
-            EXPLORAR EL DOJO
+            ESCRIBIR POR WHATSAPP
           </a>
         </div>
       </div>

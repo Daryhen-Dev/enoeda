@@ -4,13 +4,15 @@ import { MarketingFooter } from "@/components/marketing/footer"
 import { MarketingHeader } from "@/components/marketing/header"
 import { MarketingHero } from "@/components/marketing/hero"
 import { MarketingHistory } from "@/components/marketing/history"
+import { MarketingJourney } from "@/components/marketing/journey"
+import { MarketingLocations } from "@/components/marketing/locations"
 import { MarketingMasters } from "@/components/marketing/masters"
 import styles from "@/components/marketing/marketing.module.css"
 
 export const metadata: Metadata = {
-  title: "ENOEDA Dojo | Disciplina, poder y fuerza",
+  title: "ENOEDA Dojo | Karate y Kickboxing",
   description:
-    "Conocé la propuesta de ENOEDA Dojo, un espacio de práctica, disciplina y entrenamiento marcial.",
+    "Conocé ENOEDA Dojo, un espacio para practicar Karate y Kickboxing con técnica, constancia e intención.",
 }
 
 export default function Home() {
@@ -19,8 +21,10 @@ export default function Home() {
       <MarketingHeader />
       <main>
         <MarketingHero />
+        <MarketingJourney />
         <MarketingHistory />
         <MarketingMasters />
+        <MarketingLocations />
       </main>
       <MarketingFooter />
     </div>

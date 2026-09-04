@@ -1,4 +1,21 @@
-const FOOTER_ITEMS = ["Aviso legal", "Privacidad", "Contacto", "Facebook", "Instagram"]
+import {
+  MARKETING_EMAIL,
+  MARKETING_WHATSAPP_DISPLAY_NUMBER,
+  MARKETING_WHATSAPP_URL,
+} from "@/components/marketing/contact"
+
+const FOOTER_LINKS = [
+  {
+    accessibleLabel: `Escribir por WhatsApp al ${MARKETING_WHATSAPP_DISPLAY_NUMBER}`,
+    href: MARKETING_WHATSAPP_URL,
+    label: `WhatsApp ${MARKETING_WHATSAPP_DISPLAY_NUMBER}`,
+  },
+  {
+    accessibleLabel: `Enviar correo a ${MARKETING_EMAIL}`,
+    href: `mailto:${MARKETING_EMAIL}`,
+    label: MARKETING_EMAIL,
+  },
+] as const
 
 export function MarketingFooter() {
   return (
@@ -21,8 +38,16 @@ export function MarketingFooter() {
         </div>
 
         <ul className="flex flex-wrap gap-x-6 gap-y-2 font-marketing-body text-[0.68rem] font-bold uppercase tracking-[0.08em] text-marketing-menu-foreground sm:justify-end">
-          {FOOTER_ITEMS.map((item) => (
-            <li key={item}>{item}</li>
+          {FOOTER_LINKS.map((item) => (
+            <li key={item.href}>
+              <a
+                aria-label={item.accessibleLabel}
+                className="inline-flex min-h-11 items-center transition-colors hover:text-marketing-menu-border focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-marketing-menu-border motion-reduce:transition-none"
+                href={item.href}
+              >
+                {item.label}
+              </a>
+            </li>
           ))}
         </ul>
       </div>
