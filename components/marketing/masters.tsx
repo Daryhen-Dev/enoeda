@@ -27,7 +27,7 @@ export function MarketingMasters() {
   return (
     <section
       aria-labelledby="maestros-heading"
-      className={`${styles.anchorTarget} relative px-5 py-18 sm:px-8 sm:py-24 lg:px-16 lg:py-32`}
+      className={`${styles.anchorTarget} relative border-b-2 border-marketing-section-border px-5 py-18 sm:px-8 sm:py-24 lg:px-16 lg:py-32`}
       id="maestros"
     >
       <div className="mx-auto max-w-360">

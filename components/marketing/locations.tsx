@@ -1,4 +1,3 @@
-import { getMarketingWhatsAppUrl } from "@/components/marketing/contact"
 import styles from "@/components/marketing/marketing.module.css"
 
 const LOCATIONS = [
@@ -6,6 +5,25 @@ const LOCATIONS = [
     address:
       "Avenida Padre Luis Bacari y Río Bermejo, Centro Comercial Bacari Plaza, segundo piso, local de Karate.",
     name: "Carapungo",
+    schedule: [
+      {
+        discipline: "Karate",
+        entries: [
+          "Lunes, martes y miércoles · 08:00–09:00",
+          "Lunes, miércoles y viernes · 17:00–18:00",
+          "Sábado · 09:00",
+        ],
+      },
+      {
+        discipline: "Kickboxing",
+        entries: [
+          "Lunes, martes y miércoles · 07:00–08:00",
+          "Martes y jueves · 18:00–19:00",
+          "Martes y jueves · 19:00–20:00",
+          "Sábado · 07:50–09:00",
+        ],
+      },
+    ],
   },
   {
     address:
@@ -40,21 +58,61 @@ export function MarketingLocations() {
         <div className={styles.locationsList}>
           {LOCATIONS.map((location) => (
             <article className={styles.locationItem} key={location.name}>
-              <h3 className="font-marketing-display text-4xl leading-[0.85] tracking-[0.01em] text-marketing-foreground sm:text-5xl">
-                {location.name}
-              </h3>
-              <p className="font-marketing-body text-base leading-6 text-marketing-foreground">
-                {location.address}
-              </p>
-              <a
-                aria-label={`Escribir por WhatsApp sobre la sede de ${location.name}`}
-                className={`${styles.hardShadow} inline-flex min-h-11 items-center justify-center self-start border-2 border-marketing-surface bg-marketing-accent px-5 py-3 font-marketing-display text-xl tracking-[0.04em] text-marketing-foreground transition-transform hover:-translate-x-1 hover:-translate-y-1 focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-marketing-foreground motion-reduce:transition-none motion-reduce:hover:translate-x-0 motion-reduce:hover:translate-y-0`}
-                href={getMarketingWhatsAppUrl(
-                  `Hola, quiero consultar por la sede de ${location.name}.`
-                )}
+              <header className={styles.locationTitle}>
+                <h3 className="font-marketing-display text-4xl leading-[0.85] tracking-[0.01em] text-marketing-foreground sm:text-5xl">
+                  {location.name}
+                </h3>
+              </header>
+              <div
+                className={
+                  "schedule" in location
+                    ? `${styles.locationBody} ${styles.locationBodyWithSchedule}`
+                    : styles.locationBody
+                }
               >
-                ESCRIBIR POR WHATSAPP
-              </a>
+                <p
+                  className={`${styles.locationAddress} font-marketing-body text-base leading-6 text-marketing-foreground`}
+                >
+                  {location.address}
+                </p>
+                {"schedule" in location ? (
+                  <section
+                    aria-labelledby="carapungo-schedule-heading"
+                    className={styles.locationSchedule}
+                  >
+                    <h4
+                      className="font-marketing-display text-2xl leading-none tracking-[0.04em] text-marketing-foreground"
+                      id="carapungo-schedule-heading"
+                    >
+                      HORARIOS DE CARAPUNGO
+                    </h4>
+                    <dl className={styles.locationScheduleGroups}>
+                      {location.schedule.map((schedule) => (
+                        <div
+                          className={styles.locationScheduleGroup}
+                          key={schedule.discipline}
+                        >
+                          <dt className="font-marketing-body text-sm font-bold uppercase tracking-[0.08em] text-marketing-foreground">
+                            {schedule.discipline}
+                          </dt>
+                          <dd>
+                            <ul className={styles.locationScheduleEntries}>
+                              {schedule.entries.map((entry) => (
+                                <li
+                                  className={`${styles.locationScheduleEntry} font-marketing-body text-base leading-6 text-marketing-foreground`}
+                                  key={entry}
+                                >
+                                  {entry}
+                                </li>
+                              ))}
+                            </ul>
+                          </dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </section>
+                ) : null}
+              </div>
             </article>
           ))}
         </div>

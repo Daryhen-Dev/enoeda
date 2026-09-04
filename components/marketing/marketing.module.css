@@ -35,6 +35,10 @@
   box-shadow: 8px 8px 0 var(--marketing-foreground);
 }
 
+.footerPrimaryCta {
+  box-shadow: 8px 8px 0 var(--marketing-foreground);
+}
+
 .anchorTarget {
   scroll-margin-top: 5rem;
 }
@@ -188,9 +192,57 @@
 
 .locationItem {
   display: grid;
-  gap: 1.5rem;
+  gap: 2rem;
   border-bottom: 2px solid var(--marketing-foreground);
-  padding: 2rem 0;
+  padding: 2.5rem 0;
+}
+
+.locationTitle,
+.locationBody,
+.locationAddress {
+  min-width: 0;
+}
+
+.locationBody {
+  display: grid;
+  gap: 2rem;
+}
+
+.locationAddress,
+.locationScheduleEntry {
+  overflow-wrap: anywhere;
+}
+
+.locationSchedule {
+  display: grid;
+  min-width: 0;
+  gap: 1rem;
+  border-top: 2px solid var(--marketing-foreground);
+  padding-top: 1.5rem;
+}
+
+.locationScheduleGroups {
+  display: grid;
+  gap: 1rem;
+  margin: 0;
+}
+
+.locationScheduleGroup {
+  display: grid;
+  min-width: 0;
+  gap: 0.5rem;
+}
+
+.locationScheduleEntries {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.locationScheduleEntry {
+  min-width: 0;
 }
 
 @media (min-width: 640px) {
@@ -260,24 +312,25 @@
 
 @media (min-width: 1024px) {
   .locationsList {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    column-gap: 2rem;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .locationItem {
-    min-width: 0;
-    border-right: 2px solid var(--marketing-foreground);
-    border-bottom: 0;
-    padding: 0 2rem 0 0;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: 4rem;
+    align-items: start;
+    padding: 3.5rem 0;
   }
 
-  .locationItem:not(:first-child) {
-    padding-left: 2rem;
+  .locationBodyWithSchedule {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 3rem;
+    align-items: start;
   }
 
-  .locationItem:last-child {
-    border-right: 0;
-    padding-right: 0;
+  .locationSchedule {
+    border-top: 0;
+    padding-top: 0;
   }
 }
 
