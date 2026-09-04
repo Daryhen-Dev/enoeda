@@ -10,12 +10,14 @@ import { MARKETING_WHATSAPP_URL } from "@/components/marketing/shared/contact"
 import { MARKETING_NAVIGATION } from "@/components/marketing/shell/navigation"
 
 const MOBILE_MENU_ID = "marketing-mobile-menu"
+const DESKTOP_MEDIA_QUERY = "(min-width: 48rem)"
 
 export function MarketingHeader() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const firstMenuLinkRef = useRef<HTMLAnchorElement>(null)
   const lastMenuLinkRef = useRef<HTMLAnchorElement>(null)
   const mobileHomeLinkRef = useRef<HTMLAnchorElement>(null)
+  const headerHomeLinkRef = useRef<HTMLAnchorElement>(null)
   const menuButtonRef = useRef<HTMLButtonElement>(null)
   const shouldRestoreFocusRef = useRef(true)
   const wasMenuOpenRef = useRef(false)
@@ -33,6 +35,32 @@ export function MarketingHeader() {
 
     shouldRestoreFocusRef.current = true
     wasMenuOpenRef.current = false
+  }, [isMenuOpen])
+
+  useEffect(() => {
+    if (!isMenuOpen) {
+      return
+    }
+
+    const mediaQuery = window.matchMedia(DESKTOP_MEDIA_QUERY)
+    const closeMenuForDesktopViewport = () => {
+      shouldRestoreFocusRef.current = false
+      setIsMenuOpen(false)
+      headerHomeLinkRef.current?.focus()
+    }
+    const handleMediaQueryChange = (event: MediaQueryListEvent) => {
+      if (event.matches) {
+        closeMenuForDesktopViewport()
+      }
+    }
+
+    if (mediaQuery.matches) {
+      closeMenuForDesktopViewport()
+      return
+    }
+
+    mediaQuery.addEventListener("change", handleMediaQueryChange)
+    return () => mediaQuery.removeEventListener("change", handleMediaQueryChange)
   }, [isMenuOpen])
 
   function closeMenuAfterNavigation() {
@@ -67,6 +95,7 @@ export function MarketingHeader() {
           aria-label="Ir al inicio de ENOEDA Dojo"
           className="inline-flex shrink-0 items-center focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-marketing-menu-foreground"
           href="/"
+          ref={headerHomeLinkRef}
         >
           <Image
             alt=""
