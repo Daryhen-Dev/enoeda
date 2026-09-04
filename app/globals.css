@@ -15,6 +15,7 @@
   --color-marketing-surface: var(--marketing-surface);
   --color-marketing-muted: var(--marketing-muted);
   --color-marketing-accent: var(--marketing-accent);
+  --color-marketing-deep-accent: var(--marketing-deep-accent);
   --color-marketing-foreground: var(--marketing-foreground);
   --color-marketing-menu-border: var(--marketing-menu-border);
   --color-marketing-section-border: var(--marketing-section-border);
@@ -61,6 +62,7 @@
   --marketing-surface: #02142a;
   --marketing-muted: #26354d;
   --marketing-accent: #e63946;
+  --marketing-deep-accent: #AD0224;
   --marketing-foreground: #f1faee;
   --marketing-menu-border: #ffb3b1;
   --marketing-section-border: #d5e3ff;

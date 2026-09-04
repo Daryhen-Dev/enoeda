@@ -6,8 +6,8 @@ import { Menu, X } from "lucide-react"
 import { useEffect, useRef, useState, type KeyboardEvent } from "react"
 
 import enoedaLogo from "@/assets/Logo Enoeda Dojo_Rojo.png"
-import { MARKETING_WHATSAPP_URL } from "@/components/marketing/contact"
-import { MARKETING_NAVIGATION } from "@/components/marketing/navigation"
+import { MARKETING_WHATSAPP_URL } from "@/components/marketing/shared/contact"
+import { MARKETING_NAVIGATION } from "@/components/marketing/shell/navigation"
 
 const MOBILE_MENU_ID = "marketing-mobile-menu"
 

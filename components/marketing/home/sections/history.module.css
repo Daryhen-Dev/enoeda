@@ -1,0 +1,263 @@
+.historySection {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background-color: var(--marketing-muted);
+}
+
+.historyAmbient {
+  position: absolute;
+  z-index: 0;
+  top: -10rem;
+  right: -14rem;
+  width: 24rem;
+  aspect-ratio: 1;
+  background: radial-gradient(circle, var(--marketing-accent) 0%, transparent 68%);
+  opacity: 0.1;
+  pointer-events: none;
+}
+
+.historyTatamiPlane {
+  display: none;
+}
+
+.historySection::after {
+  position: absolute;
+  z-index: 0;
+  bottom: 1.5rem;
+  left: -2rem;
+  width: 22rem;
+  height: 0.625rem;
+  background-color: var(--marketing-foreground);
+  content: "";
+  opacity: 0.25;
+  pointer-events: none;
+  transform: rotate(15deg);
+  transform-origin: left center;
+}
+
+.historyGrid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 3rem;
+  align-items: start;
+}
+
+.historyNarrative {
+  min-width: 0;
+}
+
+.historyContent {
+  display: grid;
+  grid-template-columns: 0.5rem minmax(0, 1fr);
+  align-items: start;
+  gap: 1.25rem;
+}
+
+.historyAccent {
+  align-self: start;
+  min-height: 4rem;
+  margin-top: 0.35rem;
+  background-color: var(--marketing-accent);
+}
+
+.historyCopy {
+  max-width: 18rem;
+  min-width: 0;
+}
+
+.historyTitle {
+  margin: 0;
+  font-size: clamp(3rem, 4vw, 4.75rem);
+  letter-spacing: -0.02em;
+  line-height: 0.85;
+}
+
+.historyText {
+  max-width: 14rem;
+  margin-top: 1.5rem;
+  margin-left: -1.75rem;
+  border-top: 4px solid var(--marketing-foreground);
+  padding-top: 1.25rem;
+}
+
+.historyParagraphs {
+  display: grid;
+  gap: 1rem;
+}
+
+.historyParagraphs p {
+  margin: 0;
+}
+
+.historyPhoto {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  padding: 0 0 1.25rem 1.25rem;
+}
+
+.historyPhoto::before {
+  position: absolute;
+  z-index: 0;
+  bottom: 0;
+  left: 0;
+  width: calc(100% - 1.25rem);
+  height: calc(100% - 1.25rem);
+  background-color: var(--marketing-accent);
+  content: "";
+  pointer-events: none;
+}
+
+.historyPhotoFrame {
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+  border: 0.875rem solid var(--marketing-foreground);
+  background-color: var(--marketing-surface);
+  box-shadow: 0.875rem 1.125rem 2.25rem color-mix(in srgb, var(--marketing-foreground) 20%, transparent);
+}
+
+.historyImage {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  object-position: center;
+}
+
+.historyEditorialLink {
+  display: inline-flex;
+  min-height: 2.75rem;
+  max-width: 100%;
+  align-items: center;
+  color: var(--marketing-foreground);
+  font-family: var(--font-archivo-narrow);
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+  text-decoration-color: var(--marketing-accent);
+  text-decoration-line: underline;
+  text-decoration-thickness: 0.125rem;
+  text-underline-offset: 0.375rem;
+  text-transform: uppercase;
+  transition: color 160ms ease, text-decoration-color 160ms ease;
+}
+
+.historyEditorialLink:hover {
+  color: var(--marketing-menu-border);
+  text-decoration-color: var(--marketing-menu-border);
+}
+
+.historyEditorialLink:focus-visible {
+  outline: 2px solid var(--marketing-menu-border);
+  outline-offset: 0.375rem;
+}
+
+@media (min-width: 640px) {
+  .historyContent {
+    grid-template-columns: 0.625rem minmax(0, 1fr);
+    gap: 1.5rem;
+  }
+
+  .historyText {
+    margin-left: -2.125rem;
+  }
+
+  .historyPhoto {
+    padding: 0 0 1.5rem 1.5rem;
+  }
+
+  .historyPhoto::before {
+    width: calc(100% - 1.5rem);
+    height: calc(100% - 1.5rem);
+  }
+
+  .historyPhotoFrame {
+    border-width: 1rem;
+    box-shadow: 1.25rem 1.625rem 3.25rem color-mix(in srgb, var(--marketing-foreground) 22%, transparent);
+  }
+}
+
+@media (min-width: 480px), (min-width: 360px) and (min-aspect-ratio: 3 / 2) {
+  .historyAmbient {
+    top: -13rem;
+    right: -10rem;
+    width: 38rem;
+    opacity: 0.14;
+  }
+
+  .historyTatamiPlane {
+    position: absolute;
+    z-index: 0;
+    top: 17%;
+    right: -16%;
+    display: block;
+    width: min(46vw, 38rem);
+    aspect-ratio: 1.45;
+    border: 1px solid color-mix(in srgb, var(--marketing-foreground) 30%, transparent);
+    border-radius: 1.25rem 3.5rem 1.25rem 3.5rem;
+    background-color: color-mix(in srgb, var(--marketing-surface) 28%, transparent);
+    box-shadow: 2rem 2.5rem 4.5rem color-mix(in srgb, var(--marketing-foreground) 15%, transparent);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    opacity: 0.82;
+    pointer-events: none;
+    transform: rotate(-13deg);
+  }
+
+  .historyGrid {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    column-gap: 2rem;
+    row-gap: 0;
+  }
+
+  .historyNarrative {
+    grid-column: span 7 / span 7;
+  }
+
+  .historyContent {
+    gap: 2rem;
+  }
+
+  .historyCopy {
+    max-width: 24rem;
+  }
+
+  .historyText {
+    max-width: 24rem;
+    margin-left: 0;
+  }
+
+  .historyPhoto {
+    grid-column: span 5 / span 5;
+    grid-row: 1;
+    margin-left: auto;
+    max-width: 56rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .historyAmbient {
+    top: -16rem;
+    right: -8rem;
+    width: 48rem;
+    opacity: 0.16;
+  }
+
+  .historyTatamiPlane {
+    top: 8%;
+    right: -13%;
+    width: min(48vw, 48rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .historyEditorialLink {
+    transition: none;
+  }
+}

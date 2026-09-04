@@ -21,10 +21,12 @@ describe("isPublicPath", () => {
     expect(isPublicPath("/_next/static/chunk.js")).toBe(true);
   });
 
-  it("returns false for dashboard, owner, and root", () => {
+  it("returns true for root and false for administrative routes", () => {
+    expect(isPublicPath("/")).toBe(true);
     expect(isPublicPath("/dashboard")).toBe(false);
+    expect(isPublicPath("/dashboard/branches")).toBe(false);
     expect(isPublicPath("/owner")).toBe(false);
-    expect(isPublicPath("/")).toBe(false);
+    expect(isPublicPath("/owner/branches")).toBe(false);
   });
 
   it("does not match public path prefix collisions", () => {
@@ -132,7 +134,8 @@ describe("hasRequiredRole", () => {
 });
 
 describe("configuration", () => {
-  it("PUBLIC_PATHS includes expected paths", () => {
+  it("PUBLIC_PATHS includes root and authentication paths", () => {
+    expect(PUBLIC_PATHS).toContain("/");
     expect(PUBLIC_PATHS).toContain("/login");
     expect(PUBLIC_PATHS).toContain("/auth");
   });

@@ -5,7 +5,7 @@ import {
   MARKETING_TIKTOK_URL,
   MARKETING_WHATSAPP_DISPLAY_NUMBER,
   MARKETING_WHATSAPP_URL,
-} from "@/components/marketing/contact"
+} from "@/components/marketing/shared/contact"
 import styles from "@/components/marketing/marketing.module.css"
 
 const FOOTER_SOCIAL_LINKS = [
@@ -47,7 +47,7 @@ export function MarketingFooter() {
             EMPIEZA HOY.
           </p>
           <p className="mt-6 max-w-md font-marketing-body text-lg leading-7 text-marketing-menu-foreground">
-            Escribinos para consultar por la sede que elegiste y dar tu primer
+            Escríbenos para consultar por la sede elegida y dar tu primer
             paso en el dojo.
           </p>
           <a
@@ -81,7 +81,7 @@ export function MarketingFooter() {
             className="border-t-2 border-marketing-menu-border pt-5"
           >
             <p className="font-marketing-body text-xs font-bold uppercase tracking-[0.16em] text-marketing-menu-border">
-              SEGUINOS
+              SÍGUENOS
             </p>
             <ul className="mt-3 flex flex-wrap gap-x-6 gap-y-1">
               {FOOTER_SOCIAL_LINKS.map((item) => (

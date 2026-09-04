@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 interface CookieToSet {
@@ -27,7 +27,7 @@ interface MockSupabaseClient {
   rpc(name: string): Promise<{ data: unknown }>;
 }
 
-const { createServerClientMock } = vi.hoisted(() => ({
+const { createServerClientMock, updateSessionMock } = vi.hoisted(() => ({
   createServerClientMock: vi.fn<
     (
       url: string,
@@ -35,6 +35,7 @@ const { createServerClientMock } = vi.hoisted(() => ({
       options: ServerClientOptions
     ) => MockSupabaseClient
   >(),
+  updateSessionMock: vi.fn(),
 }));
 
 vi.mock("@supabase/ssr", () => ({
@@ -42,7 +43,14 @@ vi.mock("@supabase/ssr", () => ({
 }));
 
 vi.mock("@/lib/supabase/middleware", () => ({
-  updateSession: vi.fn(),
+  updateSession: updateSessionMock,
+}));
+
+vi.mock("@/lib/supabase/config", () => ({
+  getSupabasePublicConfig: () => ({
+    anonKey: "test-anon-key",
+    url: "https://enoeda.test",
+  }),
 }));
 
 import { middleware } from "./middleware";
@@ -96,5 +104,17 @@ describe("middleware session refresh responses", () => {
     expect(response.cookies.get(REFRESHED_COOKIE.name)?.value).toBe(
       REFRESHED_COOKIE.value
     );
+  });
+
+  it("delegates anonymous El camino requests to the public session update", async () => {
+    const routeRequest = request("/el-camino");
+    const publicResponse = NextResponse.next({ request: routeRequest });
+    updateSessionMock.mockResolvedValue(publicResponse);
+
+    const response = await middleware(routeRequest);
+
+    expect(updateSessionMock).toHaveBeenCalledWith(routeRequest);
+    expect(createServerClientMock).not.toHaveBeenCalled();
+    expect(response).toBe(publicResponse);
   });
 });

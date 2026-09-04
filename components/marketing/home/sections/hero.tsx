@@ -1,7 +1,7 @@
 import Image from "next/image"
 
 import heroImage from "@/assets/enoeda-hero.png"
-import { MARKETING_WHATSAPP_URL } from "@/components/marketing/contact"
+import { MARKETING_WHATSAPP_URL } from "@/components/marketing/shared/contact"
 import styles from "@/components/marketing/marketing.module.css"
 
 export function MarketingHero() {

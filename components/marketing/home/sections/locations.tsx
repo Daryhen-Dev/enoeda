@@ -4,6 +4,7 @@ const LOCATIONS = [
   {
     address:
       "Avenida Padre Luis Bacari y Río Bermejo, Centro Comercial Bacari Plaza, segundo piso, local de Karate.",
+    mapUrl: "https://maps.app.goo.gl/5eWgbJHhvtQHPTUZ7",
     name: "Carapungo",
     schedule: [
       {
@@ -28,11 +29,13 @@ const LOCATIONS = [
   {
     address:
       "Avenida Fenicio Angulo y Mercedes Obando, casa de tres pisos con vidrios azules, primer piso.",
+    mapUrl: "https://maps.app.goo.gl/hqXr82rbCzLgzw3Y6",
     name: "San José de Morán",
   },
   {
     address:
       "Avenida Misael Acosta y Jesús del Gran Poder, al lado de lavadora de autos, casa de un piso color blanco.",
+    mapUrl: "https://maps.app.goo.gl/zsRj3MVgVECgW1GP8",
     name: "San Juan de Calderón",
   },
 ] as const
@@ -49,7 +52,7 @@ export function MarketingLocations() {
           className="max-w-3xl font-marketing-display text-[clamp(3.5rem,7vw,6.5rem)] leading-[0.85] tracking-[-0.02em] text-marketing-foreground"
           id="sedes-heading"
         >
-          ENCONTRÁ TU SEDE.
+          ENCUENTRA TU SEDE.
         </h2>
         <p className="mt-5 max-w-md font-marketing-body text-base leading-6 text-marketing-foreground">
           Tres sedes para acercarte al dojo.
@@ -70,11 +73,22 @@ export function MarketingLocations() {
                     : styles.locationBody
                 }
               >
-                <p
-                  className={`${styles.locationAddress} font-marketing-body text-base leading-6 text-marketing-foreground`}
-                >
-                  {location.address}
-                </p>
+                <div className={styles.locationDetails}>
+                  <p
+                    className={`${styles.locationAddress} font-marketing-body text-base leading-6 text-marketing-foreground`}
+                  >
+                    {location.address}
+                  </p>
+                  <a
+                    aria-label={`Abrir ubicación de ${location.name} en Google Maps`}
+                    className="inline-flex min-h-11 w-fit items-center font-marketing-body text-sm font-bold uppercase tracking-[0.14em] text-marketing-foreground underline decoration-2 underline-offset-4 transition-colors hover:text-marketing-accent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-marketing-foreground motion-reduce:transition-none"
+                    href={location.mapUrl}
+                    rel="noreferrer"
+                    target="_blank"
+                  >
+                    ABRIR EN GOOGLE MAPS
+                  </a>
+                </div>
                 {"schedule" in location ? (
                   <section
                     aria-labelledby="carapungo-schedule-heading"

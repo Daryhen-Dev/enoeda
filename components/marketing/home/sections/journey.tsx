@@ -1,9 +1,9 @@
 import styles from "@/components/marketing/marketing.module.css"
 
 const JOURNEY_STEPS = [
-  "CONOCÉ EL DOJO Y LA PRÁCTICA.",
-  "ESCRIBÍ POR WHATSAPP.",
-  "ELEGÍ UNA SEDE.",
+  "CONOCE EL DOJO Y LA PRÁCTICA.",
+  "ESCRIBE POR WHATSAPP.",
+  "ELIGE UNA SEDE.",
 ] as const
 
 export function MarketingJourney() {

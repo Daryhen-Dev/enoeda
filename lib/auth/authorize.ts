@@ -57,6 +57,8 @@ export const CHANGE_PASSWORD_PATH = "/change-password" as const;
 
 /** Paths that are always public — no authentication required. */
 export const PUBLIC_PATHS = [
+  "/",
+  "/el-camino",
   "/login",
   "/auth",
   "/api/auth",
