@@ -1,6 +1,6 @@
 /**
- * Generated from the configured Supabase project after the branches_students migration.
- * Regenerate with the Supabase MCP type generator after approved schema changes.
+ * Generated from the configured Supabase project after the current migration set.
+ * Regenerate with the Supabase type generator after approved schema changes.
  */
 export type Json =
   | string
@@ -51,6 +51,7 @@ export type Database = {
       };
       students: {
         Row: {
+          auth_user_id: string | null;
           branch_id: string;
           created_at: string;
           date_of_birth: string;
@@ -64,6 +65,7 @@ export type Database = {
           updated_at: string;
         };
         Insert: {
+          auth_user_id?: string | null;
           branch_id: string;
           created_at?: string;
           date_of_birth: string;
@@ -77,6 +79,7 @@ export type Database = {
           updated_at?: string;
         };
         Update: {
+          auth_user_id?: string | null;
           branch_id?: string;
           created_at?: string;
           date_of_birth?: string;
@@ -95,6 +98,69 @@ export type Database = {
             columns: ["branch_id"];
             isOneToOne: false;
             referencedRelation: "branches";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      student_invitations: {
+        Row: {
+          accepted_at: string | null;
+          auth_user_id: string | null;
+          branch_id: string;
+          created_at: string;
+          created_by: string;
+          email: string;
+          expires_at: string;
+          id: string;
+          password_set_at: string | null;
+          revoked_at: string | null;
+          state: string;
+          student_id: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          accepted_at?: string | null;
+          auth_user_id?: string | null;
+          branch_id: string;
+          created_at?: string;
+          created_by: string;
+          email: string;
+          expires_at?: string;
+          id?: string;
+          password_set_at?: string | null;
+          revoked_at?: string | null;
+          state?: string;
+          student_id?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          accepted_at?: string | null;
+          auth_user_id?: string | null;
+          branch_id?: string;
+          created_at?: string;
+          created_by?: string;
+          email?: string;
+          expires_at?: string;
+          id?: string;
+          password_set_at?: string | null;
+          revoked_at?: string | null;
+          state?: string;
+          student_id?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "student_invitations_branch_id_fkey";
+            columns: ["branch_id"];
+            isOneToOne: false;
+            referencedRelation: "branches";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "student_invitations_student_id_fkey";
+            columns: ["student_id"];
+            isOneToOne: true;
+            referencedRelation: "students";
             referencedColumns: ["id"];
           },
         ];
@@ -187,6 +253,19 @@ export type Database = {
         };
         Returns: string;
       };
+      complete_student_enrollment: {
+        Args: {
+          p_date_of_birth: string;
+          p_first_name: string;
+          p_national_id: string;
+          p_phone: string | null;
+          p_surname: string;
+        };
+        Returns: {
+          state: string;
+          student_id: string | null;
+        }[];
+      };
       current_roles: {
         Args: never;
         Returns: {
@@ -202,6 +281,18 @@ export type Database = {
           p_surname: string;
         };
         Returns: Database["public"]["Tables"]["user_profiles"]["Row"];
+      };
+      get_my_student_enrollment_state: {
+        Args: never;
+        Returns: {
+          email: string;
+          password_set_at: string | null;
+          state: string;
+        }[];
+      };
+      mark_student_invitation_password_set: {
+        Args: never;
+        Returns: string;
       };
       revoke_branch_role: {
         Args: {
@@ -224,6 +315,12 @@ export type Database = {
           p_teacher_id: string;
         };
         Returns: undefined;
+      };
+      update_own_student_phone: {
+        Args: {
+          p_phone: string | null;
+        };
+        Returns: string;
       };
     };
     Enums: {

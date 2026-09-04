@@ -55,6 +55,9 @@ export const ROUTE_GUARDS: RouteGuard[] = [
 /** Forced password-change screen for accounts created by owner/admin. */
 export const CHANGE_PASSWORD_PATH = "/change-password" as const;
 
+/** Student accounts have a dedicated role-less, linked-profile route. */
+export const STUDENT_PATH = "/student" as const;
+
 /** Paths that are always public — no authentication required. */
 export const PUBLIC_PATHS = [
   "/",
@@ -62,6 +65,7 @@ export const PUBLIC_PATHS = [
   "/login",
   "/auth",
   "/api/auth",
+  "/enroll",
   "/_next",
   "/favicon.ico",
 ] as const;
@@ -110,6 +114,11 @@ export function isPublicPath(pathname: string): boolean {
   return PUBLIC_PATHS.some((prefix) => matchesPathPrefix(pathname, prefix));
 }
 
+/** Check whether a path belongs to the student-only shell. */
+export function isStudentPath(pathname: string): boolean {
+  return matchesPathPrefix(pathname, STUDENT_PATH);
+}
+
 /** Find the route guard applicable to a given path. */
 export function findRouteGuard(pathname: string): RouteGuard | undefined {
   return ROUTE_GUARDS.find((guard) => matchesPathPrefix(pathname, guard.pathPrefix));
@@ -122,5 +131,3 @@ export function hasRequiredRole(
 ): boolean {
   return requiredRoles.some((role) => userRoles.includes(role));
 }
-
-

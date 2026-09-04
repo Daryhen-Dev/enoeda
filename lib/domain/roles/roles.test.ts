@@ -56,7 +56,7 @@ describe("U2 Roles — DML Denial Defense", () => {
       (key) => typeof mod[key] === "function"
     );
     const allowed = [
-      "isPublicPath", "findRouteGuard", "hasRequiredRole", "parseAppRoles",
+      "isPublicPath", "isStudentPath", "findRouteGuard", "hasRequiredRole", "parseAppRoles",
       "parseRoleAssignments", "roleNamesFrom",
     ];
     for (const fn of functions) {

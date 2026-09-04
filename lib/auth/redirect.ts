@@ -2,6 +2,8 @@ import type { AppRole } from "@/lib/auth/authorize";
 
 const DEFAULT_REDIRECT = "/dashboard" as const;
 const OWNER_HOME = "/owner" as const;
+const STUDENT_HOME = "/student" as const;
+const ENROLLMENT_HOME = "/enroll" as const;
 const DASHBOARD_PREFIX = `${DEFAULT_REDIRECT}/` as const;
 const OWNER_PREFIX = `${OWNER_HOME}/` as const;
 const DISALLOWED_REDIRECT_CHARACTERS = /[%?\\#]/;
@@ -23,6 +25,21 @@ export function getPersonaHome(roles: AppRole[]): SafeRedirect {
     return OWNER_HOME as SafeRedirect;
   }
   return DEFAULT_REDIRECT as SafeRedirect;
+}
+
+/** Returns a fixed, safe destination for role-less student Auth users. */
+export function getStudentAuthHome(hasLinkedStudent: boolean): SafeRedirect {
+  return (hasLinkedStudent ? STUDENT_HOME : ENROLLMENT_HOME) as SafeRedirect;
+}
+
+/**
+ * Restricts callback continuations to the self-service enrollment route.
+ * It intentionally does not reuse the staff redirect allowlist.
+ */
+export function getSafeEnrollmentCallbackRedirect(
+  _value: unknown
+): SafeRedirect {
+  return ENROLLMENT_HOME as SafeRedirect;
 }
 
 /** Check if a path belongs to the /owner prefix. */
@@ -63,7 +80,6 @@ export function getSafeRedirect(value: unknown, roles?: AppRole[]): SafeRedirect
     return personaHome as SafeRedirect;
   }
 
-  // When roles are provided, enforce persona boundaries
   if (roles) {
     const isOwner = roles.includes("owner" as AppRole);
     if (isOwner && !isOwnerPath(value)) {

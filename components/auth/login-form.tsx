@@ -4,8 +4,13 @@ import { useState, type FormEvent } from "react"
 import { useRouter } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { parseRoleAssignments, roleNamesFrom } from "@/lib/auth/authorize"
-import { getSafeRedirect, type SafeRedirect } from "@/lib/auth/redirect"
+import {
+  getSafeRedirect,
+  getStudentAuthHome,
+  type SafeRedirect,
+} from "@/lib/auth/redirect"
 import { AUTH_MESSAGES } from "@/lib/localization/es-ec"
 import { createClient as createBrowserClient } from "@/lib/supabase/client"
 
@@ -35,23 +40,43 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
 
     try {
       const supabase = createBrowserClient()
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data: signInData, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
-      if (error) {
+      if (error || signInData.user === null) {
         setErrorMessage(AUTH_MESSAGES.LOGIN_FAILURE)
         return
       }
 
-      // Resolve the authenticated persona so owner lands on /owner while
-      // admin/teacher land on /dashboard, instead of the pre-auth default.
-      const { data: rolesData } = await supabase.rpc("current_roles")
-      const roles = roleNamesFrom(parseRoleAssignments(rolesData))
-      const personaRedirect = getSafeRedirect(redirectTo, roles)
+      const { data: rolesData, error: rolesError } = await supabase.rpc(
+        "current_roles"
+      )
+      if (rolesError) {
+        setErrorMessage(AUTH_MESSAGES.LOGIN_FAILURE)
+        return
+      }
 
-      router.replace(personaRedirect)
+      const roles = roleNamesFrom(parseRoleAssignments(rolesData))
+      if (roles.length > 0) {
+        router.replace(getSafeRedirect(redirectTo, roles))
+        router.refresh()
+        return
+      }
+
+      const studentResult = await supabase
+        .from("students")
+        .select("id")
+        .eq("auth_user_id", signInData.user.id)
+        .maybeSingle()
+
+      if (studentResult.error) {
+        setErrorMessage(AUTH_MESSAGES.LOGIN_FAILURE)
+        return
+      }
+
+      router.replace(getStudentAuthHome(studentResult.data !== null))
       router.refresh()
     } catch {
       setErrorMessage(AUTH_MESSAGES.LOGIN_FAILURE)
@@ -66,9 +91,8 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
         <label className="text-sm font-medium" htmlFor="email">
           {AUTH_MESSAGES.EMAIL_LABEL}
         </label>
-        <input
+        <Input
           autoComplete="email"
-          className="flex h-9 w-full rounded-lg border bg-transparent px-3 py-1 text-sm shadow-xs outline-none transition-[color,box-shadow] placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
           disabled={isPending}
           id="email"
           name="email"
@@ -80,9 +104,8 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
         <label className="text-sm font-medium" htmlFor="password">
           {AUTH_MESSAGES.PASSWORD_LABEL}
         </label>
-        <input
+        <Input
           autoComplete="current-password"
-          className="flex h-9 w-full rounded-lg border bg-transparent px-3 py-1 text-sm shadow-xs outline-none transition-[color,box-shadow] placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
           disabled={isPending}
           id="password"
           name="password"

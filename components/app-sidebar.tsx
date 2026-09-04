@@ -7,6 +7,7 @@ import {
   CalendarDaysIcon,
   CreditCardIcon,
   LayoutDashboardIcon,
+  MailIcon,
   ShieldIcon,
   UserRoundIcon,
   UsersIcon,
@@ -25,7 +26,10 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { DASHBOARD_SHELL_MESSAGES } from "@/lib/localization/es-ec"
+import {
+  DASHBOARD_SHELL_MESSAGES,
+  STUDENT_ENROLLMENT_MESSAGES,
+} from "@/lib/localization/es-ec"
 
 interface NavigationItem {
   title: string
@@ -40,14 +44,33 @@ interface NavigationItem {
 const navigationItems: NavigationItem[] = [
   { title: DASHBOARD_SHELL_MESSAGES.OVERVIEW, url: "/dashboard", icon: LayoutDashboardIcon, available: true, hiddenForTeacherOnly: true },
   { title: DASHBOARD_SHELL_MESSAGES.STUDENTS, url: "/dashboard/students", icon: UsersIcon, available: true },
+  { title: STUDENT_ENROLLMENT_MESSAGES.INVITATIONS_TITLE, url: "/dashboard/students/invitations", icon: MailIcon, available: true, adminOnly: true },
   { title: DASHBOARD_SHELL_MESSAGES.STAFF, url: "/dashboard/staff", icon: ShieldIcon, available: true, adminOnly: true, hiddenForTeacherOnly: true },
   { title: DASHBOARD_SHELL_MESSAGES.CALENDAR, url: "/dashboard/calendar", icon: CalendarDaysIcon, available: true },
   { title: DASHBOARD_SHELL_MESSAGES.PAYMENTS, url: "/dashboard/payments", icon: CreditCardIcon, available: true, adminOnly: true, hiddenForTeacherOnly: true },
   { title: DASHBOARD_SHELL_MESSAGES.PROFILE, url: "/dashboard/profile", icon: UserRoundIcon, available: true, profileOnly: true },
 ]
 
-function isNavigationItemActive(item: NavigationItem, pathname: string) {
+function matchesNavigationItem(
+  item: Pick<NavigationItem, "url">,
+  pathname: string
+) {
   return item.url === "/dashboard" ? pathname === item.url : pathname.startsWith(item.url)
+}
+
+export function getActiveNavigationItemUrl(
+  items: readonly Pick<NavigationItem, "url">[],
+  pathname: string
+): string | null {
+  return items
+    .filter((item) => matchesNavigationItem(item, pathname))
+    .reduce<string | null>(
+      (activeUrl, item) =>
+        activeUrl === null || item.url.length > activeUrl.length
+          ? item.url
+          : activeUrl,
+      null
+    )
 }
 
 interface AppSidebarProps extends ComponentProps<typeof Sidebar> {
@@ -68,6 +91,10 @@ export function AppSidebar({
       (!item.adminOnly || isAdmin) &&
       (!item.profileOnly || canManageProfile) &&
       (!item.hiddenForTeacherOnly || !isTeacherOnly)
+  )
+  const activeNavigationItemUrl = getActiveNavigationItemUrl(
+    visibleItems,
+    pathname
   )
 
   return (
@@ -92,7 +119,7 @@ export function AppSidebar({
             <SidebarMenu>
               {visibleItems.map((item) => {
                 const Icon = item.icon
-                const isActive = isNavigationItemActive(item, pathname)
+                const isActive = item.url === activeNavigationItemUrl
                 return (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton
