@@ -175,19 +175,36 @@
 
 .masterCard {
   position: relative;
-  min-height: 29rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2rem;
+  width: 100%;
+  min-width: 0;
   border: 2px solid var(--marketing-foreground);
   padding: 1.5rem;
   background-color: var(--marketing-muted);
   box-shadow: 10px 10px 0 var(--marketing-accent);
 }
 
-.masterGraphic {
+.masterProfile {
+  min-width: 0;
+}
+
+.masterGraphic,
+.masterGraphicPortrait {
   position: relative;
-  height: 16rem;
+  width: 100%;
+  height: clamp(16rem, 24vw, 19.2rem);
   overflow: hidden;
   border: 2px solid var(--marketing-foreground);
   background-color: var(--marketing-surface);
+}
+
+@media (min-width: 768px) {
+  .masterCard {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(1.5rem, 4vw, 4rem);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

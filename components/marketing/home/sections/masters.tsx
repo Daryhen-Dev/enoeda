@@ -1,25 +1,34 @@
 import Image from "next/image"
 
 import karateInstructorImage from "@/assets/profesor-karete-1.png"
-import karateInstructorsImage from "@/assets/profesores-karate.png"
+import senseiPamelaImage from "@/assets/senseiPamela.png"
 import styles from "@/components/marketing/marketing.module.css"
 
 const MASTER_CARDS = [
   {
-    alt: "Sensei Jonathan Palma practicando karate",
-    description: undefined,
-    id: "sensei-jonathan-palma",
-    image: karateInstructorImage,
-    imageClassName: "object-cover object-center",
-    titleLines: ["Sensei", "Jonathan Palma"],
+    alt: "Sempai Pamela practicando karate",
+    credentials: ["2do Dan en Karate FEK"],
+    graphicClassName: styles.masterGraphicPortrait,
+    id: "sensei-pamela",
+    image: senseiPamelaImage,
+    imageClassName: "object-cover object-center scale-105",
+    sizes: "(min-width: 1600px) 650px, (min-width: 768px) 44vw, 100vw",
+    titleLines: ["Sempai", "Pamela"],
   },
   {
-    alt: "Grupo de instructores de karate",
-    description: "Técnica. Disciplina. Movimiento.",
-    id: "karate-instructors",
-    image: karateInstructorsImage,
-    imageClassName: "object-cover object-top",
-    titleLines: ["Instructores"],
+    alt: "Sensei Jonathan practicando karate",
+    credentials: [
+      "Instructor jefe",
+      "3er Dan FEK Shotokan",
+      "2do Dan Shorin Ryu EE. UU.",
+      "1er Dan cinta negra Kickboxing",
+    ],
+    graphicClassName: styles.masterGraphic,
+    id: "sensei-jonathan-palma",
+    image: karateInstructorImage,
+    imageClassName: "object-cover object-center scale-105",
+    sizes: "(min-width: 1600px) 650px, (min-width: 768px) 44vw, 100vw",
+    titleLines: ["Sensei", "Jonathan"],
   },
 ] as const
 
@@ -43,32 +52,36 @@ export function MarketingMasters() {
           </h2>
         </div>
 
-        <div className="mt-10 grid gap-8 md:grid-cols-2 lg:mt-14 lg:gap-12">
-          {MASTER_CARDS.map((card) => (
-            <article className={styles.masterCard} key={card.id}>
-              <div className={styles.masterGraphic}>
-                <Image
-                  alt={card.alt}
-                  className={card.imageClassName}
-                  fill
-                  sizes="(min-width: 768px) 50vw, 100vw"
-                  src={card.image}
-                />
-              </div>
-              <h3 className="mt-8 max-w-sm font-marketing-display text-5xl leading-[0.82] tracking-[0.01em] text-marketing-foreground sm:text-6xl">
-                {card.titleLines.map((line) => (
-                  <span className="block" key={line}>
-                    {line}
-                  </span>
-                ))}
-              </h3>
-              {card.description ? (
-                <p className="mt-4 max-w-sm font-marketing-body text-base leading-relaxed text-marketing-foreground">
-                  {card.description}
-                </p>
-              ) : null}
-            </article>
-          ))}
+        <div className="mt-10 flex flex-col lg:mt-14">
+          <div className={styles.masterCard}>
+            {MASTER_CARDS.map((card) => (
+              <article className={styles.masterProfile} key={card.id}>
+                <div className={card.graphicClassName}>
+                  <Image
+                    alt={card.alt}
+                    className={card.imageClassName}
+                    fill
+                    sizes={card.sizes}
+                    src={card.image}
+                  />
+                </div>
+                <div className="mt-8 grid gap-5 xl:grid-cols-2 xl:items-start xl:gap-6">
+                  <h3 className="max-w-sm font-marketing-display text-5xl leading-[0.82] tracking-[0.01em] text-marketing-foreground sm:text-6xl">
+                    {card.titleLines.map((line) => (
+                      <span className="block" key={line}>
+                        {line}
+                      </span>
+                    ))}
+                  </h3>
+                  <ul className="space-y-1.5 font-marketing-body text-sm font-bold uppercase leading-tight tracking-[0.12em] text-marketing-accent xl:pt-1">
+                    {card.credentials.map((credential) => (
+                      <li key={credential}>{credential}</li>
+                    ))}
+                  </ul>
+                </div>
+              </article>
+            ))}
+          </div>
         </div>
       </div>
     </section>
