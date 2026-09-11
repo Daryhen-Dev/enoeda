@@ -39,8 +39,9 @@ export function MarketingHero() {
         </div>
 
         <div className="relative border-l-2 border-marketing-foreground pl-5 lg:col-span-4 lg:mb-4 lg:pl-8">
-          <p className="max-w-72 font-marketing-body text-lg leading-7 text-marketing-foreground">
-            Karate y Kickboxing para entrenar con técnica, constancia e intención.
+          <p className="max-w-72 font-marketing-body text-sm font-bold uppercase leading-5 tracking-[0.1em] text-marketing-foreground">
+            Club formativo especializado de Karate y Kickboxing. Acuerdo Ministerial 143 · Filial
+            AFEK 035 · Concentración Deportiva de Pichincha.
           </p>
           <a
             className={`${styles.hardShadow} mt-8 inline-flex min-h-11 items-center border-2 border-marketing-surface bg-marketing-accent px-6 py-4 font-marketing-display text-2xl tracking-[0.04em] text-marketing-foreground transition-transform hover:-translate-x-1 hover:-translate-y-1 focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-marketing-foreground motion-reduce:transition-none motion-reduce:hover:translate-x-0 motion-reduce:hover:translate-y-0`}
