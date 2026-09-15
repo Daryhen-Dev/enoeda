@@ -18,6 +18,7 @@ describe("isPublicPath", () => {
     expect(isPublicPath("/login")).toBe(true);
     expect(isPublicPath("/auth/callback")).toBe(true);
     expect(isPublicPath("/api/auth/confirm")).toBe(true);
+    expect(isPublicPath("/media/dojo-stories/story-01.mp4")).toBe(true);
     expect(isPublicPath("/_next/static/chunk.js")).toBe(true);
   });
 
@@ -33,6 +34,7 @@ describe("isPublicPath", () => {
     expect(isPublicPath("/loginfoo")).toBe(false);
     expect(isPublicPath("/authentic")).toBe(false);
     expect(isPublicPath("/api/authz")).toBe(false);
+    expect(isPublicPath("/mediator")).toBe(false);
   });
 });
 

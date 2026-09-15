@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 
+import { MarketingDojoStories } from "@/components/marketing/home/sections/dojo-stories"
 import { MarketingHero } from "@/components/marketing/home/sections/hero"
 import { MarketingHistory } from "@/components/marketing/home/sections/history"
 import { MarketingJourney } from "@/components/marketing/home/sections/journey"
@@ -16,6 +17,7 @@ export default function Home() {
   return (
     <main>
       <MarketingHero />
+      <MarketingDojoStories />
       <MarketingJourney />
       <MarketingHistory />
       <MarketingMasters />

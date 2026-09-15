@@ -152,6 +152,18 @@ describe("middleware session refresh responses", () => {
     expect(response).toBe(publicResponse);
   });
 
+  it("delegates public media requests without starting authentication", async () => {
+    const routeRequest = request("/media/dojo-stories/story-01.mp4");
+    const publicResponse = NextResponse.next({ request: routeRequest });
+    updateSessionMock.mockResolvedValue(publicResponse);
+
+    const response = await middleware(routeRequest);
+
+    expect(updateSessionMock).toHaveBeenCalledWith(routeRequest);
+    expect(createServerClientMock).not.toHaveBeenCalled();
+    expect(response).toBe(publicResponse);
+  });
+
   it("redirects anonymous student requests to login", async () => {
     stageSessionRefresh(null, []);
 

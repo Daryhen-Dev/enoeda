@@ -66,6 +66,7 @@ export const PUBLIC_PATHS = [
   "/auth",
   "/api/auth",
   "/enroll",
+  "/media",
   "/_next",
   "/favicon.ico",
 ] as const;
