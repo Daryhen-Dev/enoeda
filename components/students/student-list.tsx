@@ -100,11 +100,14 @@ export function StudentList({
   const selectedDisciplineName =
     disciplines.find((discipline) => discipline.id === disciplineId)?.name ??
     STUDENT_DIRECTORY_MESSAGES.ALL_DISCIPLINES
+  // getStudentColumns only stores onActivated for an interaction handler.
+  // eslint-disable-next-line react-hooks/refs
   const columns = getStudentColumns({
     branchId,
     branches,
     status: selectedTab,
     canManage,
+    onActivated: reloadActiveStudents,
     timeZone,
   })
 

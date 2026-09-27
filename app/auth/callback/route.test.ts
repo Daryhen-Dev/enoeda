@@ -30,27 +30,27 @@ describe("Supabase auth callback", () => {
     });
   });
 
-  it("exchanges a valid code and redirects to the fixed enrollment continuation", async () => {
+  it("exchanges a valid code and redirects to the fixed student destination", async () => {
     mocks.exchangeCodeForSession.mockResolvedValue({ error: null });
 
-    const response = await GET(request("?code=invite-code&next=%2Fenroll"));
+    const response = await GET(request("?code=auth-code"));
 
-    expect(mocks.exchangeCodeForSession).toHaveBeenCalledWith("invite-code");
-    expect(response.headers.get("location")).toBe("https://app.enoeda.test/enroll");
+    expect(mocks.exchangeCodeForSession).toHaveBeenCalledWith("auth-code");
+    expect(response.headers.get("location")).toBe("https://app.enoeda.test/student");
   });
 
-  it("rejects an external callback next target after successful session exchange", async () => {
+  it("ignores a user-controlled callback target after successful session exchange", async () => {
     mocks.exchangeCodeForSession.mockResolvedValue({ error: null });
 
     const response = await GET(
-      request("?code=invite-code&next=https%3A%2F%2Fevil.example%2Fsteal")
+      request("?code=auth-code&next=https%3A%2F%2Fevil.example%2Fsteal")
     );
 
-    expect(response.headers.get("location")).toBe("https://app.enoeda.test/enroll");
+    expect(response.headers.get("location")).toBe("https://app.enoeda.test/student");
   });
 
   it("routes missing codes to the generic login failure state without exchanging a session", async () => {
-    const response = await GET(request("?next=%2Fenroll"));
+    const response = await GET(request());
 
     expect(mocks.exchangeCodeForSession).not.toHaveBeenCalled();
     expect(response.headers.get("location")).toBe(
@@ -58,7 +58,7 @@ describe("Supabase auth callback", () => {
     );
   });
 
-  it("does not continue enrollment when Supabase rejects the code", async () => {
+  it("routes rejected codes to the generic login failure state", async () => {
     mocks.exchangeCodeForSession.mockResolvedValue({
       error: { message: "invalid code" },
     });

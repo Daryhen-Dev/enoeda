@@ -3,17 +3,21 @@
 import { withAuthenticatedUser } from "@/lib/auth/server-context";
 import { formatDatabaseDateOnly } from "@/lib/date";
 import {
+  assertCallerBranchAdmin,
   assertCallerBranchContext,
   BRANCH_ASSERTION_MESSAGES,
 } from "@/lib/auth/branch-assertion";
 import { COMMON_MESSAGES, STUDENT_MESSAGES } from "@/lib/localization/es-ec";
 import {
+  STUDENT_ACTIVATION_STATUS,
   STUDENT_STATUS,
+  studentActivationStatusSchema,
   studentCreateSchema,
   studentIdSchema,
   studentListSchema,
   studentReactivateSchema,
   studentUpdateSchema,
+  type StudentActivationStatus,
   type StudentCreateInput,
   type StudentListInput,
   type StudentReactivateInput,
@@ -62,6 +66,7 @@ export interface StudentListItem {
   first_name: string;
   surname: string;
   national_id: string;
+  activation_status: StudentActivationStatus;
   active_discipline_names: string[];
   active_disciplines: ActiveStudentDiscipline[];
 }
@@ -134,6 +139,7 @@ export async function listStudents(
         first_name: true,
         surname: true,
         national_id: true,
+        activation_status: true,
         student_disciplines: {
           where: { is_active: true },
           select: {
@@ -158,7 +164,16 @@ export async function listStudents(
 
   const rows = result.data as Exclude<typeof result.data, { __branchError: string }>;
   const hasExtraItem = rows.length > listInput.page_size;
-  const items = rows.slice(0, listInput.page_size).map((student) => {
+  const items: StudentListItem[] = [];
+
+  for (const student of rows.slice(0, listInput.page_size)) {
+    const activationStatus = studentActivationStatusSchema.safeParse(
+      student.activation_status
+    );
+    if (!activationStatus.success) {
+      return { success: false, error: OPERATION_FAILED_ERROR };
+    }
+
     const activeDisciplines = student.student_disciplines
       .map((studentDiscipline) => ({
         id: studentDiscipline.id,
@@ -174,18 +189,20 @@ export async function listStudents(
         )
       );
 
-    return {
+    items.push({
       id: student.id,
       branch_id: student.branch_id,
       first_name: student.first_name,
       surname: student.surname,
       national_id: student.national_id,
+      activation_status: activationStatus.data,
       active_discipline_names: activeDisciplines.map(
         (discipline) => discipline.discipline_name
       ),
       active_disciplines: activeDisciplines,
-    };
-  });
+    });
+  }
+
   const lastItem = items.at(-1);
 
   return {
@@ -196,6 +213,58 @@ export async function listStudents(
         hasExtraItem && lastItem !== undefined ? lastItem.id : null,
     },
   };
+}
+
+export async function activateStudent(
+  id: string,
+  branchId: string
+): Promise<ActionResult<{ id: string }>> {
+  const parsed = studentIdSchema.safeParse(id);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message };
+  }
+
+  if (!branchId) {
+    return { success: false, error: BRANCH_ASSERTION_MESSAGES.MISSING_BRANCH_CONTEXT };
+  }
+
+  const result = await withAuthenticatedUser(async (tx, ctx) => {
+    const branchError = assertCallerBranchAdmin(ctx, branchId);
+    if (branchError) {
+      return { __branchError: branchError } as const;
+    }
+
+    const student = await tx.students.findUnique({
+      where: { id: parsed.data },
+      select: { id: true, branch_id: true, activation_status: true },
+    });
+
+    if (student === null || student.branch_id !== branchId) {
+      return null;
+    }
+
+    if (student.activation_status === STUDENT_ACTIVATION_STATUS.ACTIVE) {
+      return { id: student.id };
+    }
+
+    return tx.students.update({
+      where: { id: student.id },
+      data: { activation_status: STUDENT_ACTIVATION_STATUS.ACTIVE },
+      select: { id: true },
+    });
+  });
+
+  if (!result.success) return result;
+
+  if (result.data !== null && "__branchError" in result.data) {
+    return { success: false, error: result.data.__branchError };
+  }
+
+  if (result.data === null) {
+    return { success: false, error: STUDENT_NOT_FOUND_ERROR };
+  }
+
+  return { success: true, data: { id: result.data.id } };
 }
 
 export interface ActiveStudentCount {

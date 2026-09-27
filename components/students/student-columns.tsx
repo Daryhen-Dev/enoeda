@@ -6,6 +6,7 @@ import Link from "next/link"
 import type { ActiveBranchOption } from "@/components/students/student-form-dialog"
 import { RegisterClassPaymentDialog } from "@/components/payments/register-class-payment-dialog"
 import { RegisterMonthlyPaymentDialog } from "@/components/payments/register-monthly-payment-dialog"
+import { StudentActivateDialog } from "@/components/students/student-activate-dialog"
 import { StudentDeactivateDialog } from "@/components/students/student-deactivate-dialog"
 import { StudentFormDialog } from "@/components/students/student-form-dialog"
 import { StudentReactivateDialog } from "@/components/students/student-reactivate-dialog"
@@ -14,17 +15,19 @@ import type { EcuadorTimeZone } from "@/lib/domain/branches/schema"
 import { getCalendarDayDifference, getCurrentDateOnly } from "@/lib/date"
 import type { ActiveStudentDiscipline } from "@/lib/domain/students/actions"
 import {
+  STUDENT_ACTIVATION_STATUS,
   STUDENT_STATUS,
   type StudentListItem,
   type StudentStatus,
 } from "@/lib/domain/students"
-import { STUDENT_DIRECTORY_MESSAGES } from "@/lib/localization/es-ec"
+import { STUDENT_DIRECTORY_MESSAGES, STUDENT_LIFECYCLE_MESSAGES } from "@/lib/localization/es-ec"
 
 interface StudentColumnsOptions {
   branchId: string
   branches: ActiveBranchOption[]
   status: StudentStatus
   canManage: boolean
+  onActivated: () => void
   timeZone: EcuadorTimeZone
 }
 
@@ -68,6 +71,7 @@ export function getStudentColumns({
   branches,
   status,
   canManage,
+  onActivated,
   timeZone,
 }: StudentColumnsOptions): ColumnDef<TableFeatures, StudentListItem>[] {
   const isActive = status === STUDENT_STATUS.ACTIVE
@@ -130,6 +134,18 @@ export function getStudentColumns({
                   aria-label={STUDENT_DIRECTORY_MESSAGES.ADMINISTRATIVE_ACTIONS_LABEL}
                   className="flex flex-wrap gap-2"
                 >
+                  {canManage &&
+                    student.activation_status === STUDENT_ACTIVATION_STATUS.PENDING && (
+                      <StudentActivateDialog
+                        student={{
+                          id: student.id,
+                          first_name: student.first_name,
+                          surname: student.surname,
+                        }}
+                        branchId={branchId}
+                        onActivated={onActivated}
+                      />
+                    )}
                   <StudentFormDialog
                     branches={branches}
                     studentId={student.id}
@@ -212,6 +228,14 @@ export function getStudentColumns({
           },
         ]
       : []),
+    {
+      accessorKey: "activation_status",
+      header: STUDENT_LIFECYCLE_MESSAGES.ACTIVATION_STATUS_LABEL,
+      cell: ({ row }) =>
+        row.original.activation_status === STUDENT_ACTIVATION_STATUS.PENDING
+          ? STUDENT_LIFECYCLE_MESSAGES.PENDING_ACTIVATION_STATUS
+          : STUDENT_LIFECYCLE_MESSAGES.ACTIVE_ACTIVATION_STATUS,
+    },
     {
       id: "status",
       header: STUDENT_DIRECTORY_MESSAGES.STATUS,

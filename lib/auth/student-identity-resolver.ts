@@ -1,10 +1,6 @@
 import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
-import {
-  isStudentInvitationState,
-  type StudentEnrollmentInvitation,
-} from "@/lib/domain/student-enrollment/types";
 
 export const STUDENT_IDENTITY_REASONS = {
   NO_STUDENT: "no_student",
@@ -14,7 +10,16 @@ export const STUDENT_IDENTITY_REASONS = {
 export type StudentIdentityReason =
   (typeof STUDENT_IDENTITY_REASONS)[keyof typeof STUDENT_IDENTITY_REASONS];
 
+export const STUDENT_ACTIVATION_STATUS = {
+  ACTIVE: "active",
+  PENDING: "pending",
+} as const;
+
+export type StudentActivationStatus =
+  (typeof STUDENT_ACTIVATION_STATUS)[keyof typeof STUDENT_ACTIVATION_STATUS];
+
 export interface StudentIdentity {
+  activationStatus: StudentActivationStatus;
   authUserId: string;
   dateOfBirth: string;
   email: string;
@@ -30,30 +35,12 @@ export type StudentIdentityResult =
   | { ok: true; student: StudentIdentity }
   | { ok: false; reason: StudentIdentityReason };
 
-export const STUDENT_ENROLLMENT_CONTEXT_KINDS = {
-  INVALID: "invalid",
-  INVITATION: "invitation",
-  STUDENT: "student",
-  UNAUTHENTICATED: "unauthenticated",
-} as const;
-
-export type StudentEnrollmentContextKind =
-  (typeof STUDENT_ENROLLMENT_CONTEXT_KINDS)[keyof typeof STUDENT_ENROLLMENT_CONTEXT_KINDS];
-
-export type StudentEnrollmentContextResult =
-  | { kind: typeof STUDENT_ENROLLMENT_CONTEXT_KINDS.STUDENT; student: StudentIdentity }
-  | {
-      kind: typeof STUDENT_ENROLLMENT_CONTEXT_KINDS.INVITATION;
-      invitation: StudentEnrollmentInvitation;
-    }
-  | { kind: typeof STUDENT_ENROLLMENT_CONTEXT_KINDS.UNAUTHENTICATED }
-  | { kind: typeof STUDENT_ENROLLMENT_CONTEXT_KINDS.INVALID };
-
 interface AuthenticatedUser {
   id: string;
 }
 
-function toStudentIdentity(student: {
+interface StudentIdentityRow {
+  activation_status: string;
   auth_user_id: string | null;
   date_of_birth: string;
   email: string;
@@ -63,12 +50,24 @@ function toStudentIdentity(student: {
   national_id: string;
   phone: string | null;
   surname: string;
-}): StudentIdentity | null {
-  if (student.auth_user_id === null) {
+}
+
+function isStudentActivationStatus(value: string): value is StudentActivationStatus {
+  return Object.values(STUDENT_ACTIVATION_STATUS).some(
+    (status) => status === value
+  );
+}
+
+function toStudentIdentity(student: StudentIdentityRow): StudentIdentity | null {
+  if (
+    student.auth_user_id === null ||
+    !isStudentActivationStatus(student.activation_status)
+  ) {
     return null;
   }
 
   return {
+    activationStatus: student.activation_status,
     authUserId: student.auth_user_id,
     dateOfBirth: student.date_of_birth,
     email: student.email,
@@ -88,7 +87,7 @@ async function resolveLinkedStudent(
   const { data, error } = await supabase
     .from("students")
     .select(
-      "id, auth_user_id, first_name, surname, national_id, email, phone, date_of_birth, is_active"
+      "id, auth_user_id, first_name, surname, national_id, email, phone, date_of_birth, is_active, activation_status"
     )
     .eq("auth_user_id", user.id)
     .maybeSingle();
@@ -117,40 +116,4 @@ export async function getStudentIdentity(): Promise<StudentIdentityResult> {
   }
 
   return { ok: true, student };
-}
-
-export async function getStudentEnrollmentContext(): Promise<StudentEnrollmentContextResult> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || user === null) {
-    return { kind: STUDENT_ENROLLMENT_CONTEXT_KINDS.UNAUTHENTICATED };
-  }
-
-  const student = await resolveLinkedStudent(supabase, user);
-  if (student !== null) {
-    return { kind: STUDENT_ENROLLMENT_CONTEXT_KINDS.STUDENT, student };
-  }
-
-  const { data, error } = await supabase.rpc("get_my_student_enrollment_state");
-  const invitation = data?.[0];
-  if (
-    error ||
-    invitation === undefined ||
-    !isStudentInvitationState(invitation.state)
-  ) {
-    return { kind: STUDENT_ENROLLMENT_CONTEXT_KINDS.INVALID };
-  }
-
-  return {
-    kind: STUDENT_ENROLLMENT_CONTEXT_KINDS.INVITATION,
-    invitation: {
-      email: invitation.email,
-      passwordConfigured: invitation.password_set_at !== null,
-      state: invitation.state,
-    },
-  };
 }

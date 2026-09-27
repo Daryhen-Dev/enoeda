@@ -80,6 +80,19 @@ export const STUDENT_STATUS = {
 export type StudentStatus =
   (typeof STUDENT_STATUS)[keyof typeof STUDENT_STATUS];
 
+export const STUDENT_ACTIVATION_STATUS = {
+  PENDING: "pending",
+  ACTIVE: "active",
+} as const;
+
+export const studentActivationStatusSchema = z.enum([
+  STUDENT_ACTIVATION_STATUS.PENDING,
+  STUDENT_ACTIVATION_STATUS.ACTIVE,
+]);
+
+export type StudentActivationStatus =
+  (typeof STUDENT_ACTIVATION_STATUS)[keyof typeof STUDENT_ACTIVATION_STATUS];
+
 export const studentListSchema = z
   .object({
     branch_id: z.uuid({ error: STUDENT_MESSAGES.INVALID_BRANCH_ID }),

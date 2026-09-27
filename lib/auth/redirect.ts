@@ -3,7 +3,7 @@ import type { AppRole } from "@/lib/auth/authorize";
 const DEFAULT_REDIRECT = "/dashboard" as const;
 const OWNER_HOME = "/owner" as const;
 const STUDENT_HOME = "/student" as const;
-const ENROLLMENT_HOME = "/enroll" as const;
+const PUBLIC_REGISTRATION_HOME = "/registro" as const;
 const DASHBOARD_PREFIX = `${DEFAULT_REDIRECT}/` as const;
 const OWNER_PREFIX = `${OWNER_HOME}/` as const;
 const DISALLOWED_REDIRECT_CHARACTERS = /[%?\\#]/;
@@ -29,17 +29,7 @@ export function getPersonaHome(roles: AppRole[]): SafeRedirect {
 
 /** Returns a fixed, safe destination for role-less student Auth users. */
 export function getStudentAuthHome(hasLinkedStudent: boolean): SafeRedirect {
-  return (hasLinkedStudent ? STUDENT_HOME : ENROLLMENT_HOME) as SafeRedirect;
-}
-
-/**
- * Restricts callback continuations to the self-service enrollment route.
- * It intentionally does not reuse the staff redirect allowlist.
- */
-export function getSafeEnrollmentCallbackRedirect(
-  _value: unknown
-): SafeRedirect {
-  return ENROLLMENT_HOME as SafeRedirect;
+  return (hasLinkedStudent ? STUDENT_HOME : PUBLIC_REGISTRATION_HOME) as SafeRedirect;
 }
 
 /** Check if a path belongs to the /owner prefix. */

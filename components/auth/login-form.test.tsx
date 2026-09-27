@@ -125,14 +125,14 @@ describe("LoginForm destinations", () => {
     expect(mocks.replace).toHaveBeenCalledWith("/student");
   });
 
-  it("sends a role-less invited account to enrollment when no student is linked", async () => {
+  it("sends a role-less unlinked account to public registration", async () => {
     mocks.rpc.mockResolvedValue({ data: [], error: null });
     mocks.from.mockReturnValue(studentQuery(null));
     rendered = renderLoginForm();
 
     await submit();
 
-    expect(mocks.replace).toHaveBeenCalledWith("/enroll");
+    expect(mocks.replace).toHaveBeenCalledWith("/registro");
   });
 
   it("does not misroute a user when role resolution fails", async () => {
