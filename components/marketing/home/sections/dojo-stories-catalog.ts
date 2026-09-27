@@ -9,7 +9,7 @@ export const DOJO_STORIES = [
   {
     id: "story-01",
     posterSrc: "/media/dojo-stories/story-01.webp",
-    title: "La práctica empieza aquí",
+    title: "Detenerse nunca",
     videoSrc: "/media/dojo-stories/story-01.mp4",
   },
   {

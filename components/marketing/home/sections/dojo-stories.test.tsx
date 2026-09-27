@@ -49,7 +49,7 @@ function renderStories(): RenderedStories {
 
 function getOpenStoryButton(container: HTMLElement) {
   const button = container.querySelector<HTMLButtonElement>(
-    'button[aria-label="Abrir historia: La práctica empieza aquí"]',
+    'button[aria-label="Abrir historia: Detenerse nunca"]',
   )
 
   expect(button).not.toBeNull()

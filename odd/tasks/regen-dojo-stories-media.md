@@ -28,6 +28,11 @@ Uniform web-optimized encode per story:
 - [x] 2. Regenerate 7 mp4 + 7 webp into `public/media/dojo-stories/`
 - [x] 3. Verify: ffprobe outputs, poster dims match video dims, `pnpm test` green
 - [x] 4. Work-unit commit on `feat/dojo-stories-media-rebuild` (evidence recorded below)
+- [x] 5. Retitle story-01 to "Detenerse nunca" (user-provided; catalog + component test aria-label), stories tests green
+
+## Follow-up decisions
+
+- 2026-09-27: user confirmed the stale-looking covers were expected (stories 02-07 are the same takes; only story-01 footage changed). Story-01 title updated to "Detenerse nunca"; remaining titles unchanged by user decision.
 
 ## Non-goals
 
