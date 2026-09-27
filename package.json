@@ -21,6 +21,8 @@
     "@supabase/ssr": "0.12.4",
     "@supabase/supabase-js": "2.112.2",
     "@tanstack/react-table": "9.1.2",
+    "altcha": "3.2.2",
+    "altcha-lib": "2.4.0",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
     "lucide-react": "1.31.0",
