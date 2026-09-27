@@ -2,6 +2,12 @@ import { PublicStudentRegistrationForm } from "@/components/student-registration
 import { listPublicActiveBranches } from "@/lib/domain/student-registration";
 import { PUBLIC_STUDENT_REGISTRATION_MESSAGES } from "@/lib/localization/es-ec";
 
+// The branch list comes from the database on every request. Without this,
+// Next statically prerenders the page at build time, which both bakes the
+// branch list into the HTML until the next deploy and requires
+// SUPABASE_SERVICE_ROLE_KEY to exist in the build environment.
+export const dynamic = "force-dynamic";
+
 export default async function PublicStudentRegistrationPage() {
   const branches = await listPublicActiveBranches();
 

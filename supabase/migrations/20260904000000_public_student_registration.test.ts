@@ -29,8 +29,8 @@ describe("Public student registration migration — structural validation", () =
     expect(sql).toContain("REVOKE ALL ON TABLE private.public_registration_rate_limits");
     expect(sql).toMatch(/CREATE FUNCTION public\.claim_public_student_registration_altcha_nonce[\s\S]*?SECURITY DEFINER[\s\S]*?SET search_path = ''/);
     expect(sql).toMatch(/CREATE FUNCTION public\.consume_public_student_registration_rate_limit[\s\S]*?SECURITY DEFINER[\s\S]*?SET search_path = ''/);
-    expect(sql).toContain("GRANT EXECUTE ON FUNCTION public.claim_public_student_registration_altcha_nonce(text, timestamptz)\n  TO service_role");
-    expect(sql).toContain("GRANT EXECUTE ON FUNCTION public.consume_public_student_registration_rate_limit(text, text, integer, integer)\n  TO service_role");
+    expect(sql).toMatch(/GRANT EXECUTE ON FUNCTION public\.claim_public_student_registration_altcha_nonce\(text, timestamptz\)\r?\n\s*TO service_role/);
+    expect(sql).toMatch(/GRANT EXECUTE ON FUNCTION public\.consume_public_student_registration_rate_limit\(text, text, integer, integer\)\r?\n\s*TO service_role/);
     expect(sql).not.toMatch(/GRANT EXECUTE[\s\S]*?TO (?:anon|authenticated)/);
   });
 
