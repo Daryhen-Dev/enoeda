@@ -1,3 +1,5 @@
+import { DOJO_STORIES_MEDIA_VERSIONS } from "./dojo-stories-media-version"
+
 export interface DojoStory {
   id: string
   posterSrc: string
@@ -5,47 +7,34 @@ export interface DojoStory {
   videoSrc: string
 }
 
-export const DOJO_STORIES = [
-  {
-    id: "story-01",
-    posterSrc: "/media/dojo-stories/story-01.webp",
-    title: "La práctica empieza aquí",
-    videoSrc: "/media/dojo-stories/story-01.mp4",
-  },
-  {
-    id: "story-02",
-    posterSrc: "/media/dojo-stories/story-02.webp",
-    title: "Técnica en movimiento",
-    videoSrc: "/media/dojo-stories/story-02.mp4",
-  },
-  {
-    id: "story-03",
-    posterSrc: "/media/dojo-stories/story-03.webp",
-    title: "Compartir el tatami",
-    videoSrc: "/media/dojo-stories/story-03.mp4",
-  },
-  {
-    id: "story-04",
-    posterSrc: "/media/dojo-stories/story-04.webp",
-    title: "La fuerza de la constancia",
-    videoSrc: "/media/dojo-stories/story-04.mp4",
-  },
-  {
-    id: "story-05",
-    posterSrc: "/media/dojo-stories/story-05.webp",
-    title: "Cada detalle cuenta",
-    videoSrc: "/media/dojo-stories/story-05.mp4",
-  },
-  {
-    id: "story-06",
-    posterSrc: "/media/dojo-stories/story-06.webp",
-    title: "Entrenar con propósito",
-    videoSrc: "/media/dojo-stories/story-06.mp4",
-  },
-  {
-    id: "story-07",
-    posterSrc: "/media/dojo-stories/story-07.webp",
-    title: "El dojo nos reúne",
-    videoSrc: "/media/dojo-stories/story-07.mp4",
-  },
-] as const satisfies readonly DojoStory[]
+const DOJO_STORY_ENTRIES = [
+  { id: "story-01", title: "Detenerse nunca" },
+  { id: "story-02", title: "Técnica en movimiento" },
+  { id: "story-03", title: "Compartir el tatami" },
+  { id: "story-04", title: "La fuerza de la constancia" },
+  { id: "story-05", title: "Cada detalle cuenta" },
+  { id: "story-06", title: "Entrenar con propósito" },
+  { id: "story-07", title: "El dojo nos reúne" },
+] as const
+
+function mediaSrc(storyId: string, fileName: string) {
+  const version = (DOJO_STORIES_MEDIA_VERSIONS as Record<string, string | undefined>)[
+    storyId
+  ]
+
+  if (!version) {
+    throw new Error(
+      `Missing prerendered media version for "${storyId}". ` +
+        "Run `pnpm stories:build` to regenerate it.",
+    )
+  }
+
+  return `/media/dojo-stories/${fileName}?v=${version}`
+}
+
+export const DOJO_STORIES = DOJO_STORY_ENTRIES.map(({ id, title }) => ({
+  id,
+  title,
+  posterSrc: mediaSrc(id, `${id}.webp`),
+  videoSrc: mediaSrc(id, `${id}.mp4`),
+})) satisfies readonly DojoStory[]
