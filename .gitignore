@@ -46,3 +46,22 @@ next-env.d.ts
 
 # prisma generated client (reproducible via pnpm db:generate)
 lib/prisma/generated/
+
+.claude
+
+.agents
+
+.vscode
+
+.kiro
+.next
+
+# agent/tooling scratch directories and local lockfiles
+.codegraph
+.codex
+supabase/.temp
+skills-lock.json
+
+# dojo-stories source videos (~34MB, inputs of pnpm stories:build;
+# published outputs live in public/media/dojo-stories)
+/assets/*.mp4
