@@ -72,6 +72,7 @@ describe("createStudent", () => {
         first_name: "Juan",
         surname: "Pérez",
         national_id: "12345678",
+        phone: null,
         email: "juan@example.com",
         date_of_birth: new Date("1995-03-15"),
         is_active: true,
