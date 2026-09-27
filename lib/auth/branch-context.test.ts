@@ -110,6 +110,8 @@ describe("resolveBranchContext", () => {
     expect(result).toEqual({
       type: "valid",
       branchId: BRANCH_A,
+      branchName: "Sucursal A",
+      timeZone: "America/Guayaquil",
       canManage: true,
     });
   });
@@ -159,6 +161,8 @@ describe("resolveBranchContext", () => {
     expect(result).toEqual({
       type: "valid",
       branchId: BRANCH_B,
+      branchName: "Sucursal B",
+      timeZone: "America/Guayaquil",
       canManage: true,
     });
   });
@@ -240,6 +244,8 @@ describe("resolveBranchContext", () => {
     expect(result).toEqual({
       type: "valid",
       branchId: BRANCH_A,
+      branchName: "Sucursal A",
+      timeZone: "America/Guayaquil",
       canManage: true,
     });
   });
@@ -261,6 +267,8 @@ describe("resolveBranchContext", () => {
     expect(result).toEqual({
       type: "valid",
       branchId: BRANCH_B,
+      branchName: "Sucursal B",
+      timeZone: "America/Guayaquil",
       canManage: false,
     });
   });
