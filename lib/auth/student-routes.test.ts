@@ -1,15 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import { isPublicPath, isStudentPath } from "./authorize";
-import {
-  getSafeEnrollmentCallbackRedirect,
-  getStudentAuthHome,
-} from "./redirect";
+import { getStudentAuthHome } from "./redirect";
 
 describe("student route boundaries", () => {
-  it("keeps enrollment callback continuation public while student profiles remain protected", () => {
-    expect(isPublicPath("/enroll")).toBe(true);
-    expect(isPublicPath("/enroll/anything")).toBe(true);
+  it("keeps public registration routes public while student profiles remain protected", () => {
+    expect(isPublicPath("/registro")).toBe(true);
+    expect(isPublicPath("/registro/anything")).toBe(true);
+    expect(isPublicPath("/api/public/altcha/challenge")).toBe(true);
+    expect(isPublicPath("/api/public/student-registration")).toBe(true);
     expect(isPublicPath("/student")).toBe(false);
   });
 
@@ -19,12 +18,8 @@ describe("student route boundaries", () => {
     expect(isStudentPath("/students")).toBe(false);
   });
 
-  it("uses fixed student and enrollment destinations rather than user-provided paths", () => {
+  it("uses fixed student and public registration destinations", () => {
     expect(getStudentAuthHome(true)).toBe("/student");
-    expect(getStudentAuthHome(false)).toBe("/enroll");
-    expect(getSafeEnrollmentCallbackRedirect("/enroll")).toBe("/enroll");
-    expect(getSafeEnrollmentCallbackRedirect("https://evil.example")).toBe(
-      "/enroll"
-    );
+    expect(getStudentAuthHome(false)).toBe("/registro");
   });
 });

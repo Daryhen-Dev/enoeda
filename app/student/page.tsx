@@ -3,10 +3,16 @@ import { redirect } from "next/navigation";
 import { StudentPhoneForm } from "@/components/student-enrollment/student-phone-form";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
+  STUDENT_ACTIVATION_STATUS,
   STUDENT_IDENTITY_REASONS,
   getStudentIdentity,
 } from "@/lib/auth/student-identity-resolver";
-import { PRODUCT_TERMS, STUDENT_ENROLLMENT_MESSAGES, formatDate } from "@/lib/localization/es-ec";
+import {
+  PRODUCT_TERMS,
+  PUBLIC_STUDENT_REGISTRATION_MESSAGES,
+  STUDENT_ENROLLMENT_MESSAGES,
+  formatDate,
+} from "@/lib/localization/es-ec";
 
 function formatStudentDate(value: string): string {
   return formatDate(new Date(`${value}T00:00:00`));
@@ -18,7 +24,7 @@ export default async function StudentProfilePage() {
     redirect(
       identity.reason === STUDENT_IDENTITY_REASONS.UNAUTHENTICATED
         ? "/login"
-        : "/enroll"
+        : "/registro"
     );
   }
 
@@ -34,6 +40,15 @@ export default async function StudentProfilePage() {
           {STUDENT_ENROLLMENT_MESSAGES.STUDENT_AREA_DESCRIPTION}
         </p>
       </div>
+
+      {student.activationStatus === STUDENT_ACTIVATION_STATUS.PENDING ? (
+        <Alert>
+          <AlertTitle>{PUBLIC_STUDENT_REGISTRATION_MESSAGES.PENDING_TITLE}</AlertTitle>
+          <AlertDescription>
+            {PUBLIC_STUDENT_REGISTRATION_MESSAGES.PENDING_DESCRIPTION}
+          </AlertDescription>
+        </Alert>
+      ) : null}
 
       {!student.isActive ? (
         <Alert>

@@ -1,7 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextRequest, NextResponse } from "next/server";
 
-import { getSafeEnrollmentCallbackRedirect } from "@/lib/auth/redirect";
 import { getSupabasePublicConfig } from "@/lib/supabase/config";
 
 function callbackFailureResponse(request: NextRequest): NextResponse {
@@ -16,10 +15,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     return callbackFailureResponse(request);
   }
 
-  const destination = getSafeEnrollmentCallbackRedirect(
-    request.nextUrl.searchParams.get("next")
-  );
-  const response = NextResponse.redirect(new URL(destination, request.url));
+  const response = NextResponse.redirect(new URL("/student", request.url));
   const { anonKey, url } = getSupabasePublicConfig();
   const supabase = createServerClient(url, anonKey, {
     cookies: {

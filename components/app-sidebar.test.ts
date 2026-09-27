@@ -5,18 +5,14 @@ import { getActiveNavigationItemUrl } from "./app-sidebar";
 const DASHBOARD_ROUTES = [
   { url: "/dashboard" },
   { url: "/dashboard/students" },
-  { url: "/dashboard/students/invitations" },
   { url: "/dashboard/staff" },
 ] as const;
 
 describe("getActiveNavigationItemUrl", () => {
   it("selects only the deepest matching dashboard route", () => {
     expect(
-      getActiveNavigationItemUrl(
-        DASHBOARD_ROUTES,
-        "/dashboard/students/invitations"
-      )
-    ).toBe("/dashboard/students/invitations");
+      getActiveNavigationItemUrl(DASHBOARD_ROUTES, "/dashboard/students")
+    ).toBe("/dashboard/students");
   });
 
   it("keeps the overview exact so it does not claim nested routes", () => {
@@ -24,8 +20,8 @@ describe("getActiveNavigationItemUrl", () => {
       "/dashboard"
     );
     expect(
-      getActiveNavigationItemUrl(DASHBOARD_ROUTES, "/dashboard/students")
-    ).toBe("/dashboard/students");
+      getActiveNavigationItemUrl(DASHBOARD_ROUTES, "/dashboard/staff")
+    ).toBe("/dashboard/staff");
   });
 
   it("returns no active navigation item for an unrelated path", () => {

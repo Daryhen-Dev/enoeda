@@ -51,6 +51,7 @@ export type Database = {
       };
       students: {
         Row: {
+          activation_status: string;
           auth_user_id: string | null;
           branch_id: string;
           created_at: string;
@@ -65,6 +66,7 @@ export type Database = {
           updated_at: string;
         };
         Insert: {
+          activation_status?: string;
           auth_user_id?: string | null;
           branch_id: string;
           created_at?: string;
@@ -79,6 +81,7 @@ export type Database = {
           updated_at?: string;
         };
         Update: {
+          activation_status?: string;
           auth_user_id?: string | null;
           branch_id?: string;
           created_at?: string;
@@ -98,69 +101,6 @@ export type Database = {
             columns: ["branch_id"];
             isOneToOne: false;
             referencedRelation: "branches";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      student_invitations: {
-        Row: {
-          accepted_at: string | null;
-          auth_user_id: string | null;
-          branch_id: string;
-          created_at: string;
-          created_by: string;
-          email: string;
-          expires_at: string;
-          id: string;
-          password_set_at: string | null;
-          revoked_at: string | null;
-          state: string;
-          student_id: string | null;
-          updated_at: string;
-        };
-        Insert: {
-          accepted_at?: string | null;
-          auth_user_id?: string | null;
-          branch_id: string;
-          created_at?: string;
-          created_by: string;
-          email: string;
-          expires_at?: string;
-          id?: string;
-          password_set_at?: string | null;
-          revoked_at?: string | null;
-          state?: string;
-          student_id?: string | null;
-          updated_at?: string;
-        };
-        Update: {
-          accepted_at?: string | null;
-          auth_user_id?: string | null;
-          branch_id?: string;
-          created_at?: string;
-          created_by?: string;
-          email?: string;
-          expires_at?: string;
-          id?: string;
-          password_set_at?: string | null;
-          revoked_at?: string | null;
-          state?: string;
-          student_id?: string | null;
-          updated_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "student_invitations_branch_id_fkey";
-            columns: ["branch_id"];
-            isOneToOne: false;
-            referencedRelation: "branches";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "student_invitations_student_id_fkey";
-            columns: ["student_id"];
-            isOneToOne: true;
-            referencedRelation: "students";
             referencedColumns: ["id"];
           },
         ];
@@ -253,18 +193,21 @@ export type Database = {
         };
         Returns: string;
       };
-      complete_student_enrollment: {
+      claim_public_student_registration_altcha_nonce: {
         Args: {
-          p_date_of_birth: string;
-          p_first_name: string;
-          p_national_id: string;
-          p_phone: string | null;
-          p_surname: string;
+          p_expires_at: string;
+          p_nonce_hash: string;
         };
-        Returns: {
-          state: string;
-          student_id: string | null;
-        }[];
+        Returns: boolean;
+      };
+      consume_public_student_registration_rate_limit: {
+        Args: {
+          p_email_hash: string;
+          p_ip_hash: string;
+          p_max_attempts: number;
+          p_window_seconds: number;
+        };
+        Returns: boolean;
       };
       current_roles: {
         Args: never;
@@ -281,18 +224,6 @@ export type Database = {
           p_surname: string;
         };
         Returns: Database["public"]["Tables"]["user_profiles"]["Row"];
-      };
-      get_my_student_enrollment_state: {
-        Args: never;
-        Returns: {
-          email: string;
-          password_set_at: string | null;
-          state: string;
-        }[];
-      };
-      mark_student_invitation_password_set: {
-        Args: never;
-        Returns: string;
       };
       revoke_branch_role: {
         Args: {

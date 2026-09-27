@@ -140,8 +140,8 @@ describe("middleware session refresh responses", () => {
     );
   });
 
-  it("delegates enrollment requests to the public session update", async () => {
-    const routeRequest = request("/enroll");
+  it("delegates public registration requests to the public session update", async () => {
+    const routeRequest = request("/registro");
     const publicResponse = NextResponse.next({ request: routeRequest });
     updateSessionMock.mockResolvedValue(publicResponse);
 

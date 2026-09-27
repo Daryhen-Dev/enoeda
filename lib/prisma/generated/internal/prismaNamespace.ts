@@ -3789,6 +3789,7 @@ export type User_profilesScalarFieldEnum = (typeof User_profilesScalarFieldEnum)
 export const StudentsScalarFieldEnum = {
   id: 'id',
   branch_id: 'branch_id',
+  auth_user_id: 'auth_user_id',
   first_name: 'first_name',
   surname: 'surname',
   national_id: 'national_id',
@@ -3796,6 +3797,7 @@ export const StudentsScalarFieldEnum = {
   phone: 'phone',
   date_of_birth: 'date_of_birth',
   is_active: 'is_active',
+  activation_status: 'activation_status',
   created_at: 'created_at',
   updated_at: 'updated_at'
 } as const

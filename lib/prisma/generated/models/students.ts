@@ -27,6 +27,7 @@ export type AggregateStudents = {
 export type StudentsMinAggregateOutputType = {
   id: string | null
   branch_id: string | null
+  auth_user_id: string | null
   first_name: string | null
   surname: string | null
   national_id: string | null
@@ -34,6 +35,7 @@ export type StudentsMinAggregateOutputType = {
   phone: string | null
   date_of_birth: Date | null
   is_active: boolean | null
+  activation_status: string | null
   created_at: Date | null
   updated_at: Date | null
 }
@@ -41,6 +43,7 @@ export type StudentsMinAggregateOutputType = {
 export type StudentsMaxAggregateOutputType = {
   id: string | null
   branch_id: string | null
+  auth_user_id: string | null
   first_name: string | null
   surname: string | null
   national_id: string | null
@@ -48,6 +51,7 @@ export type StudentsMaxAggregateOutputType = {
   phone: string | null
   date_of_birth: Date | null
   is_active: boolean | null
+  activation_status: string | null
   created_at: Date | null
   updated_at: Date | null
 }
@@ -55,6 +59,7 @@ export type StudentsMaxAggregateOutputType = {
 export type StudentsCountAggregateOutputType = {
   id: number
   branch_id: number
+  auth_user_id: number
   first_name: number
   surname: number
   national_id: number
@@ -62,6 +67,7 @@ export type StudentsCountAggregateOutputType = {
   phone: number
   date_of_birth: number
   is_active: number
+  activation_status: number
   created_at: number
   updated_at: number
   _all: number
@@ -71,6 +77,7 @@ export type StudentsCountAggregateOutputType = {
 export type StudentsMinAggregateInputType = {
   id?: true
   branch_id?: true
+  auth_user_id?: true
   first_name?: true
   surname?: true
   national_id?: true
@@ -78,6 +85,7 @@ export type StudentsMinAggregateInputType = {
   phone?: true
   date_of_birth?: true
   is_active?: true
+  activation_status?: true
   created_at?: true
   updated_at?: true
 }
@@ -85,6 +93,7 @@ export type StudentsMinAggregateInputType = {
 export type StudentsMaxAggregateInputType = {
   id?: true
   branch_id?: true
+  auth_user_id?: true
   first_name?: true
   surname?: true
   national_id?: true
@@ -92,6 +101,7 @@ export type StudentsMaxAggregateInputType = {
   phone?: true
   date_of_birth?: true
   is_active?: true
+  activation_status?: true
   created_at?: true
   updated_at?: true
 }
@@ -99,6 +109,7 @@ export type StudentsMaxAggregateInputType = {
 export type StudentsCountAggregateInputType = {
   id?: true
   branch_id?: true
+  auth_user_id?: true
   first_name?: true
   surname?: true
   national_id?: true
@@ -106,6 +117,7 @@ export type StudentsCountAggregateInputType = {
   phone?: true
   date_of_birth?: true
   is_active?: true
+  activation_status?: true
   created_at?: true
   updated_at?: true
   _all?: true
@@ -186,6 +198,7 @@ export type studentsGroupByArgs<ExtArgs extends runtime.Types.Extensions.Interna
 export type StudentsGroupByOutputType = {
   id: string
   branch_id: string
+  auth_user_id: string | null
   first_name: string
   surname: string
   national_id: string
@@ -193,6 +206,7 @@ export type StudentsGroupByOutputType = {
   phone: string | null
   date_of_birth: Date
   is_active: boolean
+  activation_status: string
   created_at: Date
   updated_at: Date
   _count: StudentsCountAggregateOutputType | null
@@ -221,6 +235,7 @@ export type studentsWhereInput = {
   NOT?: Prisma.studentsWhereInput | Prisma.studentsWhereInput[]
   id?: Prisma.UuidFilter<"students"> | string
   branch_id?: Prisma.UuidFilter<"students"> | string
+  auth_user_id?: Prisma.UuidNullableFilter<"students"> | string | null
   first_name?: Prisma.StringFilter<"students"> | string
   surname?: Prisma.StringFilter<"students"> | string
   national_id?: Prisma.StringFilter<"students"> | string
@@ -228,9 +243,11 @@ export type studentsWhereInput = {
   phone?: Prisma.StringNullableFilter<"students"> | string | null
   date_of_birth?: Prisma.DateTimeFilter<"students"> | Date | string
   is_active?: Prisma.BoolFilter<"students"> | boolean
+  activation_status?: Prisma.StringFilter<"students"> | string
   created_at?: Prisma.DateTimeFilter<"students"> | Date | string
   updated_at?: Prisma.DateTimeFilter<"students"> | Date | string
   branches?: Prisma.XOR<Prisma.BranchesScalarRelationFilter, Prisma.branchesWhereInput>
+  auth_user?: Prisma.XOR<Prisma.UsersNullableScalarRelationFilter, Prisma.usersWhereInput> | null
   student_disciplines?: Prisma.Student_disciplinesListRelationFilter
   attendance?: Prisma.AttendanceListRelationFilter
   student_progress?: Prisma.Student_progressListRelationFilter
@@ -240,6 +257,7 @@ export type studentsWhereInput = {
 export type studentsOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   branch_id?: Prisma.SortOrder
+  auth_user_id?: Prisma.SortOrderInput | Prisma.SortOrder
   first_name?: Prisma.SortOrder
   surname?: Prisma.SortOrder
   national_id?: Prisma.SortOrder
@@ -247,9 +265,11 @@ export type studentsOrderByWithRelationInput = {
   phone?: Prisma.SortOrderInput | Prisma.SortOrder
   date_of_birth?: Prisma.SortOrder
   is_active?: Prisma.SortOrder
+  activation_status?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
   branches?: Prisma.branchesOrderByWithRelationInput
+  auth_user?: Prisma.usersOrderByWithRelationInput
   student_disciplines?: Prisma.student_disciplinesOrderByRelationAggregateInput
   attendance?: Prisma.attendanceOrderByRelationAggregateInput
   student_progress?: Prisma.student_progressOrderByRelationAggregateInput
@@ -258,6 +278,7 @@ export type studentsOrderByWithRelationInput = {
 
 export type studentsWhereUniqueInput = Prisma.AtLeast<{
   id?: string
+  auth_user_id?: string
   national_id?: string
   AND?: Prisma.studentsWhereInput | Prisma.studentsWhereInput[]
   OR?: Prisma.studentsWhereInput[]
@@ -269,18 +290,21 @@ export type studentsWhereUniqueInput = Prisma.AtLeast<{
   phone?: Prisma.StringNullableFilter<"students"> | string | null
   date_of_birth?: Prisma.DateTimeFilter<"students"> | Date | string
   is_active?: Prisma.BoolFilter<"students"> | boolean
+  activation_status?: Prisma.StringFilter<"students"> | string
   created_at?: Prisma.DateTimeFilter<"students"> | Date | string
   updated_at?: Prisma.DateTimeFilter<"students"> | Date | string
   branches?: Prisma.XOR<Prisma.BranchesScalarRelationFilter, Prisma.branchesWhereInput>
+  auth_user?: Prisma.XOR<Prisma.UsersNullableScalarRelationFilter, Prisma.usersWhereInput> | null
   student_disciplines?: Prisma.Student_disciplinesListRelationFilter
   attendance?: Prisma.AttendanceListRelationFilter
   student_progress?: Prisma.Student_progressListRelationFilter
   student_notes?: Prisma.Student_notesListRelationFilter
-}, "id" | "national_id">
+}, "id" | "auth_user_id" | "national_id">
 
 export type studentsOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   branch_id?: Prisma.SortOrder
+  auth_user_id?: Prisma.SortOrderInput | Prisma.SortOrder
   first_name?: Prisma.SortOrder
   surname?: Prisma.SortOrder
   national_id?: Prisma.SortOrder
@@ -288,6 +312,7 @@ export type studentsOrderByWithAggregationInput = {
   phone?: Prisma.SortOrderInput | Prisma.SortOrder
   date_of_birth?: Prisma.SortOrder
   is_active?: Prisma.SortOrder
+  activation_status?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
   _count?: Prisma.studentsCountOrderByAggregateInput
@@ -301,6 +326,7 @@ export type studentsScalarWhereWithAggregatesInput = {
   NOT?: Prisma.studentsScalarWhereWithAggregatesInput | Prisma.studentsScalarWhereWithAggregatesInput[]
   id?: Prisma.UuidWithAggregatesFilter<"students"> | string
   branch_id?: Prisma.UuidWithAggregatesFilter<"students"> | string
+  auth_user_id?: Prisma.UuidNullableWithAggregatesFilter<"students"> | string | null
   first_name?: Prisma.StringWithAggregatesFilter<"students"> | string
   surname?: Prisma.StringWithAggregatesFilter<"students"> | string
   national_id?: Prisma.StringWithAggregatesFilter<"students"> | string
@@ -308,6 +334,7 @@ export type studentsScalarWhereWithAggregatesInput = {
   phone?: Prisma.StringNullableWithAggregatesFilter<"students"> | string | null
   date_of_birth?: Prisma.DateTimeWithAggregatesFilter<"students"> | Date | string
   is_active?: Prisma.BoolWithAggregatesFilter<"students"> | boolean
+  activation_status?: Prisma.StringWithAggregatesFilter<"students"> | string
   created_at?: Prisma.DateTimeWithAggregatesFilter<"students"> | Date | string
   updated_at?: Prisma.DateTimeWithAggregatesFilter<"students"> | Date | string
 }
@@ -321,9 +348,11 @@ export type studentsCreateInput = {
   phone?: string | null
   date_of_birth: Date | string
   is_active?: boolean
+  activation_status?: string
   created_at?: Date | string
   updated_at?: Date | string
   branches: Prisma.branchesCreateNestedOneWithoutStudentsInput
+  auth_user?: Prisma.usersCreateNestedOneWithoutStudent_profileInput
   student_disciplines?: Prisma.student_disciplinesCreateNestedManyWithoutStudentsInput
   attendance?: Prisma.attendanceCreateNestedManyWithoutStudentsInput
   student_progress?: Prisma.student_progressCreateNestedManyWithoutStudentsInput
@@ -333,6 +362,7 @@ export type studentsCreateInput = {
 export type studentsUncheckedCreateInput = {
   id?: string
   branch_id: string
+  auth_user_id?: string | null
   first_name: string
   surname: string
   national_id: string
@@ -340,6 +370,7 @@ export type studentsUncheckedCreateInput = {
   phone?: string | null
   date_of_birth: Date | string
   is_active?: boolean
+  activation_status?: string
   created_at?: Date | string
   updated_at?: Date | string
   student_disciplines?: Prisma.student_disciplinesUncheckedCreateNestedManyWithoutStudentsInput
@@ -357,9 +388,11 @@ export type studentsUpdateInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   date_of_birth?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_status?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   branches?: Prisma.branchesUpdateOneRequiredWithoutStudentsNestedInput
+  auth_user?: Prisma.usersUpdateOneWithoutStudent_profileNestedInput
   student_disciplines?: Prisma.student_disciplinesUpdateManyWithoutStudentsNestedInput
   attendance?: Prisma.attendanceUpdateManyWithoutStudentsNestedInput
   student_progress?: Prisma.student_progressUpdateManyWithoutStudentsNestedInput
@@ -369,6 +402,7 @@ export type studentsUpdateInput = {
 export type studentsUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   branch_id?: Prisma.StringFieldUpdateOperationsInput | string
+  auth_user_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   first_name?: Prisma.StringFieldUpdateOperationsInput | string
   surname?: Prisma.StringFieldUpdateOperationsInput | string
   national_id?: Prisma.StringFieldUpdateOperationsInput | string
@@ -376,6 +410,7 @@ export type studentsUncheckedUpdateInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   date_of_birth?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_status?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   student_disciplines?: Prisma.student_disciplinesUncheckedUpdateManyWithoutStudentsNestedInput
@@ -387,6 +422,7 @@ export type studentsUncheckedUpdateInput = {
 export type studentsCreateManyInput = {
   id?: string
   branch_id: string
+  auth_user_id?: string | null
   first_name: string
   surname: string
   national_id: string
@@ -394,6 +430,7 @@ export type studentsCreateManyInput = {
   phone?: string | null
   date_of_birth: Date | string
   is_active?: boolean
+  activation_status?: string
   created_at?: Date | string
   updated_at?: Date | string
 }
@@ -407,6 +444,7 @@ export type studentsUpdateManyMutationInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   date_of_birth?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_status?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -414,6 +452,7 @@ export type studentsUpdateManyMutationInput = {
 export type studentsUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   branch_id?: Prisma.StringFieldUpdateOperationsInput | string
+  auth_user_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   first_name?: Prisma.StringFieldUpdateOperationsInput | string
   surname?: Prisma.StringFieldUpdateOperationsInput | string
   national_id?: Prisma.StringFieldUpdateOperationsInput | string
@@ -421,8 +460,14 @@ export type studentsUncheckedUpdateManyInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   date_of_birth?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_status?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type StudentsNullableScalarRelationFilter = {
+  is?: Prisma.studentsWhereInput | null
+  isNot?: Prisma.studentsWhereInput | null
 }
 
 export type StudentsListRelationFilter = {
@@ -438,6 +483,7 @@ export type studentsOrderByRelationAggregateInput = {
 export type studentsCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   branch_id?: Prisma.SortOrder
+  auth_user_id?: Prisma.SortOrder
   first_name?: Prisma.SortOrder
   surname?: Prisma.SortOrder
   national_id?: Prisma.SortOrder
@@ -445,6 +491,7 @@ export type studentsCountOrderByAggregateInput = {
   phone?: Prisma.SortOrder
   date_of_birth?: Prisma.SortOrder
   is_active?: Prisma.SortOrder
+  activation_status?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
 }
@@ -452,6 +499,7 @@ export type studentsCountOrderByAggregateInput = {
 export type studentsMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   branch_id?: Prisma.SortOrder
+  auth_user_id?: Prisma.SortOrder
   first_name?: Prisma.SortOrder
   surname?: Prisma.SortOrder
   national_id?: Prisma.SortOrder
@@ -459,6 +507,7 @@ export type studentsMaxOrderByAggregateInput = {
   phone?: Prisma.SortOrder
   date_of_birth?: Prisma.SortOrder
   is_active?: Prisma.SortOrder
+  activation_status?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
 }
@@ -466,6 +515,7 @@ export type studentsMaxOrderByAggregateInput = {
 export type studentsMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   branch_id?: Prisma.SortOrder
+  auth_user_id?: Prisma.SortOrder
   first_name?: Prisma.SortOrder
   surname?: Prisma.SortOrder
   national_id?: Prisma.SortOrder
@@ -473,6 +523,7 @@ export type studentsMinOrderByAggregateInput = {
   phone?: Prisma.SortOrder
   date_of_birth?: Prisma.SortOrder
   is_active?: Prisma.SortOrder
+  activation_status?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
 }
@@ -480,6 +531,38 @@ export type studentsMinOrderByAggregateInput = {
 export type StudentsScalarRelationFilter = {
   is?: Prisma.studentsWhereInput
   isNot?: Prisma.studentsWhereInput
+}
+
+export type studentsCreateNestedOneWithoutAuth_userInput = {
+  create?: Prisma.XOR<Prisma.studentsCreateWithoutAuth_userInput, Prisma.studentsUncheckedCreateWithoutAuth_userInput>
+  connectOrCreate?: Prisma.studentsCreateOrConnectWithoutAuth_userInput
+  connect?: Prisma.studentsWhereUniqueInput
+}
+
+export type studentsUncheckedCreateNestedOneWithoutAuth_userInput = {
+  create?: Prisma.XOR<Prisma.studentsCreateWithoutAuth_userInput, Prisma.studentsUncheckedCreateWithoutAuth_userInput>
+  connectOrCreate?: Prisma.studentsCreateOrConnectWithoutAuth_userInput
+  connect?: Prisma.studentsWhereUniqueInput
+}
+
+export type studentsUpdateOneWithoutAuth_userNestedInput = {
+  create?: Prisma.XOR<Prisma.studentsCreateWithoutAuth_userInput, Prisma.studentsUncheckedCreateWithoutAuth_userInput>
+  connectOrCreate?: Prisma.studentsCreateOrConnectWithoutAuth_userInput
+  upsert?: Prisma.studentsUpsertWithoutAuth_userInput
+  disconnect?: Prisma.studentsWhereInput | boolean
+  delete?: Prisma.studentsWhereInput | boolean
+  connect?: Prisma.studentsWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.studentsUpdateToOneWithWhereWithoutAuth_userInput, Prisma.studentsUpdateWithoutAuth_userInput>, Prisma.studentsUncheckedUpdateWithoutAuth_userInput>
+}
+
+export type studentsUncheckedUpdateOneWithoutAuth_userNestedInput = {
+  create?: Prisma.XOR<Prisma.studentsCreateWithoutAuth_userInput, Prisma.studentsUncheckedCreateWithoutAuth_userInput>
+  connectOrCreate?: Prisma.studentsCreateOrConnectWithoutAuth_userInput
+  upsert?: Prisma.studentsUpsertWithoutAuth_userInput
+  disconnect?: Prisma.studentsWhereInput | boolean
+  delete?: Prisma.studentsWhereInput | boolean
+  connect?: Prisma.studentsWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.studentsUpdateToOneWithWhereWithoutAuth_userInput, Prisma.studentsUpdateWithoutAuth_userInput>, Prisma.studentsUncheckedUpdateWithoutAuth_userInput>
 }
 
 export type studentsCreateNestedManyWithoutBranchesInput = {
@@ -580,6 +663,98 @@ export type studentsUpdateOneRequiredWithoutStudent_notesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.studentsUpdateToOneWithWhereWithoutStudent_notesInput, Prisma.studentsUpdateWithoutStudent_notesInput>, Prisma.studentsUncheckedUpdateWithoutStudent_notesInput>
 }
 
+export type studentsCreateWithoutAuth_userInput = {
+  id?: string
+  first_name: string
+  surname: string
+  national_id: string
+  email: string
+  phone?: string | null
+  date_of_birth: Date | string
+  is_active?: boolean
+  activation_status?: string
+  created_at?: Date | string
+  updated_at?: Date | string
+  branches: Prisma.branchesCreateNestedOneWithoutStudentsInput
+  student_disciplines?: Prisma.student_disciplinesCreateNestedManyWithoutStudentsInput
+  attendance?: Prisma.attendanceCreateNestedManyWithoutStudentsInput
+  student_progress?: Prisma.student_progressCreateNestedManyWithoutStudentsInput
+  student_notes?: Prisma.student_notesCreateNestedManyWithoutStudentsInput
+}
+
+export type studentsUncheckedCreateWithoutAuth_userInput = {
+  id?: string
+  branch_id: string
+  first_name: string
+  surname: string
+  national_id: string
+  email: string
+  phone?: string | null
+  date_of_birth: Date | string
+  is_active?: boolean
+  activation_status?: string
+  created_at?: Date | string
+  updated_at?: Date | string
+  student_disciplines?: Prisma.student_disciplinesUncheckedCreateNestedManyWithoutStudentsInput
+  attendance?: Prisma.attendanceUncheckedCreateNestedManyWithoutStudentsInput
+  student_progress?: Prisma.student_progressUncheckedCreateNestedManyWithoutStudentsInput
+  student_notes?: Prisma.student_notesUncheckedCreateNestedManyWithoutStudentsInput
+}
+
+export type studentsCreateOrConnectWithoutAuth_userInput = {
+  where: Prisma.studentsWhereUniqueInput
+  create: Prisma.XOR<Prisma.studentsCreateWithoutAuth_userInput, Prisma.studentsUncheckedCreateWithoutAuth_userInput>
+}
+
+export type studentsUpsertWithoutAuth_userInput = {
+  update: Prisma.XOR<Prisma.studentsUpdateWithoutAuth_userInput, Prisma.studentsUncheckedUpdateWithoutAuth_userInput>
+  create: Prisma.XOR<Prisma.studentsCreateWithoutAuth_userInput, Prisma.studentsUncheckedCreateWithoutAuth_userInput>
+  where?: Prisma.studentsWhereInput
+}
+
+export type studentsUpdateToOneWithWhereWithoutAuth_userInput = {
+  where?: Prisma.studentsWhereInput
+  data: Prisma.XOR<Prisma.studentsUpdateWithoutAuth_userInput, Prisma.studentsUncheckedUpdateWithoutAuth_userInput>
+}
+
+export type studentsUpdateWithoutAuth_userInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  first_name?: Prisma.StringFieldUpdateOperationsInput | string
+  surname?: Prisma.StringFieldUpdateOperationsInput | string
+  national_id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  date_of_birth?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_status?: Prisma.StringFieldUpdateOperationsInput | string
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  branches?: Prisma.branchesUpdateOneRequiredWithoutStudentsNestedInput
+  student_disciplines?: Prisma.student_disciplinesUpdateManyWithoutStudentsNestedInput
+  attendance?: Prisma.attendanceUpdateManyWithoutStudentsNestedInput
+  student_progress?: Prisma.student_progressUpdateManyWithoutStudentsNestedInput
+  student_notes?: Prisma.student_notesUpdateManyWithoutStudentsNestedInput
+}
+
+export type studentsUncheckedUpdateWithoutAuth_userInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  branch_id?: Prisma.StringFieldUpdateOperationsInput | string
+  first_name?: Prisma.StringFieldUpdateOperationsInput | string
+  surname?: Prisma.StringFieldUpdateOperationsInput | string
+  national_id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  date_of_birth?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_status?: Prisma.StringFieldUpdateOperationsInput | string
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  student_disciplines?: Prisma.student_disciplinesUncheckedUpdateManyWithoutStudentsNestedInput
+  attendance?: Prisma.attendanceUncheckedUpdateManyWithoutStudentsNestedInput
+  student_progress?: Prisma.student_progressUncheckedUpdateManyWithoutStudentsNestedInput
+  student_notes?: Prisma.student_notesUncheckedUpdateManyWithoutStudentsNestedInput
+}
+
 export type studentsCreateWithoutBranchesInput = {
   id?: string
   first_name: string
@@ -589,8 +764,10 @@ export type studentsCreateWithoutBranchesInput = {
   phone?: string | null
   date_of_birth: Date | string
   is_active?: boolean
+  activation_status?: string
   created_at?: Date | string
   updated_at?: Date | string
+  auth_user?: Prisma.usersCreateNestedOneWithoutStudent_profileInput
   student_disciplines?: Prisma.student_disciplinesCreateNestedManyWithoutStudentsInput
   attendance?: Prisma.attendanceCreateNestedManyWithoutStudentsInput
   student_progress?: Prisma.student_progressCreateNestedManyWithoutStudentsInput
@@ -599,6 +776,7 @@ export type studentsCreateWithoutBranchesInput = {
 
 export type studentsUncheckedCreateWithoutBranchesInput = {
   id?: string
+  auth_user_id?: string | null
   first_name: string
   surname: string
   national_id: string
@@ -606,6 +784,7 @@ export type studentsUncheckedCreateWithoutBranchesInput = {
   phone?: string | null
   date_of_birth: Date | string
   is_active?: boolean
+  activation_status?: string
   created_at?: Date | string
   updated_at?: Date | string
   student_disciplines?: Prisma.student_disciplinesUncheckedCreateNestedManyWithoutStudentsInput
@@ -646,6 +825,7 @@ export type studentsScalarWhereInput = {
   NOT?: Prisma.studentsScalarWhereInput | Prisma.studentsScalarWhereInput[]
   id?: Prisma.UuidFilter<"students"> | string
   branch_id?: Prisma.UuidFilter<"students"> | string
+  auth_user_id?: Prisma.UuidNullableFilter<"students"> | string | null
   first_name?: Prisma.StringFilter<"students"> | string
   surname?: Prisma.StringFilter<"students"> | string
   national_id?: Prisma.StringFilter<"students"> | string
@@ -653,6 +833,7 @@ export type studentsScalarWhereInput = {
   phone?: Prisma.StringNullableFilter<"students"> | string | null
   date_of_birth?: Prisma.DateTimeFilter<"students"> | Date | string
   is_active?: Prisma.BoolFilter<"students"> | boolean
+  activation_status?: Prisma.StringFilter<"students"> | string
   created_at?: Prisma.DateTimeFilter<"students"> | Date | string
   updated_at?: Prisma.DateTimeFilter<"students"> | Date | string
 }
@@ -666,9 +847,11 @@ export type studentsCreateWithoutStudent_disciplinesInput = {
   phone?: string | null
   date_of_birth: Date | string
   is_active?: boolean
+  activation_status?: string
   created_at?: Date | string
   updated_at?: Date | string
   branches: Prisma.branchesCreateNestedOneWithoutStudentsInput
+  auth_user?: Prisma.usersCreateNestedOneWithoutStudent_profileInput
   attendance?: Prisma.attendanceCreateNestedManyWithoutStudentsInput
   student_progress?: Prisma.student_progressCreateNestedManyWithoutStudentsInput
   student_notes?: Prisma.student_notesCreateNestedManyWithoutStudentsInput
@@ -677,6 +860,7 @@ export type studentsCreateWithoutStudent_disciplinesInput = {
 export type studentsUncheckedCreateWithoutStudent_disciplinesInput = {
   id?: string
   branch_id: string
+  auth_user_id?: string | null
   first_name: string
   surname: string
   national_id: string
@@ -684,6 +868,7 @@ export type studentsUncheckedCreateWithoutStudent_disciplinesInput = {
   phone?: string | null
   date_of_birth: Date | string
   is_active?: boolean
+  activation_status?: string
   created_at?: Date | string
   updated_at?: Date | string
   attendance?: Prisma.attendanceUncheckedCreateNestedManyWithoutStudentsInput
@@ -716,9 +901,11 @@ export type studentsUpdateWithoutStudent_disciplinesInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   date_of_birth?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_status?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   branches?: Prisma.branchesUpdateOneRequiredWithoutStudentsNestedInput
+  auth_user?: Prisma.usersUpdateOneWithoutStudent_profileNestedInput
   attendance?: Prisma.attendanceUpdateManyWithoutStudentsNestedInput
   student_progress?: Prisma.student_progressUpdateManyWithoutStudentsNestedInput
   student_notes?: Prisma.student_notesUpdateManyWithoutStudentsNestedInput
@@ -727,6 +914,7 @@ export type studentsUpdateWithoutStudent_disciplinesInput = {
 export type studentsUncheckedUpdateWithoutStudent_disciplinesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   branch_id?: Prisma.StringFieldUpdateOperationsInput | string
+  auth_user_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   first_name?: Prisma.StringFieldUpdateOperationsInput | string
   surname?: Prisma.StringFieldUpdateOperationsInput | string
   national_id?: Prisma.StringFieldUpdateOperationsInput | string
@@ -734,6 +922,7 @@ export type studentsUncheckedUpdateWithoutStudent_disciplinesInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   date_of_birth?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_status?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   attendance?: Prisma.attendanceUncheckedUpdateManyWithoutStudentsNestedInput
@@ -750,9 +939,11 @@ export type studentsCreateWithoutAttendanceInput = {
   phone?: string | null
   date_of_birth: Date | string
   is_active?: boolean
+  activation_status?: string
   created_at?: Date | string
   updated_at?: Date | string
   branches: Prisma.branchesCreateNestedOneWithoutStudentsInput
+  auth_user?: Prisma.usersCreateNestedOneWithoutStudent_profileInput
   student_disciplines?: Prisma.student_disciplinesCreateNestedManyWithoutStudentsInput
   student_progress?: Prisma.student_progressCreateNestedManyWithoutStudentsInput
   student_notes?: Prisma.student_notesCreateNestedManyWithoutStudentsInput
@@ -761,6 +952,7 @@ export type studentsCreateWithoutAttendanceInput = {
 export type studentsUncheckedCreateWithoutAttendanceInput = {
   id?: string
   branch_id: string
+  auth_user_id?: string | null
   first_name: string
   surname: string
   national_id: string
@@ -768,6 +960,7 @@ export type studentsUncheckedCreateWithoutAttendanceInput = {
   phone?: string | null
   date_of_birth: Date | string
   is_active?: boolean
+  activation_status?: string
   created_at?: Date | string
   updated_at?: Date | string
   student_disciplines?: Prisma.student_disciplinesUncheckedCreateNestedManyWithoutStudentsInput
@@ -800,9 +993,11 @@ export type studentsUpdateWithoutAttendanceInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   date_of_birth?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_status?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   branches?: Prisma.branchesUpdateOneRequiredWithoutStudentsNestedInput
+  auth_user?: Prisma.usersUpdateOneWithoutStudent_profileNestedInput
   student_disciplines?: Prisma.student_disciplinesUpdateManyWithoutStudentsNestedInput
   student_progress?: Prisma.student_progressUpdateManyWithoutStudentsNestedInput
   student_notes?: Prisma.student_notesUpdateManyWithoutStudentsNestedInput
@@ -811,6 +1006,7 @@ export type studentsUpdateWithoutAttendanceInput = {
 export type studentsUncheckedUpdateWithoutAttendanceInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   branch_id?: Prisma.StringFieldUpdateOperationsInput | string
+  auth_user_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   first_name?: Prisma.StringFieldUpdateOperationsInput | string
   surname?: Prisma.StringFieldUpdateOperationsInput | string
   national_id?: Prisma.StringFieldUpdateOperationsInput | string
@@ -818,6 +1014,7 @@ export type studentsUncheckedUpdateWithoutAttendanceInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   date_of_birth?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_status?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   student_disciplines?: Prisma.student_disciplinesUncheckedUpdateManyWithoutStudentsNestedInput
@@ -834,9 +1031,11 @@ export type studentsCreateWithoutStudent_progressInput = {
   phone?: string | null
   date_of_birth: Date | string
   is_active?: boolean
+  activation_status?: string
   created_at?: Date | string
   updated_at?: Date | string
   branches: Prisma.branchesCreateNestedOneWithoutStudentsInput
+  auth_user?: Prisma.usersCreateNestedOneWithoutStudent_profileInput
   student_disciplines?: Prisma.student_disciplinesCreateNestedManyWithoutStudentsInput
   attendance?: Prisma.attendanceCreateNestedManyWithoutStudentsInput
   student_notes?: Prisma.student_notesCreateNestedManyWithoutStudentsInput
@@ -845,6 +1044,7 @@ export type studentsCreateWithoutStudent_progressInput = {
 export type studentsUncheckedCreateWithoutStudent_progressInput = {
   id?: string
   branch_id: string
+  auth_user_id?: string | null
   first_name: string
   surname: string
   national_id: string
@@ -852,6 +1052,7 @@ export type studentsUncheckedCreateWithoutStudent_progressInput = {
   phone?: string | null
   date_of_birth: Date | string
   is_active?: boolean
+  activation_status?: string
   created_at?: Date | string
   updated_at?: Date | string
   student_disciplines?: Prisma.student_disciplinesUncheckedCreateNestedManyWithoutStudentsInput
@@ -884,9 +1085,11 @@ export type studentsUpdateWithoutStudent_progressInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   date_of_birth?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_status?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   branches?: Prisma.branchesUpdateOneRequiredWithoutStudentsNestedInput
+  auth_user?: Prisma.usersUpdateOneWithoutStudent_profileNestedInput
   student_disciplines?: Prisma.student_disciplinesUpdateManyWithoutStudentsNestedInput
   attendance?: Prisma.attendanceUpdateManyWithoutStudentsNestedInput
   student_notes?: Prisma.student_notesUpdateManyWithoutStudentsNestedInput
@@ -895,6 +1098,7 @@ export type studentsUpdateWithoutStudent_progressInput = {
 export type studentsUncheckedUpdateWithoutStudent_progressInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   branch_id?: Prisma.StringFieldUpdateOperationsInput | string
+  auth_user_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   first_name?: Prisma.StringFieldUpdateOperationsInput | string
   surname?: Prisma.StringFieldUpdateOperationsInput | string
   national_id?: Prisma.StringFieldUpdateOperationsInput | string
@@ -902,6 +1106,7 @@ export type studentsUncheckedUpdateWithoutStudent_progressInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   date_of_birth?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_status?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   student_disciplines?: Prisma.student_disciplinesUncheckedUpdateManyWithoutStudentsNestedInput
@@ -918,9 +1123,11 @@ export type studentsCreateWithoutStudent_notesInput = {
   phone?: string | null
   date_of_birth: Date | string
   is_active?: boolean
+  activation_status?: string
   created_at?: Date | string
   updated_at?: Date | string
   branches: Prisma.branchesCreateNestedOneWithoutStudentsInput
+  auth_user?: Prisma.usersCreateNestedOneWithoutStudent_profileInput
   student_disciplines?: Prisma.student_disciplinesCreateNestedManyWithoutStudentsInput
   attendance?: Prisma.attendanceCreateNestedManyWithoutStudentsInput
   student_progress?: Prisma.student_progressCreateNestedManyWithoutStudentsInput
@@ -929,6 +1136,7 @@ export type studentsCreateWithoutStudent_notesInput = {
 export type studentsUncheckedCreateWithoutStudent_notesInput = {
   id?: string
   branch_id: string
+  auth_user_id?: string | null
   first_name: string
   surname: string
   national_id: string
@@ -936,6 +1144,7 @@ export type studentsUncheckedCreateWithoutStudent_notesInput = {
   phone?: string | null
   date_of_birth: Date | string
   is_active?: boolean
+  activation_status?: string
   created_at?: Date | string
   updated_at?: Date | string
   student_disciplines?: Prisma.student_disciplinesUncheckedCreateNestedManyWithoutStudentsInput
@@ -968,9 +1177,11 @@ export type studentsUpdateWithoutStudent_notesInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   date_of_birth?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_status?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   branches?: Prisma.branchesUpdateOneRequiredWithoutStudentsNestedInput
+  auth_user?: Prisma.usersUpdateOneWithoutStudent_profileNestedInput
   student_disciplines?: Prisma.student_disciplinesUpdateManyWithoutStudentsNestedInput
   attendance?: Prisma.attendanceUpdateManyWithoutStudentsNestedInput
   student_progress?: Prisma.student_progressUpdateManyWithoutStudentsNestedInput
@@ -979,6 +1190,7 @@ export type studentsUpdateWithoutStudent_notesInput = {
 export type studentsUncheckedUpdateWithoutStudent_notesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   branch_id?: Prisma.StringFieldUpdateOperationsInput | string
+  auth_user_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   first_name?: Prisma.StringFieldUpdateOperationsInput | string
   surname?: Prisma.StringFieldUpdateOperationsInput | string
   national_id?: Prisma.StringFieldUpdateOperationsInput | string
@@ -986,6 +1198,7 @@ export type studentsUncheckedUpdateWithoutStudent_notesInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   date_of_birth?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_status?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   student_disciplines?: Prisma.student_disciplinesUncheckedUpdateManyWithoutStudentsNestedInput
@@ -995,6 +1208,7 @@ export type studentsUncheckedUpdateWithoutStudent_notesInput = {
 
 export type studentsCreateManyBranchesInput = {
   id?: string
+  auth_user_id?: string | null
   first_name: string
   surname: string
   national_id: string
@@ -1002,6 +1216,7 @@ export type studentsCreateManyBranchesInput = {
   phone?: string | null
   date_of_birth: Date | string
   is_active?: boolean
+  activation_status?: string
   created_at?: Date | string
   updated_at?: Date | string
 }
@@ -1015,8 +1230,10 @@ export type studentsUpdateWithoutBranchesInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   date_of_birth?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_status?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  auth_user?: Prisma.usersUpdateOneWithoutStudent_profileNestedInput
   student_disciplines?: Prisma.student_disciplinesUpdateManyWithoutStudentsNestedInput
   attendance?: Prisma.attendanceUpdateManyWithoutStudentsNestedInput
   student_progress?: Prisma.student_progressUpdateManyWithoutStudentsNestedInput
@@ -1025,6 +1242,7 @@ export type studentsUpdateWithoutBranchesInput = {
 
 export type studentsUncheckedUpdateWithoutBranchesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  auth_user_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   first_name?: Prisma.StringFieldUpdateOperationsInput | string
   surname?: Prisma.StringFieldUpdateOperationsInput | string
   national_id?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1032,6 +1250,7 @@ export type studentsUncheckedUpdateWithoutBranchesInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   date_of_birth?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_status?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   student_disciplines?: Prisma.student_disciplinesUncheckedUpdateManyWithoutStudentsNestedInput
@@ -1042,6 +1261,7 @@ export type studentsUncheckedUpdateWithoutBranchesInput = {
 
 export type studentsUncheckedUpdateManyWithoutBranchesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  auth_user_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   first_name?: Prisma.StringFieldUpdateOperationsInput | string
   surname?: Prisma.StringFieldUpdateOperationsInput | string
   national_id?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1049,6 +1269,7 @@ export type studentsUncheckedUpdateManyWithoutBranchesInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   date_of_birth?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_status?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1114,6 +1335,7 @@ export type StudentsCountOutputTypeCountStudent_notesArgs<ExtArgs extends runtim
 export type studentsSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   branch_id?: boolean
+  auth_user_id?: boolean
   first_name?: boolean
   surname?: boolean
   national_id?: boolean
@@ -1121,9 +1343,11 @@ export type studentsSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   phone?: boolean
   date_of_birth?: boolean
   is_active?: boolean
+  activation_status?: boolean
   created_at?: boolean
   updated_at?: boolean
   branches?: boolean | Prisma.branchesDefaultArgs<ExtArgs>
+  auth_user?: boolean | Prisma.students$auth_userArgs<ExtArgs>
   student_disciplines?: boolean | Prisma.students$student_disciplinesArgs<ExtArgs>
   attendance?: boolean | Prisma.students$attendanceArgs<ExtArgs>
   student_progress?: boolean | Prisma.students$student_progressArgs<ExtArgs>
@@ -1134,6 +1358,7 @@ export type studentsSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
 export type studentsSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   branch_id?: boolean
+  auth_user_id?: boolean
   first_name?: boolean
   surname?: boolean
   national_id?: boolean
@@ -1141,14 +1366,17 @@ export type studentsSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   phone?: boolean
   date_of_birth?: boolean
   is_active?: boolean
+  activation_status?: boolean
   created_at?: boolean
   updated_at?: boolean
   branches?: boolean | Prisma.branchesDefaultArgs<ExtArgs>
+  auth_user?: boolean | Prisma.students$auth_userArgs<ExtArgs>
 }, ExtArgs["result"]["students"]>
 
 export type studentsSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   branch_id?: boolean
+  auth_user_id?: boolean
   first_name?: boolean
   surname?: boolean
   national_id?: boolean
@@ -1156,14 +1384,17 @@ export type studentsSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   phone?: boolean
   date_of_birth?: boolean
   is_active?: boolean
+  activation_status?: boolean
   created_at?: boolean
   updated_at?: boolean
   branches?: boolean | Prisma.branchesDefaultArgs<ExtArgs>
+  auth_user?: boolean | Prisma.students$auth_userArgs<ExtArgs>
 }, ExtArgs["result"]["students"]>
 
 export type studentsSelectScalar = {
   id?: boolean
   branch_id?: boolean
+  auth_user_id?: boolean
   first_name?: boolean
   surname?: boolean
   national_id?: boolean
@@ -1171,13 +1402,15 @@ export type studentsSelectScalar = {
   phone?: boolean
   date_of_birth?: boolean
   is_active?: boolean
+  activation_status?: boolean
   created_at?: boolean
   updated_at?: boolean
 }
 
-export type studentsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "branch_id" | "first_name" | "surname" | "national_id" | "email" | "phone" | "date_of_birth" | "is_active" | "created_at" | "updated_at", ExtArgs["result"]["students"]>
+export type studentsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "branch_id" | "auth_user_id" | "first_name" | "surname" | "national_id" | "email" | "phone" | "date_of_birth" | "is_active" | "activation_status" | "created_at" | "updated_at", ExtArgs["result"]["students"]>
 export type studentsInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   branches?: boolean | Prisma.branchesDefaultArgs<ExtArgs>
+  auth_user?: boolean | Prisma.students$auth_userArgs<ExtArgs>
   student_disciplines?: boolean | Prisma.students$student_disciplinesArgs<ExtArgs>
   attendance?: boolean | Prisma.students$attendanceArgs<ExtArgs>
   student_progress?: boolean | Prisma.students$student_progressArgs<ExtArgs>
@@ -1186,15 +1419,18 @@ export type studentsInclude<ExtArgs extends runtime.Types.Extensions.InternalArg
 }
 export type studentsIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   branches?: boolean | Prisma.branchesDefaultArgs<ExtArgs>
+  auth_user?: boolean | Prisma.students$auth_userArgs<ExtArgs>
 }
 export type studentsIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   branches?: boolean | Prisma.branchesDefaultArgs<ExtArgs>
+  auth_user?: boolean | Prisma.students$auth_userArgs<ExtArgs>
 }
 
 export type $studentsPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "students"
   objects: {
     branches: Prisma.$branchesPayload<ExtArgs>
+    auth_user: Prisma.$usersPayload<ExtArgs> | null
     student_disciplines: Prisma.$student_disciplinesPayload<ExtArgs>[]
     attendance: Prisma.$attendancePayload<ExtArgs>[]
     student_progress: Prisma.$student_progressPayload<ExtArgs>[]
@@ -1203,6 +1439,7 @@ export type $studentsPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     branch_id: string
+    auth_user_id: string | null
     first_name: string
     surname: string
     national_id: string
@@ -1210,6 +1447,7 @@ export type $studentsPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     phone: string | null
     date_of_birth: Date
     is_active: boolean
+    activation_status: string
     created_at: Date
     updated_at: Date
   }, ExtArgs["result"]["students"]>
@@ -1607,6 +1845,7 @@ readonly fields: studentsFieldRefs;
 export interface Prisma__studentsClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   branches<T extends Prisma.branchesDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.branchesDefaultArgs<ExtArgs>>): Prisma.Prisma__branchesClient<runtime.Types.Result.GetResult<Prisma.$branchesPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  auth_user<T extends Prisma.students$auth_userArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.students$auth_userArgs<ExtArgs>>): Prisma.Prisma__usersClient<runtime.Types.Result.GetResult<Prisma.$usersPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   student_disciplines<T extends Prisma.students$student_disciplinesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.students$student_disciplinesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$student_disciplinesPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   attendance<T extends Prisma.students$attendanceArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.students$attendanceArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$attendancePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   student_progress<T extends Prisma.students$student_progressArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.students$student_progressArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$student_progressPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -1642,6 +1881,7 @@ export interface Prisma__studentsClient<T, Null = never, ExtArgs extends runtime
 export interface studentsFieldRefs {
   readonly id: Prisma.FieldRef<"students", 'String'>
   readonly branch_id: Prisma.FieldRef<"students", 'String'>
+  readonly auth_user_id: Prisma.FieldRef<"students", 'String'>
   readonly first_name: Prisma.FieldRef<"students", 'String'>
   readonly surname: Prisma.FieldRef<"students", 'String'>
   readonly national_id: Prisma.FieldRef<"students", 'String'>
@@ -1649,6 +1889,7 @@ export interface studentsFieldRefs {
   readonly phone: Prisma.FieldRef<"students", 'String'>
   readonly date_of_birth: Prisma.FieldRef<"students", 'DateTime'>
   readonly is_active: Prisma.FieldRef<"students", 'Boolean'>
+  readonly activation_status: Prisma.FieldRef<"students", 'String'>
   readonly created_at: Prisma.FieldRef<"students", 'DateTime'>
   readonly updated_at: Prisma.FieldRef<"students", 'DateTime'>
 }
@@ -2049,6 +2290,25 @@ export type studentsDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * Limit how many students to delete.
    */
   limit?: number
+}
+
+/**
+ * students.auth_user
+ */
+export type students$auth_userArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the users
+   */
+  select?: Prisma.usersSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the users
+   */
+  omit?: Prisma.usersOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.usersInclude<ExtArgs> | null
+  where?: Prisma.usersWhereInput
 }
 
 /**

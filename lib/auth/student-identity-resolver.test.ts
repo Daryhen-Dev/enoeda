@@ -12,10 +12,7 @@ vi.mock("@/lib/supabase/server", () => ({
   createClient: mocks.createClient,
 }));
 
-import {
-  getStudentEnrollmentContext,
-  getStudentIdentity,
-} from "./student-identity-resolver";
+import { getStudentIdentity } from "./student-identity-resolver";
 
 function studentQuery(response: unknown) {
   const result = {
@@ -48,9 +45,10 @@ describe("student identity resolver", () => {
     expect(from).not.toHaveBeenCalled();
   });
 
-  it("resolves only the profile bound to the authenticated Auth user", async () => {
+  it("resolves only the profile bound to the authenticated Auth user with its activation state", async () => {
     const query = studentQuery({
       data: {
+        activation_status: "pending",
         auth_user_id: USER_ID,
         date_of_birth: "2000-01-01",
         email: "student@example.com",
@@ -74,6 +72,7 @@ describe("student identity resolver", () => {
     expect(result).toEqual({
       ok: true,
       student: {
+        activationStatus: "pending",
         authUserId: USER_ID,
         dateOfBirth: "2000-01-01",
         email: "student@example.com",
@@ -86,53 +85,36 @@ describe("student identity resolver", () => {
       },
     });
     expect(from).toHaveBeenCalledWith("students");
+    expect(query.select).toHaveBeenCalledWith(
+      expect.stringContaining("activation_status")
+    );
     expect(query.eq).toHaveBeenCalledWith("auth_user_id", USER_ID);
   });
 
-  it("returns the pending invitation state for a signed-in user without a linked student", async () => {
-    const studentLookup = studentQuery({ data: null, error: null });
-    const rpc = vi.fn().mockResolvedValue({
-      data: [
-        {
-          email: "student@example.com",
-          password_set_at: null,
-          state: "pending",
-        },
-      ],
+  it("fails closed when the persisted activation state is not recognized", async () => {
+    const query = studentQuery({
+      data: {
+        activation_status: "unknown",
+        auth_user_id: USER_ID,
+        date_of_birth: "2000-01-01",
+        email: "student@example.com",
+        first_name: "Ada",
+        id: STUDENT_ID,
+        is_active: true,
+        national_id: "0102030405",
+        phone: null,
+        surname: "Lovelace",
+      },
       error: null,
     });
     mocks.createClient.mockResolvedValue({
       auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: USER_ID } }, error: null }) },
-      from: vi.fn().mockReturnValue(studentLookup),
-      rpc,
+      from: vi.fn().mockReturnValue(query),
     });
 
-    const result = await getStudentEnrollmentContext();
-
-    expect(result).toEqual({
-      kind: "invitation",
-      invitation: {
-        email: "student@example.com",
-        passwordConfigured: false,
-        state: "pending",
-      },
+    await expect(getStudentIdentity()).resolves.toEqual({
+      ok: false,
+      reason: "no_student",
     });
-    expect(rpc).toHaveBeenCalledWith("get_my_student_enrollment_state");
-  });
-
-  it("fails closed when an unrecognized invitation state is returned", async () => {
-    const studentLookup = studentQuery({ data: null, error: null });
-    mocks.createClient.mockResolvedValue({
-      auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: USER_ID } }, error: null }) },
-      from: vi.fn().mockReturnValue(studentLookup),
-      rpc: vi.fn().mockResolvedValue({
-        data: [{ email: "student@example.com", password_set_at: null, state: "unknown" }],
-        error: null,
-      }),
-    });
-
-    const result = await getStudentEnrollmentContext();
-
-    expect(result).toEqual({ kind: "invalid" });
   });
 });

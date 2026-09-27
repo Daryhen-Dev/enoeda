@@ -1,10 +1,13 @@
 export {
+  STUDENT_ACTIVATION_STATUS,
   STUDENT_STATUS,
+  studentActivationStatusSchema,
   studentCreateSchema,
   studentIdSchema,
   studentListSchema,
   studentReactivateSchema,
   studentUpdateSchema,
+  type StudentActivationStatus,
   type StudentCreateInput,
   type StudentListInput,
   type StudentReactivateInput,
@@ -13,6 +16,7 @@ export {
 } from "./schema";
 
 export {
+  activateStudent,
   createStudent,
   deactivateStudent,
   getStudentById,
