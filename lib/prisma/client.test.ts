@@ -14,7 +14,7 @@ const ALLOWED = new Set(
   )
 );
 const SKIP =
-  /(?:node_modules|\.next|dist|\.git|\.turbo|\.agents|\.kiro|\.atl|__mocks__|generated|\.test\.[jt]sx?$|\.spec\.[jt]sx?$)/;
+  /(?:node_modules|\.next|dist|\.git|\.turbo|\.agents|\.kiro|\.atl|\.claude|\.codex|\.codegraph|\.vscode|\.temp|skills-lock|__mocks__|generated|\.test\.[jt]sx?$|\.spec\.[jt]sx?$)/;
 const RUNTIME_PRISMA =
   /(?:(?<!\btype\s)(?:import|export)\s+(?!type\b)[^;]*from\s+['"](?:@prisma\/(?:client|adapter-pg)|@\/lib\/prisma(?:\/(?!generated\/client\/index\.d))?[^'"]*|\.\.?\/[^'"]*prisma(?:\/(?!generated\/client\/index\.d))?[^'"]*)['"]|(?:require|import)\s*\(\s*['"](?:@prisma\/(?:client|adapter-pg)|@\/lib\/prisma|\.\.?\/[^'"]*prisma)[^'"]*['"])/;
 
