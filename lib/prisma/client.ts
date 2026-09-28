@@ -73,6 +73,35 @@ function validateUserContext({ userId, roles }: UserContext): void {
  * - `SELECT set_config('request.jwt.claims', ..., true)` — provides auth.uid()
  *   and roles for the transaction only
  */
+/**
+ * Redacts credentials embedded in connection strings before they reach a log.
+ * Postgres driver errors can echo the connection string back, which would put
+ * the database password in Workers logs.
+ */
+function redactCredentials(value: string): string {
+  return value.replace(/:\/\/([^:@/]+):[^:@/]*@/g, "://$1:****@");
+}
+
+/**
+ * Reports the underlying failure of an RLS transaction.
+ *
+ * Callers map transaction errors to generic user-facing messages, so without
+ * this the real cause never reaches the Workers logs and infrastructure
+ * failures become undiagnosable.
+ */
+function reportTransactionFailure(error: unknown): void {
+  if (error instanceof Error) {
+    console.error("[prisma] withUser transaction failed", {
+      name: error.name,
+      message: redactCredentials(error.message),
+      code: (error as { code?: unknown }).code,
+      stack: error.stack ? redactCredentials(error.stack) : undefined,
+    });
+    return;
+  }
+  console.error("[prisma] withUser transaction failed", redactCredentials(String(error)));
+}
+
 export async function withUser<T>(
   ctx: UserContext,
   fn: (tx: TransactionClient) => Promise<T>
@@ -83,9 +112,14 @@ export async function withUser<T>(
   const claims = JSON.stringify({ sub: userId, roles });
   const prisma = getPrismaClient();
 
-  return prisma.$transaction(async (tx) => {
-    await tx.$executeRaw`SET LOCAL ROLE authenticated`;
-    await tx.$executeRaw`SELECT set_config('request.jwt.claims', ${claims}, true);`;
-    return fn(tx);
-  });
+  try {
+    return await prisma.$transaction(async (tx) => {
+      await tx.$executeRaw`SET LOCAL ROLE authenticated`;
+      await tx.$executeRaw`SELECT set_config('request.jwt.claims', ${claims}, true);`;
+      return fn(tx);
+    });
+  } catch (error) {
+    reportTransactionFailure(error);
+    throw error;
+  }
 }
