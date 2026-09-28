@@ -57,12 +57,16 @@ The name lives in `alt`.
 - [x] 3. Resolve `ENOEDA` watermark collision with the new strip
 - [x] 4. `components/marketing/shell/footer.test.tsx` guards the strip
 - [x] 5. Verify: `pnpm lint`, `pnpm test`, visual pass at mobile + desktop
-- [ ] 6. Work-unit commit on the feature branch (evidence recorded below)
+- [x] 6. Work-unit commit on the feature branch (evidence recorded below)
 
 ## Commit evidence
 
-**Pending — the user asked to implement, and explicitly deferred commits to their own request.**
-Branch `feat/footer-colaboradores` is created off `main` and holds the uncommitted work.
+- `aaf3fab` — `feat(marketing): add institutional collaborators strip to footer`
+  on `feat/footer-colaboradores`: 8 files, 329 insertions(+), 7 deletions(-).
+- Merged into `main` by fast-forward (`main` had not moved since the branch point
+  `85e48b3`), so the branch adds exactly one commit and no merge commit.
+- Post-merge verification on `main`: 683 tests passed / 1 skipped, `tsc --noEmit` clean.
+- Not pushed: push and PR remain the user's decision.
 
 ## Verification results
 
