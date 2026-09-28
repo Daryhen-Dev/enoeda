@@ -65,3 +65,9 @@ skills-lock.json
 # dojo-stories source videos (~34MB, inputs of pnpm stories:build;
 # published outputs live in public/media/dojo-stories)
 /assets/*.mp4
+
+# OpenNext Cloudflare build output
+.open-next/
+
+# pnpm local store artifact
+.pnpm-store/

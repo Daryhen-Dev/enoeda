@@ -1,0 +1,36 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"main": ".open-next/worker.js",
+	"name": "enoeda",
+	"compatibility_date": "2026-09-26",
+	"compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+	"assets": {
+		"directory": ".open-next/assets",
+		"binding": "ASSETS"
+	},
+	"services": [
+		{
+			// Self-reference service binding, the service name must match the worker name
+			// see https://opennext.js.org/cloudflare/caching
+			"binding": "WORKER_SELF_REFERENCE",
+			"service": "enoeda"
+		}
+	],
+	"observability": {
+		"enabled": true
+	}
+	// To enable the R2 incremental cache (ISR), create the bucket first:
+	//   npx wrangler r2 bucket create enoeda-opennext-cache
+	// then add:
+	// "r2_buckets": [
+	//   {
+	//     "binding": "NEXT_INC_CACHE_R2_BUCKET",
+	//     "bucket_name": "enoeda-opennext-cache"
+	//   }
+	// ]
+	//
+	// To enable Cloudflare Image Optimization for next/image, add:
+	// "images": {
+	//   "binding": "IMAGES"
+	// }
+}
