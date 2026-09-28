@@ -105,6 +105,50 @@ Fix: set `"keep_vars": true` in `wrangler.jsonc`. Sensitive values should also
 live in secrets (Settings > Variables and Secrets) rather than as plain text,
 which makes them both deploy-proof and encrypted.
 
+## Root cause 5 — build-time variables need a rebuild, not just a redeploy
+
+After the runtime secrets were loaded, every route returned `200` in the browser
+challenge, but the client bundle was still broken. Adding a variable in the
+dashboard redeploys the current version; it does not recompile it.
+
+Evidence, taken from the deployed client chunk:
+
+```js
+let e=sb.default.env.NEXT_PUBLIC_SUPABASE_URL,t=sb.default.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+if(!s_(e)||!s_(t)){ ...throw Error("Missing required Supabase public environment variables...") }
+```
+
+The lookup is present but no value is inlined: neither the project URL nor the
+`sb_publishable_…` anon key appeared anywhere in the chunks. `login-form.tsx`,
+`logout-button.tsx` and `public-student-registration-form.tsx` are `"use client"`
+and call `createBrowserClient()`, so the browser would throw on submit even while
+the server rendered `200`.
+
+Fix: after changing Workers Builds build variables, trigger a **new build**.
+`next build` is what inlines `NEXT_PUBLIC_*` into the client bundle.
+
+### Two similarly named Cloudflare sections
+
+A Worker has two different variable stores, and they are easy to confuse:
+
+| Location | Scope | Use for |
+| --- | --- | --- |
+| Settings > **Build** > *Build variables and secrets* | the ephemeral CI container only | values `next build` needs, i.e. `NEXT_PUBLIC_*` |
+| Settings > **Variables and Secrets** | bindings on the deployed version | everything the Worker reads at request time |
+
+A build variable is **not** available at runtime. Putting runtime secrets there
+leaves the Worker with nothing to read.
+
+### Detecting this from the API
+
+Reading state directly avoids guessing from truncated logs:
+
+- `GET /accounts/{id}/builds/workers/{tag}` — the real build config.
+- `GET /accounts/{id}/builds/workers/{tag}/builds` — build history with outcome.
+- `GET /accounts/{id}/builds/builds/{uuid}/logs` — build log lines.
+- `GET /accounts/{id}/workers/scripts/{name}/settings` and `/secrets` — bindings
+  by type and secret names (values are never returned).
+
 ## Verification
 
 Reproduced in a CI-equivalent Linux container (node 24 + pnpm 11.21, repo on a
@@ -125,20 +169,49 @@ Upload: 17049 KiB / gzip 4207 KiB, 110 asset files, bindings
 - Cloudflare Image Optimization binding (`images`): not enabled to avoid
   unexpected per-request billing.
 
-## Required Cloudflare configuration (dashboard, not in repo)
+## Final Cloudflare configuration (applied 2026-09-28)
 
-Build-time variables (needed because `NEXT_PUBLIC_*` is inlined by Next):
+Runtime secrets (Settings > Variables and Secrets), all six present:
+
+- `DATABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `ALTCHA_HMAC_SECRET`
+- `PUBLIC_REGISTRATION_HASH_SECRET`
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+
+Build variables (Settings > Build), needed for client-side inlining:
 
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
-Runtime variables/secrets:
+Two constraints the code enforces, worth knowing before setting values:
 
-- `DATABASE_URL` (server secret)
-- `SUPABASE_SERVICE_ROLE_KEY` (server secret)
-- `ALTCHA_HMAC_SECRET` (server secret)
-- `PUBLIC_REGISTRATION_HASH_SECRET` (server secret)
-- `ALTCHA_CHALLENGE_TTL_SECONDS` (optional)
+- `ALTCHA_HMAC_SECRET` and `PUBLIC_REGISTRATION_HASH_SECRET` must be at least 32
+  characters (`getRequiredSecret` throws below that).
+- `ALTCHA_CHALLENGE_TTL_SECONDS` and the two
+  `PUBLIC_REGISTRATION_RATE_LIMIT_*` variables are optional and have defaults; if
+  set, they must be integers inside their documented ranges or the app throws.
+
+`APP_URL` and `NEXT_PUBLIC_APP_URL` were previously bound but are referenced
+nowhere in the code; they were deliberately not restored.
+
+## Outcome
+
+All routes returned `200` after the runtime secrets were loaded:
+
+| Route | Before | After |
+| --- | --- | --- |
+| `/` | 500 | 200 |
+| `/login` | 500 | 200 |
+| `/el-camino` | 500 | 200 |
+| `/registro` | 500 | 200 |
+
+Still unproven: `Prisma` → Postgres over `pg-cloudflare`. No anonymous route
+exercises it — `/`, `/login` and `/el-camino` never touch the database, and
+`/registro` uses the Supabase admin client, which goes over REST rather than
+`pg`. Validating it requires an authenticated request to `/dashboard`, which
+exercises `withUser`.
 
 ## Runtime database note
 
