@@ -63,10 +63,27 @@ The name lives in `alt`.
 
 - `aaf3fab` — `feat(marketing): add institutional collaborators strip to footer`
   on `feat/footer-colaboradores`: 8 files, 329 insertions(+), 7 deletions(-).
-- Merged into `main` by fast-forward (`main` had not moved since the branch point
-  `85e48b3`), so the branch adds exactly one commit and no merge commit.
+- Fast-forwarded locally into `main` (`main` had not moved since the branch point
+  `85e48b3`), adding exactly two local commits: `aaf3fab` and `2e5f107`.
 - Post-merge verification on `main`: 683 tests passed / 1 skipped, `tsc --noEmit` clean.
-- Not pushed: push and PR remain the user's decision.
+
+### How this actually reached `origin/main` — record corrected 2026-09-28
+
+The work was never published on its own. Local `main` had drifted two commits
+ahead of `origin/main` without being pushed. A later feature branch
+(`feat/cloudflare-opennext-deploy`) was created from that local `main` and
+pushed, so its PR was diffed against `origin/main` and silently included these
+two commits. The squash `236df3e` ("chore(deploy): add OpenNext Cloudflare
+configuration (#174)") therefore merged the footer work into `origin/main`
+together with the Cloudflare deploy configuration.
+
+This was unintended: the footer work reached `main` without its own PR or
+review, under a commit message that does not describe it. The user decided to
+keep it on `main` and correct the record here instead of reverting and
+re-submitting.
+
+- Local recovery ref for the pre-squash commits: tag `backup/footer-local-main`
+  -> `2e5f107`.
 
 ## Verification results
 
