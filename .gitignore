@@ -69,5 +69,10 @@ skills-lock.json
 # OpenNext Cloudflare build output
 .open-next/
 
+# wrangler local files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+
 # pnpm local store artifact
 .pnpm-store/
