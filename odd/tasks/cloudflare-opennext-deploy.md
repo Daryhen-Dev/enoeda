@@ -95,9 +95,10 @@ ready.
 - [x] 4. Create `wrangler.jsonc` + `open-next.config.ts`
 - [x] 5. Fix `pg-cloudflare` tracing (opennext issue #1214)
 - [x] 6. Verify end-to-end in CI-equivalent Linux container
-- [ ] 7. Work-unit commit on the feature branch
+- [x] 7. Work-unit commit on the feature branch — `cb5be89`
 
 ## Commit evidence
 
-(pending)
+- `cb5be89` — chore(deploy): add OpenNext Cloudflare configuration
+  (wrangler.jsonc, open-next.config.ts, devDeps, allowBuilds, pg-cloudflare tracing)
 
