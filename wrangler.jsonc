@@ -4,6 +4,12 @@
 	"name": "enoeda",
 	"compatibility_date": "2026-09-26",
 	"compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+	// Wrangler deletes every `vars` entry set in the dashboard before applying
+	// those found in this config file (--keep-vars defaults to false), so a plain
+	// `wrangler deploy` wipes the Worker's dashboard variables. Secrets are never
+	// deleted by a deploy, which is why sensitive values belong in secrets
+	// (Settings > Variables and Secrets) rather than plain text.
+	"keep_vars": true,
 	"assets": {
 		"directory": ".open-next/assets",
 		"binding": "ASSETS"
