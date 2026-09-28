@@ -43,6 +43,45 @@ path exists — it was previously only a transitive optional dependency under
 pnpm's virtual store) and declare `outputFileTracingIncludes` in `next.config.ts`
 for `pg-cloudflare/dist/**` and `pg-cloudflare/esm/**`.
 
+## Root cause 3 — deploy failed after the bundle built (Workers Builds command)
+
+With root causes 1 and 2 fixed, the build step succeeded but the deploy step
+failed:
+
+```
+Executing user build command: pnpm run build      <- only `next build`
+Executing user deploy command: npx wrangler deploy
+OpenNext project detected, calling `opennextjs-cloudflare deploy`
+ERROR Could not find compiled Open Next config, did you run the build command?
+```
+
+Workers Builds was configured with the build command `pnpm run build`, which
+runs only `next build` and never adapts the app for Workers. `wrangler deploy`
+detects OpenNext and delegates to `opennextjs-cloudflare deploy`, which needs
+the bundle produced by `opennextjs-cloudflare build` — a step that never ran.
+
+Fix: set the Workers Builds **build command** to `npx opennextjs-cloudflare build`
+(leave the deploy command as `npx wrangler deploy`).
+
+This is a dashboard setting, not repository configuration. It cannot be fixed by
+pointing the `build` script at `opennextjs-cloudflare build`, because that
+command invokes `pnpm run build` internally
+(`@opennextjs/aws/dist/build/buildNextApp.js`) — it would recurse infinitely.
+The escape hatch is `--skipNextBuild` (`SKIP_NEXT_APP_BUILD`), deliberately not
+used here in order to stay on the documented path.
+
+## Missing standard OpenNext configuration
+
+`migrate` was never run to completion (it was the step that failed in CI), so the
+repo was also missing the standard OpenNext setup. Added:
+
+- `preview` / `deploy` / `upload` / `cf-typegen` scripts.
+- `public/_headers` with immutable caching for `/_next/static/*`.
+- `.gitignore` entries for `.wrangler` and `.dev.vars*` (the latter keeps local
+  Worker secrets out of git).
+
+`build` intentionally stays `next build`, per the official documentation.
+
 ## Verification
 
 Reproduced in a CI-equivalent Linux container (node 24 + pnpm 11.21, repo on a
