@@ -1,3 +1,5 @@
+import Image from "next/image"
+
 import {
   MARKETING_EMAIL,
   MARKETING_FACEBOOK_URL,
@@ -6,6 +8,10 @@ import {
   MARKETING_WHATSAPP_DISPLAY_NUMBER,
   MARKETING_WHATSAPP_URL,
 } from "@/components/marketing/shared/contact"
+import {
+  MARKETING_COLLABORATORS,
+  MARKETING_COLLABORATORS_INTRO,
+} from "@/components/marketing/shared/collaborators"
 import styles from "@/components/marketing/marketing.module.css"
 
 const FOOTER_SOCIAL_LINKS = [
@@ -29,12 +35,17 @@ const FOOTER_SOCIAL_LINKS = [
 const SECONDARY_LINK_CLASS =
   "inline-flex min-h-11 items-center font-marketing-body text-sm font-bold uppercase tracking-[0.1em] text-marketing-menu-foreground transition-colors hover:text-marketing-menu-border focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-marketing-menu-border motion-reduce:transition-none"
 
+const COLLABORATOR_SIZES = "(min-width: 1024px) 210px, (min-width: 640px) 22vw, 44vw"
+
+const SECTION_LABEL_CLASS =
+  "font-marketing-body text-xs font-bold uppercase tracking-[0.16em] text-marketing-menu-border"
+
 export function MarketingFooter() {
   return (
     <footer className="relative isolate overflow-hidden rounded-b-[1.75rem] border-t-2 border-marketing-menu-border bg-marketing-surface px-5 py-12 sm:px-8 sm:py-16 lg:px-16 lg:py-20">
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute -bottom-12 -right-2 font-marketing-display text-[clamp(9rem,24vw,20rem)] leading-none tracking-[0.02em] text-marketing-muted opacity-75"
+        className="pointer-events-none absolute -bottom-10 -right-2 font-marketing-display text-[clamp(6rem,17vw,15rem)] leading-none tracking-[0.02em] text-marketing-muted opacity-60"
       >
         ENOEDA
       </span>
@@ -64,9 +75,7 @@ export function MarketingFooter() {
 
         <div className="grid content-end gap-8 lg:col-span-4 lg:col-start-9">
           <div className="border-t-2 border-marketing-menu-border pt-5">
-            <p className="font-marketing-body text-xs font-bold uppercase tracking-[0.16em] text-marketing-menu-border">
-              CONTACTO DIRECTO
-            </p>
+            <p className={SECTION_LABEL_CLASS}>CONTACTO DIRECTO</p>
             <a
               aria-label={`Enviar correo a ${MARKETING_EMAIL}`}
               className={`${SECONDARY_LINK_CLASS} mt-3 max-w-full break-all`}
@@ -80,9 +89,7 @@ export function MarketingFooter() {
             aria-label="Redes sociales de ENOEDA Dojo"
             className="border-t-2 border-marketing-menu-border pt-5"
           >
-            <p className="font-marketing-body text-xs font-bold uppercase tracking-[0.16em] text-marketing-menu-border">
-              SÍGUENOS
-            </p>
+            <p className={SECTION_LABEL_CLASS}>SÍGUENOS</p>
             <ul className="mt-3 flex flex-wrap gap-x-6 gap-y-1">
               {FOOTER_SOCIAL_LINKS.map((item) => (
                 <li key={item.href}>
@@ -101,6 +108,53 @@ export function MarketingFooter() {
           </nav>
         </div>
       </div>
+
+      <section
+        aria-labelledby="footer-colaboradores-heading"
+        className="relative z-10 mx-auto mt-16 max-w-360 border-t-2 border-marketing-menu-border pt-8 lg:mt-20"
+      >
+        <div className="grid gap-8 lg:grid-cols-12 lg:items-start lg:gap-10">
+          <div className="lg:col-span-4">
+            <h2
+              className={SECTION_LABEL_CLASS}
+              id="footer-colaboradores-heading"
+            >
+              CON EL RESPALDO DE
+            </h2>
+            <p className="mt-3 max-w-sm font-marketing-body text-sm leading-6 text-marketing-menu-foreground">
+              {MARKETING_COLLABORATORS_INTRO}
+            </p>
+          </div>
+
+          <ul className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-4 lg:col-span-8">
+            {MARKETING_COLLABORATORS.map((collaborator) => (
+              <li key={collaborator.id}>
+                {/*
+                  Pure white on purpose: the source PNGs are transparent, but
+                  AKR and KORU carry large opaque white fields (38% and 71% of
+                  their pixels). Against the off-white marketing-foreground
+                  those fields would show a visible seam, and FEK is 49% black
+                  and would disappear on the navy surface.
+                */}
+                <div className="relative aspect-square border-2 border-marketing-foreground bg-white">
+                  <Image
+                    alt={collaborator.alt}
+                    className="object-contain p-3 sm:p-4"
+                    decoding="async"
+                    fill
+                    loading="lazy"
+                    sizes={COLLABORATOR_SIZES}
+                    src={collaborator.image}
+                  />
+                </div>
+                <p className="mt-3 font-marketing-body text-xs font-bold uppercase leading-snug tracking-[0.12em] text-marketing-menu-foreground">
+                  {collaborator.role}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
 
       <div className="relative z-10 mx-auto mt-16 flex max-w-360 flex-col gap-2 border-t-2 border-marketing-foreground/30 pt-5 font-marketing-body text-xs font-bold uppercase tracking-[0.1em] text-marketing-menu-border sm:mt-20 sm:flex-row sm:items-center sm:justify-between">
         <span>© 2026 ENOEDA DOJO</span>
