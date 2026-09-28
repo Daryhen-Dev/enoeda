@@ -101,4 +101,18 @@ ready.
 
 - `cb5be89` — chore(deploy): add OpenNext Cloudflare configuration
   (wrangler.jsonc, open-next.config.ts, devDeps, allowBuilds, pg-cloudflare tracing)
+- `8217526` — docs(odd): record commit evidence for the Cloudflare OpenNext deploy
+- `236df3e` — squash merge of PR #174 into `main`.
+
+### Unintended payload in the squash — corrected 2026-09-28
+
+The branch was created from a local `main` that had drifted two commits ahead of
+`origin/main` (`aaf3fab`, `2e5f107`), and those commits were never pushed. They
+travelled with the branch, so the PR diff included them and the squash brought
+the unrelated footer collaborators work into `main` under this commit message.
+See `odd/tasks/footer-colaboradores.md` for the full record. The user chose to
+keep it on `main` and correct the record rather than revert.
+
+Lesson: compare against `origin/<base>` before branching, not just the local
+base branch.
 
