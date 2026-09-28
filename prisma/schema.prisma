@@ -1,6 +1,7 @@
 generator client {
   provider        = "prisma-client"
   output          = "../lib/prisma/generated"
+  runtime         = "workerd"
   previewFeatures = ["partialIndexes"]
 }
 
