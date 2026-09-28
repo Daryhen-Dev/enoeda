@@ -82,6 +82,29 @@ repo was also missing the standard OpenNext setup. Added:
 
 `build` intentionally stays `next build`, per the official documentation.
 
+## Root cause 4 — the first successful deploy wiped the Worker's variables
+
+The first green build shipped the app, but `wrangler deploy` deleted every
+variable that had been set in the dashboard. Before the deploy the Worker had six
+`plain_text` bindings (`APP_URL`, `DATABASE_URL`, `NEXT_PUBLIC_APP_URL`,
+`NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_SUPABASE_URL`,
+`SUPABASE_SERVICE_ROLE_KEY`); afterwards only `ASSETS` and
+`WORKER_SELF_REFERENCE` remained.
+
+Cause, per Cloudflare docs: `wrangler deploy` uses `--keep-vars` defaulting to
+`false`, which *"will delete all vars before setting those found in the Wrangler
+configuration"*. Since `wrangler.jsonc` declares no `vars`, everything the
+dashboard held was removed. Secrets are never deleted by a deployment.
+
+The app then returned `HTTP 500` on every route, including the static `/`:
+`lib/supabase/config.ts` throws when `NEXT_PUBLIC_SUPABASE_URL` or
+`NEXT_PUBLIC_SUPABASE_ANON_KEY` are missing, and `middleware.ts` calls
+`getSupabasePublicConfig()` through `updateSession` on every request.
+
+Fix: set `"keep_vars": true` in `wrangler.jsonc`. Sensitive values should also
+live in secrets (Settings > Variables and Secrets) rather than as plain text,
+which makes them both deploy-proof and encrypted.
+
 ## Verification
 
 Reproduced in a CI-equivalent Linux container (node 24 + pnpm 11.21, repo on a
