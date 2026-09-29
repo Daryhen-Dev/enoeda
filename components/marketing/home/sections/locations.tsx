@@ -3,7 +3,7 @@ import styles from "@/components/marketing/marketing.module.css"
 const LOCATIONS = [
   {
     address:
-      "Avenida Padre Luis Bacari y Río Bermejo, Centro Comercial Bacari Plaza, segundo piso, local de Karate.",
+      "Avenida Padre Luis Vaccari y Río Bermejo, Centro Comercial Vaccari Plaza, segundo piso, local de Karate.",
     mapUrl: "https://maps.app.goo.gl/5eWgbJHhvtQHPTUZ7",
     name: "Carapungo",
     schedule: [
