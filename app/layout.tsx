@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Archivo_Narrow, Bebas_Neue, Geist, Geist_Mono } from "next/font/google";
+import { Archivo_Narrow, Bebas_Neue, Geist, Geist_Mono, Shojumaru } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { APPLICATION_METADATA_MESSAGES, USER_LOCALE } from "@/lib/localization/es-ec";
@@ -27,6 +27,12 @@ const archivoNarrow = Archivo_Narrow({
   weight: ["400", "500", "600", "700"],
 });
 
+const shojumaru = Shojumaru({
+  variable: "--font-shojumaru",
+  subsets: ["latin"],
+  weight: "400",
+});
+
 export const metadata: Metadata = {
   title: APPLICATION_METADATA_MESSAGES.TITLE,
   description: APPLICATION_METADATA_MESSAGES.DESCRIPTION,
@@ -36,7 +42,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang={USER_LOCALE}
-      className={`${geistSans.variable} ${geistMono.variable} ${bebasNeue.variable} ${archivoNarrow.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${bebasNeue.variable} ${archivoNarrow.variable} ${shojumaru.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col">

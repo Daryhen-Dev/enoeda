@@ -1,11 +1,9 @@
 "use client"
 
-import Image from "next/image"
 import Link from "next/link"
 import { Menu, X } from "lucide-react"
 import { useEffect, useRef, useState, type KeyboardEvent } from "react"
 
-import enoedaLogo from "@/assets/Logo Enoeda Dojo_Rojo.png"
 import { MARKETING_WHATSAPP_URL } from "@/components/marketing/shared/contact"
 import { MARKETING_NAVIGATION } from "@/components/marketing/shell/navigation"
 
@@ -97,12 +95,9 @@ export function MarketingHeader() {
           href="/"
           ref={headerHomeLinkRef}
         >
-          <Image
-            alt=""
-            className="h-14 w-14 object-contain"
-            priority
-            src={enoedaLogo}
-          />
+          <span className="font-marketing-logo text-2xl whitespace-nowrap text-marketing-accent">
+            Enoeda Dojo
+          </span>
         </Link>
 
         <div className="hidden items-center gap-5 md:flex">
@@ -159,12 +154,9 @@ export function MarketingHeader() {
               onKeyDown={trapFocusFromMobileHomeLink}
               ref={mobileHomeLinkRef}
             >
-              <Image
-                alt=""
-                className="h-14 w-14 object-contain"
-                priority
-                src={enoedaLogo}
-              />
+              <span className="font-marketing-logo text-2xl whitespace-nowrap text-marketing-accent">
+                Enoeda Dojo
+              </span>
             </Link>
             <button
               aria-label="Cerrar navegación"
