@@ -8,7 +8,7 @@
  * cookies, or contexts.
  *
  * The Prisma RLS helper is delegated to `@/lib/prisma/client` which owns the
- * singleton and the `withUser` function. Application code must use
+ * per-call client factory and the `withUser` function. Application code must use
  * `withAuthenticatedUser`.
  *
  * Supabase RLS remains the authorization authority.

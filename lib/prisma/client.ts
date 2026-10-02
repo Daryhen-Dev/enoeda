@@ -1,7 +1,7 @@
 /**
  * Server-only Prisma client with RLS context helper.
  *
- * Constructs a module-private Prisma singleton and exposes `withUser` for
+ * Constructs a module-private, per-call Prisma client and exposes `withUser` for
  * setting Postgres session context (role + JWT claims) inside an
  * interactive transaction. This is the single allowed runtime Prisma
  * consumer in this codebase (also consumed internally by server-context.ts).
@@ -14,25 +14,26 @@ import "server-only";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@/lib/prisma/generated/client";
 
-// --- Module-private Prisma singleton ---
+// --- Module-private Prisma client factory ---
 
-const globalForPrisma = globalThis as unknown as {
-  __prismaClient?: PrismaClient;
-};
-
-function getPrismaClient(): PrismaClient {
-  if (!globalForPrisma.__prismaClient) {
-    const connectionString = process.env.DATABASE_URL;
-    if (!connectionString) {
-      throw new Error(
-        "DATABASE_URL is not set. Add it to .env.local (server secret, never NEXT_PUBLIC)."
-      );
-    }
-
-    const adapter = new PrismaPg({ connectionString });
-    globalForPrisma.__prismaClient = new PrismaClient({ adapter });
+/**
+ * Creates a fresh Prisma client (with its own pg pool) for one unit of work.
+ *
+ * Deliberately NOT a global singleton: Cloudflare Workers bind TCP sockets to
+ * the request that opened them, so a pool cached on `globalThis` is unusable
+ * from later requests in the same isolate and `$transaction` times out with
+ * P2028. The caller must `$disconnect()` the client when done.
+ */
+function createPrismaClient(): PrismaClient {
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) {
+    throw new Error(
+      "DATABASE_URL is not set. Add it to .env.local (server secret, never NEXT_PUBLIC)."
+    );
   }
-  return globalForPrisma.__prismaClient;
+
+  const adapter = new PrismaPg({ connectionString });
+  return new PrismaClient({ adapter });
 }
 
 // --- Types ---
@@ -110,7 +111,7 @@ export async function withUser<T>(
 
   const { userId, roles } = ctx;
   const claims = JSON.stringify({ sub: userId, roles });
-  const prisma = getPrismaClient();
+  const prisma = createPrismaClient();
 
   try {
     return await prisma.$transaction(async (tx) => {
@@ -121,5 +122,16 @@ export async function withUser<T>(
   } catch (error) {
     reportTransactionFailure(error);
     throw error;
+  } finally {
+    // Release this request's sockets; a disconnect failure must never mask
+    // the transaction's own result or error.
+    await prisma.$disconnect().catch((disconnectError: unknown) => {
+      console.error(
+        "[prisma] disconnect failed",
+        disconnectError instanceof Error
+          ? redactCredentials(disconnectError.message)
+          : redactCredentials(String(disconnectError))
+      );
+    });
   }
 }
