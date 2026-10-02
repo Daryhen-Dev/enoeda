@@ -25,12 +25,17 @@ and silently render a partial/empty list when only one fails.
 
 ## Tasks
 
-- [ ] 1. `lib/prisma/client.ts`: create a `PrismaClient` + `PrismaPg` per
+- [x] 1. `lib/prisma/client.ts`: create a `PrismaClient` + `PrismaPg` per
       `withUser` call and `$disconnect()` it in `finally`; unit test it.
-- [ ] 2. Owner pages: fetch all branches in one `listBranches({ status: "all" })`
+- [x] 2. Owner pages: fetch all branches in one `listBranches({ status: "all" })`
       call and show the load-failure alert whenever it fails.
 - [ ] 3. Deploy and confirm P2028 disappears from Workers logs (user-owned push).
 
 ## Evidence
 
-(commits recorded per task)
+- Task 1: `bfeb6ec` fix(prisma): create a per-request client instead of a global singleton.
+- Task 2: see the `fix(owner)` commit on this branch.
+- Checks: vitest 692 passed / 1 skipped, `tsc --noEmit` clean, eslint clean, `next build` ok.
+- Not run: `client.runtime.test.ts` against the real DB already fails before this
+  change (Vite cannot load the workerd `.wasm?module`); `opennextjs-cloudflare build`
+  fails locally on Windows pnpm symlink access (also fails on unmodified main).

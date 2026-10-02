@@ -5,6 +5,7 @@ import { assertCallerBranchAdmin } from "@/lib/auth/branch-assertion";
 import { BRANCH_MESSAGES, COMMON_MESSAGES } from "@/lib/localization/es-ec";
 import {
   BRANCH_STATUS,
+  BRANCH_LIST_ALL,
   branchCreateSchema,
   branchIdSchema,
   branchListSchema,
@@ -305,11 +306,13 @@ export async function listBranches(
   }
 
   try {
+    const { status } = parsed.data;
     const result = await withAuthenticatedUser(async (tx) => {
       return tx.branches.findMany({
-        where: {
-          is_active: parsed.data.status === BRANCH_STATUS.ACTIVE,
-        },
+        where:
+          status === BRANCH_LIST_ALL
+            ? {}
+            : { is_active: status === BRANCH_STATUS.ACTIVE },
         select: {
           id: true,
           name: true,
@@ -318,7 +321,8 @@ export async function listBranches(
           time_zone: true,
           is_active: true,
         },
-        orderBy: { name: "asc" },
+        // Active first, then by name (no-op for single-status filters).
+        orderBy: [{ is_active: "desc" }, { name: "asc" }],
       });
     });
 

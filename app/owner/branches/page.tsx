@@ -10,13 +10,9 @@ import { OWNER_MESSAGES } from "@/lib/localization/es-ec"
  * Owner branches management page — CRUD operations on branches.
  */
 export default async function OwnerBranchesPage() {
-  const result = await listBranches({ status: "active" })
-  const inactiveResult = await listBranches({ status: "inactive" })
-
-  const allBranches = [
-    ...(result.success ? result.data ?? [] : []),
-    ...(inactiveResult.success ? inactiveResult.data ?? [] : []),
-  ]
+  // One query for every branch: a partial failure must surface as an error,
+  // never as a silently empty or truncated list.
+  const result = await listBranches({ status: "all" })
 
   return (
     <div className="flex flex-col gap-4 p-4 md:gap-6 md:p-6">
@@ -37,14 +33,14 @@ export default async function OwnerBranchesPage() {
         <BranchCreateDialog />
       </div>
 
-      {!result.success && !inactiveResult.success ? (
+      {!result.success ? (
         <Alert variant="destructive">
           <AlertCircleIcon />
           <AlertTitle>{OWNER_MESSAGES.BRANCHES}</AlertTitle>
           <AlertDescription>{OWNER_MESSAGES.LOAD_FAILURE}</AlertDescription>
         </Alert>
       ) : (
-        <BranchList branches={allBranches} />
+        <BranchList branches={result.data ?? []} />
       )}
     </div>
   )

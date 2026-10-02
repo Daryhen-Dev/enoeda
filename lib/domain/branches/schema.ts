@@ -43,9 +43,14 @@ const timeZoneSchema = z.enum(ECUADOR_TIME_ZONE_VALUES, {
 
 export const branchIdSchema = z.uuid({ error: BRANCH_MESSAGES.INVALID_ID });
 
+/** List filter that returns active and inactive branches in one query. */
+export const BRANCH_LIST_ALL = "all" as const;
+
 export const branchListSchema = z
   .object({
-    status: z.enum(BRANCH_STATUS_VALUES).default(BRANCH_STATUS.ACTIVE),
+    status: z
+      .enum([...BRANCH_STATUS_VALUES, BRANCH_LIST_ALL])
+      .default(BRANCH_STATUS.ACTIVE),
   })
   .strict();
 
