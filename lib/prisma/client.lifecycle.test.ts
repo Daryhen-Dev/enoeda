@@ -1,9 +1,9 @@
 /**
- * Connection lifecycle of `withUser`.
+ * Connection lifecycle of `withUser` on the Node.js runtime.
  *
- * Cloudflare Workers bind TCP sockets to the request that opened them, so a
- * Prisma client (and its pg pool) must never be shared across requests. Each
- * `withUser` call owns a fresh client and disconnects it when done.
+ * One Prisma client (and its pg pool) is created lazily per process and
+ * reused across calls; it is never disconnected per call, which would throw
+ * away the pool on every request.
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -34,47 +34,47 @@ const fakeTx = { $executeRaw: vi.fn(async () => 0) };
 describe("withUser connection lifecycle", () => {
   beforeEach(() => {
     instances.length = 0;
+    delete (globalThis as { __prismaClient?: unknown }).__prismaClient;
     process.env.DATABASE_URL = "postgresql://user:pass@localhost:5432/db";
     transactionImpl = (fn) => fn(fakeTx);
     vi.spyOn(console, "error").mockImplementation(() => {});
   });
 
-  it("creates a new client per call and never reuses one across calls", async () => {
+  it("reuses one client across calls", async () => {
     const { withUser } = await import("./client");
 
     await withUser(CTX, async () => "a");
     await withUser(CTX, async () => "b");
 
-    expect(instances).toHaveLength(2);
-    expect(instances[0]).not.toBe(instances[1]);
+    expect(instances).toHaveLength(1);
   });
 
-  it("disconnects the client after a successful transaction", async () => {
+  it("does not disconnect the shared client after a call", async () => {
     const { withUser } = await import("./client");
 
     await expect(withUser(CTX, async () => 42)).resolves.toBe(42);
-    expect(instances[0].$disconnect).toHaveBeenCalledTimes(1);
+    expect(instances[0].$disconnect).not.toHaveBeenCalled();
   });
 
-  it("disconnects the client when the transaction fails", async () => {
+  it("rethrows transaction failures and keeps the client usable", async () => {
     const { withUser } = await import("./client");
     transactionImpl = async () => {
       throw new Error("boom");
     };
 
     await expect(withUser(CTX, async () => 1)).rejects.toThrow("boom");
-    expect(instances[0].$disconnect).toHaveBeenCalledTimes(1);
+
+    transactionImpl = (fn) => fn(fakeTx);
+    await expect(withUser(CTX, async () => 2)).resolves.toBe(2);
+    expect(instances).toHaveLength(1);
   });
 
-  it("does not mask the original error when disconnect fails", async () => {
+  it("fails clearly when DATABASE_URL is missing", async () => {
     const { withUser } = await import("./client");
-    transactionImpl = async () => {
-      throw new Error("original");
-    };
+    delete process.env.DATABASE_URL;
 
-    const pending = withUser(CTX, async () => 1);
-    instances[0].$disconnect.mockRejectedValueOnce(new Error("disconnect"));
-
-    await expect(pending).rejects.toThrow("original");
+    await expect(withUser(CTX, async () => 1)).rejects.toThrow(
+      "DATABASE_URL is not set"
+    );
   });
 });
