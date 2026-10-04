@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextRequest, NextResponse } from "next/server";
 
+import { RECOVERY_CALLBACK_NEXT } from "@/lib/auth/redirect";
 import { getSupabasePublicConfig } from "@/lib/supabase/config";
 
 function callbackFailureResponse(request: NextRequest): NextResponse {
@@ -15,7 +16,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     return callbackFailureResponse(request);
   }
 
-  const response = NextResponse.redirect(new URL("/student", request.url));
+  // User-controlled targets stay ignored; only the allowlisted recovery
+  // destination may override the fixed student default.
+  const next =
+    request.nextUrl.searchParams.get("next") === RECOVERY_CALLBACK_NEXT
+      ? RECOVERY_CALLBACK_NEXT
+      : "/student";
+  const response = NextResponse.redirect(new URL(next, request.url));
   const { anonKey, url } = getSupabasePublicConfig();
   const supabase = createServerClient(url, anonKey, {
     cookies: {

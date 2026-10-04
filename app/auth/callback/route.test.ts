@@ -49,6 +49,28 @@ describe("Supabase auth callback", () => {
     expect(response.headers.get("location")).toBe("https://app.enoeda.test/student");
   });
 
+  it("follows only the allowlisted recovery callback target", async () => {
+    mocks.exchangeCodeForSession.mockResolvedValue({ error: null });
+
+    const response = await GET(
+      request(`?code=auth-code&next=%2Freset-password`)
+    );
+
+    expect(response.headers.get("location")).toBe(
+      "https://app.enoeda.test/reset-password"
+    );
+  });
+
+  it("ignores a next target outside the recovery allowlist", async () => {
+    mocks.exchangeCodeForSession.mockResolvedValue({ error: null });
+
+    const response = await GET(request("?code=auth-code&next=%2Fowner"));
+
+    expect(response.headers.get("location")).toBe(
+      "https://app.enoeda.test/student"
+    );
+  });
+
   it("routes missing codes to the generic login failure state without exchanging a session", async () => {
     const response = await GET(request());
 

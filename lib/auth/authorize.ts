@@ -68,6 +68,8 @@ export const PUBLIC_PATHS = [
   "/api/public",
   "/media",
   "/registro",
+  "/forgot-password",
+  "/reset-password",
   "/_next",
   "/favicon.ico",
 ] as const;

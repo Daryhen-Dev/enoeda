@@ -140,6 +140,8 @@ describe("configuration", () => {
     expect(PUBLIC_PATHS).toContain("/");
     expect(PUBLIC_PATHS).toContain("/login");
     expect(PUBLIC_PATHS).toContain("/auth");
+    expect(PUBLIC_PATHS).toContain("/forgot-password");
+    expect(PUBLIC_PATHS).toContain("/reset-password");
   });
 
   it("ROUTE_GUARDS protects dashboard with admin|teacher (owner excluded)", () => {

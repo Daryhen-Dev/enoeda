@@ -121,6 +121,14 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
       <Button aria-busy={isPending} className="w-full" disabled={isPending} type="submit">
         {isPending ? AUTH_MESSAGES.LOGIN_PENDING : AUTH_MESSAGES.LOGIN_ACTION}
       </Button>
+      <p className="text-center text-sm">
+        <a
+          className="font-medium text-primary underline-offset-4 hover:underline"
+          href="/forgot-password"
+        >
+          {AUTH_MESSAGES.FORGOT_PASSWORD_LINK}
+        </a>
+      </p>
     </form>
   )
 }

@@ -82,3 +82,9 @@ export function getSafeRedirect(value: unknown, roles?: AppRole[]): SafeRedirect
 
   return value as SafeRedirect;
 }
+
+/**
+ * Only destination the auth callback may follow from a password-recovery
+ * link; anything else keeps the fixed student default.
+ */
+export const RECOVERY_CALLBACK_NEXT = "/reset-password" as const;

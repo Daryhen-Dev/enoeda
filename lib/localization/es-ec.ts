@@ -125,6 +125,29 @@ export const AUTH_MESSAGES = {
   LOGOUT_ACTION: "Cerrar sesión",
   LOGOUT_PENDING: "Cerrando sesión…",
   LOGOUT_FAILURE: "No se pudo cerrar sesión. Inténtelo nuevamente.",
+  INVALID_EMAIL: "El correo electrónico no es válido.",
+  FORGOT_PASSWORD_LINK: "¿Olvidó su contraseña?",
+} as const
+
+export const FORGOT_PASSWORD_MESSAGES = {
+  PAGE_TITLE: "Recuperar contraseña",
+  PAGE_DESCRIPTION:
+    "Ingrese su correo electrónico y le enviaremos un enlace para restablecerla.",
+  EMAIL_LABEL: "Correo electrónico",
+  SEND_ACTION: "Enviar enlace",
+  SEND_PENDING: "Enviando…",
+  EMAIL_SENT:
+    "Si el correo está registrado, recibirá un enlace para restablecer su contraseña. Revise también su carpeta de spam.",
+  FAILURE: "No se pudo enviar el enlace. Inténtelo nuevamente.",
+  BACK_TO_LOGIN: "Volver a iniciar sesión",
+} as const
+
+export const RESET_PASSWORD_MESSAGES = {
+  PAGE_TITLE: "Nueva contraseña",
+  PAGE_DESCRIPTION: "Defina su nueva contraseña para continuar.",
+  ACTION: "Guardar contraseña",
+  PENDING: "Guardando…",
+  FAILURE: "No se pudo actualizar la contraseña. Inténtelo nuevamente.",
 } as const
 
 export const DASHBOARD_SHELL_MESSAGES = {
