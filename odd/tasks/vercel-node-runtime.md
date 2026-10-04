@@ -24,12 +24,19 @@ OpenNext/workerd bundle.
 
 ## Tasks
 
-- [ ] 1. Node runtime: drop `outputFileTracingIncludes`, Prisma generator back
+- [x] 1. Node runtime: drop `outputFileTracingIncludes`, Prisma generator back
       to the Node target (remove `runtime = "workerd"`), restore the Prisma
       singleton in `withUser` (correct on Node), update tests.
-- [ ] 2. Verify: clean worktree `pnpm install --frozen-lockfile`, tests, tsc,
+- [x] 2. Verify: clean worktree `pnpm install --frozen-lockfile`, tests, tsc,
       `next build`, no symlinked trace entries.
 - [ ] 3. User: merge, confirm Vercel deploy green, move the domain (DNS only).
 - [ ] 4. Later: remove Cloudflare config/deps and disable Workers Builds.
 
 ## Evidence
+
+- Task 1: `8a0265b` fix(deploy): target the Node.js runtime for Vercel.
+- Checks: vitest 695 passed / 1 skipped; `client.runtime.test.ts` against the
+  real DB now passes (was failing on the workerd Wasm); tsc and eslint clean;
+  clean-worktree `pnpm install --frozen-lockfile` + `next build` ok; 0 traces
+  include `pg-cloudflare/esm`.
+- Not verifiable locally: Vercel's function packager itself (needs a deploy).
