@@ -10,10 +10,6 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "stories:build": "node scripts/build-dojo-stories.mjs",
-    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
-    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
-    "upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload",
-    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
     "db:pull": "prisma db pull",
     "db:generate": "prisma generate"
   },
@@ -34,7 +30,6 @@
     "next": "16.3.0",
     "next-themes": "0.4.6",
     "pg": "8.23.0",
-    "pg-cloudflare": "1.4.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "react-hook-form": "7.85.0",
@@ -47,7 +42,6 @@
     "zustand": "5.0.14"
   },
   "devDependencies": {
-    "@opennextjs/cloudflare": "^1.20.6",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/pg": "8.21.0",
@@ -60,8 +54,7 @@
     "prisma": "7.6.0",
     "tailwindcss": "^4",
     "typescript": "^5",
-    "vitest": "4.1.10",
-    "wrangler": "^4.142.0"
+    "vitest": "4.1.10"
   },
   "packageManager": "pnpm@11.21.0"
 }

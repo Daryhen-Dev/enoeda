@@ -29,8 +29,12 @@ OpenNext/workerd bundle.
       singleton in `withUser` (correct on Node), update tests.
 - [x] 2. Verify: clean worktree `pnpm install --frozen-lockfile`, tests, tsc,
       `next build`, no symlinked trace entries.
-- [ ] 3. User: merge, confirm Vercel deploy green, move the domain (DNS only).
-- [ ] 4. Later: remove Cloudflare config/deps and disable Workers Builds.
+- [x] 3. User: merge, confirm Vercel deploy green, move the domain (DNS only).
+      Done 2026-10-04/05: production deploys green, `enoedadojo.com` served by
+      Vercel (Namecheap BasicDNS, `www` primary, apex 308 to `www`).
+- [x] 4. Remove Cloudflare config/deps and disable Workers Builds. Repo side
+      done in `odd/tasks/remove-cloudflare-config.md`; the user reported
+      deleting everything in Cloudflare, including the zone.
 
 ## Evidence
 
