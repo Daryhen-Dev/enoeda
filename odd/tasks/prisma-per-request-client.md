@@ -29,7 +29,10 @@ and silently render a partial/empty list when only one fails.
       `withUser` call and `$disconnect()` it in `finally`; unit test it.
 - [x] 2. Owner pages: fetch all branches in one `listBranches({ status: "all" })`
       call and show the load-failure alert whenever it fails.
-- [ ] 3. Deploy and confirm P2028 disappears from Workers logs (user-owned push).
+- [x] 3. ~~Deploy and confirm P2028 disappears from Workers logs.~~ Superseded
+      2026-10-02: Workers is no longer a deployment target (10 ms CPU cap on
+      the free plan), and `withUser` is back to the Node singleton. See
+      `odd/tasks/vercel-node-runtime.md`.
 
 ## Evidence
 

@@ -62,8 +62,8 @@ getQueryCompilerWasmModule: async () => {
 - [x] `prisma validate` accepts `runtime = "workerd"` (a string; the array form is rejected)
 - [x] `pnpm test` — 683 passed, 1 skipped, no regressions
 - [x] `pnpm build` (`next build`, Turbopack) resolves `.wasm?module` and completes
-- [ ] OpenNext/esbuild (`.open-next` bundle) resolves `.wasm?module` — must verify in Linux container, `opennextjs-cloudflare build` cannot run on Windows
-- [ ] Deployed Worker performs a read and a write
+- [x] ~~OpenNext/esbuild (`.open-next` bundle) resolves `.wasm?module`~~ Superseded: the `workerd` target was removed in `8a0265b`.
+- [x] ~~Deployed Worker performs a read and a write~~ Superseded: Workers is no longer a deployment target; see `odd/tasks/vercel-node-runtime.md` and `odd/tasks/remove-cloudflare-config.md`.
 
 ## Open decision
 
