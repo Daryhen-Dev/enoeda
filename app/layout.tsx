@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Archivo_Narrow, Bebas_Neue, Geist, Geist_Mono, Shojumaru } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { Analytics } from "@vercel/analytics/next"
 import { APPLICATION_METADATA_MESSAGES, USER_LOCALE } from "@/lib/localization/es-ec";
 import "./globals.css";
 
@@ -53,6 +54,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           disableTransitionOnChange
         >
           {children}
+          <Analytics />
           <Toaster />
         </ThemeProvider>
       </body>

@@ -25,6 +25,7 @@
     "@supabase/ssr": "0.12.4",
     "@supabase/supabase-js": "2.112.2",
     "@tanstack/react-table": "9.1.2",
+    "@vercel/analytics": "^2.0.1",
     "altcha": "3.2.2",
     "altcha-lib": "2.4.0",
     "class-variance-authority": "0.7.1",

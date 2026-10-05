@@ -51,4 +51,6 @@ the file on disk at implementation time is a 1254x1254 PNG).
 
 ## Commit evidence
 
-- `feat(marketing): split footer partners into colaboradores and convenios` on `feat/footer-convenios`.
+- `b2dc080` — `feat(marketing): split footer partners into colaboradores and convenios` on `feat/footer-convenios`.
+- Squash-merged via PR #181 as `b18b7c1` on `main`; production Workers Build succeeded.
+- PR check failed only at `npx wrangler preview` (missing `previews` block in `wrangler.jsonc`); `next build` passed. Branch-preview config is a separate follow-up.
