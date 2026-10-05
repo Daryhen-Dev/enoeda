@@ -37,8 +37,9 @@ developer still has a local `.dev.vars`; dropping the ignore could expose it to
       history/docs and the `pg` optional dependency.
 - [x] 3. Docs: close the stale Cloudflare-era checkboxes in `odd/tasks/` and
       record evidence.
-- [ ] 4. User follow-ups: confirm Workers Builds / the Worker are gone in the
-      Cloudflare dashboard; confirm the Vercel deploy of this change is green.
+- [x] 4. Vercel deploy of this change is green (preview and production).
+- [ ] 5. User: confirm the Worker and the Workers Builds trigger are gone in
+      the Cloudflare dashboard (not checkable from the repo).
 
 ## User follow-ups (outside repo)
 
@@ -90,3 +91,12 @@ developer still has a local `.dev.vars`; dropping the ignore could expose it to
   package manager's install summary as if it were a lockfile entry count.
 - `tsc` in a clean worktree gives false `next/image` errors until `next build`
   has generated `next-env.d.ts`; run it after the build.
+
+## Delivery
+
+- PR #182 (label `type:chore`), squash-merged as `1cf468c` on `main`; branch deleted.
+- Vercel preview check passed on the PR; the production deploy of `1cf468c`
+  completed successfully and `/`, `/login`, `/forgot-password` and
+  `/_vercel/insights/script.js` answer 200 on `www.enoedadojo.com`.
+- This confirms Vercel's function packager accepts the build with the remaining
+  `.pnpm/.../pg-cloudflare` trace entries (it was the open question above).
