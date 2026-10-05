@@ -50,11 +50,18 @@ developer still has a local `.dev.vars`; dropping the ignore could expose it to
 - Task 1: `ab48b75` chore(deploy): remove the Cloudflare Workers and OpenNext
   configuration. Deleted `wrangler.jsonc`, `open-next.config.ts`,
   `public/_headers`; dropped 4 scripts, 3 dependencies and the `workerd`
-  allowance. Lockfile: 177 packages removed, no version bumps (every added
-  `pkg@version` key also existed before). The 86 inserted lines are
-  `optional: true` markers on `@img/colour`, `buffer-from`, `commander`,
-  `supports-color`, `yaml` and `pg-cloudflare`, plus `sharp@0.35.4` dropping
-  out (only `0.35.3`, used by Next, remains).
+  allowance. Lockfile, compared structurally by parsing both versions as YAML
+  (not by reading the textual diff): `pnpm install` reported 177 fewer installed
+  packages; the lockfile lost 239 entries in `packages:` (1167 to 928) and 239 in
+  `snapshots:` (1169 to 930); **0 entries added**, 0 `packages:` entries changed;
+  the only `snapshots:` changes are `optional: true` added to 10 entries
+  (`@img/colour`, `@jridgewell/source-map`, `buffer-from`, `commander`,
+  `esbuild`, `pg-cloudflare`, `source-map-support`, `supports-color`, `terser`,
+  `yaml`), which is pnpm recomputing optionality once the Cloudflare tooling that
+  made them required is gone. `importers` lost exactly `pg-cloudflare`,
+  `@opennextjs/cloudflare` and `wrangler`. `sharp@0.35.4` dropped out; only
+  `0.35.3`, used by Next, remains. The ~85 inserted lines in the textual diff are
+  these flags plus unchanged entries the diff re-emitted around removed blocks.
 - Task 2, clean linked worktree at `ab48b75`:
   `pnpm install --frozen-lockfile` ok; vitest 701 passed / 1 skipped; tsc clean
   (run after `next build`, which generates `next-env.d.ts`); `next build` ok
@@ -76,7 +83,10 @@ developer still has a local `.dev.vars`; dropping the ignore could expose it to
 
 ## Lessons
 
-- A lockfile diff that is huge is not necessarily risky: compare the sets of
-  `pkg@version` keys added vs removed instead of reading the diff.
+- A lockfile diff that is huge is not necessarily risky, and its inserted lines
+  are not necessarily new content: the textual diff re-emits unchanged entries
+  next to removed blocks. Parse both lockfiles and compare the key sets and
+  values instead of reading the diff (or grepping it), and do not quote the
+  package manager's install summary as if it were a lockfile entry count.
 - `tsc` in a clean worktree gives false `next/image` errors until `next build`
   has generated `next-env.d.ts`; run it after the build.
