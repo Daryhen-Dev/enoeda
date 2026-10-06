@@ -114,10 +114,12 @@ date_of_birth })`:
 
 ## Follow-ups
 
-- `lib/localization/es-ec.ts:502` `TARGET_USER_LABEL: "ID de usuario (UUID)"` is
-  a dead constant with no consumer, left over from the pre-email flow. My
-  acceptance grep for "uuid" hit it; it is not part of this change and can be
-  deleted on its own.
+- ~~`lib/localization/es-ec.ts` `TARGET_USER_LABEL: "ID de usuario (UUID)"` was a
+  dead constant with no consumer, left over from the pre-email flow. My
+  acceptance grep for "uuid" hit it.~~ Resolved: deleted in
+  `chore/remove-dead-target-user-label` after confirming zero code references
+  (name, case-insensitive, computed-key and spread access all checked) with the
+  build, `tsc` and the full suite green.
 - Owner-surface teacher assignment still needs the `assign_branch_teacher` RPC to
   stop rejecting `owner`, i.e. a migration.
 
