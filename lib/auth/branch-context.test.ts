@@ -6,7 +6,8 @@
  * - S1.1: 1 branch, param matches → valid
  * - S1.1: 1 branch, param differs → redirect
  * - S1.2: N>1, param matches one → valid
- * - S1.2: N>1, no match → selector
+ * - S1.2: N>1, no match/no param → redirect to first active branch
+ *   (deterministic: sorted by name with Spanish collation, tie-break by id)
  * - Dedup: admin+teacher same branchId counted once
  * - Unauthenticated/no roles → error
  */
@@ -167,7 +168,7 @@ describe("resolveBranchContext", () => {
     });
   });
 
-  it("returns selector when N>1 branches and param does not match", async () => {
+  it("redirects to the alphabetically-first branch when N>1 and param does not match", async () => {
     mockGetAuthenticatedContext.mockResolvedValue({
       ok: true,
       ctx: {
@@ -181,18 +182,13 @@ describe("resolveBranchContext", () => {
     });
 
     const result = await resolveBranchContext(BRANCH_C);
-    expect(result.type).toBe("selector");
-    if (result.type === "selector") {
-      expect(result.branches).toHaveLength(2);
-      expect(result.branches.map((b) => b.id)).toContain(BRANCH_A);
-      expect(result.branches.map((b) => b.id)).toContain(BRANCH_B);
-      // Names must be actual names, not UUIDs
-      expect(result.branches.map((b) => b.name)).toContain("Sucursal A");
-      expect(result.branches.map((b) => b.name)).toContain("Sucursal B");
+    expect(result.type).toBe("redirect");
+    if (result.type === "redirect") {
+      expect(result.branchId).toBe(BRANCH_A);
     }
   });
 
-  it("returns selector when N>1 branches and no param", async () => {
+  it("redirects to the alphabetically-first branch when N>1 and no param", async () => {
     mockGetAuthenticatedContext.mockResolvedValue({
       ok: true,
       ctx: {
@@ -206,7 +202,43 @@ describe("resolveBranchContext", () => {
     });
 
     const result = await resolveBranchContext(undefined);
-    expect(result.type).toBe("selector");
+    expect(result).toEqual({ type: "redirect", branchId: BRANCH_A });
+  });
+
+  it("redirects to the same branch regardless of assignment order (deterministic default)", async () => {
+    mockGetAuthenticatedContext.mockResolvedValue({
+      ok: true,
+      ctx: {
+        userId: "user-1",
+        roles: ["admin"],
+        // Reversed order: default must come from the name sort, not from
+        // the order assignments (or DB rows) happen to arrive in.
+        assignments: [
+          { role: "admin", branchId: BRANCH_C },
+          { role: "admin", branchId: BRANCH_B },
+          { role: "admin", branchId: BRANCH_A },
+        ],
+      },
+    });
+
+    // Also reverse the DB row order so neither input order can mask the sort.
+    mockWithAuthenticatedUser.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
+      const mockTx = {
+        branches: {
+          findMany: ({ where }: { where: { id: { in: string[] } } }) =>
+            [
+              { id: BRANCH_C, name: "Sucursal C" },
+              { id: BRANCH_B, name: "Sucursal B" },
+              { id: BRANCH_A, name: "Sucursal A" },
+            ].filter((b) => where.id.in.includes(b.id)),
+        },
+      };
+      const data = await fn(mockTx);
+      return { success: true, data };
+    });
+
+    const result = await resolveBranchContext(undefined);
+    expect(result).toEqual({ type: "redirect", branchId: BRANCH_A });
   });
 
   it("deduplicates admin+teacher same branchId into one branch", async () => {
@@ -310,7 +342,7 @@ describe("resolveBranchContext", () => {
     expect(result).toEqual({ type: "error" });
   });
 
-  it("does not fall back to UUID for branch names in selector", async () => {
+  it("does not fall back to UUID for branch names in redirect", async () => {
     mockGetAuthenticatedContext.mockResolvedValue({
       ok: true,
       ctx: {

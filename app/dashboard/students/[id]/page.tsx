@@ -3,7 +3,6 @@ import { AlertCircleIcon, ArrowLeftIcon } from "lucide-react"
 import Link from "next/link"
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { BranchSelector } from "@/components/branch/branch-selector"
 import { getStudentById } from "@/lib/domain/students/actions"
 import {
   getStudentDisciplines,
@@ -72,20 +71,6 @@ export default async function StudentDetailPage({
     }
     redirectParams.set("branch", branchResult.branchId)
     redirect(`/dashboard/students/${id}?${redirectParams.toString()}`)
-  }
-
-  if (branchResult.type === "selector") {
-    const otherParams = Object.fromEntries(
-      Object.entries(search).filter(([key]) => key !== "branch")
-    ) as Record<string, string>
-
-    return (
-      <BranchSelector
-        branches={branchResult.branches}
-        currentPath={`/dashboard/students/${id}`}
-        currentParams={otherParams}
-      />
-    )
   }
 
   // Valid branch — proceed with scoped data

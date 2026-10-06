@@ -5,7 +5,6 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { StaffList } from "@/components/staff/staff-list"
 import { DefaultTeacherSelector } from "@/components/staff/default-teacher-selector"
 import { GrantRoleDialog } from "@/components/staff/grant-role-dialog"
-import { BranchSelector } from "@/components/branch/branch-selector"
 import { APP_ROLES } from "@/lib/auth/authorize"
 import { resolveBranchContext } from "@/lib/auth/branch-context"
 import { getAuthenticatedContext } from "@/lib/auth/identity-resolver"
@@ -64,17 +63,6 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
     }
     redirectParams.set("branch", branchResult.branchId)
     redirect(`/dashboard/staff?${redirectParams.toString()}`)
-  }
-
-  if (branchResult.type === "selector") {
-    const { branch: _, ...otherParams } = params
-    return (
-      <BranchSelector
-        branches={branchResult.branches}
-        currentPath="/dashboard/staff"
-        currentParams={otherParams as Record<string, string>}
-      />
-    )
   }
 
   const branchId = branchResult.branchId

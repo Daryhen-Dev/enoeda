@@ -43,7 +43,6 @@ export type BranchContextResult =
       isGlobalAdminReadOnly?: true;
     }
   | { type: "redirect"; branchId: string }
-  | { type: "selector"; branches: { id: string; name: string }[] }
   | { type: "error" };
 
 const OPERATIONAL_ROLES: Set<string> = new Set(["admin", "teacher"]);
@@ -97,6 +96,19 @@ function toActiveBranches(branches: ActiveBranchRow[]): ActiveBranch[] {
   });
 }
 
+/**
+ * Deterministic default branch: first active branch ordered by name with
+ * Spanish collation, tie-break by id ascending.
+ */
+function defaultBranchId(activeBranches: ActiveBranch[]): string | undefined {
+  const [first] = [...activeBranches].sort(
+    (a, b) =>
+      a.name.localeCompare(b.name, "es") ||
+      (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)
+  );
+  return first?.id;
+}
+
 function resolveActiveBranchContext(
   activeBranches: ActiveBranch[],
   branchParam: string | undefined,
@@ -119,19 +131,9 @@ function resolveActiveBranchContext(
       : result;
   }
 
-  if (activeBranches.length === 1) {
-    const [singleBranch] = activeBranches;
-    if (!singleBranch) return { type: "error" };
-    return { type: "redirect", branchId: singleBranch.id };
-  }
-
-  return {
-    type: "selector",
-    branches: activeBranches.map((branch) => ({
-      id: branch.id,
-      name: branch.name,
-    })),
-  };
+  const defaultId = defaultBranchId(activeBranches);
+  if (defaultId === undefined) return { type: "error" };
+  return { type: "redirect", branchId: defaultId };
 }
 
 export async function resolveBranchContext(

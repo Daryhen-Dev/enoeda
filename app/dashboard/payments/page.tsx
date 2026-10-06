@@ -4,7 +4,6 @@ import { redirect } from "next/navigation"
 import Link from "next/link"
 import { AlertCircleIcon, SettingsIcon } from "lucide-react"
 
-import { BranchSelector } from "@/components/branch/branch-selector"
 import { ClassPriceConfigDialog } from "@/components/payments/class-price-config-dialog"
 import { DisciplineFilterTabs } from "@/components/payments/discipline-filter-tabs"
 import { OverdueStudentsList } from "@/components/payments/overdue-students-list"
@@ -95,22 +94,6 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
     }
     redirectParams.set("branch", branchResult.branchId)
     redirect(`/dashboard/payments?${redirectParams.toString()}`)
-  }
-
-  if (branchResult.type === "selector") {
-    const otherParams: Record<string, string> = {}
-    for (const [key, value] of Object.entries(params)) {
-      if (key !== "branch" && typeof value === "string") {
-        otherParams[key] = value
-      }
-    }
-    return (
-      <BranchSelector
-        branches={branchResult.branches}
-        currentPath="/dashboard/payments"
-        currentParams={otherParams}
-      />
-    )
   }
 
   const allowGlobalAdminRead = branchResult.isGlobalAdminReadOnly === true
