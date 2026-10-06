@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
+  deactivateAllFutureClasses,
   deactivateScheduledClass,
   deactivateScheduledClassSeries,
 } from "@/lib/domain/classes/actions";
@@ -29,21 +30,11 @@ import {
 const DEFAULT_TRIGGER_CLASSES =
   "text-destructive border-destructive hover:bg-destructive hover:text-white";
 
-/**
- * Normalize a SessionView start_time ("HH:MM" or "HH:MM:SS") to "HH:MM",
- * the format deactivateScheduledClassSeriesSchema expects.
- */
-export function normalizeStartTime(startTime: string): string {
-  const parts = startTime.split(":");
-  return parts.length > 2 ? `${parts[0]}:${parts[1]}` : startTime;
-}
-
-type RemoveScope = "series" | "single";
+type RemoveScope = "series" | "single" | "all";
 
 interface RemoveRecurringClassDialogProps {
   scheduledClassId: string;
   branchId: string;
-  disciplineId: string;
   disciplineName: string;
   startTime: string;
   trigger?: React.ReactNode;
@@ -54,7 +45,6 @@ interface RemoveRecurringClassDialogProps {
 export function RemoveRecurringClassDialog({
   scheduledClassId,
   branchId,
-  disciplineId,
   disciplineName,
   startTime,
   trigger,
@@ -81,20 +71,25 @@ export function RemoveRecurringClassDialog({
         scope === "series"
           ? await deactivateScheduledClassSeries({
               branch_id: branchId,
-              discipline_id: disciplineId,
-              start_time: normalizeStartTime(startTime),
+              scheduled_class_id: scheduledClassId,
             })
-          : await deactivateScheduledClass({
-              id: scheduledClassId,
-              branch_id: branchId,
-            });
+          : scope === "all"
+            ? await deactivateAllFutureClasses({
+                branch_id: branchId,
+              })
+            : await deactivateScheduledClass({
+                id: scheduledClassId,
+                branch_id: branchId,
+              });
 
       if (result.success) {
         setIsOpen(false);
         toast.success(
           scope === "series"
             ? REMOVE_RECURRING_CLASS_MESSAGES.SUCCESS_SERIES
-            : REMOVE_RECURRING_CLASS_MESSAGES.SUCCESS
+            : scope === "all"
+              ? REMOVE_RECURRING_CLASS_MESSAGES.SUCCESS_ALL
+              : REMOVE_RECURRING_CLASS_MESSAGES.SUCCESS
         );
         router.refresh();
       } else {
@@ -178,6 +173,25 @@ export function RemoveRecurringClassDialog({
               </span>
               <span className="text-sm text-muted-foreground">
                 {REMOVE_RECURRING_CLASS_MESSAGES.SCOPE_SINGLE_HINT}
+              </span>
+            </span>
+          </label>
+          <label className="flex items-start gap-2">
+            <input
+              type="radio"
+              name="remove-recurring-class-scope"
+              value="all"
+              checked={scope === "all"}
+              onChange={() => setScope("all")}
+              disabled={isPending}
+              className="mt-1 accent-destructive"
+            />
+            <span className="flex flex-col gap-0.5">
+              <span className="text-sm font-medium">
+                {REMOVE_RECURRING_CLASS_MESSAGES.SCOPE_ALL_LABEL}
+              </span>
+              <span className="text-sm text-muted-foreground">
+                {REMOVE_RECURRING_CLASS_MESSAGES.SCOPE_ALL_HINT}
               </span>
             </span>
           </label>

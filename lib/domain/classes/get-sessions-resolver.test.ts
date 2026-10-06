@@ -4,7 +4,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-import { formatDateOnly } from "@/lib/date";
+import { formatDateOnly, parseDateOnly } from "@/lib/date";
 
 vi.mock("server-only", () => ({}));
 const mockQueryRaw = vi.fn();
@@ -37,6 +37,7 @@ import { getSessionsForRange } from "./actions";
 
 const BRANCH = "aaaaaaaa-1111-2222-8333-444444444444";
 const CLASS = "11111111-2222-3333-8444-555555555555";
+const ONE_TIME_CLASS = "33333333-4444-5555-8666-777777777777";
 const T_A = "aaaa1111-2222-3333-8444-555555555555";
 const T_B = "bbbb1111-2222-3333-8444-555555555555";
 
@@ -53,6 +54,49 @@ function setupAuth() {
 
 function makeClass(teacherId: string, isActive = true) {
   return { id: CLASS, day_of_week: 0, start_time: new Date("1970-01-01T08:00:00Z"), default_teacher_id: teacherId, is_active: isActive, disciplines: { id: "d1", name: "Yoga", code: "YG" } };
+}
+
+function makeOneTimeClass(opts: {
+  classDate: string;
+  isActive: boolean;
+  id?: string;
+}) {
+  return {
+    id: opts.id ?? ONE_TIME_CLASS,
+    branch_id: BRANCH,
+    class_date: parseDateOnly(opts.classDate),
+    start_time: new Date("1970-01-01T10:00:00"),
+    teacher_id: null,
+    is_active: opts.isActive,
+    disciplines: { id: "d1", name: "Yoga", code: "YG" },
+  };
+}
+
+/**
+ * Mimic the DB-side one-time merge filter: the class_date range plus the
+ * (is_active = true OR class_date < today) gate the resolver must send.
+ */
+function setupOneTimeRows(rows: ReturnType<typeof makeOneTimeClass>[]) {
+  mockTx.one_time_classes.findMany.mockImplementation(
+    async ({
+      where,
+    }: {
+      where: {
+        class_date: { gte: Date; lte: Date };
+        OR?: Array<{ is_active?: boolean; class_date?: { lt: Date } }>;
+      };
+    }) => {
+      const gate = where.OR?.find(
+        (clause) => clause.class_date !== undefined
+      )?.class_date?.lt;
+      return rows.filter(
+        (row) =>
+          row.class_date >= where.class_date.gte &&
+          row.class_date <= where.class_date.lte &&
+          (row.is_active || (gate !== undefined && row.class_date < gate))
+      );
+    }
+  );
 }
 
 /** Guarantee a Monday strictly before today (within the last 7 days). */
@@ -166,5 +210,88 @@ describe("getSessionsForRange resolver integration", () => {
       record_count: 1,
       present_count: 1,
     });
+  });
+
+  it("sends the (is_active = true OR class_date < today) gate to the one-time merge query", async () => {
+    mockFindMany.mockResolvedValue([]);
+    mockQueryRaw.mockResolvedValue([]);
+    setupAuth();
+    await getSessionsForRange({
+      branch_id: BRANCH,
+      start_date: "2026-09-01",
+      end_date: "2026-09-30",
+    });
+    expect(mockTx.one_time_classes.findMany).toHaveBeenCalledTimes(1);
+    const { where } = mockTx.one_time_classes.findMany.mock.calls[0][0] as {
+      where: {
+        OR?: Array<{ is_active?: boolean; class_date?: { lt: Date } }>;
+      };
+    };
+    expect(where.OR).toBeDefined();
+    expect(where.OR).toContainEqual({ is_active: true });
+    const pastGate = where.OR!.find(
+      (clause) => clause.class_date !== undefined
+    )?.class_date?.lt;
+    expect(pastGate).toBeDefined();
+    // Same server-local midnight the recurring gate derives from.
+    expect(pastGate!.getTime()).toBe(parseDateOnly(formatDateOnly(new Date())).getTime());
+  });
+
+  it("returns an inactive one-time class with a past date", async () => {
+    mockFindMany.mockResolvedValue([]);
+    mockQueryRaw.mockResolvedValue([]);
+    const pastDate = pastMondayDateStr();
+    setupOneTimeRows([makeOneTimeClass({ classDate: pastDate, isActive: false })]);
+    setupAuth();
+    const r = await getSessionsForRange({
+      branch_id: BRANCH,
+      start_date: pastDate,
+      end_date: pastDate,
+    });
+    expect(r.success).toBe(true);
+    expect(r.data).toHaveLength(1);
+    expect(r.data![0].scheduled_class_id).toBe(ONE_TIME_CLASS);
+    expect(r.data![0].is_one_time).toBe(true);
+    expect(r.data![0].session_date).toBe(pastDate);
+  });
+
+  it("hides inactive one-time classes from today onward but keeps active ones", async () => {
+    mockFindMany.mockResolvedValue([]);
+    mockQueryRaw.mockResolvedValue([]);
+    const todayStr = formatDateOnly(new Date());
+    const future = new Date();
+    future.setDate(future.getDate() + 5);
+    const futureStr = formatDateOnly(future);
+    setupOneTimeRows([
+      makeOneTimeClass({ classDate: todayStr, isActive: true, id: "44444444-4444-4444-8444-444444444444" }),
+      makeOneTimeClass({ classDate: todayStr, isActive: false }),
+      makeOneTimeClass({ classDate: futureStr, isActive: false }),
+    ]);
+    setupAuth();
+    const r = await getSessionsForRange({
+      branch_id: BRANCH,
+      start_date: todayStr,
+      end_date: futureStr,
+    });
+    expect(r.success).toBe(true);
+    expect(r.data).toHaveLength(1);
+    expect(r.data![0].scheduled_class_id).toBe("44444444-4444-4444-8444-444444444444");
+    expect(r.data![0].is_one_time).toBe(true);
+  });
+
+  it("treats active one-time classes exactly as before", async () => {
+    mockFindMany.mockResolvedValue([]);
+    mockQueryRaw.mockResolvedValue([]);
+    const todayStr = formatDateOnly(new Date());
+    setupOneTimeRows([makeOneTimeClass({ classDate: todayStr, isActive: true })]);
+    setupAuth();
+    const r = await getSessionsForRange({
+      branch_id: BRANCH,
+      start_date: todayStr,
+      end_date: todayStr,
+    });
+    expect(r.success).toBe(true);
+    expect(r.data).toHaveLength(1);
+    expect(r.data![0].scheduled_class_id).toBe(ONE_TIME_CLASS);
   });
 });

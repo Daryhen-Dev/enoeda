@@ -3855,6 +3855,7 @@ export const Scheduled_classesScalarFieldEnum = {
   start_time: 'start_time',
   end_time: 'end_time',
   is_active: 'is_active',
+  series_id: 'series_id',
   created_at: 'created_at',
   updated_at: 'updated_at'
 } as const
@@ -3870,6 +3871,7 @@ export const One_time_classesScalarFieldEnum = {
   class_date: 'class_date',
   start_time: 'start_time',
   end_time: 'end_time',
+  is_active: 'is_active',
   created_at: 'created_at',
   updated_at: 'updated_at'
 } as const

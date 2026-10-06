@@ -21,6 +21,7 @@ import {
   createOneTimeClassSchema,
   createScheduledClassBatchSchema,
   createScheduledClassSchema,
+  deactivateAllFutureClassesSchema,
   deactivateScheduledClassSchema,
   deactivateScheduledClassSeriesSchema,
   getSessionsForRangeSchema,
@@ -267,6 +268,7 @@ export async function createScheduledClass(
             default_teacher_id: parsed.data.default_teacher_id ?? null,
             day_of_week: parsed.data.day_of_week,
             start_time: new Date(`1970-01-01T${parsed.data.start_time}:00`),
+            series_id: crypto.randomUUID(),
           },
           select: { id: true },
         });
@@ -337,6 +339,11 @@ export async function createScheduledClassBatch(
   const created: CreateScheduledClassBatchResult["created"] = [];
   const failed: CreateScheduledClassBatchResult["failed"] = [];
 
+  // One shared series identity for every row of the batch (including all
+  // per-day loop iterations), so removing the series no longer needs the
+  // discipline + start_time heuristic.
+  const seriesId = crypto.randomUUID();
+
   for (const day_of_week of days_of_week) {
     try {
       const result = await withAuthenticatedUser(
@@ -348,6 +355,7 @@ export async function createScheduledClassBatch(
               default_teacher_id: default_teacher_id ?? null,
               day_of_week,
               start_time: new Date(`1970-01-01T${start_time}:00`),
+              series_id: seriesId,
             },
             select: { id: true },
           });
@@ -603,15 +611,21 @@ export async function deactivateScheduledClass(
 }
 
 /**
- * Deactivate ALL active scheduled_classes rows in the branch sharing the
- * same discipline + start_time (the weekly batch has no group id; its rows
- * are independent). Used to remove a whole weekly series at once.
- * History is preserved (soft-deactivate is_active=false; never deletes).
+ * Deactivate ALL active scheduled_classes rows sharing the same series_id
+ * (the materialized series identity created with the class or batch).
+ * Used to remove a whole weekly series at once. History is preserved
+ * (soft-deactivate is_active=false; never deletes).
+ *
+ * The caller passes any one row of the series (scheduled_class_id); its
+ * series_id is resolved inside the transaction. When the row is absent or
+ * has no series_id (should not happen post-backfill), fails with
+ * CLASS_MESSAGES.NOT_FOUND.
  *
  * Authorization: unlike deactivateScheduledClass there is no single row to
- * run assertClassInContext against — the active branch-assignment assertion
- * plus RLS inside withAuthenticatedUser scope the bulk update to the
- * caller's own branch. Owner/Admin-branch via RLS.
+ * run assertClassInContext against for the bulk update — the active
+ * branch-assignment assertion plus RLS inside withAuthenticatedUser scope
+ * the lookup and the bulk update to the caller's own branch.
+ * Owner/Admin-branch via RLS.
  */
 export async function deactivateScheduledClassSeries(
   input: unknown
@@ -621,7 +635,7 @@ export async function deactivateScheduledClassSeries(
     return { success: false, error: parsed.error.issues[0].message };
   }
 
-  const { branch_id, discipline_id, start_time } = parsed.data;
+  const { branch_id, scheduled_class_id } = parsed.data;
 
   try {
     const result = await withAuthenticatedUser(async (tx, ctx) => {
@@ -631,18 +645,93 @@ export async function deactivateScheduledClassSeries(
         throw new Error(branchCheck.error);
       }
 
+      // Resolve the series identity from the given row (RLS scopes the
+      // lookup to the caller's branch).
+      const row = await tx.scheduled_classes.findFirst({
+        where: { id: scheduled_class_id, branch_id },
+        select: { series_id: true },
+      });
+
+      if (!row || row.series_id === null) {
+        throw new Error(CLASS_MESSAGES.NOT_FOUND);
+      }
+
       const batch = await tx.scheduled_classes.updateMany({
         where: {
           branch_id,
-          discipline_id,
-          // Same normalization used by createScheduledClassBatch.
-          start_time: new Date(`1970-01-01T${start_time}:00`),
+          series_id: row.series_id,
           is_active: true,
         },
         data: { is_active: false },
       });
 
       return { deactivated: batch.count };
+    }, {
+      mapTransactionError: (error) =>
+        error instanceof Error &&
+        (error.message === CLASS_MESSAGES.NOT_FOUND ||
+          error.message === CLASS_MESSAGES.BRANCH_CONTEXT_REQUIRED ||
+          error.message.includes("permisos"))
+          ? error.message
+          : undefined,
+    });
+
+    if (!result.success) return result;
+    return { success: true, data: result.data };
+  } catch {
+    return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
+  }
+}
+
+/**
+ * Deactivate ALL future classes of a branch in one step:
+ * - every active recurring template (scheduled_classes), and
+ * - every active one-time class with class_date >= today (server-local,
+ *   same formatDateOnly pipeline as getSessionsForRange).
+ * History is preserved (soft-deactivate is_active=false; never deletes):
+ * past sessions stay visible through the existing resolver gates.
+ *
+ * Authorization: the active branch-assignment assertion plus RLS inside
+ * withAuthenticatedUser scope both bulk updates to the caller's own
+ * branch. Owner/Admin-branch via RLS.
+ */
+export async function deactivateAllFutureClasses(
+  input: unknown
+): Promise<ActionResult<{ recurring: number; oneTime: number }>> {
+  const parsed = deactivateAllFutureClassesSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message };
+  }
+
+  const { branch_id } = parsed.data;
+
+  try {
+    const result = await withAuthenticatedUser(async (tx, ctx) => {
+      // Branch assignment assertion — fail-closed
+      const branchCheck = assertActiveBranchAssignment(ctx, branch_id);
+      if (!branchCheck.ok) {
+        throw new Error(branchCheck.error);
+      }
+
+      // Server-local "today" through the same formatDateOnly/parseDateOnly
+      // pipeline the session resolver uses for its past-visibility gates.
+      const today = parseDateOnly(formatDateOnly(new Date()));
+
+      const recurringUpdate = await tx.scheduled_classes.updateMany({
+        where: { branch_id, is_active: true },
+        data: { is_active: false },
+      });
+
+      const oneTimeUpdate = await tx.one_time_classes.updateMany({
+        where: {
+          branch_id,
+          is_active: true,
+          class_date: { gte: today },
+        },
+        data: { is_active: false },
+      });
+
+      return { recurring: recurringUpdate.count, oneTime: oneTimeUpdate.count };
     }, {
       mapTransactionError: (error) =>
         error instanceof Error &&
@@ -816,10 +905,17 @@ export async function getSessionsForRange(
       }
 
       // Merge in one-time sessions even when there are no recurring classes.
+      // Inactive one-time classes only contribute PAST occurrences
+      // (strictly before today); active ones behave exactly as before —
+      // mirrors the recurring-template gate above.
       const oneTimeClasses = await tx.one_time_classes.findMany({
         where: {
           branch_id,
           class_date: { gte: start, lte: end },
+          OR: [
+            { is_active: true },
+            { class_date: { lt: parseDateOnly(todayStr) } },
+          ],
           ...(discipline_ids && discipline_ids.length > 0
             ? { discipline_id: { in: discipline_ids } }
             : {}),

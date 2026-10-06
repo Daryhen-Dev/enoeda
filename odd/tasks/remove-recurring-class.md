@@ -65,18 +65,49 @@ Round 2 tasks:
       dialog test update. tsc + scoped eslint + focused vitest.
 
 ## Evidence (round 2)
-- Worker: gentle-ai-worker. deactivateScheduledClassSeries soft-deactivates all
-  active rows matching branch+discipline+start_time (same normalization as
-  createScheduledClassBatch); guards = assertActiveBranchAssignment + RLS
-  (comment explains no single-row assertClassInContext).
-- getSessionsForRange loads active+inactive templates; expansion gate
-  `cls.is_active || dateStr < todayStr` keeps past occurrences (attendance and
-  overlay paths untouched); today+future of inactive templates hidden.
-- Dialog: RadioGroup (native inputs, no repo radio-group primitive), default
-  "series", secondary "single"; normalizeStartTime pure helper exported+tested;
-  SUCCESS_SERIES toast; session-block passes disciplineId.
-- Deviation: start_time schema uses repo's permissive /^\d{2}:\d{2}$/ (aligned
-  with createScheduledClassSchema) instead of a stricter regex.
-- Checks: tsc --noEmit clean; pnpm vitest run 726 passed / 1 skipped / 0
-  failed; scoped eslint over all 9 changed files clean.
-- Commit: 655b50d feat(calendar): remove whole recurring series and keep past classes visible (branch feat/recurring-removal-scope-history)
+- Commit: 655b50d feat(calendar): remove whole recurring series and keep past classes visible
+  (branch feat/recurring-removal-scope-history; final hash after rebase: 58d4ea4, merged to main)
+
+## Round 3 — remove ALL future classes + proper series id (branch feat/remove-all-future-classes)
+User request: third removal scope — delete EVERYTHING future (not just the
+weekly series), without affecting past history. User also asked for a real id
+for recurring series (today the batch rows are independent; round 2 used the
+discipline+start_time heuristic). User confirmed scope includes future
+one-time classes (requires one_time_classes.is_active migration).
+
+Round 3 tasks:
+- [ ] T9: Migration: scheduled_classes.series_id (uuid, indexed) + backfill
+      grouping legacy rows by branch+discipline+start_time;
+      one_time_classes.is_active (boolean, default true). Prisma schema synced.
+- [ ] T10: createScheduledClass / createScheduledClassBatch assign series_id
+      (batch shares one uuid).
+- [ ] T11: deactivateScheduledClassSeries re-keyed to series_id (input:
+      branch_id + scheduled_class_id; resolves the row's series_id).
+      New deactivateAllFutureClasses(branch_id): soft-deactivates all active
+      recurring templates + one-time classes with class_date >= today.
+- [ ] T12: getSessionsForRange: one-time filter keeps past one-time classes
+      visible (is_active OR class_date < today).
+- [ ] T13: Dialog third radio "todo el horario futuro" + copy/toasts.
+- [ ] T14: Tests (migration, schema, actions, resolver, dialog) + tsc + lint.
+
+## Evidence (round 3)
+- Worker: gentle-ai-worker. Migration 20260906000000 (transactional, no
+  destructive ops): scheduled_classes.series_id + index, CTE backfill
+  series_id = min(id) per (branch_id, discipline_id, start_time) covering all
+  legacy rows; one_time_classes.is_active default true. Prisma schema synced;
+  tracked generated client regenerated (pnpm exec prisma generate, offline).
+- Actions: create stamps series_id (batch shares one uuid);
+  deactivateScheduledClassSeries re-keyed to { branch_id, scheduled_class_id }
+  -> series_id lookup -> updateMany (NOT_FOUND on missing/null);
+  deactivateAllFutureClasses soft-deactivates all active recurring + one-time
+  with class_date >= server-local today, returns { recurring, oneTime }.
+- Resolver: one-time merge gate (is_active OR class_date < today) — past
+  one-time classes stay visible.
+- Dialog: third radio "all" ("Todo el horario futuro de la sucursal"),
+  scope-aware toasts, normalizeStartTime removed (unused).
+- Checks: tsc --noEmit clean; vitest 758 passed / 1 skipped / 0 failed;
+  scoped eslint clean.
+- IMPORTANT: migration NOT applied to any database — applying it is a user
+  decision. Until applied, the Prisma client expects columns that do not
+  exist in the DB.
+- Commit: 573ef73 feat(calendar): series identity for recurring classes and remove-all-future scope (branch feat/remove-all-future-classes)

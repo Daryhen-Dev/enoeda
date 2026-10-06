@@ -43,6 +43,7 @@ export type Scheduled_classesMinAggregateOutputType = {
   start_time: Date | null
   end_time: Date | null
   is_active: boolean | null
+  series_id: string | null
   created_at: Date | null
   updated_at: Date | null
 }
@@ -56,6 +57,7 @@ export type Scheduled_classesMaxAggregateOutputType = {
   start_time: Date | null
   end_time: Date | null
   is_active: boolean | null
+  series_id: string | null
   created_at: Date | null
   updated_at: Date | null
 }
@@ -69,6 +71,7 @@ export type Scheduled_classesCountAggregateOutputType = {
   start_time: number
   end_time: number
   is_active: number
+  series_id: number
   created_at: number
   updated_at: number
   _all: number
@@ -92,6 +95,7 @@ export type Scheduled_classesMinAggregateInputType = {
   start_time?: true
   end_time?: true
   is_active?: true
+  series_id?: true
   created_at?: true
   updated_at?: true
 }
@@ -105,6 +109,7 @@ export type Scheduled_classesMaxAggregateInputType = {
   start_time?: true
   end_time?: true
   is_active?: true
+  series_id?: true
   created_at?: true
   updated_at?: true
 }
@@ -118,6 +123,7 @@ export type Scheduled_classesCountAggregateInputType = {
   start_time?: true
   end_time?: true
   is_active?: true
+  series_id?: true
   created_at?: true
   updated_at?: true
   _all?: true
@@ -218,6 +224,7 @@ export type Scheduled_classesGroupByOutputType = {
   start_time: Date
   end_time: Date | null
   is_active: boolean
+  series_id: string | null
   created_at: Date
   updated_at: Date
   _count: Scheduled_classesCountAggregateOutputType | null
@@ -254,6 +261,7 @@ export type scheduled_classesWhereInput = {
   start_time?: Prisma.DateTimeFilter<"scheduled_classes"> | Date | string
   end_time?: Prisma.DateTimeNullableFilter<"scheduled_classes"> | Date | string | null
   is_active?: Prisma.BoolFilter<"scheduled_classes"> | boolean
+  series_id?: Prisma.UuidNullableFilter<"scheduled_classes"> | string | null
   created_at?: Prisma.DateTimeFilter<"scheduled_classes"> | Date | string
   updated_at?: Prisma.DateTimeFilter<"scheduled_classes"> | Date | string
   branches?: Prisma.XOR<Prisma.BranchesScalarRelationFilter, Prisma.branchesWhereInput>
@@ -271,6 +279,7 @@ export type scheduled_classesOrderByWithRelationInput = {
   start_time?: Prisma.SortOrder
   end_time?: Prisma.SortOrderInput | Prisma.SortOrder
   is_active?: Prisma.SortOrder
+  series_id?: Prisma.SortOrderInput | Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
   branches?: Prisma.branchesOrderByWithRelationInput
@@ -291,6 +300,7 @@ export type scheduled_classesWhereUniqueInput = Prisma.AtLeast<{
   start_time?: Prisma.DateTimeFilter<"scheduled_classes"> | Date | string
   end_time?: Prisma.DateTimeNullableFilter<"scheduled_classes"> | Date | string | null
   is_active?: Prisma.BoolFilter<"scheduled_classes"> | boolean
+  series_id?: Prisma.UuidNullableFilter<"scheduled_classes"> | string | null
   created_at?: Prisma.DateTimeFilter<"scheduled_classes"> | Date | string
   updated_at?: Prisma.DateTimeFilter<"scheduled_classes"> | Date | string
   branches?: Prisma.XOR<Prisma.BranchesScalarRelationFilter, Prisma.branchesWhereInput>
@@ -308,6 +318,7 @@ export type scheduled_classesOrderByWithAggregationInput = {
   start_time?: Prisma.SortOrder
   end_time?: Prisma.SortOrderInput | Prisma.SortOrder
   is_active?: Prisma.SortOrder
+  series_id?: Prisma.SortOrderInput | Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
   _count?: Prisma.scheduled_classesCountOrderByAggregateInput
@@ -329,6 +340,7 @@ export type scheduled_classesScalarWhereWithAggregatesInput = {
   start_time?: Prisma.DateTimeWithAggregatesFilter<"scheduled_classes"> | Date | string
   end_time?: Prisma.DateTimeNullableWithAggregatesFilter<"scheduled_classes"> | Date | string | null
   is_active?: Prisma.BoolWithAggregatesFilter<"scheduled_classes"> | boolean
+  series_id?: Prisma.UuidNullableWithAggregatesFilter<"scheduled_classes"> | string | null
   created_at?: Prisma.DateTimeWithAggregatesFilter<"scheduled_classes"> | Date | string
   updated_at?: Prisma.DateTimeWithAggregatesFilter<"scheduled_classes"> | Date | string
 }
@@ -340,6 +352,7 @@ export type scheduled_classesCreateInput = {
   start_time: Date | string
   end_time?: Date | string | null
   is_active?: boolean
+  series_id?: string | null
   created_at?: Date | string
   updated_at?: Date | string
   branches: Prisma.branchesCreateNestedOneWithoutScheduled_classesInput
@@ -357,6 +370,7 @@ export type scheduled_classesUncheckedCreateInput = {
   start_time: Date | string
   end_time?: Date | string | null
   is_active?: boolean
+  series_id?: string | null
   created_at?: Date | string
   updated_at?: Date | string
   class_sessions?: Prisma.class_sessionsUncheckedCreateNestedManyWithoutScheduled_classesInput
@@ -370,6 +384,7 @@ export type scheduled_classesUpdateInput = {
   start_time?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   end_time?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  series_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   branches?: Prisma.branchesUpdateOneRequiredWithoutScheduled_classesNestedInput
@@ -387,6 +402,7 @@ export type scheduled_classesUncheckedUpdateInput = {
   start_time?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   end_time?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  series_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   class_sessions?: Prisma.class_sessionsUncheckedUpdateManyWithoutScheduled_classesNestedInput
@@ -402,6 +418,7 @@ export type scheduled_classesCreateManyInput = {
   start_time: Date | string
   end_time?: Date | string | null
   is_active?: boolean
+  series_id?: string | null
   created_at?: Date | string
   updated_at?: Date | string
 }
@@ -413,6 +430,7 @@ export type scheduled_classesUpdateManyMutationInput = {
   start_time?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   end_time?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  series_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -426,6 +444,7 @@ export type scheduled_classesUncheckedUpdateManyInput = {
   start_time?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   end_time?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  series_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -449,6 +468,7 @@ export type scheduled_classesCountOrderByAggregateInput = {
   start_time?: Prisma.SortOrder
   end_time?: Prisma.SortOrder
   is_active?: Prisma.SortOrder
+  series_id?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
 }
@@ -466,6 +486,7 @@ export type scheduled_classesMaxOrderByAggregateInput = {
   start_time?: Prisma.SortOrder
   end_time?: Prisma.SortOrder
   is_active?: Prisma.SortOrder
+  series_id?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
 }
@@ -479,6 +500,7 @@ export type scheduled_classesMinOrderByAggregateInput = {
   start_time?: Prisma.SortOrder
   end_time?: Prisma.SortOrder
   is_active?: Prisma.SortOrder
+  series_id?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
 }
@@ -626,6 +648,7 @@ export type scheduled_classesCreateWithoutBranchesInput = {
   start_time: Date | string
   end_time?: Date | string | null
   is_active?: boolean
+  series_id?: string | null
   created_at?: Date | string
   updated_at?: Date | string
   disciplines: Prisma.disciplinesCreateNestedOneWithoutScheduled_classesInput
@@ -641,6 +664,7 @@ export type scheduled_classesUncheckedCreateWithoutBranchesInput = {
   start_time: Date | string
   end_time?: Date | string | null
   is_active?: boolean
+  series_id?: string | null
   created_at?: Date | string
   updated_at?: Date | string
   class_sessions?: Prisma.class_sessionsUncheckedCreateNestedManyWithoutScheduled_classesInput
@@ -685,6 +709,7 @@ export type scheduled_classesScalarWhereInput = {
   start_time?: Prisma.DateTimeFilter<"scheduled_classes"> | Date | string
   end_time?: Prisma.DateTimeNullableFilter<"scheduled_classes"> | Date | string | null
   is_active?: Prisma.BoolFilter<"scheduled_classes"> | boolean
+  series_id?: Prisma.UuidNullableFilter<"scheduled_classes"> | string | null
   created_at?: Prisma.DateTimeFilter<"scheduled_classes"> | Date | string
   updated_at?: Prisma.DateTimeFilter<"scheduled_classes"> | Date | string
 }
@@ -696,6 +721,7 @@ export type scheduled_classesCreateWithoutDisciplinesInput = {
   start_time: Date | string
   end_time?: Date | string | null
   is_active?: boolean
+  series_id?: string | null
   created_at?: Date | string
   updated_at?: Date | string
   branches: Prisma.branchesCreateNestedOneWithoutScheduled_classesInput
@@ -711,6 +737,7 @@ export type scheduled_classesUncheckedCreateWithoutDisciplinesInput = {
   start_time: Date | string
   end_time?: Date | string | null
   is_active?: boolean
+  series_id?: string | null
   created_at?: Date | string
   updated_at?: Date | string
   class_sessions?: Prisma.class_sessionsUncheckedCreateNestedManyWithoutScheduled_classesInput
@@ -750,6 +777,7 @@ export type scheduled_classesCreateWithoutClass_sessionsInput = {
   start_time: Date | string
   end_time?: Date | string | null
   is_active?: boolean
+  series_id?: string | null
   created_at?: Date | string
   updated_at?: Date | string
   branches: Prisma.branchesCreateNestedOneWithoutScheduled_classesInput
@@ -766,6 +794,7 @@ export type scheduled_classesUncheckedCreateWithoutClass_sessionsInput = {
   start_time: Date | string
   end_time?: Date | string | null
   is_active?: boolean
+  series_id?: string | null
   created_at?: Date | string
   updated_at?: Date | string
   attendance?: Prisma.attendanceUncheckedCreateNestedManyWithoutScheduled_classesInput
@@ -794,6 +823,7 @@ export type scheduled_classesUpdateWithoutClass_sessionsInput = {
   start_time?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   end_time?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  series_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   branches?: Prisma.branchesUpdateOneRequiredWithoutScheduled_classesNestedInput
@@ -810,6 +840,7 @@ export type scheduled_classesUncheckedUpdateWithoutClass_sessionsInput = {
   start_time?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   end_time?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  series_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   attendance?: Prisma.attendanceUncheckedUpdateManyWithoutScheduled_classesNestedInput
@@ -822,6 +853,7 @@ export type scheduled_classesCreateWithoutAttendanceInput = {
   start_time: Date | string
   end_time?: Date | string | null
   is_active?: boolean
+  series_id?: string | null
   created_at?: Date | string
   updated_at?: Date | string
   branches: Prisma.branchesCreateNestedOneWithoutScheduled_classesInput
@@ -838,6 +870,7 @@ export type scheduled_classesUncheckedCreateWithoutAttendanceInput = {
   start_time: Date | string
   end_time?: Date | string | null
   is_active?: boolean
+  series_id?: string | null
   created_at?: Date | string
   updated_at?: Date | string
   class_sessions?: Prisma.class_sessionsUncheckedCreateNestedManyWithoutScheduled_classesInput
@@ -866,6 +899,7 @@ export type scheduled_classesUpdateWithoutAttendanceInput = {
   start_time?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   end_time?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  series_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   branches?: Prisma.branchesUpdateOneRequiredWithoutScheduled_classesNestedInput
@@ -882,6 +916,7 @@ export type scheduled_classesUncheckedUpdateWithoutAttendanceInput = {
   start_time?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   end_time?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  series_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   class_sessions?: Prisma.class_sessionsUncheckedUpdateManyWithoutScheduled_classesNestedInput
@@ -895,6 +930,7 @@ export type scheduled_classesCreateManyBranchesInput = {
   start_time: Date | string
   end_time?: Date | string | null
   is_active?: boolean
+  series_id?: string | null
   created_at?: Date | string
   updated_at?: Date | string
 }
@@ -906,6 +942,7 @@ export type scheduled_classesUpdateWithoutBranchesInput = {
   start_time?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   end_time?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  series_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   disciplines?: Prisma.disciplinesUpdateOneRequiredWithoutScheduled_classesNestedInput
@@ -921,6 +958,7 @@ export type scheduled_classesUncheckedUpdateWithoutBranchesInput = {
   start_time?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   end_time?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  series_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   class_sessions?: Prisma.class_sessionsUncheckedUpdateManyWithoutScheduled_classesNestedInput
@@ -935,6 +973,7 @@ export type scheduled_classesUncheckedUpdateManyWithoutBranchesInput = {
   start_time?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   end_time?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  series_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -947,6 +986,7 @@ export type scheduled_classesCreateManyDisciplinesInput = {
   start_time: Date | string
   end_time?: Date | string | null
   is_active?: boolean
+  series_id?: string | null
   created_at?: Date | string
   updated_at?: Date | string
 }
@@ -958,6 +998,7 @@ export type scheduled_classesUpdateWithoutDisciplinesInput = {
   start_time?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   end_time?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  series_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   branches?: Prisma.branchesUpdateOneRequiredWithoutScheduled_classesNestedInput
@@ -973,6 +1014,7 @@ export type scheduled_classesUncheckedUpdateWithoutDisciplinesInput = {
   start_time?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   end_time?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  series_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   class_sessions?: Prisma.class_sessionsUncheckedUpdateManyWithoutScheduled_classesNestedInput
@@ -987,6 +1029,7 @@ export type scheduled_classesUncheckedUpdateManyWithoutDisciplinesInput = {
   start_time?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   end_time?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  series_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1040,6 +1083,7 @@ export type scheduled_classesSelect<ExtArgs extends runtime.Types.Extensions.Int
   start_time?: boolean
   end_time?: boolean
   is_active?: boolean
+  series_id?: boolean
   created_at?: boolean
   updated_at?: boolean
   branches?: boolean | Prisma.branchesDefaultArgs<ExtArgs>
@@ -1058,6 +1102,7 @@ export type scheduled_classesSelectCreateManyAndReturn<ExtArgs extends runtime.T
   start_time?: boolean
   end_time?: boolean
   is_active?: boolean
+  series_id?: boolean
   created_at?: boolean
   updated_at?: boolean
   branches?: boolean | Prisma.branchesDefaultArgs<ExtArgs>
@@ -1073,6 +1118,7 @@ export type scheduled_classesSelectUpdateManyAndReturn<ExtArgs extends runtime.T
   start_time?: boolean
   end_time?: boolean
   is_active?: boolean
+  series_id?: boolean
   created_at?: boolean
   updated_at?: boolean
   branches?: boolean | Prisma.branchesDefaultArgs<ExtArgs>
@@ -1088,11 +1134,12 @@ export type scheduled_classesSelectScalar = {
   start_time?: boolean
   end_time?: boolean
   is_active?: boolean
+  series_id?: boolean
   created_at?: boolean
   updated_at?: boolean
 }
 
-export type scheduled_classesOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "branch_id" | "discipline_id" | "default_teacher_id" | "day_of_week" | "start_time" | "end_time" | "is_active" | "created_at" | "updated_at", ExtArgs["result"]["scheduled_classes"]>
+export type scheduled_classesOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "branch_id" | "discipline_id" | "default_teacher_id" | "day_of_week" | "start_time" | "end_time" | "is_active" | "series_id" | "created_at" | "updated_at", ExtArgs["result"]["scheduled_classes"]>
 export type scheduled_classesInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   branches?: boolean | Prisma.branchesDefaultArgs<ExtArgs>
   disciplines?: boolean | Prisma.disciplinesDefaultArgs<ExtArgs>
@@ -1126,6 +1173,7 @@ export type $scheduled_classesPayload<ExtArgs extends runtime.Types.Extensions.I
     start_time: Date
     end_time: Date | null
     is_active: boolean
+    series_id: string | null
     created_at: Date
     updated_at: Date
   }, ExtArgs["result"]["scheduled_classes"]>
@@ -1563,6 +1611,7 @@ export interface scheduled_classesFieldRefs {
   readonly start_time: Prisma.FieldRef<"scheduled_classes", 'DateTime'>
   readonly end_time: Prisma.FieldRef<"scheduled_classes", 'DateTime'>
   readonly is_active: Prisma.FieldRef<"scheduled_classes", 'Boolean'>
+  readonly series_id: Prisma.FieldRef<"scheduled_classes", 'String'>
   readonly created_at: Prisma.FieldRef<"scheduled_classes", 'DateTime'>
   readonly updated_at: Prisma.FieldRef<"scheduled_classes", 'DateTime'>
 }

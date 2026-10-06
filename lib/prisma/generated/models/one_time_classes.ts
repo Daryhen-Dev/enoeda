@@ -34,6 +34,7 @@ export type One_time_classesMinAggregateOutputType = {
   class_date: Date | null
   start_time: Date | null
   end_time: Date | null
+  is_active: boolean | null
   created_at: Date | null
   updated_at: Date | null
 }
@@ -46,6 +47,7 @@ export type One_time_classesMaxAggregateOutputType = {
   class_date: Date | null
   start_time: Date | null
   end_time: Date | null
+  is_active: boolean | null
   created_at: Date | null
   updated_at: Date | null
 }
@@ -58,6 +60,7 @@ export type One_time_classesCountAggregateOutputType = {
   class_date: number
   start_time: number
   end_time: number
+  is_active: number
   created_at: number
   updated_at: number
   _all: number
@@ -72,6 +75,7 @@ export type One_time_classesMinAggregateInputType = {
   class_date?: true
   start_time?: true
   end_time?: true
+  is_active?: true
   created_at?: true
   updated_at?: true
 }
@@ -84,6 +88,7 @@ export type One_time_classesMaxAggregateInputType = {
   class_date?: true
   start_time?: true
   end_time?: true
+  is_active?: true
   created_at?: true
   updated_at?: true
 }
@@ -96,6 +101,7 @@ export type One_time_classesCountAggregateInputType = {
   class_date?: true
   start_time?: true
   end_time?: true
+  is_active?: true
   created_at?: true
   updated_at?: true
   _all?: true
@@ -181,6 +187,7 @@ export type One_time_classesGroupByOutputType = {
   class_date: Date
   start_time: Date
   end_time: Date | null
+  is_active: boolean
   created_at: Date
   updated_at: Date
   _count: One_time_classesCountAggregateOutputType | null
@@ -214,6 +221,7 @@ export type one_time_classesWhereInput = {
   class_date?: Prisma.DateTimeFilter<"one_time_classes"> | Date | string
   start_time?: Prisma.DateTimeFilter<"one_time_classes"> | Date | string
   end_time?: Prisma.DateTimeNullableFilter<"one_time_classes"> | Date | string | null
+  is_active?: Prisma.BoolFilter<"one_time_classes"> | boolean
   created_at?: Prisma.DateTimeFilter<"one_time_classes"> | Date | string
   updated_at?: Prisma.DateTimeFilter<"one_time_classes"> | Date | string
   branches?: Prisma.XOR<Prisma.BranchesScalarRelationFilter, Prisma.branchesWhereInput>
@@ -229,6 +237,7 @@ export type one_time_classesOrderByWithRelationInput = {
   class_date?: Prisma.SortOrder
   start_time?: Prisma.SortOrder
   end_time?: Prisma.SortOrderInput | Prisma.SortOrder
+  is_active?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
   branches?: Prisma.branchesOrderByWithRelationInput
@@ -247,6 +256,7 @@ export type one_time_classesWhereUniqueInput = Prisma.AtLeast<{
   class_date?: Prisma.DateTimeFilter<"one_time_classes"> | Date | string
   start_time?: Prisma.DateTimeFilter<"one_time_classes"> | Date | string
   end_time?: Prisma.DateTimeNullableFilter<"one_time_classes"> | Date | string | null
+  is_active?: Prisma.BoolFilter<"one_time_classes"> | boolean
   created_at?: Prisma.DateTimeFilter<"one_time_classes"> | Date | string
   updated_at?: Prisma.DateTimeFilter<"one_time_classes"> | Date | string
   branches?: Prisma.XOR<Prisma.BranchesScalarRelationFilter, Prisma.branchesWhereInput>
@@ -262,6 +272,7 @@ export type one_time_classesOrderByWithAggregationInput = {
   class_date?: Prisma.SortOrder
   start_time?: Prisma.SortOrder
   end_time?: Prisma.SortOrderInput | Prisma.SortOrder
+  is_active?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
   _count?: Prisma.one_time_classesCountOrderByAggregateInput
@@ -280,6 +291,7 @@ export type one_time_classesScalarWhereWithAggregatesInput = {
   class_date?: Prisma.DateTimeWithAggregatesFilter<"one_time_classes"> | Date | string
   start_time?: Prisma.DateTimeWithAggregatesFilter<"one_time_classes"> | Date | string
   end_time?: Prisma.DateTimeNullableWithAggregatesFilter<"one_time_classes"> | Date | string | null
+  is_active?: Prisma.BoolWithAggregatesFilter<"one_time_classes"> | boolean
   created_at?: Prisma.DateTimeWithAggregatesFilter<"one_time_classes"> | Date | string
   updated_at?: Prisma.DateTimeWithAggregatesFilter<"one_time_classes"> | Date | string
 }
@@ -290,6 +302,7 @@ export type one_time_classesCreateInput = {
   class_date: Date | string
   start_time: Date | string
   end_time?: Date | string | null
+  is_active?: boolean
   created_at?: Date | string
   updated_at?: Date | string
   branches: Prisma.branchesCreateNestedOneWithoutOne_time_classesInput
@@ -305,6 +318,7 @@ export type one_time_classesUncheckedCreateInput = {
   class_date: Date | string
   start_time: Date | string
   end_time?: Date | string | null
+  is_active?: boolean
   created_at?: Date | string
   updated_at?: Date | string
   attendance?: Prisma.attendanceUncheckedCreateNestedManyWithoutOne_time_classesInput
@@ -316,6 +330,7 @@ export type one_time_classesUpdateInput = {
   class_date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   start_time?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   end_time?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   branches?: Prisma.branchesUpdateOneRequiredWithoutOne_time_classesNestedInput
@@ -331,6 +346,7 @@ export type one_time_classesUncheckedUpdateInput = {
   class_date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   start_time?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   end_time?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   attendance?: Prisma.attendanceUncheckedUpdateManyWithoutOne_time_classesNestedInput
@@ -344,6 +360,7 @@ export type one_time_classesCreateManyInput = {
   class_date: Date | string
   start_time: Date | string
   end_time?: Date | string | null
+  is_active?: boolean
   created_at?: Date | string
   updated_at?: Date | string
 }
@@ -354,6 +371,7 @@ export type one_time_classesUpdateManyMutationInput = {
   class_date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   start_time?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   end_time?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -366,6 +384,7 @@ export type one_time_classesUncheckedUpdateManyInput = {
   class_date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   start_time?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   end_time?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -388,6 +407,7 @@ export type one_time_classesCountOrderByAggregateInput = {
   class_date?: Prisma.SortOrder
   start_time?: Prisma.SortOrder
   end_time?: Prisma.SortOrder
+  is_active?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
 }
@@ -400,6 +420,7 @@ export type one_time_classesMaxOrderByAggregateInput = {
   class_date?: Prisma.SortOrder
   start_time?: Prisma.SortOrder
   end_time?: Prisma.SortOrder
+  is_active?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
 }
@@ -412,6 +433,7 @@ export type one_time_classesMinOrderByAggregateInput = {
   class_date?: Prisma.SortOrder
   start_time?: Prisma.SortOrder
   end_time?: Prisma.SortOrder
+  is_active?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
 }
@@ -527,6 +549,7 @@ export type one_time_classesCreateWithoutBranchesInput = {
   class_date: Date | string
   start_time: Date | string
   end_time?: Date | string | null
+  is_active?: boolean
   created_at?: Date | string
   updated_at?: Date | string
   disciplines: Prisma.disciplinesCreateNestedOneWithoutOne_time_classesInput
@@ -540,6 +563,7 @@ export type one_time_classesUncheckedCreateWithoutBranchesInput = {
   class_date: Date | string
   start_time: Date | string
   end_time?: Date | string | null
+  is_active?: boolean
   created_at?: Date | string
   updated_at?: Date | string
   attendance?: Prisma.attendanceUncheckedCreateNestedManyWithoutOne_time_classesInput
@@ -582,6 +606,7 @@ export type one_time_classesScalarWhereInput = {
   class_date?: Prisma.DateTimeFilter<"one_time_classes"> | Date | string
   start_time?: Prisma.DateTimeFilter<"one_time_classes"> | Date | string
   end_time?: Prisma.DateTimeNullableFilter<"one_time_classes"> | Date | string | null
+  is_active?: Prisma.BoolFilter<"one_time_classes"> | boolean
   created_at?: Prisma.DateTimeFilter<"one_time_classes"> | Date | string
   updated_at?: Prisma.DateTimeFilter<"one_time_classes"> | Date | string
 }
@@ -592,6 +617,7 @@ export type one_time_classesCreateWithoutDisciplinesInput = {
   class_date: Date | string
   start_time: Date | string
   end_time?: Date | string | null
+  is_active?: boolean
   created_at?: Date | string
   updated_at?: Date | string
   branches: Prisma.branchesCreateNestedOneWithoutOne_time_classesInput
@@ -605,6 +631,7 @@ export type one_time_classesUncheckedCreateWithoutDisciplinesInput = {
   class_date: Date | string
   start_time: Date | string
   end_time?: Date | string | null
+  is_active?: boolean
   created_at?: Date | string
   updated_at?: Date | string
   attendance?: Prisma.attendanceUncheckedCreateNestedManyWithoutOne_time_classesInput
@@ -642,6 +669,7 @@ export type one_time_classesCreateWithoutAttendanceInput = {
   class_date: Date | string
   start_time: Date | string
   end_time?: Date | string | null
+  is_active?: boolean
   created_at?: Date | string
   updated_at?: Date | string
   branches: Prisma.branchesCreateNestedOneWithoutOne_time_classesInput
@@ -656,6 +684,7 @@ export type one_time_classesUncheckedCreateWithoutAttendanceInput = {
   class_date: Date | string
   start_time: Date | string
   end_time?: Date | string | null
+  is_active?: boolean
   created_at?: Date | string
   updated_at?: Date | string
 }
@@ -682,6 +711,7 @@ export type one_time_classesUpdateWithoutAttendanceInput = {
   class_date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   start_time?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   end_time?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   branches?: Prisma.branchesUpdateOneRequiredWithoutOne_time_classesNestedInput
@@ -696,6 +726,7 @@ export type one_time_classesUncheckedUpdateWithoutAttendanceInput = {
   class_date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   start_time?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   end_time?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -707,6 +738,7 @@ export type one_time_classesCreateManyBranchesInput = {
   class_date: Date | string
   start_time: Date | string
   end_time?: Date | string | null
+  is_active?: boolean
   created_at?: Date | string
   updated_at?: Date | string
 }
@@ -717,6 +749,7 @@ export type one_time_classesUpdateWithoutBranchesInput = {
   class_date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   start_time?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   end_time?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   disciplines?: Prisma.disciplinesUpdateOneRequiredWithoutOne_time_classesNestedInput
@@ -730,6 +763,7 @@ export type one_time_classesUncheckedUpdateWithoutBranchesInput = {
   class_date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   start_time?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   end_time?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   attendance?: Prisma.attendanceUncheckedUpdateManyWithoutOne_time_classesNestedInput
@@ -742,6 +776,7 @@ export type one_time_classesUncheckedUpdateManyWithoutBranchesInput = {
   class_date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   start_time?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   end_time?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -753,6 +788,7 @@ export type one_time_classesCreateManyDisciplinesInput = {
   class_date: Date | string
   start_time: Date | string
   end_time?: Date | string | null
+  is_active?: boolean
   created_at?: Date | string
   updated_at?: Date | string
 }
@@ -763,6 +799,7 @@ export type one_time_classesUpdateWithoutDisciplinesInput = {
   class_date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   start_time?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   end_time?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   branches?: Prisma.branchesUpdateOneRequiredWithoutOne_time_classesNestedInput
@@ -776,6 +813,7 @@ export type one_time_classesUncheckedUpdateWithoutDisciplinesInput = {
   class_date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   start_time?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   end_time?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   attendance?: Prisma.attendanceUncheckedUpdateManyWithoutOne_time_classesNestedInput
@@ -788,6 +826,7 @@ export type one_time_classesUncheckedUpdateManyWithoutDisciplinesInput = {
   class_date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   start_time?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   end_time?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -831,6 +870,7 @@ export type one_time_classesSelect<ExtArgs extends runtime.Types.Extensions.Inte
   class_date?: boolean
   start_time?: boolean
   end_time?: boolean
+  is_active?: boolean
   created_at?: boolean
   updated_at?: boolean
   branches?: boolean | Prisma.branchesDefaultArgs<ExtArgs>
@@ -847,6 +887,7 @@ export type one_time_classesSelectCreateManyAndReturn<ExtArgs extends runtime.Ty
   class_date?: boolean
   start_time?: boolean
   end_time?: boolean
+  is_active?: boolean
   created_at?: boolean
   updated_at?: boolean
   branches?: boolean | Prisma.branchesDefaultArgs<ExtArgs>
@@ -861,6 +902,7 @@ export type one_time_classesSelectUpdateManyAndReturn<ExtArgs extends runtime.Ty
   class_date?: boolean
   start_time?: boolean
   end_time?: boolean
+  is_active?: boolean
   created_at?: boolean
   updated_at?: boolean
   branches?: boolean | Prisma.branchesDefaultArgs<ExtArgs>
@@ -875,11 +917,12 @@ export type one_time_classesSelectScalar = {
   class_date?: boolean
   start_time?: boolean
   end_time?: boolean
+  is_active?: boolean
   created_at?: boolean
   updated_at?: boolean
 }
 
-export type one_time_classesOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "branch_id" | "discipline_id" | "teacher_id" | "class_date" | "start_time" | "end_time" | "created_at" | "updated_at", ExtArgs["result"]["one_time_classes"]>
+export type one_time_classesOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "branch_id" | "discipline_id" | "teacher_id" | "class_date" | "start_time" | "end_time" | "is_active" | "created_at" | "updated_at", ExtArgs["result"]["one_time_classes"]>
 export type one_time_classesInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   branches?: boolean | Prisma.branchesDefaultArgs<ExtArgs>
   disciplines?: boolean | Prisma.disciplinesDefaultArgs<ExtArgs>
@@ -910,6 +953,7 @@ export type $one_time_classesPayload<ExtArgs extends runtime.Types.Extensions.In
     class_date: Date
     start_time: Date
     end_time: Date | null
+    is_active: boolean
     created_at: Date
     updated_at: Date
   }, ExtArgs["result"]["one_time_classes"]>
@@ -1345,6 +1389,7 @@ export interface one_time_classesFieldRefs {
   readonly class_date: Prisma.FieldRef<"one_time_classes", 'DateTime'>
   readonly start_time: Prisma.FieldRef<"one_time_classes", 'DateTime'>
   readonly end_time: Prisma.FieldRef<"one_time_classes", 'DateTime'>
+  readonly is_active: Prisma.FieldRef<"one_time_classes", 'Boolean'>
   readonly created_at: Prisma.FieldRef<"one_time_classes", 'DateTime'>
   readonly updated_at: Prisma.FieldRef<"one_time_classes", 'DateTime'>
 }

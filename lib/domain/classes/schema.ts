@@ -54,11 +54,16 @@ export const deactivateScheduledClassSchema = z.object({
   branch_id: z.uuid(),
 });
 
+// Targets the materialized series identity (scheduled_classes.series_id)
+// via any one of its rows; no longer relies on the
+// discipline + start_time heuristic.
 export const deactivateScheduledClassSeriesSchema = z.object({
   branch_id: z.uuid(),
-  discipline_id: z.uuid(),
-  // Aligned with createScheduledClassSchema: "HH:MM" (24h).
-  start_time: z.string().regex(/^\d{2}:\d{2}$/),
+  scheduled_class_id: z.uuid(),
+});
+
+export const deactivateAllFutureClassesSchema = z.object({
+  branch_id: z.uuid(),
 });
 
 export const getSessionsForRangeSchema = z.object({
@@ -117,6 +122,9 @@ export type UpdateScheduledClassInput = z.infer<typeof updateScheduledClassSchem
 export type DeactivateScheduledClassInput = z.infer<typeof deactivateScheduledClassSchema>;
 export type DeactivateScheduledClassSeriesInput = z.infer<
   typeof deactivateScheduledClassSeriesSchema
+>;
+export type DeactivateAllFutureClassesInput = z.infer<
+  typeof deactivateAllFutureClassesSchema
 >;
 export type GetSessionsForRangeInput = z.infer<typeof getSessionsForRangeSchema>;
 export type SuspendSessionInput = z.infer<typeof suspendSessionSchema>;

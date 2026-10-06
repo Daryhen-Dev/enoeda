@@ -10,11 +10,11 @@ import {
 
 const SCHEDULED_CLASS_ID = "aaaaaaaa-1111-2222-8333-444444444444";
 const BRANCH_ID = "bbbbbbbb-1111-2222-8333-444444444444";
-const DISCIPLINE_ID = "cccccccc-1111-2222-8333-444444444444";
 
 const mocks = vi.hoisted(() => ({
   deactivateScheduledClass: vi.fn(),
   deactivateScheduledClassSeries: vi.fn(),
+  deactivateAllFutureClasses: vi.fn(),
   refresh: vi.fn(),
   toastSuccess: vi.fn(),
   toastError: vi.fn(),
@@ -23,6 +23,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/lib/domain/classes/actions", () => ({
   deactivateScheduledClass: mocks.deactivateScheduledClass,
   deactivateScheduledClassSeries: mocks.deactivateScheduledClassSeries,
+  deactivateAllFutureClasses: mocks.deactivateAllFutureClasses,
 }));
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: mocks.refresh }),
@@ -33,7 +34,6 @@ vi.mock("sonner", () => ({
 
 import {
   RemoveRecurringClassDialog,
-  normalizeStartTime,
 } from "./remove-recurring-class-dialog";
 
 interface RenderedDialog {
@@ -51,7 +51,6 @@ function renderDialog(): RenderedDialog {
       <RemoveRecurringClassDialog
         scheduledClassId={SCHEDULED_CLASS_ID}
         branchId={BRANCH_ID}
-        disciplineId={DISCIPLINE_ID}
         disciplineName="Karate"
         startTime="17:00"
       />
@@ -75,8 +74,38 @@ function queryDialogContent(): HTMLElement | null {
   );
 }
 
+function queryScopeRadio(content: HTMLElement, scope: string) {
+  return content.querySelector<HTMLInputElement>(
+    `input[type="radio"][value="${scope}"]`
+  );
+}
+
+function queryConfirmButton(content: HTMLElement) {
+  return [...content.querySelectorAll<HTMLButtonElement>("button")].find(
+    (button) =>
+      button.textContent?.includes(REMOVE_RECURRING_CLASS_MESSAGES.CONFIRM_ACTION)
+  );
+}
+
+async function confirm() {
+  const confirmButton = queryConfirmButton(queryDialogContent()!);
+  expect(confirmButton).toBeDefined();
+
+  await act(async () => {
+    confirmButton?.click();
+  });
+  await act(async () => {});
+}
+
 describe("RemoveRecurringClassDialog", () => {
   let rendered: RenderedDialog | undefined;
+
+  function openDialog(): HTMLElement {
+    act(() => {
+      rendered?.container.querySelector("button")?.click();
+    });
+    return queryDialogContent()!;
+  }
 
   beforeEach(() => {
     (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -88,6 +117,10 @@ describe("RemoveRecurringClassDialog", () => {
     mocks.deactivateScheduledClassSeries.mockResolvedValue({
       success: true,
       data: { deactivated: 3 },
+    });
+    mocks.deactivateAllFutureClasses.mockResolvedValue({
+      success: true,
+      data: { recurring: 5, oneTime: 2 },
     });
   });
 
@@ -113,52 +146,45 @@ describe("RemoveRecurringClassDialog", () => {
   it("shows title and description when opened", () => {
     rendered = renderDialog();
 
-    act(() => {
-      rendered?.container.querySelector("button")?.click();
-    });
+    const content = openDialog();
 
-    const content = queryDialogContent();
-    expect(content?.textContent).toContain(
+    expect(content.textContent).toContain(
       REMOVE_RECURRING_CLASS_MESSAGES.DIALOG_TITLE
     );
-    expect(content?.textContent).toContain(
+    expect(content.textContent).toContain(
       REMOVE_RECURRING_CLASS_MESSAGES.DIALOG_DESCRIPTION
+    );
+  });
+
+  it("renders three scope radios with series as default", () => {
+    rendered = renderDialog();
+
+    const content = openDialog();
+
+    expect(queryScopeRadio(content, "series")).toBeDefined();
+    expect(queryScopeRadio(content, "single")).toBeDefined();
+    expect(queryScopeRadio(content, "all")).toBeDefined();
+    expect(queryScopeRadio(content, "series")?.checked).toBe(true);
+    expect(content.textContent).toContain(
+      REMOVE_RECURRING_CLASS_MESSAGES.SCOPE_ALL_LABEL
+    );
+    expect(content.textContent).toContain(
+      REMOVE_RECURRING_CLASS_MESSAGES.SCOPE_ALL_HINT
     );
   });
 
   it("confirms with the default series scope via deactivateScheduledClassSeries", async () => {
     rendered = renderDialog();
 
-    act(() => {
-      rendered?.container.querySelector("button")?.click();
-    });
-
-    const content = queryDialogContent()!;
-    const seriesRadio = content.querySelector<HTMLInputElement>(
-      'input[type="radio"][value="series"]'
-    );
-    expect(seriesRadio?.checked).toBe(true);
-
-    const confirmButton = [
-      ...content.querySelectorAll<HTMLButtonElement>("button"),
-    ].find((button) =>
-      button.textContent?.includes(
-        REMOVE_RECURRING_CLASS_MESSAGES.CONFIRM_ACTION
-      )
-    );
-    expect(confirmButton).toBeDefined();
-
-    await act(async () => {
-      confirmButton?.click();
-    });
-    await act(async () => {});
+    openDialog();
+    await confirm();
 
     expect(mocks.deactivateScheduledClassSeries).toHaveBeenCalledWith({
       branch_id: BRANCH_ID,
-      discipline_id: DISCIPLINE_ID,
-      start_time: "17:00",
+      scheduled_class_id: SCHEDULED_CLASS_ID,
     });
     expect(mocks.deactivateScheduledClass).not.toHaveBeenCalled();
+    expect(mocks.deactivateAllFutureClasses).not.toHaveBeenCalled();
     expect(mocks.toastSuccess).toHaveBeenCalledWith(
       REMOVE_RECURRING_CLASS_MESSAGES.SUCCESS_SERIES
     );
@@ -169,14 +195,8 @@ describe("RemoveRecurringClassDialog", () => {
   it("calls deactivateScheduledClass when the single scope is selected", async () => {
     rendered = renderDialog();
 
-    act(() => {
-      rendered?.container.querySelector("button")?.click();
-    });
-
-    const content = queryDialogContent()!;
-    const singleRadio = content.querySelector<HTMLInputElement>(
-      'input[type="radio"][value="single"]'
-    );
+    const content = openDialog();
+    const singleRadio = queryScopeRadio(content, "single");
     expect(singleRadio).toBeDefined();
 
     act(() => {
@@ -184,25 +204,14 @@ describe("RemoveRecurringClassDialog", () => {
     });
     expect(singleRadio?.checked).toBe(true);
 
-    const confirmButton = [
-      ...content.querySelectorAll<HTMLButtonElement>("button"),
-    ].find((button) =>
-      button.textContent?.includes(
-        REMOVE_RECURRING_CLASS_MESSAGES.CONFIRM_ACTION
-      )
-    );
-    expect(confirmButton).toBeDefined();
-
-    await act(async () => {
-      confirmButton?.click();
-    });
-    await act(async () => {});
+    await confirm();
 
     expect(mocks.deactivateScheduledClass).toHaveBeenCalledWith({
       id: SCHEDULED_CLASS_ID,
       branch_id: BRANCH_ID,
     });
     expect(mocks.deactivateScheduledClassSeries).not.toHaveBeenCalled();
+    expect(mocks.deactivateAllFutureClasses).not.toHaveBeenCalled();
     expect(mocks.toastSuccess).toHaveBeenCalledWith(
       REMOVE_RECURRING_CLASS_MESSAGES.SUCCESS
     );
@@ -210,9 +219,30 @@ describe("RemoveRecurringClassDialog", () => {
     expect(queryDialogContent()).toBeNull();
   });
 
-  it("normalizes start_time with seconds to HH:MM", () => {
-    expect(normalizeStartTime("17:00")).toBe("17:00");
-    expect(normalizeStartTime("17:00:00")).toBe("17:00");
+  it("calls deactivateAllFutureClasses when the all scope is selected", async () => {
+    rendered = renderDialog();
+
+    const content = openDialog();
+    const allRadio = queryScopeRadio(content, "all");
+    expect(allRadio).toBeDefined();
+
+    act(() => {
+      allRadio?.click();
+    });
+    expect(allRadio?.checked).toBe(true);
+
+    await confirm();
+
+    expect(mocks.deactivateAllFutureClasses).toHaveBeenCalledWith({
+      branch_id: BRANCH_ID,
+    });
+    expect(mocks.deactivateScheduledClass).not.toHaveBeenCalled();
+    expect(mocks.deactivateScheduledClassSeries).not.toHaveBeenCalled();
+    expect(mocks.toastSuccess).toHaveBeenCalledWith(
+      REMOVE_RECURRING_CLASS_MESSAGES.SUCCESS_ALL
+    );
+    expect(mocks.refresh).toHaveBeenCalled();
+    expect(queryDialogContent()).toBeNull();
   });
 
   it("keeps the dialog open and shows the error path on failure", async () => {
@@ -222,22 +252,8 @@ describe("RemoveRecurringClassDialog", () => {
     });
     rendered = renderDialog();
 
-    act(() => {
-      rendered?.container.querySelector("button")?.click();
-    });
-
-    const confirmButton = [
-      ...queryDialogContent()!.querySelectorAll<HTMLButtonElement>("button"),
-    ].find((button) =>
-      button.textContent?.includes(
-        REMOVE_RECURRING_CLASS_MESSAGES.CONFIRM_ACTION
-      )
-    );
-
-    await act(async () => {
-      confirmButton?.click();
-    });
-    await act(async () => {});
+    openDialog();
+    await confirm();
 
     expect(mocks.toastSuccess).not.toHaveBeenCalled();
     expect(mocks.refresh).not.toHaveBeenCalled();
