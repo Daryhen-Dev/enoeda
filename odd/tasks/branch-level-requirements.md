@@ -31,7 +31,7 @@ required to move up a belt, from a dedicated section.
 - [x] T4: Admin section `/dashboard/belts` (nav "Cinturones", admin-only):
       per discipline, levels with general value, branch value, edit and reset.
 - [x] T5: Tests (migration, resolution, actions, section), tsc, lint.
-- [ ] T6: Apply migration (user-authorized in a later step), commit.
+- [x] T6: Apply migration (user-authorized in a later step), commit.
 
 ## Evidence
 - Worker: gentle-ai-worker. Migration 20260908000000 (transactional, no
@@ -51,5 +51,18 @@ required to move up a belt, from a dedicated section.
   set_updated_at exists (20260812000000); app guard verified.
 - Checks: prisma generate OK; tsc --noEmit clean; vitest 814 passed / 1
   skipped / 0 failed; eslint clean on 13 changed non-generated files.
-- Migration 20260908000000: NOT applied (awaiting user authorization).
-- Commit: (pending)
+- Migration 20260908000000 APPLIED to the Supabase DB (user-authorized):
+  table exists, RLS enabled + forced, 3 policies, updated_at trigger, both
+  constraints present, 0 rows.
+- Live RLS probe (rolled-back transactions, real non-owner branch admin):
+  INSERT into own branch allowed; INSERT into another branch denied with
+  42501; 0 rows left behind.
+- Extra fix found during review: lib/prisma/generated/ is gitignored, so new
+  generated model files (class_series.ts since ecef089, and
+  branch_level_requirements.ts) were never committed while models.ts
+  re-exports them. Type-only re-exports + @ts-nocheck kept builds green, but
+  the tracked client was incomplete; both files force-added.
+- Pre-merge verification (gentle-ai-verify): tsc clean; vitest 814 passed /
+  1 skipped; eslint clean on 13 files; tree clean.
+- Commits: 91e0787 feat(belts): branch admins set the classes required to
+  move up a belt; a5051e5 fix(prisma): track generated client models.
