@@ -22,6 +22,7 @@ import {
   createScheduledClassBatchSchema,
   createScheduledClassSchema,
   deactivateScheduledClassSchema,
+  deactivateScheduledClassSeriesSchema,
   getSessionsForRangeSchema,
   getSuspensionReportSchema,
   reinstateSessionSchema,
@@ -602,6 +603,63 @@ export async function deactivateScheduledClass(
 }
 
 /**
+ * Deactivate ALL active scheduled_classes rows in the branch sharing the
+ * same discipline + start_time (the weekly batch has no group id; its rows
+ * are independent). Used to remove a whole weekly series at once.
+ * History is preserved (soft-deactivate is_active=false; never deletes).
+ *
+ * Authorization: unlike deactivateScheduledClass there is no single row to
+ * run assertClassInContext against — the active branch-assignment assertion
+ * plus RLS inside withAuthenticatedUser scope the bulk update to the
+ * caller's own branch. Owner/Admin-branch via RLS.
+ */
+export async function deactivateScheduledClassSeries(
+  input: unknown
+): Promise<ActionResult<{ deactivated: number }>> {
+  const parsed = deactivateScheduledClassSeriesSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message };
+  }
+
+  const { branch_id, discipline_id, start_time } = parsed.data;
+
+  try {
+    const result = await withAuthenticatedUser(async (tx, ctx) => {
+      // Branch assignment assertion — fail-closed
+      const branchCheck = assertActiveBranchAssignment(ctx, branch_id);
+      if (!branchCheck.ok) {
+        throw new Error(branchCheck.error);
+      }
+
+      const batch = await tx.scheduled_classes.updateMany({
+        where: {
+          branch_id,
+          discipline_id,
+          // Same normalization used by createScheduledClassBatch.
+          start_time: new Date(`1970-01-01T${start_time}:00`),
+          is_active: true,
+        },
+        data: { is_active: false },
+      });
+
+      return { deactivated: batch.count };
+    }, {
+      mapTransactionError: (error) =>
+        error instanceof Error &&
+        (error.message === CLASS_MESSAGES.BRANCH_CONTEXT_REQUIRED ||
+          error.message.includes("permisos"))
+          ? error.message
+          : undefined,
+    });
+
+    if (!result.success) return result;
+    return { success: true, data: result.data };
+  } catch {
+    return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
+  }
+}
+
+/**
  * Get sessions for a date range (virtual expansion + materialized overlay).
  * Any authenticated user with branch access via RLS.
  * Validates caller has active branch assignment internally (fail-closed).
@@ -645,10 +703,12 @@ export async function getSessionsForRange(
 
       const start = parseDateOnly(start_date);
       const end = parseDateOnly(end_date);
+      // Load active AND inactive templates: past occurrences of deactivated
+      // templates must stay visible (with attendance); occurrences from today
+      // onward of inactive templates are hidden below.
       const classes = await tx.scheduled_classes.findMany({
         where: {
           branch_id,
-          is_active: true,
           ...(discipline_ids && discipline_ids.length > 0
             ? { discipline_id: { in: discipline_ids } }
             : {}),
@@ -660,12 +720,18 @@ export async function getSessionsForRange(
 
       // Expand recurring virtual sessions by iterating dates.
       const sessions: SessionView[] = [];
+      // Server-local "today" as YYYY-MM-DD, produced with the same
+      // formatDateOnly pipeline used for session_date strings, so the
+      // comparison below stays consistent.
+      const todayStr = formatDateOnly(new Date());
       for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
         const isoDay = jsToIsoDayOfWeek(d.getDay());
         const dateStr = formatDateOnly(d);
 
         for (const cls of classes) {
-          if (cls.day_of_week === isoDay) {
+          // Inactive templates only contribute PAST occurrences (strictly
+          // before today); active templates behave exactly as before.
+          if (cls.day_of_week === isoDay && (cls.is_active || dateStr < todayStr)) {
             const timeStr = formatTime(cls.start_time);
             sessions.push({
               scheduled_class_id: cls.id,

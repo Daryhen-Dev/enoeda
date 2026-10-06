@@ -54,6 +54,13 @@ export const deactivateScheduledClassSchema = z.object({
   branch_id: z.uuid(),
 });
 
+export const deactivateScheduledClassSeriesSchema = z.object({
+  branch_id: z.uuid(),
+  discipline_id: z.uuid(),
+  // Aligned with createScheduledClassSchema: "HH:MM" (24h).
+  start_time: z.string().regex(/^\d{2}:\d{2}$/),
+});
+
 export const getSessionsForRangeSchema = z.object({
   branch_id: z.uuid(),
   start_date: z.string().date(),
@@ -108,6 +115,9 @@ export const getSuspensionReportSchema = z.object({
 export type CreateScheduledClassInput = z.infer<typeof createScheduledClassSchema>;
 export type UpdateScheduledClassInput = z.infer<typeof updateScheduledClassSchema>;
 export type DeactivateScheduledClassInput = z.infer<typeof deactivateScheduledClassSchema>;
+export type DeactivateScheduledClassSeriesInput = z.infer<
+  typeof deactivateScheduledClassSeriesSchema
+>;
 export type GetSessionsForRangeInput = z.infer<typeof getSessionsForRangeSchema>;
 export type SuspendSessionInput = z.infer<typeof suspendSessionSchema>;
 export type ReinstateSessionInput = z.infer<typeof reinstateSessionSchema>;

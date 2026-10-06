@@ -344,6 +344,7 @@ export function SessionBlock({
                   <RemoveRecurringClassDialog
                     scheduledClassId={session.scheduled_class_id}
                     branchId={branchId}
+                    disciplineId={session.discipline_id}
                     disciplineName={session.discipline_name}
                     startTime={session.start_time}
                     triggerClassName="inline-flex h-8 w-full items-center justify-center gap-1 rounded-full border border-destructive bg-destructive px-2 text-sm font-medium whitespace-nowrap text-white shadow-sm transition-colors hover:bg-red-700 hover:text-white focus-visible:border-red-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-950/50 disabled:pointer-events-none disabled:opacity-50"

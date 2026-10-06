@@ -10,9 +10,11 @@ import {
 
 const SCHEDULED_CLASS_ID = "aaaaaaaa-1111-2222-8333-444444444444";
 const BRANCH_ID = "bbbbbbbb-1111-2222-8333-444444444444";
+const DISCIPLINE_ID = "cccccccc-1111-2222-8333-444444444444";
 
 const mocks = vi.hoisted(() => ({
   deactivateScheduledClass: vi.fn(),
+  deactivateScheduledClassSeries: vi.fn(),
   refresh: vi.fn(),
   toastSuccess: vi.fn(),
   toastError: vi.fn(),
@@ -20,6 +22,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@/lib/domain/classes/actions", () => ({
   deactivateScheduledClass: mocks.deactivateScheduledClass,
+  deactivateScheduledClassSeries: mocks.deactivateScheduledClassSeries,
 }));
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: mocks.refresh }),
@@ -28,7 +31,10 @@ vi.mock("sonner", () => ({
   toast: { success: mocks.toastSuccess, error: mocks.toastError },
 }));
 
-import { RemoveRecurringClassDialog } from "./remove-recurring-class-dialog";
+import {
+  RemoveRecurringClassDialog,
+  normalizeStartTime,
+} from "./remove-recurring-class-dialog";
 
 interface RenderedDialog {
   container: HTMLDivElement;
@@ -45,6 +51,7 @@ function renderDialog(): RenderedDialog {
       <RemoveRecurringClassDialog
         scheduledClassId={SCHEDULED_CLASS_ID}
         branchId={BRANCH_ID}
+        disciplineId={DISCIPLINE_ID}
         disciplineName="Karate"
         startTime="17:00"
       />
@@ -77,6 +84,10 @@ describe("RemoveRecurringClassDialog", () => {
     mocks.deactivateScheduledClass.mockResolvedValue({
       success: true,
       data: { id: SCHEDULED_CLASS_ID },
+    });
+    mocks.deactivateScheduledClassSeries.mockResolvedValue({
+      success: true,
+      data: { deactivated: 3 },
     });
   });
 
@@ -115,15 +126,66 @@ describe("RemoveRecurringClassDialog", () => {
     );
   });
 
-  it("confirms by deactivating the scheduled class and takes the success path", async () => {
+  it("confirms with the default series scope via deactivateScheduledClassSeries", async () => {
     rendered = renderDialog();
 
     act(() => {
       rendered?.container.querySelector("button")?.click();
     });
 
+    const content = queryDialogContent()!;
+    const seriesRadio = content.querySelector<HTMLInputElement>(
+      'input[type="radio"][value="series"]'
+    );
+    expect(seriesRadio?.checked).toBe(true);
+
     const confirmButton = [
-      ...queryDialogContent()!.querySelectorAll<HTMLButtonElement>("button"),
+      ...content.querySelectorAll<HTMLButtonElement>("button"),
+    ].find((button) =>
+      button.textContent?.includes(
+        REMOVE_RECURRING_CLASS_MESSAGES.CONFIRM_ACTION
+      )
+    );
+    expect(confirmButton).toBeDefined();
+
+    await act(async () => {
+      confirmButton?.click();
+    });
+    await act(async () => {});
+
+    expect(mocks.deactivateScheduledClassSeries).toHaveBeenCalledWith({
+      branch_id: BRANCH_ID,
+      discipline_id: DISCIPLINE_ID,
+      start_time: "17:00",
+    });
+    expect(mocks.deactivateScheduledClass).not.toHaveBeenCalled();
+    expect(mocks.toastSuccess).toHaveBeenCalledWith(
+      REMOVE_RECURRING_CLASS_MESSAGES.SUCCESS_SERIES
+    );
+    expect(mocks.refresh).toHaveBeenCalled();
+    expect(queryDialogContent()).toBeNull();
+  });
+
+  it("calls deactivateScheduledClass when the single scope is selected", async () => {
+    rendered = renderDialog();
+
+    act(() => {
+      rendered?.container.querySelector("button")?.click();
+    });
+
+    const content = queryDialogContent()!;
+    const singleRadio = content.querySelector<HTMLInputElement>(
+      'input[type="radio"][value="single"]'
+    );
+    expect(singleRadio).toBeDefined();
+
+    act(() => {
+      singleRadio?.click();
+    });
+    expect(singleRadio?.checked).toBe(true);
+
+    const confirmButton = [
+      ...content.querySelectorAll<HTMLButtonElement>("button"),
     ].find((button) =>
       button.textContent?.includes(
         REMOVE_RECURRING_CLASS_MESSAGES.CONFIRM_ACTION
@@ -140,6 +202,7 @@ describe("RemoveRecurringClassDialog", () => {
       id: SCHEDULED_CLASS_ID,
       branch_id: BRANCH_ID,
     });
+    expect(mocks.deactivateScheduledClassSeries).not.toHaveBeenCalled();
     expect(mocks.toastSuccess).toHaveBeenCalledWith(
       REMOVE_RECURRING_CLASS_MESSAGES.SUCCESS
     );
@@ -147,8 +210,13 @@ describe("RemoveRecurringClassDialog", () => {
     expect(queryDialogContent()).toBeNull();
   });
 
+  it("normalizes start_time with seconds to HH:MM", () => {
+    expect(normalizeStartTime("17:00")).toBe("17:00");
+    expect(normalizeStartTime("17:00:00")).toBe("17:00");
+  });
+
   it("keeps the dialog open and shows the error path on failure", async () => {
-    mocks.deactivateScheduledClass.mockResolvedValue({
+    mocks.deactivateScheduledClassSeries.mockResolvedValue({
       success: false,
       error: "La clase solicitada no existe o no tiene permisos para accederla.",
     });

@@ -17,7 +17,10 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { deactivateScheduledClass } from "@/lib/domain/classes/actions";
+import {
+  deactivateScheduledClass,
+  deactivateScheduledClassSeries,
+} from "@/lib/domain/classes/actions";
 import {
   COMMON_MESSAGES,
   REMOVE_RECURRING_CLASS_MESSAGES,
@@ -26,9 +29,21 @@ import {
 const DEFAULT_TRIGGER_CLASSES =
   "text-destructive border-destructive hover:bg-destructive hover:text-white";
 
+/**
+ * Normalize a SessionView start_time ("HH:MM" or "HH:MM:SS") to "HH:MM",
+ * the format deactivateScheduledClassSeriesSchema expects.
+ */
+export function normalizeStartTime(startTime: string): string {
+  const parts = startTime.split(":");
+  return parts.length > 2 ? `${parts[0]}:${parts[1]}` : startTime;
+}
+
+type RemoveScope = "series" | "single";
+
 interface RemoveRecurringClassDialogProps {
   scheduledClassId: string;
   branchId: string;
+  disciplineId: string;
   disciplineName: string;
   startTime: string;
   trigger?: React.ReactNode;
@@ -39,6 +54,7 @@ interface RemoveRecurringClassDialogProps {
 export function RemoveRecurringClassDialog({
   scheduledClassId,
   branchId,
+  disciplineId,
   disciplineName,
   startTime,
   trigger,
@@ -47,6 +63,7 @@ export function RemoveRecurringClassDialog({
 }: RemoveRecurringClassDialogProps) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
+  const [scope, setScope] = useState<RemoveScope>("series");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -60,14 +77,25 @@ export function RemoveRecurringClassDialog({
   function handleConfirm() {
     setError(null);
     startTransition(async () => {
-      const result = await deactivateScheduledClass({
-        id: scheduledClassId,
-        branch_id: branchId,
-      });
+      const result =
+        scope === "series"
+          ? await deactivateScheduledClassSeries({
+              branch_id: branchId,
+              discipline_id: disciplineId,
+              start_time: normalizeStartTime(startTime),
+            })
+          : await deactivateScheduledClass({
+              id: scheduledClassId,
+              branch_id: branchId,
+            });
 
       if (result.success) {
         setIsOpen(false);
-        toast.success(REMOVE_RECURRING_CLASS_MESSAGES.SUCCESS);
+        toast.success(
+          scope === "series"
+            ? REMOVE_RECURRING_CLASS_MESSAGES.SUCCESS_SERIES
+            : REMOVE_RECURRING_CLASS_MESSAGES.SUCCESS
+        );
         router.refresh();
       } else {
         setError(result.error ?? COMMON_MESSAGES.UNEXPECTED_ERROR);
@@ -106,6 +134,54 @@ export function RemoveRecurringClassDialog({
             {REMOVE_RECURRING_CLASS_MESSAGES.DIALOG_DESCRIPTION}
           </AlertDialogDescription>
         </AlertDialogHeader>
+
+        <div
+          role="radiogroup"
+          aria-label={REMOVE_RECURRING_CLASS_MESSAGES.SCOPE_GROUP_LABEL}
+          className="flex flex-col gap-2"
+        >
+          <label className="flex items-start gap-2">
+            <input
+              type="radio"
+              name="remove-recurring-class-scope"
+              value="series"
+              checked={scope === "series"}
+              onChange={() => setScope("series")}
+              disabled={isPending}
+              className="mt-1 accent-destructive"
+            />
+            <span className="flex flex-col gap-0.5">
+              <span className="text-sm font-medium">
+                {REMOVE_RECURRING_CLASS_MESSAGES.SCOPE_SERIES_LABEL}
+              </span>
+              <span className="text-sm text-muted-foreground">
+                {REMOVE_RECURRING_CLASS_MESSAGES.SCOPE_SERIES_HINT(
+                  disciplineName,
+                  startTime
+                )}
+              </span>
+            </span>
+          </label>
+          <label className="flex items-start gap-2">
+            <input
+              type="radio"
+              name="remove-recurring-class-scope"
+              value="single"
+              checked={scope === "single"}
+              onChange={() => setScope("single")}
+              disabled={isPending}
+              className="mt-1 accent-destructive"
+            />
+            <span className="flex flex-col gap-0.5">
+              <span className="text-sm font-medium">
+                {REMOVE_RECURRING_CLASS_MESSAGES.SCOPE_SINGLE_LABEL}
+              </span>
+              <span className="text-sm text-muted-foreground">
+                {REMOVE_RECURRING_CLASS_MESSAGES.SCOPE_SINGLE_HINT}
+              </span>
+            </span>
+          </label>
+        </div>
 
         {error && (
           <p role="alert" className="text-sm text-destructive">

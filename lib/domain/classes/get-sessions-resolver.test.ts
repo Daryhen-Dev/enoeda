@@ -4,6 +4,8 @@
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
+import { formatDateOnly } from "@/lib/date";
+
 vi.mock("server-only", () => ({}));
 const mockQueryRaw = vi.fn();
 const mockFindMany = vi.fn();
@@ -49,8 +51,16 @@ function setupAuth() {
   });
 }
 
-function makeClass(teacherId: string) {
-  return { id: CLASS, day_of_week: 0, start_time: new Date("1970-01-01T08:00:00Z"), default_teacher_id: teacherId, disciplines: { id: "d1", name: "Yoga", code: "YG" } };
+function makeClass(teacherId: string, isActive = true) {
+  return { id: CLASS, day_of_week: 0, start_time: new Date("1970-01-01T08:00:00Z"), default_teacher_id: teacherId, is_active: isActive, disciplines: { id: "d1", name: "Yoga", code: "YG" } };
+}
+
+/** Guarantee a Monday strictly before today (within the last 7 days). */
+function pastMondayDateStr(): string {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  while (d.getDay() !== 1) d.setDate(d.getDate() - 1);
+  return formatDateOnly(d);
 }
 
 describe("getSessionsForRange resolver integration", () => {
@@ -84,5 +94,77 @@ describe("getSessionsForRange resolver integration", () => {
     const r = await getSessionsForRange({ branch_id: BRANCH, start_date: "2026-09-07", end_date: "2026-09-07" });
     expect(r.success).toBe(true);
     expect(r.data![0].teacher_id).toBe(T_OVR);
+  });
+
+  it("yields past occurrences only for an inactive template", async () => {
+    mockFindMany.mockResolvedValue([makeClass(T_A, false)]);
+    mockQueryRaw.mockResolvedValue([]);
+    setupAuth();
+    const todayStr = formatDateOnly(new Date());
+    const start = new Date();
+    start.setDate(start.getDate() - 10);
+    const end = new Date();
+    end.setDate(end.getDate() + 10);
+    const r = await getSessionsForRange({
+      branch_id: BRANCH,
+      start_date: formatDateOnly(start),
+      end_date: formatDateOnly(end),
+    });
+    expect(r.success).toBe(true);
+    const classSessions = r.data!.filter((s) => s.scheduled_class_id === CLASS);
+    // The 21-day window always contains a Monday strictly before today.
+    expect(classSessions.length).toBeGreaterThan(0);
+    expect(
+      classSessions.every((s) => s.session_date < todayStr)
+    ).toBe(true);
+  });
+
+  it("keeps active template occurrences from today onward unchanged", async () => {
+    mockFindMany.mockResolvedValue([makeClass(T_A, true)]);
+    mockQueryRaw.mockResolvedValue([]);
+    setupAuth();
+    const todayStr = formatDateOnly(new Date());
+    const start = new Date();
+    start.setDate(start.getDate() - 10);
+    const end = new Date();
+    end.setDate(end.getDate() + 10);
+    const r = await getSessionsForRange({
+      branch_id: BRANCH,
+      start_date: formatDateOnly(start),
+      end_date: formatDateOnly(end),
+    });
+    expect(r.success).toBe(true);
+    const classSessions = r.data!.filter((s) => s.scheduled_class_id === CLASS);
+    // Any 10-day window after today always contains the next Monday.
+    expect(
+      classSessions.some((s) => s.session_date > todayStr)
+    ).toBe(true);
+  });
+
+  it("keeps attendance overlay intact for past inactive occurrences", async () => {
+    const pastDate = pastMondayDateStr();
+    mockFindMany.mockResolvedValue([makeClass(T_A, false)]);
+    mockQueryRaw.mockResolvedValue([]);
+    mockTx.attendance.findMany.mockResolvedValue([
+      {
+        scheduled_class_id: CLASS,
+        one_time_class_id: null,
+        session_date: new Date(pastDate),
+        attended: true,
+      },
+    ]);
+    setupAuth();
+    const r = await getSessionsForRange({
+      branch_id: BRANCH,
+      start_date: pastDate,
+      end_date: pastDate,
+    });
+    expect(r.success).toBe(true);
+    expect(r.data).toHaveLength(1);
+    expect(r.data![0].scheduled_class_id).toBe(CLASS);
+    expect(r.data![0].attendance).toEqual({
+      record_count: 1,
+      present_count: 1,
+    });
   });
 });

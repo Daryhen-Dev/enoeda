@@ -14,12 +14,14 @@ import { describe, expect, it } from "vitest";
 import {
   updateScheduledClassSchema,
   deactivateScheduledClassSchema,
+  deactivateScheduledClassSeriesSchema,
   suspendSessionSchema,
   reinstateSessionSchema,
   assignTeacherSchema,
 } from "@/lib/domain/classes/schema";
 
 const BRANCH_A = "aaaaaaaa-1111-2222-8333-444444444444";
+const DISCIPLINE_A = "cccccccc-1111-2222-8333-444444444444";
 const CLASS_ID = "11111111-2222-3333-8444-555555555555";
 
 describe("Schema branch_id enforcement (fail-closed)", () => {
@@ -61,6 +63,52 @@ describe("Schema branch_id enforcement (fail-closed)", () => {
       const result = deactivateScheduledClassSchema.safeParse({
         id: CLASS_ID,
         branch_id: "not-a-uuid",
+      });
+      expect(result.success).toBe(false);
+    });
+  });
+
+  describe("deactivateScheduledClassSeriesSchema", () => {
+    it("accepts a valid series payload", () => {
+      const result = deactivateScheduledClassSeriesSchema.safeParse({
+        branch_id: BRANCH_A,
+        discipline_id: DISCIPLINE_A,
+        start_time: "17:00",
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it("rejects when discipline_id is absent", () => {
+      const result = deactivateScheduledClassSeriesSchema.safeParse({
+        branch_id: BRANCH_A,
+        start_time: "17:00",
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it("rejects invalid branch_id format", () => {
+      const result = deactivateScheduledClassSeriesSchema.safeParse({
+        branch_id: "not-a-uuid",
+        discipline_id: DISCIPLINE_A,
+        start_time: "17:00",
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it("rejects start_time without leading zero", () => {
+      const result = deactivateScheduledClassSeriesSchema.safeParse({
+        branch_id: BRANCH_A,
+        discipline_id: DISCIPLINE_A,
+        start_time: "7:00",
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it("rejects start_time with seconds", () => {
+      const result = deactivateScheduledClassSeriesSchema.safeParse({
+        branch_id: BRANCH_A,
+        discipline_id: DISCIPLINE_A,
+        start_time: "17:00:00",
       });
       expect(result.success).toBe(false);
     });

@@ -662,9 +662,17 @@ export const REMOVE_RECURRING_CLASS_MESSAGES = {
   ACTION: "Quitar clase",
   DIALOG_TITLE: "¿Quitar la clase recurrente?",
   DIALOG_DESCRIPTION:
-    "La clase dejará de aparecer en el calendario a partir de hoy. La asistencia histórica se conserva. Esta acción no se puede deshacer desde la aplicación.",
+    "Las clases dejarán de aparecer en el calendario a partir de hoy. Las clases pasadas permanecerán visibles en el calendario con su historial de asistencia. Esta acción no se puede deshacer desde la aplicación.",
+  SCOPE_GROUP_LABEL: "Alcance de la eliminación",
+  SCOPE_SERIES_LABEL: "Todas las clases de este horario",
+  SCOPE_SERIES_HINT: (disciplineName: string, startTime: string) =>
+    `Toda la semana para ${disciplineName} a las ${startTime}.`,
+  SCOPE_SINGLE_LABEL: "Solo esta clase semanal",
+  SCOPE_SINGLE_HINT:
+    "Únicamente la clase de este día de la semana; las de los demás días en este horario siguen activas.",
   CONFIRM_ACTION: "Quitar clase",
   SUCCESS: "Clase recurrente quitada correctamente.",
+  SUCCESS_SERIES: "Clases recurrentes quitadas correctamente.",
   ARIA_LABEL: (disciplineName: string, startTime: string) =>
     `Quitar la clase recurrente de ${disciplineName}, a las ${startTime}`,
 } as const
