@@ -102,6 +102,18 @@ export const createBranchTeacherSchema = z
   })
   .extend(accountProfileSchema.shape);
 
+/**
+ * Branch admin grants the teacher role to an ALREADY EXISTING Auth account
+ * located by email. This flow never creates an Auth account; it shares the
+ * email/branchId/profile field validations with the account-creation schemas.
+ */
+export const assignTeacherToExistingAccountSchema = z
+  .object({
+    email: z.email({ error: ROLE_MESSAGES.INVALID_EMAIL }),
+    branchId: z.string().uuid({ message: ROLE_MESSAGES.INVALID_BRANCH_ID }),
+  })
+  .extend(accountProfileSchema.shape);
+
 /** List teacher accounts for a branch (for teacher-picker UI). */
 export const listBranchTeacherOptionsSchema = z.object({
   branchId: z.string().uuid({ message: ROLE_MESSAGES.INVALID_BRANCH_ID }),
@@ -109,6 +121,9 @@ export const listBranchTeacherOptionsSchema = z.object({
 
 export type CreateBranchAdminInput = z.infer<typeof createBranchAdminSchema>;
 export type CreateBranchTeacherInput = z.infer<typeof createBranchTeacherSchema>;
+export type AssignTeacherToExistingAccountInput = z.infer<
+  typeof assignTeacherToExistingAccountSchema
+>;
 export type ListBranchTeacherOptionsInput = z.infer<typeof listBranchTeacherOptionsSchema>;
 
 // --- Legacy flat schemas (kept for reference; RPCs dropped in migration) ---

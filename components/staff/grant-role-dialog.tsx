@@ -18,8 +18,12 @@ import {
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { CreatedAccountDialog } from "@/components/owner/created-account-dialog"
-import { createBranchTeacher } from "@/lib/domain/roles/actions"
+import {
+  assignTeacherToExistingAccount,
+  createBranchTeacher,
+} from "@/lib/domain/roles/actions"
 import type { CreatedAccountCredentials } from "@/lib/domain/roles/actions"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import {
   TEACHER_MANAGEMENT_MESSAGES,
   ROLE_CREATION_MESSAGES,
@@ -31,14 +35,20 @@ interface AssignTeacherDialogProps {
   branchId: string
 }
 
+type AssignMode = "existing" | "create"
+
+const ASSIGN_MODES: AssignMode[] = ["existing", "create"]
+
 /**
- * Admin-scoped dialog for creating a brand-new teacher account within
- * the admin's own branch. Authorization (admin-of-this-branch) is
- * enforced server-side by `createBranchTeacher`.
+ * Admin-scoped dialog for granting the teacher role within the admin's own
+ * branch. Two modes: assign the role to an already-existing account (never
+ * creates anything) or create a brand-new teacher account. Authorization
+ * (admin-of-this-branch) is enforced server-side by both server actions.
  */
 export function GrantRoleDialog({ branchId }: AssignTeacherDialogProps) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
+  const [mode, setMode] = useState<AssignMode>("existing")
   const [email, setEmail] = useState("")
   const [firstName, setFirstName] = useState("")
   const [surname, setSurname] = useState("")
@@ -61,6 +71,28 @@ export function GrantRoleDialog({ branchId }: AssignTeacherDialogProps) {
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     startTransition(async () => {
+      if (mode === "existing") {
+        const result = await assignTeacherToExistingAccount({
+          email,
+          branchId,
+          first_name: firstName,
+          surname,
+          phone: phone || undefined,
+          date_of_birth: dateOfBirth,
+        })
+        if (result.success) {
+          setOpen(false)
+          resetForm()
+          toast.success(
+            TEACHER_MANAGEMENT_MESSAGES.EXISTING_ACCOUNT_ASSIGNED_SUCCESS
+          )
+          router.refresh()
+        } else {
+          setError(result.error ?? COMMON_MESSAGES.UNEXPECTED_ERROR)
+        }
+        return
+      }
+
       const result = await createBranchTeacher({
         email,
         branchId,
@@ -99,9 +131,29 @@ export function GrantRoleDialog({ branchId }: AssignTeacherDialogProps) {
               {TEACHER_MANAGEMENT_MESSAGES.ASSIGN_DIALOG_TITLE}
             </SheetTitle>
             <SheetDescription>
-              {TEACHER_MANAGEMENT_MESSAGES.ASSIGN_DIALOG_DESCRIPTION}
+              {mode === "existing"
+                ? TEACHER_MANAGEMENT_MESSAGES.EXISTING_MODE_DESCRIPTION
+                : TEACHER_MANAGEMENT_MESSAGES.ASSIGN_DIALOG_DESCRIPTION}
             </SheetDescription>
           </SheetHeader>
+
+          <ToggleGroup
+            multiple={false}
+            value={[mode]}
+            onValueChange={(value) => {
+              const next = value[0] as AssignMode | undefined
+              if (next && ASSIGN_MODES.includes(next)) setMode(next)
+            }}
+            variant="outline"
+            aria-label={TEACHER_MANAGEMENT_MESSAGES.MODE_TOGGLE_LABEL}
+          >
+            <ToggleGroupItem value="existing">
+              {TEACHER_MANAGEMENT_MESSAGES.MODE_EXISTING}
+            </ToggleGroupItem>
+            <ToggleGroupItem value="create">
+              {TEACHER_MANAGEMENT_MESSAGES.MODE_CREATE}
+            </ToggleGroupItem>
+          </ToggleGroup>
 
           <form
             onSubmit={handleSubmit}
@@ -183,8 +235,12 @@ export function GrantRoleDialog({ branchId }: AssignTeacherDialogProps) {
               className="self-start"
             >
               {isPending
-                ? ROLE_CREATION_MESSAGES.CREATING_ACCOUNT
-                : ROLE_CREATION_MESSAGES.CREATE_ACCOUNT_ACTION}
+                ? mode === "existing"
+                  ? TEACHER_MANAGEMENT_MESSAGES.ASSIGNING
+                  : ROLE_CREATION_MESSAGES.CREATING_ACCOUNT
+                : mode === "existing"
+                  ? TEACHER_MANAGEMENT_MESSAGES.EXISTING_MODE_SUBMIT
+                  : ROLE_CREATION_MESSAGES.CREATE_ACCOUNT_ACTION}
             </Button>
           </form>
         </SheetContent>

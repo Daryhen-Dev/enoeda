@@ -425,6 +425,9 @@ export const OWNER_MESSAGES = {
 export const ROLE_CREATION_MESSAGES = {
   EMAIL_ALREADY_EXISTS: "Ya existe una cuenta con este correo electrónico.",
   ALREADY_ADMIN_IN_BRANCH: "Esta persona ya es administradora de esta sucursal.",
+  NO_ACCOUNT_FOR_EMAIL:
+    "No existe una cuenta con ese correo electrónico. La persona debe tener una cuenta antes de poder asignarle el cargo.",
+  ALREADY_TEACHER_IN_BRANCH: "Esta persona ya es profesora activa de esta sucursal.",
   EXISTING_ACCOUNT_ASSIGNED_TITLE: "Cargo asignado a una cuenta existente",
   EXISTING_ACCOUNT_ASSIGNED_DESCRIPTION:
     "El correo electrónico ya tenía una cuenta en el sistema. Se le asignó el cargo de administradora de la sucursal. No se generó una contraseña nueva.",
@@ -487,7 +490,15 @@ export const TEACHER_MANAGEMENT_MESSAGES = {
   ROLE_LABEL: "Rol",
   ASSIGN_ACTION: "Asignar profesor",
   ASSIGN_DIALOG_TITLE: "Asignar profesor",
-  ASSIGN_DIALOG_DESCRIPTION: "Ingrese el UUID del usuario que será profesor en esta sucursal.",
+  ASSIGN_DIALOG_DESCRIPTION: "Cree una cuenta nueva e ingrese los datos de la persona que será profesora en esta sucursal.",
+  MODE_TOGGLE_LABEL: "Modo de asignación",
+  MODE_EXISTING: "Cuenta existente",
+  MODE_CREATE: "Crear cuenta",
+  EXISTING_MODE_DESCRIPTION:
+    "Asigne el cargo de profesor a una cuenta ya registrada. Los datos personales se usan solo si la cuenta aún no tiene un perfil; nunca se sobrescriben los datos existentes.",
+  EXISTING_MODE_SUBMIT: "Asignar cargo",
+  EXISTING_ACCOUNT_ASSIGNED_SUCCESS:
+    "Cargo de profesor asignado a la cuenta existente correctamente.",
   TARGET_USER_LABEL: "ID de usuario (UUID)",
   ASSIGNING: "Asignando…",
   DEACTIVATE_ACTION: "Desactivar",
