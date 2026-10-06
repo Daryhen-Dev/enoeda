@@ -18,9 +18,9 @@ describe("Class series and one-time active migration — structural validation",
     );
   });
 
-  it("backfills series_id for every legacy row using the min(id) of each (branch_id, discipline_id, start_time) group", () => {
+  it("backfills series_id for every legacy row using the lowest id (uuid ordering) of each (branch_id, discipline_id, start_time) group", () => {
     expect(sql).toMatch(
-      /WITH legacy_series AS \([\s\S]*?min\(id\) AS series_id[\s\S]*?GROUP BY branch_id, discipline_id, start_time/
+      /WITH legacy_series AS \([\s\S]*?\(array_agg\(id ORDER BY id\)\)\[1\] AS series_id[\s\S]*?GROUP BY branch_id, discipline_id, start_time/
     );
     expect(sql).toMatch(
       /UPDATE public\.scheduled_classes[\s\S]*?SET series_id = ls\.series_id[\s\S]*?FROM legacy_series/

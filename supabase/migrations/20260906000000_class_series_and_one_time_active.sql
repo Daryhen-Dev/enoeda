@@ -27,12 +27,14 @@ CREATE INDEX scheduled_classes_series_id_idx
 
 -- =============================================================================
 -- 2. Backfill series_id from the legacy (branch_id, discipline_id, start_time)
---    grouping; the group's min(id) becomes the shared series identity.
+--    grouping; the group's lowest id (uuid ordering) becomes the shared series
+--    identity. min() is not defined for uuid, so array_agg with ORDER BY is
+--    used instead.
 -- =============================================================================
 
 WITH legacy_series AS (
   SELECT
-    min(id) AS series_id,
+    (array_agg(id ORDER BY id))[1] AS series_id,
     branch_id,
     discipline_id,
     start_time
