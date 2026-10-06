@@ -425,6 +425,9 @@ export const OWNER_MESSAGES = {
 export const ROLE_CREATION_MESSAGES = {
   EMAIL_ALREADY_EXISTS: "Ya existe una cuenta con este correo electrónico.",
   ALREADY_ADMIN_IN_BRANCH: "Esta persona ya es administradora de esta sucursal.",
+  NO_ACCOUNT_FOR_EMAIL:
+    "No existe una cuenta con ese correo electrónico. La persona debe tener una cuenta antes de poder asignarle el cargo.",
+  ALREADY_TEACHER_IN_BRANCH: "Esta persona ya es profesora activa de esta sucursal.",
   EXISTING_ACCOUNT_ASSIGNED_TITLE: "Cargo asignado a una cuenta existente",
   EXISTING_ACCOUNT_ASSIGNED_DESCRIPTION:
     "El correo electrónico ya tenía una cuenta en el sistema. Se le asignó el cargo de administradora de la sucursal. No se generó una contraseña nueva.",

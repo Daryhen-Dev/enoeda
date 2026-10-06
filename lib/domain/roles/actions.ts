@@ -17,6 +17,7 @@ import {
   setBranchDefaultTeacherSchema,
   createBranchAdminSchema,
   createBranchTeacherSchema,
+  assignTeacherToExistingAccountSchema,
   listBranchTeacherOptionsSchema,
   type AssignBranchAdminInput,
   type AssignBranchTeacherInput,
@@ -26,6 +27,7 @@ import {
   type SetBranchDefaultTeacherInput,
   type CreateBranchAdminInput,
   type CreateBranchTeacherInput,
+  type AssignTeacherToExistingAccountInput,
 } from "./schema";
 
 export interface ActionResult<T = unknown> {
@@ -484,6 +486,88 @@ export async function createBranchTeacher(
     success: true,
     data: { mode: "created", email: parsed.data.email, temporaryPassword },
   };
+}
+
+/**
+ * Branch admin grants the teacher role to an ALREADY EXISTING Auth account,
+ * located by email. This flow never creates an Auth account. It blocks when
+ * the target already holds an active teacher assignment for the branch, calls
+ * the idempotent `assign_branch_teacher` RPC, and ensures a canonical profile
+ * exists (never overwriting an existing one).
+ */
+export async function assignTeacherToExistingAccount(
+  input: AssignTeacherToExistingAccountInput
+): Promise<ActionResult<{ email: string }>> {
+  const parsed = assignTeacherToExistingAccountSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: parsed.error.issues[0].message };
+
+  const identity = await getAuthenticatedContext();
+  if (!identity.ok) return { success: false, error: COMMON_MESSAGES.AUTHENTICATION_REQUIRED };
+  const isAdminOfBranch = identity.ctx.assignments.some(
+    (assignment) =>
+      assignment.role === "admin" && assignment.branchId === parsed.data.branchId
+  );
+  if (!isAdminOfBranch) {
+    return { success: false, error: COMMON_MESSAGES.INSUFFICIENT_PERMISSIONS };
+  }
+
+  const admin = createAdminClient();
+  const lookup = await findAuthUserIdByEmail(admin, parsed.data.email);
+  if (lookup.status === "failed") {
+    return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
+  }
+  if (lookup.status === "not_found") {
+    return { success: false, error: ROLE_CREATION_MESSAGES.NO_ACCOUNT_FOR_EMAIL };
+  }
+
+  // Block when the target already holds an active teacher assignment here.
+  const { data: activeTeacher, error: rolesError } = await admin
+    .from("user_roles")
+    .select("user_id")
+    .eq("user_id", lookup.userId)
+    .eq("role", "teacher")
+    .eq("branch_id", parsed.data.branchId)
+    .is("revoked_at", null)
+    .maybeSingle();
+  if (rolesError) return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
+  if (activeTeacher) {
+    return { success: false, error: ROLE_CREATION_MESSAGES.ALREADY_TEACHER_IN_BRANCH };
+  }
+
+  // The RPC keeps database-side admin-of-branch authorization authoritative.
+  const supabase = await createClient();
+  const { error: assignError } = await supabase.rpc("assign_branch_teacher", {
+    p_target: lookup.userId,
+    p_branch_id: parsed.data.branchId,
+  });
+  if (assignError) {
+    return {
+      success: false,
+      error: isAuthorizationError(assignError.message)
+        ? COMMON_MESSAGES.INSUFFICIENT_PERMISSIONS
+        : COMMON_MESSAGES.UNEXPECTED_ERROR,
+    };
+  }
+
+  // Ensure a canonical profile exists; never overwrite an existing one.
+  const { data: profile, error: profileLookupError } = await admin
+    .from("user_profiles")
+    .select("user_id")
+    .eq("user_id", lookup.userId)
+    .maybeSingle();
+  if (profileLookupError) {
+    return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
+  }
+  if (!profile) {
+    const { error: profileError } = await createCanonicalProfile(
+      admin,
+      lookup.userId,
+      parsed.data
+    );
+    if (profileError) return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
+  }
+
+  return { success: true, data: { email: parsed.data.email } };
 }
 
 /**

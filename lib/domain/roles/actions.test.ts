@@ -13,8 +13,9 @@ vi.mock("@/lib/auth/server-context", () => ({ withAuthenticatedUser: vi.fn() }))
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getAuthenticatedContext } from "@/lib/auth/identity-resolver";
-import { ROLE_CREATION_MESSAGES } from "@/lib/localization/es-ec";
-import { createBranchAdmin, revokeBranchTeacher } from "./actions";
+import { COMMON_MESSAGES, ROLE_CREATION_MESSAGES } from "@/lib/localization/es-ec";
+import { assignTeacherToExistingAccount, createBranchAdmin, revokeBranchTeacher } from "./actions";
+import { ROLE_MESSAGES } from "./schema";
 
 const BRANCH = "aaaaaaaa-1111-2222-8333-444444444444";
 const TARGET = "bbbbbbbb-1111-2222-8333-444444444444";
@@ -305,5 +306,218 @@ describe("createBranchAdmin", () => {
     expect(admin.auth.admin.createUser).not.toHaveBeenCalled();
     expect(admin.from).not.toHaveBeenCalled();
     expect(builders.size).toBe(0);
+  });
+});
+
+// --- assignTeacherToExistingAccount ---------------------------------------------
+
+const EXISTING_TEACHER_INPUT = {
+  email: "profesor.existente@example.com",
+  branchId: BRANCH,
+  first_name: "Pedro",
+  surname: "Gómez",
+  phone: "0988888888",
+  date_of_birth: "1985-03-20",
+};
+
+const OTHER_BRANCH = "dddddddd-1111-2222-8333-444444444444";
+
+const BRANCH_ADMIN_IDENTITY = identityContext({
+  ok: true,
+  ctx: {
+    userId: "admin-1",
+    roles: ["admin"],
+    assignments: [{ role: "admin", branchId: BRANCH }],
+  },
+});
+
+function identityWithAssignments(assignments: Array<{ role: string; branchId: string }>) {
+  return identityContext({ ok: true, ctx: { userId: "u-1", roles: ["admin"], assignments } });
+}
+
+describe("assignTeacherToExistingAccount", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(getAuthenticatedContext).mockResolvedValue(BRANCH_ADMIN_IDENTITY);
+  });
+
+  it("assigns the teacher role via RPC using the looked-up user id", async () => {
+    mockRpc.mockResolvedValue({ data: null, error: null });
+    const { admin, builders } = buildAdminClient({
+      listUsersPages: [
+        { data: { users: [{ id: TARGET, email: EXISTING_TEACHER_INPUT.email }] }, error: null },
+      ],
+      tables: {
+        user_roles: { data: null, error: null },
+        user_profiles: { data: null, error: null },
+      },
+    });
+    useAdminClient(admin);
+
+    const result = await assignTeacherToExistingAccount(EXISTING_TEACHER_INPUT);
+
+    expect(admin.auth.admin.createUser).not.toHaveBeenCalled();
+    expect(mockRpc).toHaveBeenCalledWith("assign_branch_teacher", {
+      p_target: TARGET,
+      p_branch_id: BRANCH,
+    });
+    expect(builders.get("user_profiles")?.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        user_id: TARGET,
+        first_name: EXISTING_TEACHER_INPUT.first_name,
+        surname: EXISTING_TEACHER_INPUT.surname,
+        phone: EXISTING_TEACHER_INPUT.phone,
+        date_of_birth: EXISTING_TEACHER_INPUT.date_of_birth,
+      })
+    );
+    expect(result).toEqual({ success: true, data: { email: EXISTING_TEACHER_INPUT.email } });
+  });
+
+  it("returns NO_ACCOUNT_FOR_EMAIL and never creates an account or calls the RPC for an unknown email", async () => {
+    const { admin } = buildAdminClient({
+      listUsersPages: [
+        { data: { users: [{ id: "u-other", email: "otro@example.com" }] }, error: null },
+      ],
+    });
+    useAdminClient(admin);
+
+    const result = await assignTeacherToExistingAccount(EXISTING_TEACHER_INPUT);
+
+    expect(result).toEqual({
+      success: false,
+      error: ROLE_CREATION_MESSAGES.NO_ACCOUNT_FOR_EMAIL,
+    });
+    expect(admin.auth.admin.createUser).not.toHaveBeenCalled();
+    expect(mockRpc).not.toHaveBeenCalled();
+  });
+
+  it("returns UNEXPECTED_ERROR when the auth email lookup fails", async () => {
+    const { admin } = buildAdminClient({
+      listUsersPages: [{ data: null, error: { message: "network failure" } }],
+    });
+    useAdminClient(admin);
+
+    const result = await assignTeacherToExistingAccount(EXISTING_TEACHER_INPUT);
+
+    expect(result).toEqual({ success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR });
+    expect(mockRpc).not.toHaveBeenCalled();
+  });
+
+  it("returns ALREADY_TEACHER_IN_BRANCH and skips the RPC when already an active teacher", async () => {
+    const { admin } = buildAdminClient({
+      listUsersPages: [
+        { data: { users: [{ id: TARGET, email: EXISTING_TEACHER_INPUT.email }] }, error: null },
+      ],
+      tables: {
+        user_roles: { data: { user_id: TARGET }, error: null },
+      },
+    });
+    useAdminClient(admin);
+
+    const result = await assignTeacherToExistingAccount(EXISTING_TEACHER_INPUT);
+
+    expect(result).toEqual({
+      success: false,
+      error: ROLE_CREATION_MESSAGES.ALREADY_TEACHER_IN_BRANCH,
+    });
+    expect(mockRpc).not.toHaveBeenCalled();
+    expect(admin.auth.admin.createUser).not.toHaveBeenCalled();
+  });
+
+  it("rejects callers that are not admins of the target branch", async () => {
+    const { admin } = buildAdminClient();
+    useAdminClient(admin);
+
+    vi.mocked(getAuthenticatedContext).mockResolvedValue(
+      identityWithAssignments([{ role: "teacher", branchId: BRANCH }])
+    );
+    expect((await assignTeacherToExistingAccount(EXISTING_TEACHER_INPUT)).success).toBe(false);
+
+    vi.mocked(getAuthenticatedContext).mockResolvedValue(
+      identityWithAssignments([{ role: "admin", branchId: OTHER_BRANCH }])
+    );
+    expect((await assignTeacherToExistingAccount(EXISTING_TEACHER_INPUT)).success).toBe(false);
+
+    vi.mocked(getAuthenticatedContext).mockResolvedValue(UNAUTHENTICATED_IDENTITY);
+    expect(await assignTeacherToExistingAccount(EXISTING_TEACHER_INPUT)).toEqual({
+      success: false,
+      error: COMMON_MESSAGES.AUTHENTICATION_REQUIRED,
+    });
+
+    expect(mockRpc).not.toHaveBeenCalled();
+    expect(admin.auth.admin.listUsers).not.toHaveBeenCalled();
+    expect(admin.from).not.toHaveBeenCalled();
+  });
+
+  it("leaves an existing canonical profile untouched", async () => {
+    mockRpc.mockResolvedValue({ data: null, error: null });
+    const { admin, builders } = buildAdminClient({
+      listUsersPages: [
+        { data: { users: [{ id: TARGET, email: EXISTING_TEACHER_INPUT.email }] }, error: null },
+      ],
+      tables: {
+        user_roles: { data: null, error: null },
+        user_profiles: { data: { user_id: TARGET }, error: null },
+      },
+    });
+    useAdminClient(admin);
+
+    const result = await assignTeacherToExistingAccount(EXISTING_TEACHER_INPUT);
+
+    expect(result).toEqual({ success: true, data: { email: EXISTING_TEACHER_INPUT.email } });
+    expect(builders.get("user_profiles")?.insert).not.toHaveBeenCalled();
+  });
+
+  it("maps an RPC authorization failure to INSUFFICIENT_PERMISSIONS", async () => {
+    mockRpc.mockResolvedValue({ data: null, error: { message: "unauthorized for branch" } });
+    const { admin } = buildAdminClient({
+      listUsersPages: [
+        { data: { users: [{ id: TARGET, email: EXISTING_TEACHER_INPUT.email }] }, error: null },
+      ],
+      tables: {
+        user_roles: { data: null, error: null },
+        user_profiles: { data: null, error: null },
+      },
+    });
+    useAdminClient(admin);
+
+    const result = await assignTeacherToExistingAccount(EXISTING_TEACHER_INPUT);
+
+    expect(result).toEqual({ success: false, error: COMMON_MESSAGES.INSUFFICIENT_PERMISSIONS });
+    expect(admin.auth.admin.deleteUser).not.toHaveBeenCalled();
+    expect(admin.from).not.toHaveBeenCalledWith("user_profiles");
+  });
+
+  it("maps a non-authorization RPC failure to UNEXPECTED_ERROR without touching the account", async () => {
+    mockRpc.mockResolvedValue({ data: null, error: { message: "some_pg_error" } });
+    const { admin } = buildAdminClient({
+      listUsersPages: [
+        { data: { users: [{ id: TARGET, email: EXISTING_TEACHER_INPUT.email }] }, error: null },
+      ],
+      tables: {
+        user_roles: { data: null, error: null },
+      },
+    });
+    useAdminClient(admin);
+
+    const result = await assignTeacherToExistingAccount(EXISTING_TEACHER_INPUT);
+
+    expect(result).toEqual({ success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR });
+    expect(admin.auth.admin.deleteUser).not.toHaveBeenCalled();
+  });
+
+  it("rejects invalid input with the schema message", async () => {
+    const { admin } = buildAdminClient();
+    useAdminClient(admin);
+
+    expect(
+      await assignTeacherToExistingAccount({ ...EXISTING_TEACHER_INPUT, email: "no-valido" })
+    ).toEqual({ success: false, error: ROLE_MESSAGES.INVALID_EMAIL });
+    expect(
+      await assignTeacherToExistingAccount({ ...EXISTING_TEACHER_INPUT, branchId: "no-uuid" })
+    ).toEqual({ success: false, error: ROLE_MESSAGES.INVALID_BRANCH_ID });
+
+    expect(mockRpc).not.toHaveBeenCalled();
+    expect(admin.auth.admin.listUsers).not.toHaveBeenCalled();
   });
 });
