@@ -66,16 +66,16 @@ date_of_birth })`:
 
 ## Tasks
 
-- [ ] 1. Schema + action + messages: `assignTeacherToExistingAccountSchema` in
+- [x] 1. Schema + action + messages: `assignTeacherToExistingAccountSchema` in
       `lib/domain/roles/schema.ts`, the action in `lib/domain/roles/actions.ts`,
       and the new `es-ec.ts` strings. Tests first in
       `lib/domain/roles/actions.test.ts`: existing email assigns the role;
       unknown email errors without creating anything; already-a-teacher errors;
       non-admin short-circuits; profile created only when missing.
-- [ ] 2. UI: mode toggle in `components/staff/grant-role-dialog.tsx`, existing
+- [x] 2. UI: mode toggle in `components/staff/grant-role-dialog.tsx`, existing
       mode wired to the new action, create mode untouched, plus a component test
       for the toggle.
-- [ ] 3. Checks: focused + full vitest, tsc, eslint, `next build`.
+- [x] 3. Checks: focused + full vitest, tsc, eslint, `next build`.
 - [ ] 4. User: verify in the browser that an admin can give the teacher role to
       an existing admin's email and that the person then shows up both in
       Personal and in the calendar teacher picker.
@@ -87,4 +87,45 @@ date_of_birth })`:
 
 ## Evidence
 
-(filled in as tasks close)
+- Task 1: `faa3bb6` feat(roles): assign the teacher role to an existing account
+  (schema + action + 9 new action tests + 2 messages + barrel export).
+- Task 2: `feat(staff)` commit — dialog mode toggle (`ToggleGroup`, the
+  single-select segmented the repo already ships, no new dependency) +
+  `components/staff/grant-role-dialog.test.tsx` (4 tests) + the new copy and the
+  stale `ASSIGN_DIALOG_DESCRIPTION` UUID fix.
+- Test-first on both units: 9 action tests RED (missing export) then 18/18
+  green; 4 dialog tests RED then 4/4 green.
+- Mutation check on the coverage gap the verifier found: deleting the
+  `router.refresh()` call fails
+  `assigns the role to the existing account and never creates one`, so the
+  assertion is real rather than decorative.
+- Independent verification: 10 items, 9 PASS. Confirmed by reading the code that
+  no path calls `createUser`/`deleteUser`, the admin-of-branch check precedes the
+  email lookup, the already-teacher block is branch-scoped (`revoked_at IS NULL`
+  for this branch, so a teacher of another branch stays assignable), the profile
+  is only inserted when absent and never updated, and the create-mode body is
+  byte-identical to the pre-feature file.
+- Gates: full vitest 725 passed / 1 skipped; `next build` ok; `tsc --noEmit`
+  clean; eslint clean on the changed files.
+- Not verified: anything needing a live Supabase or a browser — real
+  `assign_branch_teacher` authorization, `listUsers` pagination, the rendered
+  `ToggleGroup` semantics, and the intended end state of one person holding
+  `admin` + `teacher`.
+
+## Follow-ups
+
+- `lib/localization/es-ec.ts:502` `TARGET_USER_LABEL: "ID de usuario (UUID)"` is
+  a dead constant with no consumer, left over from the pre-email flow. My
+  acceptance grep for "uuid" hit it; it is not part of this change and can be
+  deleted on its own.
+- Owner-surface teacher assignment still needs the `assign_branch_teacher` RPC to
+  stop rejecting `owner`, i.e. a migration.
+
+## Process note
+
+This work started in `C:/Proyects/enoeda` and finished in the isolated worktree
+`C:/Proyects/enoeda-teacher`. The parallel session switched the shared tree's
+branch to `feat/remove-recurring-class` mid-flight, which left my uncommitted
+work sitting on their branch and mixed my `es-ec.ts` lines with theirs. Moved out
+with `git diff` + `git apply`, then reverted only my own files, so neither
+feature contaminated the other's history.
