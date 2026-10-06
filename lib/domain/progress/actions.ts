@@ -11,6 +11,10 @@ import {
 } from "@/lib/localization/es-ec";
 import type { TransactionClient } from "@/lib/prisma/client";
 import {
+  buildBranchRequirementMap,
+  resolveRequiredSessions,
+} from "@/lib/domain/levels/branch-requirements";
+import {
   promoteStudentSchema,
   reverseLatestPromotionSchema,
   readinessQuerySchema,
@@ -116,7 +120,8 @@ export async function getStudentProgressSummary(
         return [];
       }
 
-      const [progressRecords, levels, attendanceRecords] = await Promise.all([
+      const [progressRecords, levels, attendanceRecords, requirementOverrides] =
+        await Promise.all([
         tx.student_progress.findMany({
           where: {
             student_id: parsed.data.student_id,
@@ -172,6 +177,14 @@ export async function getStudentProgressSummary(
             one_time_classes: { select: { discipline_id: true } },
           },
         }),
+        tx.branch_level_requirements.findMany({
+          where: { branch_id: parsed.data.branch_id },
+          select: {
+            branch_id: true,
+            level_id: true,
+            required_attended_sessions: true,
+          },
+        }),
       ]);
 
       const currentProgressByDiscipline = new Map<
@@ -213,6 +226,13 @@ export async function getStudentProgressSummary(
         }
       }
 
+      // Branch admins may override a level's required sessions for their
+      // own branch; without an override the general (owner) value applies.
+      const overridesByLevel = buildBranchRequirementMap(
+        requirementOverrides,
+        parsed.data.branch_id
+      );
+
       return enrolledDisciplines.map((enrollment) => {
         const currentProgress = currentProgressByDiscipline.get(
           enrollment.discipline_id
@@ -241,7 +261,12 @@ export async function getStudentProgressSummary(
           next_level_name: nextLevel?.name ?? null,
           next_level_color: nextLevel?.color ?? null,
           next_level_required_sessions:
-            nextLevel?.required_attended_sessions ?? null,
+            nextLevel === null
+              ? null
+              : resolveRequiredSessions(
+                  nextLevel.required_attended_sessions,
+                  overridesByLevel.get(nextLevel.id)
+                ),
           period_started_at: currentProgress?.promoted_at ?? null,
           attended_sessions:
             currentProgress === undefined
@@ -334,6 +359,18 @@ async function getPromotionEligibility(
     };
   }
 
+  // Effective requirement: the branch's override wins when present.
+  const override = await tx.branch_level_requirements.findUnique({
+    where: { branch_id_level_id: { branch_id, level_id } },
+    select: { branch_id: true, required_attended_sessions: true },
+  });
+  const required = resolveRequiredSessions(
+    level.required_attended_sessions,
+    override && override.branch_id === branch_id
+      ? override.required_attended_sessions
+      : null
+  );
+
   const latestProgress = await tx.student_progress.findFirst({
     where: { student_id, discipline_id },
     orderBy: LATEST_PROGRESS_ORDER,
@@ -364,7 +401,6 @@ async function getPromotionEligibility(
     },
   });
 
-  const required = level.required_attended_sessions;
   return {
     attended,
     required,

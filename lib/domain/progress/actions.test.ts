@@ -64,9 +64,15 @@ function buildMockTx(overrides: Record<string, unknown> = {}) {
         discipline_id: DISCIPLINE_ID,
         required_attended_sessions: 10,
       }),
+      findMany: vi.fn().mockResolvedValue([]),
+    },
+    branch_level_requirements: {
+      findUnique: vi.fn().mockResolvedValue(null),
+      findMany: vi.fn().mockResolvedValue([]),
     },
     attendance: {
       count: vi.fn().mockResolvedValue(12),
+      findMany: vi.fn().mockResolvedValue([]),
     },
     ...overrides,
   };
@@ -88,6 +94,7 @@ vi.mock("@/lib/auth/branch-assertion", async () => {
 let getPromotionReadiness: typeof import("./actions").getPromotionReadiness;
 let promoteStudent: typeof import("./actions").promoteStudent;
 let listProgress: typeof import("./actions").listProgress;
+let getStudentProgressSummary: typeof import("./actions").getStudentProgressSummary;
 let createNote: typeof import("./actions").createNote;
 let completeNote: typeof import("./actions").completeNote;
 let reopenNote: typeof import("./actions").reopenNote;
@@ -105,6 +112,7 @@ beforeEach(async () => {
   getPromotionReadiness = mod.getPromotionReadiness;
   promoteStudent = mod.promoteStudent;
   listProgress = mod.listProgress;
+  getStudentProgressSummary = mod.getStudentProgressSummary;
   createNote = mod.createNote;
   completeNote = mod.completeNote;
   reopenNote = mod.reopenNote;
@@ -251,6 +259,223 @@ describe("listProgress — branch security", () => {
     });
     expect(result.success).toBe(false);
     expect(result.error).toContain("otra sucursal");
+  });
+});
+
+// =============================================================================
+// Branch level requirement resolution (effective value)
+// =============================================================================
+
+describe("getPromotionReadiness — branch level requirement overrides", () => {
+  function setupReadinessTx(
+    override: { branch_id: string; required_attended_sessions: number } | null
+  ) {
+    const tx = buildMockTx();
+    tx.students.findUnique = vi.fn().mockResolvedValue({ branch_id: BRANCH_A });
+    tx.branch_level_requirements.findUnique = vi.fn().mockResolvedValue(override);
+    setupWithAuth(ctxBranchA, tx);
+    return tx;
+  }
+
+  it("uses the branch override when one exists", async () => {
+    setupReadinessTx({ branch_id: BRANCH_A, required_attended_sessions: 4 });
+
+    const result = await getPromotionReadiness({
+      student_id: STUDENT_ID,
+      discipline_id: DISCIPLINE_ID,
+      level_id: LEVEL_ID,
+      branch_id: BRANCH_A,
+    });
+    expect(result.success).toBe(true);
+    expect(result.data?.required).toBe(4);
+    expect(result.data?.meets_requirement).toBe(true); // attended = 12
+  });
+
+  it("falls back to the general value without an override", async () => {
+    setupReadinessTx(null);
+
+    const result = await getPromotionReadiness({
+      student_id: STUDENT_ID,
+      discipline_id: DISCIPLINE_ID,
+      level_id: LEVEL_ID,
+      branch_id: BRANCH_A,
+    });
+    expect(result.success).toBe(true);
+    expect(result.data?.required).toBe(10);
+    expect(result.data?.meets_requirement).toBe(true);
+  });
+
+  it("ignores an override that belongs to another branch", async () => {
+    setupReadinessTx({ branch_id: BRANCH_B, required_attended_sessions: 99 });
+
+    const result = await getPromotionReadiness({
+      student_id: STUDENT_ID,
+      discipline_id: DISCIPLINE_ID,
+      level_id: LEVEL_ID,
+      branch_id: BRANCH_A,
+    });
+    expect(result.success).toBe(true);
+    expect(result.data?.required).toBe(10);
+  });
+
+  it("queries the override scoped to the requested branch and level", async () => {
+    const tx = setupReadinessTx(null);
+
+    await getPromotionReadiness({
+      student_id: STUDENT_ID,
+      discipline_id: DISCIPLINE_ID,
+      level_id: LEVEL_ID,
+      branch_id: BRANCH_A,
+    });
+    expect(tx.branch_level_requirements.findUnique).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          branch_id_level_id: { branch_id: BRANCH_A, level_id: LEVEL_ID },
+        },
+      })
+    );
+  });
+});
+
+describe("getStudentProgressSummary — branch level requirement overrides", () => {
+  const OTHER_LEVEL_ID = "d3333333-3333-4333-8333-333333333399";
+
+  interface SummaryLevelRow {
+    id: string;
+    discipline_id: string;
+    name: string;
+    color: string | null;
+    sort_order: number;
+    required_attended_sessions: number;
+  }
+
+  function setupSummaryTx(options: {
+    levels: SummaryLevelRow[];
+    progressRecords?: Array<{
+      id: string;
+      discipline_id: string;
+      level_id: string;
+      promoted_at: Date;
+      created_at: Date;
+    }>;
+    overrideRows: Array<{
+      branch_id: string;
+      level_id: string;
+      required_attended_sessions: number;
+    }>;
+  }) {
+    const tx = buildMockTx();
+    tx.students.findUnique = vi.fn().mockResolvedValue({
+      branch_id: BRANCH_A,
+      student_disciplines: [
+        { discipline_id: DISCIPLINE_ID, disciplines: { name: "Karate" } },
+      ],
+    });
+    tx.discipline_levels.findMany = vi.fn().mockResolvedValue(options.levels);
+    tx.student_progress.findMany = vi
+      .fn()
+      .mockResolvedValue(options.progressRecords ?? []);
+    tx.attendance.findMany = vi.fn().mockResolvedValue([]);
+    tx.branch_level_requirements.findMany = vi
+      .fn()
+      .mockResolvedValue(options.overrideRows);
+    setupWithAuth(ctxBranchA, tx);
+    return tx;
+  }
+
+  function buildLevels(): SummaryLevelRow[] {
+    return [
+      {
+        id: LEVEL_ID,
+        discipline_id: DISCIPLINE_ID,
+        name: "Blanco",
+        color: null,
+        sort_order: 0,
+        required_attended_sessions: 10,
+      },
+      {
+        id: OTHER_LEVEL_ID,
+        discipline_id: DISCIPLINE_ID,
+        name: "Amarillo",
+        color: null,
+        sort_order: 1,
+        required_attended_sessions: 20,
+      },
+    ];
+  }
+
+  function buildCurrentProgress() {
+    return [
+      {
+        id: "progress-1",
+        discipline_id: DISCIPLINE_ID,
+        level_id: LEVEL_ID,
+        promoted_at: new Date("2026-01-01"),
+        created_at: new Date("2026-01-01"),
+      },
+    ];
+  }
+
+  it("reports the branch override as next_level_required_sessions", async () => {
+    setupSummaryTx({
+      levels: buildLevels(),
+      progressRecords: buildCurrentProgress(),
+      overrideRows: [
+        {
+          branch_id: BRANCH_A,
+          level_id: OTHER_LEVEL_ID,
+          required_attended_sessions: 5,
+        },
+      ],
+    });
+
+    const result = await getStudentProgressSummary({
+      student_id: STUDENT_ID,
+      branch_id: BRANCH_A,
+    });
+    expect(result.success).toBe(true);
+    expect(result.data?.[0]?.next_level_id).toBe(OTHER_LEVEL_ID);
+    expect(result.data?.[0]?.next_level_required_sessions).toBe(5);
+  });
+
+  it("reports the general value when no override exists", async () => {
+    setupSummaryTx({
+      levels: buildLevels(),
+      progressRecords: buildCurrentProgress(),
+      overrideRows: [],
+    });
+
+    const result = await getStudentProgressSummary({
+      student_id: STUDENT_ID,
+      branch_id: BRANCH_A,
+    });
+    expect(result.success).toBe(true);
+    expect(result.data?.[0]?.next_level_required_sessions).toBe(20);
+  });
+
+  it("ignores override rows belonging to another branch", async () => {
+    const tx = setupSummaryTx({
+      levels: buildLevels(),
+      progressRecords: buildCurrentProgress(),
+      overrideRows: [
+        {
+          branch_id: BRANCH_B,
+          level_id: OTHER_LEVEL_ID,
+          required_attended_sessions: 99,
+        },
+      ],
+    });
+
+    const result = await getStudentProgressSummary({
+      student_id: STUDENT_ID,
+      branch_id: BRANCH_A,
+    });
+    expect(result.success).toBe(true);
+    // A foreign-branch row must never leak into resolution.
+    expect(result.data?.[0]?.next_level_required_sessions).toBe(20);
+    expect(tx.branch_level_requirements.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { branch_id: BRANCH_A } })
+    );
   });
 });
 

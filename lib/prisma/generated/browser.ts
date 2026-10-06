@@ -241,6 +241,11 @@ export type student_progress = Prisma.student_progressModel
  */
 export type student_notes = Prisma.student_notesModel
 /**
+ * Model branch_level_requirements
+ * This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+ */
+export type branch_level_requirements = Prisma.branch_level_requirementsModel
+/**
  * Model payments
  * This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
  */

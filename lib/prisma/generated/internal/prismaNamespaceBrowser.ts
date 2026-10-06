@@ -89,6 +89,7 @@ export const ModelName = {
   discipline_levels: 'discipline_levels',
   student_progress: 'student_progress',
   student_notes: 'student_notes',
+  branch_level_requirements: 'branch_level_requirements',
   payments: 'payments',
   class_payments: 'class_payments'
 } as const
@@ -705,6 +706,19 @@ export const Student_notesScalarFieldEnum = {
 } as const
 
 export type Student_notesScalarFieldEnum = (typeof Student_notesScalarFieldEnum)[keyof typeof Student_notesScalarFieldEnum]
+
+
+export const Branch_level_requirementsScalarFieldEnum = {
+  id: 'id',
+  branch_id: 'branch_id',
+  level_id: 'level_id',
+  required_attended_sessions: 'required_attended_sessions',
+  updated_by: 'updated_by',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
+} as const
+
+export type Branch_level_requirementsScalarFieldEnum = (typeof Branch_level_requirementsScalarFieldEnum)[keyof typeof Branch_level_requirementsScalarFieldEnum]
 
 
 export const PaymentsScalarFieldEnum = {

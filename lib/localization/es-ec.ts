@@ -159,6 +159,7 @@ export const DASHBOARD_SHELL_MESSAGES = {
   MANAGEMENT: "Administración",
   CALENDAR: "Calendario",
   CONCURRENCIAS: "Concurrencias",
+  BELTS: "Cinturones",
   PAYMENTS: "Pagos",
   PROFILE: "Mi perfil",
   PROFILE_NAME_UNAVAILABLE: "Perfil pendiente",
@@ -813,6 +814,28 @@ export const LEVEL_MESSAGES = {
   LOAD_FAILURE: "No se pudieron cargar los niveles.",
   SAVING: "Guardando…",
   MANAGE_LEVELS: "Niveles",
+} as const
+
+export const BRANCH_LEVEL_MESSAGES = {
+  PAGE_TITLE: "Cinturones",
+  PAGE_DESCRIPTION:
+    "Defina las sesiones requeridas para promocionar entre cinturones en esta sucursal.",
+  NO_BRANCH_CONTEXT:
+    "No tiene una sucursal activa asignada. Contacte al administrador.",
+  LOAD_FAILURE: "No se pudieron cargar los niveles.",
+  INVALID_BRANCH_ID: "Identificador de sucursal inválido.",
+  INVALID_LEVEL_ID: "Identificador de nivel inválido.",
+  REQUIRED_SESSIONS_INVALID:
+    "Las sesiones requeridas deben ser un entero entre 0 y 1000.",
+  GENERAL_LABEL: "General",
+  BRANCH_LABEL: "Esta sucursal",
+  CUSTOM_BADGE: "Personalizado",
+  USE_GENERAL_ACTION: "Usar valor general",
+  OWNER_MANAGED_NOTE:
+    "Los nombres, los colores y el orden de los niveles los administra el propietario de la academia.",
+  SAVE_SUCCESS: "Requisito de la sucursal guardado correctamente.",
+  RESET_SUCCESS: "La sucursal usa el valor general nuevamente.",
+  NO_LEVELS: "Sin niveles configurados.",
 } as const
 
 export const PROGRESS_MESSAGES = {

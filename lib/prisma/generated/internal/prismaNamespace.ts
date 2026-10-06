@@ -422,6 +422,7 @@ export const ModelName = {
   discipline_levels: 'discipline_levels',
   student_progress: 'student_progress',
   student_notes: 'student_notes',
+  branch_level_requirements: 'branch_level_requirements',
   payments: 'payments',
   class_payments: 'class_payments'
 } as const
@@ -439,7 +440,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "audit_log_entries" | "custom_oauth_providers" | "flow_state" | "identities" | "instances" | "mfa_amr_claims" | "mfa_challenges" | "mfa_factors" | "oauth_authorizations" | "oauth_client_states" | "oauth_clients" | "oauth_consents" | "one_time_tokens" | "refresh_tokens" | "saml_providers" | "saml_relay_states" | "schema_migrations" | "sessions" | "sso_domains" | "sso_providers" | "users" | "webauthn_challenges" | "webauthn_credentials" | "user_roles" | "branches" | "user_profiles" | "students" | "disciplines" | "student_disciplines" | "discipline_events" | "scheduled_classes" | "class_series" | "one_time_classes" | "class_sessions" | "attendance" | "discipline_levels" | "student_progress" | "student_notes" | "payments" | "class_payments"
+    modelProps: "audit_log_entries" | "custom_oauth_providers" | "flow_state" | "identities" | "instances" | "mfa_amr_claims" | "mfa_challenges" | "mfa_factors" | "oauth_authorizations" | "oauth_client_states" | "oauth_clients" | "oauth_consents" | "one_time_tokens" | "refresh_tokens" | "saml_providers" | "saml_relay_states" | "schema_migrations" | "sessions" | "sso_domains" | "sso_providers" | "users" | "webauthn_challenges" | "webauthn_credentials" | "user_roles" | "branches" | "user_profiles" | "students" | "disciplines" | "student_disciplines" | "discipline_events" | "scheduled_classes" | "class_series" | "one_time_classes" | "class_sessions" | "attendance" | "discipline_levels" | "student_progress" | "student_notes" | "branch_level_requirements" | "payments" | "class_payments"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -3255,6 +3256,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    branch_level_requirements: {
+      payload: Prisma.$branch_level_requirementsPayload<ExtArgs>
+      fields: Prisma.branch_level_requirementsFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.branch_level_requirementsFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$branch_level_requirementsPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.branch_level_requirementsFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$branch_level_requirementsPayload>
+        }
+        findFirst: {
+          args: Prisma.branch_level_requirementsFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$branch_level_requirementsPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.branch_level_requirementsFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$branch_level_requirementsPayload>
+        }
+        findMany: {
+          args: Prisma.branch_level_requirementsFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$branch_level_requirementsPayload>[]
+        }
+        create: {
+          args: Prisma.branch_level_requirementsCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$branch_level_requirementsPayload>
+        }
+        createMany: {
+          args: Prisma.branch_level_requirementsCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.branch_level_requirementsCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$branch_level_requirementsPayload>[]
+        }
+        delete: {
+          args: Prisma.branch_level_requirementsDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$branch_level_requirementsPayload>
+        }
+        update: {
+          args: Prisma.branch_level_requirementsUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$branch_level_requirementsPayload>
+        }
+        deleteMany: {
+          args: Prisma.branch_level_requirementsDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.branch_level_requirementsUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.branch_level_requirementsUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$branch_level_requirementsPayload>[]
+        }
+        upsert: {
+          args: Prisma.branch_level_requirementsUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$branch_level_requirementsPayload>
+        }
+        aggregate: {
+          args: Prisma.Branch_level_requirementsAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateBranch_level_requirements>
+        }
+        groupBy: {
+          args: Prisma.branch_level_requirementsGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Branch_level_requirementsGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.branch_level_requirementsCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Branch_level_requirementsCountAggregateOutputType> | number
+        }
+      }
+    }
     payments: {
       payload: Prisma.$paymentsPayload<ExtArgs>
       fields: Prisma.paymentsFieldRefs
@@ -4040,6 +4115,19 @@ export const Student_notesScalarFieldEnum = {
 export type Student_notesScalarFieldEnum = (typeof Student_notesScalarFieldEnum)[keyof typeof Student_notesScalarFieldEnum]
 
 
+export const Branch_level_requirementsScalarFieldEnum = {
+  id: 'id',
+  branch_id: 'branch_id',
+  level_id: 'level_id',
+  required_attended_sessions: 'required_attended_sessions',
+  updated_by: 'updated_by',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
+} as const
+
+export type Branch_level_requirementsScalarFieldEnum = (typeof Branch_level_requirementsScalarFieldEnum)[keyof typeof Branch_level_requirementsScalarFieldEnum]
+
+
 export const PaymentsScalarFieldEnum = {
   id: 'id',
   student_discipline_id: 'student_discipline_id',
@@ -4514,6 +4602,7 @@ export type GlobalOmitConfig = {
   discipline_levels?: Prisma.discipline_levelsOmit
   student_progress?: Prisma.student_progressOmit
   student_notes?: Prisma.student_notesOmit
+  branch_level_requirements?: Prisma.branch_level_requirementsOmit
   payments?: Prisma.paymentsOmit
   class_payments?: Prisma.class_paymentsOmit
 }
