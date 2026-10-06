@@ -1008,6 +1008,28 @@ export const PAYMENT_MESSAGES = {
   CHARGE_CLASS: "Cobrar clase",
 } as const
 
+/** Student detail (resumen) page composition messages. */
+export const STUDENT_DETAIL_MESSAGES = {
+  ACTIVE_BADGE: "Activo",
+  INACTIVE_BADGE: "Inactivo",
+  AGE_LABEL: (years: string) => `${years} años`,
+  TAB_NOTES: "Bitácora",
+  TAB_PAYMENTS: "Pagos",
+  TAB_PROGRESS: "Progreso",
+  TAB_ENROLLMENTS: "Inscripciones",
+  TAB_WITH_COUNT: (label: string, count: string) => `${label} (${count})`,
+  PAID_THROUGH_LABEL: "Pagado hasta",
+  NO_MONTHLY_PAYMENTS: "Sin pagos mensuales",
+  MORE_ACTIONS_ARIA: (discipline: string) => `Más acciones de ${discipline}`,
+  MONTHLY_PAYMENT_ARIA: (discipline: string) =>
+    `Registrar pago mensual de ${discipline}`,
+  CLASS_PAYMENT_ARIA: (discipline: string) => `Cobrar clase de ${discipline}`,
+  PROMOTE_ARIA: (discipline: string) => `Promover en ${discipline}`,
+  VIEW_ALL_ACTION: (count: string) => `Ver todo (${count})`,
+  VIEW_LESS_ACTION: "Ver menos",
+  ENROLLMENTS_EMPTY: "Sin eventos de inscripción.",
+} as const
+
 export const PAYMENT_CONSOLE_MESSAGES = {
   HEADING: "Pagos en espera",
   DESCRIPTION: "Resumen mensual de pagos y seguimiento de inscripciones pendientes.",

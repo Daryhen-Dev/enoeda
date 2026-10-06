@@ -23,7 +23,9 @@ import {
   COMMON_MESSAGES,
   formatDate,
   formatDateTime,
+  formatNumber,
   NOTES_MESSAGES,
+  STUDENT_DETAIL_MESSAGES,
   TOAST_MESSAGES,
 } from "@/lib/localization/es-ec"
 import { cn } from "@/lib/utils"
@@ -41,9 +43,18 @@ type FilterState = "all" | "open" | "completed"
 interface StudentNotesPanelProps {
   notes: NoteRecord[]
   branchId: string
+  /**
+   * Maximum entries shown per filter before the "Ver todo" toggle. When
+   * omitted the full list renders (legacy behavior for other call sites).
+   */
+  visibleCount?: number
 }
 
-export function StudentNotesPanel({ notes, branchId }: StudentNotesPanelProps) {
+export function StudentNotesPanel({
+  notes,
+  branchId,
+  visibleCount,
+}: StudentNotesPanelProps) {
   const router = useRouter()
   const [filter, setFilter] = useState<FilterState>("open")
   const [noteToReopen, setNoteToReopen] = useState<NoteRecord | null>(null)
@@ -54,6 +65,11 @@ export function StudentNotesPanel({ notes, branchId }: StudentNotesPanelProps) {
     if (filter === "completed") return note.is_completed
     return true
   })
+  const [showAll, setShowAll] = useState(false)
+  const isBounded =
+    visibleCount !== undefined && filteredNotes.length > visibleCount
+  const visibleNotes =
+    isBounded && !showAll ? filteredNotes.slice(0, visibleCount) : filteredNotes
 
   function handleComplete(noteId: string) {
     startTransition(async () => {
@@ -123,7 +139,7 @@ export function StudentNotesPanel({ notes, branchId }: StudentNotesPanelProps) {
         </p>
       ) : (
         <div className="grid w-full grid-cols-1 gap-3 min-[480px]:grid-cols-2">
-          {filteredNotes.map((note) => (
+          {visibleNotes.map((note) => (
             <div
               key={note.id}
               className={cn(
@@ -177,6 +193,22 @@ export function StudentNotesPanel({ notes, branchId }: StudentNotesPanelProps) {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {isBounded && (
+        <div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowAll((current) => !current)}
+          >
+            {showAll
+              ? STUDENT_DETAIL_MESSAGES.VIEW_LESS_ACTION
+              : STUDENT_DETAIL_MESSAGES.VIEW_ALL_ACTION(
+                  formatNumber(filteredNotes.length)
+                )}
+          </Button>
         </div>
       )}
 

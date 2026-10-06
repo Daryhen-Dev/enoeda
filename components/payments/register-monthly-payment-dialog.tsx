@@ -52,6 +52,10 @@ const MONTH_VALUES = [
 interface RegisterMonthlyPaymentDialogProps {
   studentDisciplineId: string
   branchId: string
+  /** Trigger button variant; "outline" preserves the default appearance. */
+  triggerVariant?: "default" | "outline"
+  /** Accessible name for the trigger, e.g. one that names the discipline. */
+  triggerAriaLabel?: string
 }
 
 function getLocalDateInputValue() {
@@ -93,6 +97,8 @@ function getCoverageMonthCount(
 export function RegisterMonthlyPaymentDialog({
   studentDisciplineId,
   branchId,
+  triggerVariant = "outline",
+  triggerAriaLabel,
 }: RegisterMonthlyPaymentDialogProps) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
@@ -169,7 +175,15 @@ export function RegisterMonthlyPaymentDialog({
         resetForm()
       }}
     >
-      <SheetTrigger render={<Button variant="outline" size="sm" />}>
+      <SheetTrigger
+        render={
+          <Button
+            variant={triggerVariant}
+            size="sm"
+            aria-label={triggerAriaLabel}
+          />
+        }
+      >
         <PlusIcon className="size-4" />
         {PAYMENT_MESSAGES.REGISTER_MONTHLY_TITLE}
       </SheetTrigger>

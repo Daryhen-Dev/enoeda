@@ -1,7 +1,9 @@
 "use client"
 
+import { useState } from "react"
 import type { ColumnDef, TableFeatures } from "@tanstack/react-table"
 
+import { Button } from "@/components/ui/button"
 import { DataTable } from "@/components/data-table"
 import {
   PAYMENT_HISTORY_KIND,
@@ -9,7 +11,12 @@ import {
   type PaymentHistoryActionRecord,
 } from "@/components/payments/payment-history-actions"
 import type { ClassPaymentRecord, PaymentRecord } from "@/lib/domain/payments/actions"
-import { formatDate, PAYMENT_MESSAGES } from "@/lib/localization/es-ec"
+import {
+  formatDate,
+  formatNumber,
+  PAYMENT_MESSAGES,
+  STUDENT_DETAIL_MESSAGES,
+} from "@/lib/localization/es-ec"
 
 interface StudentPaymentHistoryProps {
   monthly: PaymentRecord[]
@@ -18,6 +25,11 @@ interface StudentPaymentHistoryProps {
   canManage: boolean
   paymentSettingsAvailable: boolean
   paymentEditWindowDays: number | null
+  /**
+   * Maximum entries shown before the "Ver todo" toggle. When omitted the
+   * full list renders (legacy behavior for other call sites).
+   */
+  visibleCount?: number
 }
 
 interface CombinedPaymentEntry {
@@ -37,6 +49,7 @@ export function StudentPaymentHistory({
   canManage,
   paymentSettingsAvailable,
   paymentEditWindowDays,
+  visibleCount,
 }: StudentPaymentHistoryProps) {
   const entries: CombinedPaymentEntry[] = [
     ...monthly.map((payment) => ({
@@ -78,6 +91,10 @@ export function StudentPaymentHistory({
       },
     })),
   ].sort((left, right) => right.date.getTime() - left.date.getTime())
+  const [showAll, setShowAll] = useState(false)
+  const isBounded = visibleCount !== undefined && entries.length > visibleCount
+  const visibleEntries =
+    isBounded && !showAll ? entries.slice(0, visibleCount) : entries
 
   const columns: ColumnDef<TableFeatures, CombinedPaymentEntry>[] = [
     {
@@ -114,11 +131,28 @@ export function StudentPaymentHistory({
   ]
 
   return (
-    <DataTable
-      columns={columns}
-      data={entries}
-      caption={PAYMENT_MESSAGES.HISTORY_TITLE}
-      emptyState={PAYMENT_MESSAGES.NO_PAYMENTS}
-    />
+    <div className="flex flex-col gap-2">
+      <DataTable
+        columns={columns}
+        data={visibleEntries}
+        caption={PAYMENT_MESSAGES.HISTORY_TITLE}
+        emptyState={PAYMENT_MESSAGES.NO_PAYMENTS}
+      />
+      {isBounded && (
+        <div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowAll((current) => !current)}
+          >
+            {showAll
+              ? STUDENT_DETAIL_MESSAGES.VIEW_LESS_ACTION
+              : STUDENT_DETAIL_MESSAGES.VIEW_ALL_ACTION(
+                  formatNumber(entries.length)
+                )}
+          </Button>
+        </div>
+      )}
+    </div>
   )
 }

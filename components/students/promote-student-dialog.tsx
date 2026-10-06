@@ -54,6 +54,16 @@ interface PromoteStudentDialogProps {
   disciplineName: string
   levels: LevelRecord[]
   branchId: string
+  /**
+   * Which parts to render: "both" (default, backward compatible), "promote"
+   * (promotion sheet only) or "correction" (correction dialog only).
+   */
+  mode?: "both" | "promote" | "correction"
+  /** Controlled open state for the correction dialog; uncontrolled when omitted. */
+  correctionOpen?: boolean
+  onCorrectionOpenChange?: (open: boolean) => void
+  /** Accessible name for the promote trigger, e.g. one naming the discipline. */
+  triggerAriaLabel?: string
 }
 
 export function PromoteStudentDialog({
@@ -62,10 +72,14 @@ export function PromoteStudentDialog({
   disciplineName,
   levels,
   branchId,
+  mode = "both",
+  correctionOpen: correctionOpenProp,
+  onCorrectionOpenChange,
+  triggerAriaLabel,
 }: PromoteStudentDialogProps) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
-  const [correctionOpen, setCorrectionOpen] = useState(false)
+  const [internalCorrectionOpen, setInternalCorrectionOpen] = useState(false)
   const [levelId, setLevelId] = useState<string>("")
   const [observations, setObservations] = useState("")
   const [error, setError] = useState<string | null>(null)
@@ -73,6 +87,14 @@ export function PromoteStudentDialog({
   const [isPending, startTransition] = useTransition()
   const [isCorrecting, startCorrectionTransition] = useTransition()
   const selectedLevel = levels.find((level) => level.id === levelId) ?? null
+  const showPromotion = mode !== "correction"
+  const showCorrection = mode !== "promote"
+  const isCorrectionControlled = onCorrectionOpenChange !== undefined
+  const correctionOpenValue = isCorrectionControlled
+    ? (correctionOpenProp ?? false)
+    : internalCorrectionOpen
+  const updateCorrectionOpen =
+    onCorrectionOpenChange ?? setInternalCorrectionOpen
 
   const [readiness, setReadiness] = useState<{
     attended: number
@@ -137,7 +159,7 @@ export function PromoteStudentDialog({
         branch_id: branchId,
       })
       if (result.success) {
-        setCorrectionOpen(false)
+        updateCorrectionOpen(false)
         toast.success(TOAST_MESSAGES.STUDENT_PROMOTION_CORRECTED)
         router.refresh()
       } else {
@@ -148,148 +170,158 @@ export function PromoteStudentDialog({
 
   return (
     <>
-      <Sheet
-        open={open}
-        onOpenChange={(nextOpen) => {
-          setOpen(nextOpen)
-          if (!nextOpen) resetForm()
-        }}
-      >
-        <SheetTrigger render={<Button variant="outline" size="sm" />}>
+      {showPromotion && (
+        <Sheet
+          open={open}
+          onOpenChange={(nextOpen) => {
+            setOpen(nextOpen)
+            if (!nextOpen) resetForm()
+          }}
+        >
+          <SheetTrigger
+            render={
+              <Button variant="outline" size="sm" aria-label={triggerAriaLabel} />
+            }
+          >
           <ArrowUpIcon className="size-4" />
           {PROGRESS_MESSAGES.PROMOTE_ACTION}
-        </SheetTrigger>
-        <SheetContent side="right" size="content">
-          <SheetHeader>
-            <SheetTitle>{PROGRESS_MESSAGES.PROMOTE_TITLE}</SheetTitle>
-            <SheetDescription>
-              {PROGRESS_MESSAGES.PROMOTE_DESCRIPTION} ({disciplineName})
-            </SheetDescription>
-          </SheetHeader>
+          </SheetTrigger>
+          <SheetContent side="right" size="content">
+            <SheetHeader>
+              <SheetTitle>{PROGRESS_MESSAGES.PROMOTE_TITLE}</SheetTitle>
+              <SheetDescription>
+                {PROGRESS_MESSAGES.PROMOTE_DESCRIPTION} ({disciplineName})
+              </SheetDescription>
+            </SheetHeader>
 
-          <form
-            onSubmit={handleSubmit}
-            className="flex flex-1 flex-col gap-4 overflow-y-auto px-4"
-          >
-            <FieldGroup>
-              <Field>
-                <FieldLabel>{PROGRESS_MESSAGES.TARGET_LEVEL_LABEL}</FieldLabel>
-                <Select
-                  value={levelId}
-                  onValueChange={(value) => {
-                    setLevelId(value ?? "")
-                    setReadiness(null)
-                  }}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue
-                      placeholder={PROGRESS_MESSAGES.TARGET_LEVEL_PLACEHOLDER}
-                    >
-                      {selectedLevel
-                        ? `${selectedLevel.sort_order}. ${selectedLevel.name}`
-                        : null}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {levels.map((level) => (
-                      <SelectItem key={level.id} value={level.id}>
-                        {level.sort_order}. {level.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </Field>
-
-              {readiness && (
-                <div className="rounded-md border p-3 text-sm">
-                  <Badge
-                    variant={readiness.meets_requirement ? "default" : "secondary"}
+            <form
+              onSubmit={handleSubmit}
+              className="flex flex-1 flex-col gap-4 overflow-y-auto px-4"
+            >
+              <FieldGroup>
+                <Field>
+                  <FieldLabel>{PROGRESS_MESSAGES.TARGET_LEVEL_LABEL}</FieldLabel>
+                  <Select
+                    value={levelId}
+                    onValueChange={(value) => {
+                      setLevelId(value ?? "")
+                      setReadiness(null)
+                    }}
                   >
-                    {readiness.meets_requirement
-                      ? PROGRESS_MESSAGES.READINESS_MEETS
-                      : PROGRESS_MESSAGES.READINESS_NOT_MEETS}
-                  </Badge>
-                  <div className="mt-2 flex gap-4 text-xs text-muted-foreground">
-                    <span>
-                      {PROGRESS_MESSAGES.ATTENDED_LABEL}: {readiness.attended}
-                    </span>
-                    <span>
-                      {PROGRESS_MESSAGES.REQUIRED_LABEL}: {readiness.required}
-                    </span>
+                    <SelectTrigger className="w-full">
+                      <SelectValue
+                        placeholder={PROGRESS_MESSAGES.TARGET_LEVEL_PLACEHOLDER}
+                      >
+                        {selectedLevel
+                          ? `${selectedLevel.sort_order}. ${selectedLevel.name}`
+                          : null}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {levels.map((level) => (
+                        <SelectItem key={level.id} value={level.id}>
+                          {level.sort_order}. {level.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
+
+                {readiness && (
+                  <div className="rounded-md border p-3 text-sm">
+                    <Badge
+                      variant={readiness.meets_requirement ? "default" : "secondary"}
+                    >
+                      {readiness.meets_requirement
+                        ? PROGRESS_MESSAGES.READINESS_MEETS
+                        : PROGRESS_MESSAGES.READINESS_NOT_MEETS}
+                    </Badge>
+                    <div className="mt-2 flex gap-4 text-xs text-muted-foreground">
+                      <span>
+                        {PROGRESS_MESSAGES.ATTENDED_LABEL}: {readiness.attended}
+                      </span>
+                      <span>
+                        {PROGRESS_MESSAGES.REQUIRED_LABEL}: {readiness.required}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              <Field>
-                <FieldLabel htmlFor="promote-observations">
-                  {PROGRESS_MESSAGES.OBSERVATIONS_LABEL}
-                </FieldLabel>
-                <Input
-                  id="promote-observations"
-                  type="text"
-                  value={observations}
-                  onChange={(event) => setObservations(event.target.value)}
-                  placeholder={PROGRESS_MESSAGES.OBSERVATIONS_PLACEHOLDER}
-                  maxLength={500}
-                />
-              </Field>
+                <Field>
+                  <FieldLabel htmlFor="promote-observations">
+                    {PROGRESS_MESSAGES.OBSERVATIONS_LABEL}
+                  </FieldLabel>
+                  <Input
+                    id="promote-observations"
+                    type="text"
+                    value={observations}
+                    onChange={(event) => setObservations(event.target.value)}
+                    placeholder={PROGRESS_MESSAGES.OBSERVATIONS_PLACEHOLDER}
+                    maxLength={500}
+                  />
+                </Field>
 
-              {error && <FieldError>{error}</FieldError>}
-            </FieldGroup>
+                {error && <FieldError>{error}</FieldError>}
+              </FieldGroup>
 
-            <Button
-              type="submit"
-              disabled={
-                isPending || !levelId || readiness?.meets_requirement === false
-              }
-              className="self-start"
-            >
-              {isPending
-                ? PROGRESS_MESSAGES.PROMOTING
-                : PROGRESS_MESSAGES.PROMOTE_ACTION}
-            </Button>
-          </form>
-        </SheetContent>
-      </Sheet>
+              <Button
+                type="submit"
+                disabled={
+                  isPending || !levelId || readiness?.meets_requirement === false
+                }
+                className="self-start"
+              >
+                {isPending
+                  ? PROGRESS_MESSAGES.PROMOTING
+                  : PROGRESS_MESSAGES.PROMOTE_ACTION}
+              </Button>
+            </form>
+          </SheetContent>
+        </Sheet>
+      )}
 
-      <AlertDialog
-        open={correctionOpen}
-        onOpenChange={(nextOpen) => {
-          if (isCorrecting) return
-          setCorrectionOpen(nextOpen)
-          if (!nextOpen) setCorrectionError(null)
-        }}
-      >
-        <AlertDialogTrigger render={<Button variant="outline" size="sm" />}>
-          <Undo2Icon className="size-4" />
-          {PROGRESS_MESSAGES.CORRECT_PROMOTION_ACTION}
-        </AlertDialogTrigger>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{PROGRESS_MESSAGES.CORRECT_PROMOTION_TITLE}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {PROGRESS_MESSAGES.CORRECT_PROMOTION_DESCRIPTION} ({disciplineName})
-            </AlertDialogDescription>
-          </AlertDialogHeader>
+      {showCorrection && (
+        <AlertDialog
+          open={correctionOpenValue}
+          onOpenChange={(nextOpen) => {
+            if (isCorrecting) return
+            updateCorrectionOpen(nextOpen)
+            if (!nextOpen) setCorrectionError(null)
+          }}
+        >
+          {!isCorrectionControlled && (
+            <AlertDialogTrigger render={<Button variant="outline" size="sm" />}>
+              <Undo2Icon className="size-4" />
+              {PROGRESS_MESSAGES.CORRECT_PROMOTION_ACTION}
+            </AlertDialogTrigger>
+          )}
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{PROGRESS_MESSAGES.CORRECT_PROMOTION_TITLE}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {PROGRESS_MESSAGES.CORRECT_PROMOTION_DESCRIPTION} ({disciplineName})
+              </AlertDialogDescription>
+            </AlertDialogHeader>
 
-          {correctionError && <FieldError role="alert">{correctionError}</FieldError>}
+            {correctionError && <FieldError role="alert">{correctionError}</FieldError>}
 
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isCorrecting}>
-              {COMMON_MESSAGES.CANCEL}
-            </AlertDialogCancel>
-            <AlertDialogAction
-              variant="destructive"
-              disabled={isCorrecting}
-              onClick={handleCorrection}
-            >
-              {isCorrecting
-                ? PROGRESS_MESSAGES.CORRECTING_PROMOTION
-                : PROGRESS_MESSAGES.CORRECT_PROMOTION_ACTION}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isCorrecting}>
+                {COMMON_MESSAGES.CANCEL}
+              </AlertDialogCancel>
+              <AlertDialogAction
+                variant="destructive"
+                disabled={isCorrecting}
+                onClick={handleCorrection}
+              >
+                {isCorrecting
+                  ? PROGRESS_MESSAGES.CORRECTING_PROMOTION
+                  : PROGRESS_MESSAGES.CORRECT_PROMOTION_ACTION}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </>
   )
 }

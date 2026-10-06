@@ -29,6 +29,8 @@ import {
 interface RegisterClassPaymentDialogProps {
   studentDisciplineId: string
   branchId: string
+  /** Accessible name for the trigger, e.g. one that names the discipline. */
+  triggerAriaLabel?: string
 }
 
 function getLocalDateInputValue() {
@@ -42,6 +44,7 @@ function getLocalDateInputValue() {
 export function RegisterClassPaymentDialog({
   studentDisciplineId,
   branchId,
+  triggerAriaLabel,
 }: RegisterClassPaymentDialogProps) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
@@ -83,7 +86,11 @@ export function RegisterClassPaymentDialog({
         resetForm()
       }}
     >
-      <SheetTrigger render={<Button variant="outline" size="sm" />}>
+      <SheetTrigger
+        render={
+          <Button variant="outline" size="sm" aria-label={triggerAriaLabel} />
+        }
+      >
         <BanknoteIcon className="size-4" />
         {PAYMENT_MESSAGES.CHARGE_CLASS}
       </SheetTrigger>
