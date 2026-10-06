@@ -499,7 +499,6 @@ export const TEACHER_MANAGEMENT_MESSAGES = {
   EXISTING_MODE_SUBMIT: "Asignar cargo",
   EXISTING_ACCOUNT_ASSIGNED_SUCCESS:
     "Cargo de profesor asignado a la cuenta existente correctamente.",
-  TARGET_USER_LABEL: "ID de usuario (UUID)",
   ASSIGNING: "Asignando…",
   DEACTIVATE_ACTION: "Desactivar",
   DEACTIVATE_CONFIRMATION_TITLE: "¿Desactivar acceso de profesor?",
