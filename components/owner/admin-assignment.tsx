@@ -26,7 +26,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTr
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { CreatedAccountDialog } from "@/components/owner/created-account-dialog"
 import { createBranchAdmin, revokeBranchRole } from "@/lib/domain/roles/actions"
-import type { CreatedAccountCredentials, StaffAssignment } from "@/lib/domain/roles/actions"
+import type { CreatedAccountResult, StaffAssignment } from "@/lib/domain/roles/actions"
 import { COMMON_MESSAGES, formatDate, OWNER_MESSAGES, ROLE_CREATION_MESSAGES, TOAST_MESSAGES } from "@/lib/localization/es-ec"
 
 interface AdminAssignmentProps {
@@ -78,7 +78,7 @@ function AssignAdminDialog({ branchId }: { branchId: string }) {
   const [dateOfBirth, setDateOfBirth] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
-  const [createdCredentials, setCreatedCredentials] = useState<CreatedAccountCredentials | null>(null)
+  const [createdResult, setCreatedResult] = useState<CreatedAccountResult | null>(null)
 
   function resetForm() {
     setEmail(""); setFirstName(""); setSurname(""); setPhone(""); setDateOfBirth(""); setError(null)
@@ -89,7 +89,12 @@ function AssignAdminDialog({ branchId }: { branchId: string }) {
     startTransition(async () => {
       const result = await createBranchAdmin({ email, branchId, first_name: firstName, surname, phone: phone || undefined, date_of_birth: dateOfBirth })
       if (result.success && result.data) {
-        setOpen(false); resetForm(); setCreatedCredentials(result.data); toast.success(TOAST_MESSAGES.ADMIN_ACCOUNT_CREATED)
+        setOpen(false); resetForm(); setCreatedResult(result.data)
+        if (result.data.mode === "created") {
+          toast.success(TOAST_MESSAGES.ADMIN_ACCOUNT_CREATED)
+        } else {
+          toast.success(TOAST_MESSAGES.ADMIN_CARGO_ASSIGNED_EXISTING)
+        }
       } else setError(result.error ?? COMMON_MESSAGES.UNEXPECTED_ERROR)
     })
   }
@@ -106,7 +111,7 @@ function AssignAdminDialog({ branchId }: { branchId: string }) {
         {error ? <FieldError id="assign-admin-error">{error}</FieldError> : null}
       </FieldGroup><Button type="submit" disabled={isPending || !email || !firstName || !surname || !dateOfBirth} className="self-start">{isPending ? ROLE_CREATION_MESSAGES.CREATING_ACCOUNT : ROLE_CREATION_MESSAGES.CREATE_ACCOUNT_ACTION}</Button></form>
     </SheetContent></Sheet>
-    <CreatedAccountDialog credentials={createdCredentials} onClose={() => { setCreatedCredentials(null); router.refresh() }} />
+    <CreatedAccountDialog credentials={createdResult} onClose={() => { setCreatedResult(null); router.refresh() }} />
   </>
 }
 

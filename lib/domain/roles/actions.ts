@@ -44,10 +44,23 @@ export interface StaffAssignment {
   email?: string | null;
 }
 
-export interface CreatedAccountCredentials {
-  email: string;
-  temporaryPassword: string;
-}
+/**
+ * Result of the owner's create-branch-admin flow. Distinguishes a freshly
+ * created Auth account (with a one-time temporary password) from the reuse
+ * of an existing account, which never receives a new password.
+ */
+export type CreatedAccountResult =
+  | { mode: "created"; email: string; temporaryPassword: string }
+  | { mode: "existing"; email: string };
+
+/**
+ * Credentials payload for flows that always create a new Auth account
+ * (branch teacher creation). The created variant of `CreatedAccountResult`.
+ */
+export type CreatedAccountCredentials = Extract<
+  CreatedAccountResult,
+  { mode: "created" }
+>;
 
 export interface TeacherOption {
   id: string;
@@ -56,6 +69,37 @@ export interface TeacherOption {
 
 function generateTemporaryPassword(): string {
   return randomBytes(18).toString("base64url");
+}
+
+type AuthUserEmailLookup =
+  | { status: "found"; userId: string }
+  | { status: "not_found" }
+  | { status: "failed" };
+
+/**
+ * Find an existing Auth user by email through paginated admin listing
+ * (same pattern as `listBranchStaff`). Emails are compared trimmed and
+ * lowercased; pagination stops at the first match or the first short page.
+ */
+async function findAuthUserIdByEmail(
+  admin: ReturnType<typeof createAdminClient>,
+  email: string
+): Promise<AuthUserEmailLookup> {
+  const normalized = email.trim().toLowerCase();
+  let page = 1;
+  while (page > 0) {
+    const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 1000 });
+    if (error) return { status: "failed" };
+
+    const match = data.users.find(
+      (user) => user.email?.trim().toLowerCase() === normalized
+    );
+    if (match) return { status: "found", userId: match.id };
+
+    if (data.users.length < 1000) return { status: "not_found" };
+    page += 1;
+  }
+  return { status: "not_found" };
 }
 
 function isAuthorizationError(message: string): boolean {
@@ -237,10 +281,15 @@ export async function getBranchDefaultTeacher(branchId: string): Promise<string 
   return data?.teacher_id ?? null;
 }
 
-/** Owner creates an Auth account, canonical identity, and branch-admin role. */
+/**
+ * Owner creates an Auth account, canonical identity, and branch-admin role.
+ * When the email already has an Auth account, no new account or password is
+ * generated: the existing account is assigned the role and its canonical
+ * profile is only created when missing (never overwritten).
+ */
 export async function createBranchAdmin(
   input: CreateBranchAdminInput
-): Promise<ActionResult<CreatedAccountCredentials>> {
+): Promise<ActionResult<CreatedAccountResult>> {
   const parsed = createBranchAdminSchema.safeParse(input);
   if (!parsed.success) return { success: false, error: parsed.error.issues[0].message };
 
@@ -250,31 +299,89 @@ export async function createBranchAdmin(
     return { success: false, error: COMMON_MESSAGES.INSUFFICIENT_PERMISSIONS };
   }
 
-  const temporaryPassword = generateTemporaryPassword();
   const admin = createAdminClient();
-  const { data: created, error: createError } = await admin.auth.admin.createUser({
-    email: parsed.data.email,
-    password: temporaryPassword,
-    email_confirm: true,
-    app_metadata: { must_change_password: true },
-  });
-
-  if (createError || !created.user) {
-    return {
-      success: false,
-      error: createError?.message.includes("already been registered")
-        ? ROLE_CREATION_MESSAGES.EMAIL_ALREADY_EXISTS
-        : COMMON_MESSAGES.UNEXPECTED_ERROR,
-    };
+  const lookup = await findAuthUserIdByEmail(admin, parsed.data.email);
+  if (lookup.status === "failed") {
+    return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
   }
 
   const supabase = await createClient();
+
+  if (lookup.status === "not_found") {
+    // No existing account: create one with a one-time temporary password.
+    const temporaryPassword = generateTemporaryPassword();
+    const { data: created, error: createError } = await admin.auth.admin.createUser({
+      email: parsed.data.email,
+      password: temporaryPassword,
+      email_confirm: true,
+      app_metadata: { must_change_password: true },
+    });
+
+    if (createError || !created.user) {
+      return {
+        success: false,
+        error: createError?.message.includes("already been registered")
+          ? ROLE_CREATION_MESSAGES.EMAIL_ALREADY_EXISTS
+          : COMMON_MESSAGES.UNEXPECTED_ERROR,
+      };
+    }
+
+    const { error: assignError } = await supabase.rpc("assign_branch_admin", {
+      p_target: created.user.id,
+      p_branch_id: parsed.data.branchId,
+    });
+    if (assignError) {
+      await admin.auth.admin.deleteUser(created.user.id).catch(() => undefined);
+      return {
+        success: false,
+        error: isAuthorizationError(assignError.message)
+          ? COMMON_MESSAGES.INSUFFICIENT_PERMISSIONS
+          : COMMON_MESSAGES.UNEXPECTED_ERROR,
+      };
+    }
+
+    const { error: profileError } = await createCanonicalProfile(
+      admin,
+      created.user.id,
+      parsed.data
+    );
+    if (profileError) {
+      await rollbackCreatedAccount(
+        created.user.id,
+        "admin",
+        parsed.data.branchId,
+        admin,
+        supabase
+      );
+      return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
+    }
+
+    return {
+      success: true,
+      data: { mode: "created", email: parsed.data.email, temporaryPassword },
+    };
+  }
+
+  // Existing account: block when it already administers this branch.
+  const { data: activeAssignment, error: rolesError } = await admin
+    .from("user_roles")
+    .select("user_id")
+    .eq("user_id", lookup.userId)
+    .eq("role", "admin")
+    .eq("branch_id", parsed.data.branchId)
+    .is("revoked_at", null)
+    .maybeSingle();
+  if (rolesError) return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
+  if (activeAssignment) {
+    return { success: false, error: ROLE_CREATION_MESSAGES.ALREADY_ADMIN_IN_BRANCH };
+  }
+
+  // The RPC keeps database-side owner authorization authoritative.
   const { error: assignError } = await supabase.rpc("assign_branch_admin", {
-    p_target: created.user.id,
+    p_target: lookup.userId,
     p_branch_id: parsed.data.branchId,
   });
   if (assignError) {
-    await admin.auth.admin.deleteUser(created.user.id).catch(() => undefined);
     return {
       success: false,
       error: isAuthorizationError(assignError.message)
@@ -283,23 +390,25 @@ export async function createBranchAdmin(
     };
   }
 
-  const { error: profileError } = await createCanonicalProfile(
-    admin,
-    created.user.id,
-    parsed.data
-  );
-  if (profileError) {
-    await rollbackCreatedAccount(
-      created.user.id,
-      "admin",
-      parsed.data.branchId,
-      admin,
-      supabase
-    );
+  // Ensure a canonical profile exists; never overwrite an existing one.
+  const { data: profile, error: profileLookupError } = await admin
+    .from("user_profiles")
+    .select("user_id")
+    .eq("user_id", lookup.userId)
+    .maybeSingle();
+  if (profileLookupError) {
     return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
   }
+  if (!profile) {
+    const { error: profileError } = await createCanonicalProfile(
+      admin,
+      lookup.userId,
+      parsed.data
+    );
+    if (profileError) return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
+  }
 
-  return { success: true, data: { email: parsed.data.email, temporaryPassword } };
+  return { success: true, data: { mode: "existing", email: parsed.data.email } };
 }
 
 /**
@@ -371,7 +480,10 @@ export async function createBranchTeacher(
     return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
   }
 
-  return { success: true, data: { email: parsed.data.email, temporaryPassword } };
+  return {
+    success: true,
+    data: { mode: "created", email: parsed.data.email, temporaryPassword },
+  };
 }
 
 /**

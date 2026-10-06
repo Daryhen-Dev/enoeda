@@ -14,18 +14,21 @@ import {
 } from "@/components/ui/dialog"
 import { Field, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import type { CreatedAccountCredentials } from "@/lib/domain/roles/actions"
+import type { CreatedAccountResult } from "@/lib/domain/roles/actions"
 import { ROLE_CREATION_MESSAGES } from "@/lib/localization/es-ec"
 
 interface CreatedAccountDialogProps {
-  credentials: CreatedAccountCredentials | null
+  /** Assignment outcome; the teacher flow only ever passes the created variant. */
+  credentials: CreatedAccountResult | null
   onClose: () => void
 }
 
 /**
- * Displays newly created account credentials exactly once. The temporary
- * password is never persisted client-side beyond this dialog's lifetime
- * and is not retrievable again after closing.
+ * Reports the outcome of an admin-role assignment. For a newly created
+ * account it shows the one-time temporary password, which is never persisted
+ * client-side beyond this dialog's lifetime and is not retrievable again
+ * after closing. For a reused existing account it only confirms the
+ * assignment; no password is shown or generated.
  */
 export function CreatedAccountDialog({
   credentials,
@@ -47,69 +50,89 @@ export function CreatedAccountDialog({
       }}
     >
       <DialogContent showCloseButton={false}>
-        <DialogHeader>
-          <DialogTitle>{ROLE_CREATION_MESSAGES.CREDENTIALS_DIALOG_TITLE}</DialogTitle>
-          <DialogDescription>
-            {ROLE_CREATION_MESSAGES.CREDENTIALS_DIALOG_DESCRIPTION}
-          </DialogDescription>
-        </DialogHeader>
+        {credentials?.mode === "existing" ? (
+          <>
+            <DialogHeader>
+              <DialogTitle>
+                {ROLE_CREATION_MESSAGES.EXISTING_ACCOUNT_ASSIGNED_TITLE}
+              </DialogTitle>
+              <DialogDescription>
+                {ROLE_CREATION_MESSAGES.EXISTING_ACCOUNT_ASSIGNED_DESCRIPTION}
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="mt-4">
+              <Button type="button" onClick={onClose}>
+                {ROLE_CREATION_MESSAGES.CLOSE_ACTION}
+              </Button>
+            </DialogFooter>
+          </>
+        ) : (
+          <>
+            <DialogHeader>
+              <DialogTitle>{ROLE_CREATION_MESSAGES.CREDENTIALS_DIALOG_TITLE}</DialogTitle>
+              <DialogDescription>
+                {ROLE_CREATION_MESSAGES.CREDENTIALS_DIALOG_DESCRIPTION}
+              </DialogDescription>
+            </DialogHeader>
 
-        {credentials && (
-          <div className="mt-4 space-y-3">
-            <Field>
-              <FieldLabel htmlFor="created-account-email">
-                {ROLE_CREATION_MESSAGES.CREDENTIALS_EMAIL_LABEL}
-              </FieldLabel>
-              <div className="flex gap-2">
-                <Input
-                  id="created-account-email"
-                  readOnly
-                  value={credentials.email}
-                  className="font-mono text-xs"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon-sm"
-                  onClick={() => handleCopy("email", credentials.email)}
-                  aria-label={ROLE_CREATION_MESSAGES.COPY_ACTION}
-                >
-                  {copied === "email" ? <CheckIcon /> : <CopyIcon />}
-                </Button>
+            {credentials && (
+              <div className="mt-4 space-y-3">
+                <Field>
+                  <FieldLabel htmlFor="created-account-email">
+                    {ROLE_CREATION_MESSAGES.CREDENTIALS_EMAIL_LABEL}
+                  </FieldLabel>
+                  <div className="flex gap-2">
+                    <Input
+                      id="created-account-email"
+                      readOnly
+                      value={credentials.email}
+                      className="font-mono text-xs"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon-sm"
+                      onClick={() => handleCopy("email", credentials.email)}
+                      aria-label={ROLE_CREATION_MESSAGES.COPY_ACTION}
+                    >
+                      {copied === "email" ? <CheckIcon /> : <CopyIcon />}
+                    </Button>
+                  </div>
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="created-account-password">
+                    {ROLE_CREATION_MESSAGES.CREDENTIALS_PASSWORD_LABEL}
+                  </FieldLabel>
+                  <div className="flex gap-2">
+                    <Input
+                      id="created-account-password"
+                      readOnly
+                      value={credentials.temporaryPassword}
+                      className="font-mono text-xs"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon-sm"
+                      onClick={() =>
+                        handleCopy("password", credentials.temporaryPassword)
+                      }
+                      aria-label={ROLE_CREATION_MESSAGES.COPY_ACTION}
+                    >
+                      {copied === "password" ? <CheckIcon /> : <CopyIcon />}
+                    </Button>
+                  </div>
+                </Field>
               </div>
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="created-account-password">
-                {ROLE_CREATION_MESSAGES.CREDENTIALS_PASSWORD_LABEL}
-              </FieldLabel>
-              <div className="flex gap-2">
-                <Input
-                  id="created-account-password"
-                  readOnly
-                  value={credentials.temporaryPassword}
-                  className="font-mono text-xs"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon-sm"
-                  onClick={() =>
-                    handleCopy("password", credentials.temporaryPassword)
-                  }
-                  aria-label={ROLE_CREATION_MESSAGES.COPY_ACTION}
-                >
-                  {copied === "password" ? <CheckIcon /> : <CopyIcon />}
-                </Button>
-              </div>
-            </Field>
-          </div>
+            )}
+
+            <DialogFooter className="mt-4">
+              <Button type="button" onClick={onClose}>
+                {ROLE_CREATION_MESSAGES.CLOSE_ACTION}
+              </Button>
+            </DialogFooter>
+          </>
         )}
-
-        <DialogFooter className="mt-4">
-          <Button type="button" onClick={onClose}>
-            {ROLE_CREATION_MESSAGES.CLOSE_ACTION}
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   )
