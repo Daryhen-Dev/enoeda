@@ -45,6 +45,17 @@ function getDisciplineColors(code: string): DisciplineColors {
   }
 }
 
+// Session cards keep a light discipline tint in both themes, so action
+// buttons use explicit light-surface colors and pin their dark: variants to
+// the same values (Button's outline variant adds dark: backgrounds of its own).
+const ACTION_BUTTON_BASE =
+  "inline-flex h-8 w-full items-center justify-center gap-1 rounded-full border px-2 text-sm font-medium whitespace-nowrap shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50";
+// Single filled action per card.
+const PRIMARY_ACTION_CLASSES = `${ACTION_BUTTON_BASE} border-sky-700 bg-sky-700 text-white hover:bg-sky-800 hover:text-white focus-visible:ring-sky-900/40 dark:border-sky-700 dark:bg-sky-700 dark:hover:bg-sky-800`;
+const NEUTRAL_ACTION_CLASSES = `${ACTION_BUTTON_BASE} border-slate-300 bg-white/80 text-slate-800 hover:bg-white hover:text-slate-950 focus-visible:ring-slate-500/40 dark:border-slate-300 dark:bg-white/80 dark:text-slate-800 dark:hover:bg-white`;
+const DANGER_ACTION_CLASSES = `${ACTION_BUTTON_BASE} border-red-300 bg-white/80 text-red-700 hover:bg-red-50 hover:text-red-800 focus-visible:ring-red-600/40 dark:border-red-300 dark:bg-white/80 dark:text-red-700 dark:hover:bg-red-50`;
+const RESTORE_ACTION_CLASSES = `${ACTION_BUTTON_BASE} border-emerald-300 bg-white/80 text-emerald-800 hover:bg-emerald-50 hover:text-emerald-900 focus-visible:ring-emerald-600/40 dark:border-emerald-300 dark:bg-white/80 dark:text-emerald-800 dark:hover:bg-emerald-50`;
+
 function isInteractiveTarget(target: EventTarget | null): boolean {
   if (!(target instanceof Element)) return false;
 
@@ -286,7 +297,7 @@ export function SessionBlock({
                 sessionDate={session.session_date}
                 branchId={branchId ?? ""}
                 disabled={isSuspended || !branchId || !session.can_take_attendance}
-                triggerClassName="inline-flex h-8 w-full items-center justify-center gap-1 rounded-full border border-sky-600 bg-sky-600 px-2 text-sm font-medium whitespace-nowrap text-white shadow-sm transition-colors hover:bg-sky-700 hover:text-white focus-visible:border-sky-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-950/50 disabled:pointer-events-none disabled:opacity-50"
+                triggerClassName={PRIMARY_ACTION_CLASSES}
               />
             )
           ) : (
@@ -297,7 +308,7 @@ export function SessionBlock({
                   sessionDate={session.session_date}
                   branchId={branchId ?? ""}
                   disabled={isSuspended || !branchId || !session.can_take_attendance}
-                  triggerClassName="inline-flex h-8 w-full items-center justify-center gap-1 rounded-full border border-sky-600 bg-sky-600 px-2 text-sm font-medium whitespace-nowrap text-white shadow-sm transition-colors hover:bg-sky-700 hover:text-white focus-visible:border-sky-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-950/50 disabled:pointer-events-none disabled:opacity-50"
+                  triggerClassName={PRIMARY_ACTION_CLASSES}
                 />
               )}
               {canManage && branchId && (
@@ -313,7 +324,7 @@ export function SessionBlock({
                           {SUSPENSION_MESSAGES.SUSPEND_TITLE}
                         </>
                       }
-                      triggerClassName="inline-flex h-8 w-full items-center justify-center gap-1 rounded-full border border-destructive bg-destructive px-2 text-sm font-medium whitespace-nowrap text-white shadow-sm transition-colors hover:bg-red-700 hover:text-white focus-visible:border-red-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-950/50 disabled:pointer-events-none disabled:opacity-50"
+                      triggerClassName={DANGER_ACTION_CLASSES}
                     />
                   ) : isSuspended ? (
                     <Button
@@ -321,7 +332,7 @@ export function SessionBlock({
                       size="sm"
                       disabled={isPending}
                       onClick={handleReinstate}
-                      className="h-8 w-full rounded-full border-emerald-600 bg-emerald-600 px-2 text-sm text-white shadow-sm hover:bg-emerald-700 hover:text-white focus-visible:border-emerald-950 focus-visible:ring-emerald-950/50"
+                      className={RESTORE_ACTION_CLASSES}
                     >
                       {isPending
                         ? COMMON_MESSAGES.LOADING
@@ -339,14 +350,14 @@ export function SessionBlock({
                         ? TEACHER_CONFLICT_MESSAGES.ASSIGN_ACTION
                         : TEACHER_CONFLICT_MESSAGES.CHANGE_ACTION
                     }
-                    triggerClassName="inline-flex h-8 w-full items-center justify-center gap-1 rounded-full border border-purple-600 bg-purple-600 px-2 text-sm font-medium whitespace-nowrap text-white shadow-sm transition-colors hover:bg-purple-700 hover:text-white focus-visible:border-purple-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-950/50 disabled:pointer-events-none disabled:opacity-50"
+                    triggerClassName={NEUTRAL_ACTION_CLASSES}
                   />
                   <RemoveRecurringClassDialog
                     scheduledClassId={session.scheduled_class_id}
                     branchId={branchId}
                     disciplineName={session.discipline_name}
                     startTime={session.start_time}
-                    triggerClassName="inline-flex h-8 w-full items-center justify-center gap-1 rounded-full border border-destructive bg-destructive px-2 text-sm font-medium whitespace-nowrap text-white shadow-sm transition-colors hover:bg-red-700 hover:text-white focus-visible:border-red-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-950/50 disabled:pointer-events-none disabled:opacity-50"
+                    triggerClassName={DANGER_ACTION_CLASSES}
                   />
                 </>
               )}
