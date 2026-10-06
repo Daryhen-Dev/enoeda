@@ -1,0 +1,133 @@
+"use client";
+
+import { useState, useTransition } from "react";
+import { Trash2Icon } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { deactivateScheduledClass } from "@/lib/domain/classes/actions";
+import {
+  COMMON_MESSAGES,
+  REMOVE_RECURRING_CLASS_MESSAGES,
+} from "@/lib/localization/es-ec";
+
+const DEFAULT_TRIGGER_CLASSES =
+  "text-destructive border-destructive hover:bg-destructive hover:text-white";
+
+interface RemoveRecurringClassDialogProps {
+  scheduledClassId: string;
+  branchId: string;
+  disciplineName: string;
+  startTime: string;
+  trigger?: React.ReactNode;
+  triggerClassName?: string;
+  disabled?: boolean;
+}
+
+export function RemoveRecurringClassDialog({
+  scheduledClassId,
+  branchId,
+  disciplineName,
+  startTime,
+  trigger,
+  triggerClassName,
+  disabled = false,
+}: RemoveRecurringClassDialogProps) {
+  const router = useRouter();
+  const [isOpen, setIsOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  function handleOpenChange(nextIsOpen: boolean) {
+    if (isPending) return;
+
+    setIsOpen(nextIsOpen);
+    setError(null);
+  }
+
+  function handleConfirm() {
+    setError(null);
+    startTransition(async () => {
+      const result = await deactivateScheduledClass({
+        id: scheduledClassId,
+        branch_id: branchId,
+      });
+
+      if (result.success) {
+        setIsOpen(false);
+        toast.success(REMOVE_RECURRING_CLASS_MESSAGES.SUCCESS);
+        router.refresh();
+      } else {
+        setError(result.error ?? COMMON_MESSAGES.UNEXPECTED_ERROR);
+      }
+    });
+  }
+
+  return (
+    <AlertDialog open={isOpen} onOpenChange={handleOpenChange}>
+      <AlertDialogTrigger
+        disabled={disabled}
+        render={
+          <Button
+            variant="outline"
+            aria-label={REMOVE_RECURRING_CLASS_MESSAGES.ARIA_LABEL(
+              disciplineName,
+              startTime
+            )}
+            className={triggerClassName ?? DEFAULT_TRIGGER_CLASSES}
+          />
+        }
+      >
+        {trigger ?? (
+          <>
+            <Trash2Icon aria-hidden="true" data-icon="inline-start" />
+            {REMOVE_RECURRING_CLASS_MESSAGES.ACTION}
+          </>
+        )}
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>
+            {REMOVE_RECURRING_CLASS_MESSAGES.DIALOG_TITLE}
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            {REMOVE_RECURRING_CLASS_MESSAGES.DIALOG_DESCRIPTION}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+
+        {error && (
+          <p role="alert" className="text-sm text-destructive">
+            {error}
+          </p>
+        )}
+
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={isPending}>
+            {COMMON_MESSAGES.CANCEL}
+          </AlertDialogCancel>
+          <AlertDialogAction
+            variant="destructive"
+            disabled={isPending}
+            onClick={handleConfirm}
+          >
+            {isPending
+              ? COMMON_MESSAGES.LOADING
+              : REMOVE_RECURRING_CLASS_MESSAGES.CONFIRM_ACTION}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}

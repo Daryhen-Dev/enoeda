@@ -647,6 +647,17 @@ export const SUSPENSION_MESSAGES = {
   REINSTATED: "Sesión reactivada.",
 } as const
 
+export const REMOVE_RECURRING_CLASS_MESSAGES = {
+  ACTION: "Quitar clase",
+  DIALOG_TITLE: "¿Quitar la clase recurrente?",
+  DIALOG_DESCRIPTION:
+    "La clase dejará de aparecer en el calendario a partir de hoy. La asistencia histórica se conserva. Esta acción no se puede deshacer desde la aplicación.",
+  CONFIRM_ACTION: "Quitar clase",
+  SUCCESS: "Clase recurrente quitada correctamente.",
+  ARIA_LABEL: (disciplineName: string, startTime: string) =>
+    `Quitar la clase recurrente de ${disciplineName}, a las ${startTime}`,
+} as const
+
 export const TEACHER_CONFLICT_MESSAGES = {
   WARNING: "Este profesor ya está asignado a otra clase el mismo día y horario. Si continúa, esa clase quedará sin profesor asignado.",
   CONFIRM: "Confirmar y continuar",

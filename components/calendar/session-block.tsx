@@ -7,6 +7,7 @@ import { toast } from "sonner";
 
 import { AttendanceSheetDialog } from "@/components/attendance/attendance-sheet-dialog";
 import { SessionInfoSheetDialog } from "@/components/attendance/session-info-sheet-dialog";
+import { RemoveRecurringClassDialog } from "@/components/classes/remove-recurring-class-dialog";
 import { SessionSuspendDialog } from "@/components/classes/session-suspend-dialog";
 import { TeacherAssignDialog } from "@/components/classes/teacher-assign-dialog";
 import { Button } from "@/components/ui/button";
@@ -339,6 +340,13 @@ export function SessionBlock({
                         : TEACHER_CONFLICT_MESSAGES.CHANGE_ACTION
                     }
                     triggerClassName="inline-flex h-8 w-full items-center justify-center gap-1 rounded-full border border-purple-600 bg-purple-600 px-2 text-sm font-medium whitespace-nowrap text-white shadow-sm transition-colors hover:bg-purple-700 hover:text-white focus-visible:border-purple-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-950/50 disabled:pointer-events-none disabled:opacity-50"
+                  />
+                  <RemoveRecurringClassDialog
+                    scheduledClassId={session.scheduled_class_id}
+                    branchId={branchId}
+                    disciplineName={session.discipline_name}
+                    startTime={session.start_time}
+                    triggerClassName="inline-flex h-8 w-full items-center justify-center gap-1 rounded-full border border-destructive bg-destructive px-2 text-sm font-medium whitespace-nowrap text-white shadow-sm transition-colors hover:bg-red-700 hover:text-white focus-visible:border-red-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-950/50 disabled:pointer-events-none disabled:opacity-50"
                   />
                 </>
               )}
