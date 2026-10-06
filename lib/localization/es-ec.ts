@@ -490,7 +490,15 @@ export const TEACHER_MANAGEMENT_MESSAGES = {
   ROLE_LABEL: "Rol",
   ASSIGN_ACTION: "Asignar profesor",
   ASSIGN_DIALOG_TITLE: "Asignar profesor",
-  ASSIGN_DIALOG_DESCRIPTION: "Ingrese el UUID del usuario que será profesor en esta sucursal.",
+  ASSIGN_DIALOG_DESCRIPTION: "Cree una cuenta nueva e ingrese los datos de la persona que será profesora en esta sucursal.",
+  MODE_TOGGLE_LABEL: "Modo de asignación",
+  MODE_EXISTING: "Cuenta existente",
+  MODE_CREATE: "Crear cuenta",
+  EXISTING_MODE_DESCRIPTION:
+    "Asigne el cargo de profesor a una cuenta ya registrada. Los datos personales se usan solo si la cuenta aún no tiene un perfil; nunca se sobrescriben los datos existentes.",
+  EXISTING_MODE_SUBMIT: "Asignar cargo",
+  EXISTING_ACCOUNT_ASSIGNED_SUCCESS:
+    "Cargo de profesor asignado a la cuenta existente correctamente.",
   TARGET_USER_LABEL: "ID de usuario (UUID)",
   ASSIGNING: "Asignando…",
   DEACTIVATE_ACTION: "Desactivar",
