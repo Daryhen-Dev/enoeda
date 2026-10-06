@@ -12,7 +12,6 @@ import { CalendarMonthView } from "@/components/calendar/calendar-month-view";
 import { CalendarWeekView } from "@/components/calendar/calendar-week-view";
 import { ScheduledClassCreateDialog } from "@/components/classes/scheduled-class-create-dialog";
 import { OneTimeClassCreateDialog } from "@/components/classes/one-time-class-create-dialog";
-import { BranchSelector } from "@/components/branch/branch-selector";
 import { resolveBranchContext } from "@/lib/auth/branch-context";
 import { CALENDAR_MESSAGES } from "@/lib/localization/es-ec";
 
@@ -26,7 +25,6 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
   const branchResult = await resolveBranchContext(params.branch, { allowGlobalAdminRead: true });
   if (branchResult.type === "error") return <div className="flex flex-1 flex-col gap-4 p-4"><Alert variant="destructive"><AlertCircleIcon /><AlertTitle>{CALENDAR_MESSAGES.PAGE_TITLE}</AlertTitle><AlertDescription>{CALENDAR_MESSAGES.NO_BRANCH_CONTEXT}</AlertDescription></Alert></div>;
   if (branchResult.type === "redirect") { const redirectParams = new URLSearchParams(); for (const [key, value] of Object.entries(params)) if (typeof value === "string") redirectParams.set(key, value); redirectParams.set("branch", branchResult.branchId); redirect(`/dashboard/calendar?${redirectParams.toString()}`); }
-  if (branchResult.type === "selector") { const currentParams = Object.fromEntries(Object.entries(params).filter((entry): entry is [string, string] => entry[0] !== "branch" && typeof entry[1] === "string")); return <BranchSelector branches={branchResult.branches} currentPath="/dashboard/calendar" currentParams={currentParams} />; }
   const view: CalendarView = params.view === CALENDAR_VIEWS.DAY ? CALENDAR_VIEWS.DAY : params.view === CALENDAR_VIEWS.WEEK ? CALENDAR_VIEWS.WEEK : CALENDAR_VIEWS.MONTH;
   const baseDate = params.date ? parseDateOnly(params.date) : new Date();
   let startDate: Date; let endDate: Date;

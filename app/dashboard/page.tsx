@@ -9,7 +9,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { BranchSelector } from "@/components/branch/branch-selector"
 import { getDashboardKpis } from "@/lib/domain/dashboard"
 import { APP_ROLES } from "@/lib/auth/authorize"
 import { resolveBranchContext } from "@/lib/auth/branch-context"
@@ -68,17 +67,6 @@ export default async function DashboardOverview({ searchParams }: DashboardOverv
     }
     redirectParams.set("branch", branchResult.branchId)
     redirect(`/dashboard?${redirectParams.toString()}`)
-  }
-
-  if (branchResult.type === "selector") {
-    const { branch: _, ...otherParams } = params
-    return (
-      <BranchSelector
-        branches={branchResult.branches}
-        currentPath="/dashboard"
-        currentParams={otherParams as Record<string, string>}
-      />
-    )
   }
 
   // Valid branch — proceed with KPI data

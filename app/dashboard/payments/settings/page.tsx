@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation"
 
-import { BranchSelector } from "@/components/branch/branch-selector"
 import { PaymentSettingsForm } from "@/components/payments/payment-settings-form"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { resolveBranchContext } from "@/lib/auth/branch-context"
@@ -22,13 +21,6 @@ export default async function PaymentSettingsPage({ searchParams }: PaymentSetti
     }
     redirectParams.set("branch", branchResult.branchId)
     redirect(`/dashboard/payments/settings?${redirectParams.toString()}`)
-  }
-
-  if (branchResult.type === "selector") {
-    const currentParams = Object.fromEntries(
-      Object.entries(params).filter(([key, value]) => key !== "branch" && value)
-    ) as Record<string, string>
-    return <BranchSelector branches={branchResult.branches} currentPath="/dashboard/payments/settings" currentParams={currentParams} />
   }
 
   if (branchResult.type === "error" || !branchResult.canManage) {

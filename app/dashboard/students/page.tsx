@@ -2,7 +2,6 @@ import { redirect } from "next/navigation"
 import { AlertCircleIcon } from "lucide-react"
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { BranchSelector } from "@/components/branch/branch-selector"
 import { StudentList } from "@/components/students/student-list"
 import { listDisciplines } from "@/lib/domain/disciplines/actions"
 import {
@@ -43,22 +42,6 @@ export default async function StudentsPage({ searchParams }: StudentsPageProps) 
     }
     redirectParams.set("branch", branchResult.branchId)
     redirect(`/dashboard/students?${redirectParams.toString()}`)
-  }
-
-  if (branchResult.type === "selector") {
-    const otherParams: Record<string, string> = Object.fromEntries(
-      Object.entries(params).filter(
-        (entry): entry is [string, string] =>
-          entry[0] !== "branch" && entry[1] !== undefined,
-      ),
-    )
-    return (
-      <BranchSelector
-        branches={branchResult.branches}
-        currentPath="/dashboard/students"
-        currentParams={otherParams}
-      />
-    )
   }
 
   const branchId = branchResult.branchId
