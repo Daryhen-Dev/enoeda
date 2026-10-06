@@ -52,6 +52,9 @@ first option the user sees in the combobox.
       `BranchSelector`/"Seleccione una sucursal" references remain.
 - [ ] 4. User: verify in the browser that a multi-branch admin lands on a branch
       with content and only the header combobox, on all 7 pages.
+- [x] 5. Keep the chosen branch across navigation: sidebar links now carry the
+      current `?branch` for branch-scoped routes
+      (`components/app-sidebar.tsx`).
 
 ## Deliberate omissions (found in the same audit, not in this change)
 
@@ -96,14 +99,33 @@ first option the user sees in the combobox.
 
 ## Follow-ups found while working
 
-- `components/app-sidebar.tsx:102,123` links do not carry `?branch`, so after
-  this change navigating between pages resets the admin to the alphabetically
-  first branch; a manual choice survives only within one page. This is the cheap
-  half of "remember the last branch" and is the obvious next change.
-- `.open-next/` (82 MB, gitignored) is stale build output from the removed
-  Cloudflare toolchain and is not in eslint's `globalIgnores`, so a project-wide
-  `pnpm exec eslint` reports ~730 errors from it. Deleting the directory fixes
-  the noise; adding an ignore rule would re-introduce config for a toolchain
-  that no longer exists.
 - Pre-existing warning, outside this diff: `app/dashboard/staff/page.tsx:77`
   `'teachers' is assigned a value but never used`.
+- Header `<select>` label/`aria-label` conflict and the duplicated page/dialog
+  headings listed above are still open.
+
+## Task 5: sidebar preserves ?branch
+
+Without this, task 1 made the redundancy fix half-broken: the resolver defaults
+to the first branch, and the sidebar links had no query, so every sidebar click
+reset the admin back to that default and a manual choice survived only within
+one page.
+
+- `components/app-sidebar.tsx`: explicit `branchScoped` flag per nav item
+  (`/dashboard/profile` is `false`), exported pure
+  `buildNavigationHref(url, branchScoped, branchId)`, and the logo link plus nav
+  links moved into a `SidebarNavigation` child that reads `useSearchParams()`,
+  rendered under `<Suspense fallback={null}>`. The boundary lives in this file so
+  `app/dashboard/layout.tsx` stays untouched.
+- The branch id is `encodeURIComponent`-ed: it comes from the URL, so an
+  unencoded value could inject extra query pairs into the rendered `href`.
+- Active-state highlighting still compares plain `item.url` against
+  `usePathname()`, so the query cannot break it.
+- Evidence: commit `189c87f`. Test-first (4 new helper tests RED, then 8 passed
+  in the file; full suite 707 passed / 1 skipped), `next build` clean with no
+  missing-suspense-boundary report, `tsc` clean, eslint clean on both files.
+  Independent verification: 8/8 PASS.
+- Unverified: whether `fallback={null}` can flash an empty sidebar on a hard
+  load. Every `/dashboard/*` route is dynamic (`ƒ`, none `○` static), which rules
+  out the static-prerender path that would render `null` instead of the nav, so a
+  flash is not expected — but hydration timing is only settleable in a browser.
