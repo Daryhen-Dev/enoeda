@@ -26,7 +26,9 @@ import {
   deactivateScheduledClassSeriesSchema,
   getSessionsForRangeSchema,
   getSuspensionReportSchema,
+  listClassSeriesSchema,
   reinstateSessionSchema,
+  renameClassSeriesSchema,
   suspendSessionSchema,
   updateScheduledClassSchema,
 } from "./schema";
@@ -242,6 +244,9 @@ async function detectTeacherConflicts(
 
 /**
  * Create a new recurring weekly class.
+ * The class seeds its own 1-row series: a class_series catalog row is
+ * created with an auto-generated name ("<discipline> — <day> <HH:MM>"),
+ * and the scheduled_classes row points at it via series_id.
  * Owner/Admin-branch via RLS.
  */
 export async function createScheduledClass(
@@ -261,6 +266,25 @@ export async function createScheduledClass(
           throw new Error(branchCheck.error);
         }
 
+        // Resolve the discipline for the auto-generated series name.
+        const discipline = await tx.disciplines.findUnique({
+          where: { id: parsed.data.discipline_id },
+          select: { name: true },
+        });
+        if (!discipline) {
+          throw new Error(CLASS_MESSAGES.NOT_FOUND);
+        }
+
+        const seriesId = crypto.randomUUID();
+        await tx.class_series.create({
+          data: {
+            id: seriesId,
+            branch_id: parsed.data.branch_id,
+            name: `${discipline.name} — ${WEEKDAY_LABELS[parsed.data.day_of_week]} ${parsed.data.start_time}`,
+          },
+          select: { id: true },
+        });
+
         return tx.scheduled_classes.create({
           data: {
             branch_id: parsed.data.branch_id,
@@ -268,7 +292,7 @@ export async function createScheduledClass(
             default_teacher_id: parsed.data.default_teacher_id ?? null,
             day_of_week: parsed.data.day_of_week,
             start_time: new Date(`1970-01-01T${parsed.data.start_time}:00`),
-            series_id: crypto.randomUUID(),
+            series_id: seriesId,
           },
           select: { id: true },
         });
@@ -282,6 +306,7 @@ export async function createScheduledClass(
           ) ??
           (error instanceof Error &&
           (error.message === CLASS_MESSAGES.BRANCH_CONTEXT_REQUIRED ||
+            error.message === CLASS_MESSAGES.NOT_FOUND ||
             error.message.includes("permisos"))
             ? error.message
             : undefined),
@@ -322,7 +347,7 @@ export async function createScheduledClassBatch(
     return { success: false, error: parsed.error.issues[0].message };
   }
 
-  const { branch_id, discipline_id, default_teacher_id, days_of_week, start_time } =
+  const { branch_id, discipline_id, default_teacher_id, days_of_week, start_time, series_name } =
     parsed.data;
 
   // Pre-validate branch assignment before any writes
@@ -341,8 +366,34 @@ export async function createScheduledClassBatch(
 
   // One shared series identity for every row of the batch (including all
   // per-day loop iterations), so removing the series no longer needs the
-  // discipline + start_time heuristic.
+  // discipline + start_time heuristic. The admin-provided name lands in
+  // the class_series catalog; when the catalog insert fails, no day rows
+  // are created.
   const seriesId = crypto.randomUUID();
+  const seriesResult = await withAuthenticatedUser(async (tx) => {
+    await tx.class_series.create({
+      data: {
+        id: seriesId,
+        branch_id,
+        name: series_name,
+      },
+      select: { id: true },
+    });
+    return { series_id: seriesId };
+  }, {
+    mapTransactionError: (error) =>
+      error instanceof Error &&
+      (error.message === CLASS_MESSAGES.BRANCH_CONTEXT_REQUIRED ||
+        error.message.includes("permisos"))
+        ? error.message
+        : undefined,
+  });
+  if (!seriesResult.success) {
+    return {
+      success: false,
+      error: seriesResult.error ?? COMMON_MESSAGES.UNEXPECTED_ERROR,
+    };
+  }
 
   for (const day_of_week of days_of_week) {
     try {
@@ -616,9 +667,12 @@ export async function deactivateScheduledClass(
  * Used to remove a whole weekly series at once. History is preserved
  * (soft-deactivate is_active=false; never deletes).
  *
- * The caller passes any one row of the series (scheduled_class_id); its
- * series_id is resolved inside the transaction. When the row is absent or
- * has no series_id (should not happen post-backfill), fails with
+ * The caller passes EITHER any one row of the series (scheduled_class_id —
+ * the calendar dialog) OR the series identity itself (series_id — the
+ * concurrencias section); the schema rejects passing both or neither.
+ * When scheduled_class_id is given, its series_id is resolved inside the
+ * transaction. When series_id is given, the catalog row is verified to
+ * belong to the caller's branch. Either way the target is absent →
  * CLASS_MESSAGES.NOT_FOUND.
  *
  * Authorization: unlike deactivateScheduledClass there is no single row to
@@ -635,7 +689,7 @@ export async function deactivateScheduledClassSeries(
     return { success: false, error: parsed.error.issues[0].message };
   }
 
-  const { branch_id, scheduled_class_id } = parsed.data;
+  const { branch_id, scheduled_class_id, series_id } = parsed.data;
 
   try {
     const result = await withAuthenticatedUser(async (tx, ctx) => {
@@ -645,21 +699,37 @@ export async function deactivateScheduledClassSeries(
         throw new Error(branchCheck.error);
       }
 
-      // Resolve the series identity from the given row (RLS scopes the
-      // lookup to the caller's branch).
-      const row = await tx.scheduled_classes.findFirst({
-        where: { id: scheduled_class_id, branch_id },
-        select: { series_id: true },
-      });
+      // Resolve the series identity (RLS scopes the lookups to the
+      // caller's branch).
+      let resolvedSeriesId: string | null = null;
+      if (scheduled_class_id) {
+        const row = await tx.scheduled_classes.findFirst({
+          where: { id: scheduled_class_id, branch_id },
+          select: { series_id: true },
+        });
+        if (!row || row.series_id === null) {
+          throw new Error(CLASS_MESSAGES.NOT_FOUND);
+        }
+        resolvedSeriesId = row.series_id;
+      } else if (series_id) {
+        const series = await tx.class_series.findFirst({
+          where: { id: series_id, branch_id },
+          select: { id: true },
+        });
+        if (!series) {
+          throw new Error(CLASS_MESSAGES.NOT_FOUND);
+        }
+        resolvedSeriesId = series.id;
+      }
 
-      if (!row || row.series_id === null) {
+      if (!resolvedSeriesId) {
         throw new Error(CLASS_MESSAGES.NOT_FOUND);
       }
 
       const batch = await tx.scheduled_classes.updateMany({
         where: {
           branch_id,
-          series_id: row.series_id,
+          series_id: resolvedSeriesId,
           is_active: true,
         },
         data: { is_active: false },
@@ -684,20 +754,21 @@ export async function deactivateScheduledClassSeries(
 }
 
 /**
- * Deactivate ALL future classes of a branch in one step:
- * - every active recurring template (scheduled_classes), and
- * - every active one-time class with class_date >= today (server-local,
- *   same formatDateOnly pipeline as getSessionsForRange).
+ * Deactivate ALL future classes of a branch in one step: every active
+ * recurring template (scheduled_classes — the "concurrencias").
+ * One-time classes are deliberately NOT touched: "quitar todo lo futuro"
+ * targets recurring series only, and one_time_classes.is_active stays
+ * unused for now.
  * History is preserved (soft-deactivate is_active=false; never deletes):
  * past sessions stay visible through the existing resolver gates.
  *
  * Authorization: the active branch-assignment assertion plus RLS inside
- * withAuthenticatedUser scope both bulk updates to the caller's own
+ * withAuthenticatedUser scope the bulk update to the caller's own
  * branch. Owner/Admin-branch via RLS.
  */
 export async function deactivateAllFutureClasses(
   input: unknown
-): Promise<ActionResult<{ recurring: number; oneTime: number }>> {
+): Promise<ActionResult<{ deactivated: number }>> {
   const parsed = deactivateAllFutureClassesSchema.safeParse(input);
   if (!parsed.success) {
     return { success: false, error: parsed.error.issues[0].message };
@@ -713,29 +784,210 @@ export async function deactivateAllFutureClasses(
         throw new Error(branchCheck.error);
       }
 
-      // Server-local "today" through the same formatDateOnly/parseDateOnly
-      // pipeline the session resolver uses for its past-visibility gates.
-      const today = parseDateOnly(formatDateOnly(new Date()));
-
       const recurringUpdate = await tx.scheduled_classes.updateMany({
         where: { branch_id, is_active: true },
         data: { is_active: false },
       });
 
-      const oneTimeUpdate = await tx.one_time_classes.updateMany({
-        where: {
-          branch_id,
-          is_active: true,
-          class_date: { gte: today },
-        },
-        data: { is_active: false },
-      });
-
-      return { recurring: recurringUpdate.count, oneTime: oneTimeUpdate.count };
+      return { deactivated: recurringUpdate.count };
     }, {
       mapTransactionError: (error) =>
         error instanceof Error &&
         (error.message === CLASS_MESSAGES.BRANCH_CONTEXT_REQUIRED ||
+          error.message.includes("permisos"))
+          ? error.message
+          : undefined,
+    });
+
+    if (!result.success) return result;
+    return { success: true, data: result.data };
+  } catch {
+    return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
+  }
+}
+
+/**
+ * One row per concurrencia (recurring series) of a branch, for the
+ * concurrencias admin section. Rows are grouped by series_id: active rows
+ * drive days_of_week and active_row_count; a series whose rows are ALL
+ * inactive is still listed with is_all_inactive=true (history preserved).
+ * The teacher name is resolved through user_profiles via the admin
+ * client (same pattern as listBranchStaff).
+ * Owner/Admin-branch via RLS.
+ */
+export interface ClassSeriesView {
+  series_id: string;
+  name: string;
+  discipline_id: string;
+  discipline_name: string;
+  days_of_week: number[];
+  start_time: string;
+  default_teacher_id: string | null;
+  teacher_name: string | null;
+  active_row_count: number;
+  is_all_inactive: boolean;
+}
+
+export async function listClassSeries(
+  input: unknown
+): Promise<ActionResult<ClassSeriesView[]>> {
+  const parsed = listClassSeriesSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message };
+  }
+
+  const { branch_id } = parsed.data;
+
+  try {
+    const result = await withAuthenticatedUser(async (tx, ctx) => {
+      // Branch assignment assertion — fail-closed
+      const branchCheck = assertActiveBranchAssignment(ctx, branch_id);
+      if (!branchCheck.ok) {
+        return { __branchError: branchCheck.error } as const;
+      }
+
+      // The class_series catalog is the authoritative list of series.
+      const seriesRows = await tx.class_series.findMany({
+        where: { branch_id },
+        select: { id: true, name: true },
+        orderBy: { name: "asc" },
+      });
+
+      const classRows = await tx.scheduled_classes.findMany({
+        where: { branch_id, series_id: { not: null } },
+        include: {
+          disciplines: { select: { id: true, name: true } },
+        },
+      });
+
+      const rowsBySeriesId = new Map<string, typeof classRows>();
+      for (const row of classRows) {
+        if (row.series_id === null) continue;
+        const bucket = rowsBySeriesId.get(row.series_id);
+        if (bucket) {
+          bucket.push(row);
+        } else {
+          rowsBySeriesId.set(row.series_id, [row]);
+        }
+      }
+
+      const views: ClassSeriesView[] = [];
+      const teacherIds = new Set<string>();
+      for (const series of seriesRows) {
+        const rows = rowsBySeriesId.get(series.id) ?? [];
+        const firstRow = rows[0];
+        // A catalog row without any class rows cannot happen today (the
+        // row is created together with its classes and nothing deletes);
+        // skip defensively if it ever does.
+        if (!firstRow) continue;
+
+        const activeRows = rows.filter((row) => row.is_active);
+        const teacherId =
+          activeRows.find((row) => row.default_teacher_id !== null)
+            ?.default_teacher_id ?? firstRow.default_teacher_id;
+        if (teacherId) {
+          teacherIds.add(teacherId);
+        }
+
+        views.push({
+          series_id: series.id,
+          name: series.name,
+          discipline_id: firstRow.disciplines.id,
+          discipline_name: firstRow.disciplines.name,
+          days_of_week: [
+            ...new Set(activeRows.map((row) => row.day_of_week)),
+          ].sort((a, b) => a - b),
+          start_time: formatTime(firstRow.start_time),
+          default_teacher_id: teacherId ?? null,
+          teacher_name: null,
+          active_row_count: activeRows.length,
+          is_all_inactive: activeRows.length === 0,
+        });
+      }
+
+      const teacherNameById = new Map<string, string>();
+      if (teacherIds.size > 0) {
+        const admin = createAdminClient();
+        const { data: profiles, error: profilesError } = await admin
+          .from("user_profiles")
+          .select("user_id, first_name, surname")
+          .in("user_id", [...teacherIds]);
+        if (profilesError) {
+          throw new Error(COMMON_MESSAGES.UNEXPECTED_ERROR);
+        }
+        for (const profile of profiles ?? []) {
+          const displayName = [profile.first_name, profile.surname]
+            .filter((name): name is string => Boolean(name))
+            .join(" ");
+          if (displayName) {
+            teacherNameById.set(profile.user_id, displayName);
+          }
+        }
+      }
+      for (const view of views) {
+        view.teacher_name = view.default_teacher_id
+          ? teacherNameById.get(view.default_teacher_id) ?? null
+          : null;
+      }
+
+      return views;
+    }, {
+      mapTransactionError: (error) =>
+        error instanceof Error &&
+        (error.message === CLASS_MESSAGES.BRANCH_CONTEXT_REQUIRED ||
+          error.message.includes("permisos"))
+          ? error.message
+          : undefined,
+    });
+
+    if (!result.success) return result;
+    if (result.data && "__branchError" in result.data) {
+      return { success: false, error: (result.data as { __branchError: string }).__branchError };
+    }
+    return { success: true, data: result.data as ClassSeriesView[] };
+  } catch {
+    return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
+  }
+}
+
+/**
+ * Rename a concurrencia (class_series row) within the caller's branch.
+ * Soft operation only (no deletes): the row is updated in place.
+ * NOT_FOUND when no catalog row matches id + branch.
+ * Owner/Admin-branch via RLS.
+ */
+export async function renameClassSeries(
+  input: unknown
+): Promise<ActionResult<{ series_id: string }>> {
+  const parsed = renameClassSeriesSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message };
+  }
+
+  const { branch_id, series_id, name } = parsed.data;
+
+  try {
+    const result = await withAuthenticatedUser(async (tx, ctx) => {
+      // Branch assignment assertion — fail-closed
+      const branchCheck = assertActiveBranchAssignment(ctx, branch_id);
+      if (!branchCheck.ok) {
+        throw new Error(branchCheck.error);
+      }
+
+      const updated = await tx.class_series.updateMany({
+        where: { id: series_id, branch_id },
+        data: { name },
+      });
+      if (updated.count === 0) {
+        throw new Error(CLASS_MESSAGES.NOT_FOUND);
+      }
+
+      return { series_id };
+    }, {
+      mapTransactionError: (error) =>
+        error instanceof Error &&
+        (error.message === CLASS_MESSAGES.NOT_FOUND ||
+          error.message === CLASS_MESSAGES.BRANCH_CONTEXT_REQUIRED ||
           error.message.includes("permisos"))
           ? error.message
           : undefined,

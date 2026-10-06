@@ -43,6 +43,16 @@ const WEEKDAYS = WEEKDAY_LABELS.map((label, value) => ({ value, label }));
 /** Sentinel value for the "no teacher yet" option — Select items cannot use an empty string value. */
 const NO_TEACHER_VALUE = "__none__";
 
+const SERIES_NAME_MAX_LENGTH = 80;
+
+function validateSeriesName(name: string): string | null {
+  const trimmed = name.trim();
+  if (trimmed.length === 0) return CLASS_MESSAGES.SERIES_NAME_REQUIRED;
+  if (trimmed.length > SERIES_NAME_MAX_LENGTH)
+    return CLASS_MESSAGES.SERIES_NAME_MAX;
+  return null;
+}
+
 export function ScheduledClassCreateDialog({
   branchId,
   disciplines,
@@ -50,6 +60,8 @@ export function ScheduledClassCreateDialog({
 }: ScheduledClassCreateDialogProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [seriesName, setSeriesName] = useState("");
+  const [nameError, setNameError] = useState<string | null>(null);
   const [disciplineId, setDisciplineId] = useState("");
   const [daysOfWeek, setDaysOfWeek] = useState<number[]>([]);
   const [startTime, setStartTime] = useState("09:00");
@@ -61,6 +73,8 @@ export function ScheduledClassCreateDialog({
   const [isPending, startTransition] = useTransition();
 
   function resetForm() {
+    setSeriesName("");
+    setNameError(null);
     setDisciplineId("");
     setDaysOfWeek([]);
     setStartTime("09:00");
@@ -78,6 +92,14 @@ export function ScheduledClassCreateDialog({
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (daysOfWeek.length === 0) return;
+
+    const nameValidationError = validateSeriesName(seriesName);
+    if (nameValidationError) {
+      setNameError(nameValidationError);
+      return;
+    }
+    setNameError(null);
+
     startTransition(async () => {
       const result = await createScheduledClassBatch({
         branch_id: branchId,
@@ -86,6 +108,7 @@ export function ScheduledClassCreateDialog({
           teacherId === NO_TEACHER_VALUE ? null : teacherId,
         days_of_week: daysOfWeek,
         start_time: startTime,
+        series_name: seriesName,
       });
 
       if (!result.success || !result.data) {
@@ -142,6 +165,26 @@ export function ScheduledClassCreateDialog({
           className="flex flex-1 flex-col gap-4 overflow-y-auto px-4"
         >
           <FieldGroup>
+            <Field data-invalid={nameError ? true : undefined}>
+              <FieldLabel htmlFor="class-series-name">
+                {CLASS_MESSAGES.SERIES_NAME_LABEL}
+              </FieldLabel>
+              <Input
+                id="class-series-name"
+                type="text"
+                value={seriesName}
+                onChange={(e) => {
+                  setSeriesName(e.target.value);
+                  if (nameError) setNameError(validateSeriesName(e.target.value));
+                }}
+                maxLength={SERIES_NAME_MAX_LENGTH}
+                placeholder={CLASS_MESSAGES.SERIES_NAME_PLACEHOLDER}
+                aria-invalid={nameError ? true : undefined}
+                disabled={isPending}
+                required
+              />
+              {nameError && <FieldError>{nameError}</FieldError>}
+            </Field>
             <Field>
               <FieldLabel htmlFor="class-discipline">
                 {CLASS_MESSAGES.DISCIPLINE_LABEL}
@@ -249,7 +292,9 @@ export function ScheduledClassCreateDialog({
 
           <Button
             type="submit"
-            disabled={isPending || !disciplineId || daysOfWeek.length === 0}
+            disabled={
+              isPending || !disciplineId || !seriesName.trim() || daysOfWeek.length === 0
+            }
             className="self-start"
           >
             {isPending ? COMMON_MESSAGES.LOADING : COMMON_MESSAGES.CREATE}

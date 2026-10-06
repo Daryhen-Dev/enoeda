@@ -266,6 +266,7 @@ export type scheduled_classesWhereInput = {
   updated_at?: Prisma.DateTimeFilter<"scheduled_classes"> | Date | string
   branches?: Prisma.XOR<Prisma.BranchesScalarRelationFilter, Prisma.branchesWhereInput>
   disciplines?: Prisma.XOR<Prisma.DisciplinesScalarRelationFilter, Prisma.disciplinesWhereInput>
+  class_series?: Prisma.XOR<Prisma.Class_seriesNullableScalarRelationFilter, Prisma.class_seriesWhereInput> | null
   class_sessions?: Prisma.Class_sessionsListRelationFilter
   attendance?: Prisma.AttendanceListRelationFilter
 }
@@ -284,6 +285,7 @@ export type scheduled_classesOrderByWithRelationInput = {
   updated_at?: Prisma.SortOrder
   branches?: Prisma.branchesOrderByWithRelationInput
   disciplines?: Prisma.disciplinesOrderByWithRelationInput
+  class_series?: Prisma.class_seriesOrderByWithRelationInput
   class_sessions?: Prisma.class_sessionsOrderByRelationAggregateInput
   attendance?: Prisma.attendanceOrderByRelationAggregateInput
 }
@@ -305,6 +307,7 @@ export type scheduled_classesWhereUniqueInput = Prisma.AtLeast<{
   updated_at?: Prisma.DateTimeFilter<"scheduled_classes"> | Date | string
   branches?: Prisma.XOR<Prisma.BranchesScalarRelationFilter, Prisma.branchesWhereInput>
   disciplines?: Prisma.XOR<Prisma.DisciplinesScalarRelationFilter, Prisma.disciplinesWhereInput>
+  class_series?: Prisma.XOR<Prisma.Class_seriesNullableScalarRelationFilter, Prisma.class_seriesWhereInput> | null
   class_sessions?: Prisma.Class_sessionsListRelationFilter
   attendance?: Prisma.AttendanceListRelationFilter
 }, "id">
@@ -352,11 +355,11 @@ export type scheduled_classesCreateInput = {
   start_time: Date | string
   end_time?: Date | string | null
   is_active?: boolean
-  series_id?: string | null
   created_at?: Date | string
   updated_at?: Date | string
   branches: Prisma.branchesCreateNestedOneWithoutScheduled_classesInput
   disciplines: Prisma.disciplinesCreateNestedOneWithoutScheduled_classesInput
+  class_series?: Prisma.class_seriesCreateNestedOneWithoutScheduled_classesInput
   class_sessions?: Prisma.class_sessionsCreateNestedManyWithoutScheduled_classesInput
   attendance?: Prisma.attendanceCreateNestedManyWithoutScheduled_classesInput
 }
@@ -384,11 +387,11 @@ export type scheduled_classesUpdateInput = {
   start_time?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   end_time?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  series_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   branches?: Prisma.branchesUpdateOneRequiredWithoutScheduled_classesNestedInput
   disciplines?: Prisma.disciplinesUpdateOneRequiredWithoutScheduled_classesNestedInput
+  class_series?: Prisma.class_seriesUpdateOneWithoutScheduled_classesNestedInput
   class_sessions?: Prisma.class_sessionsUpdateManyWithoutScheduled_classesNestedInput
   attendance?: Prisma.attendanceUpdateManyWithoutScheduled_classesNestedInput
 }
@@ -430,7 +433,6 @@ export type scheduled_classesUpdateManyMutationInput = {
   start_time?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   end_time?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  series_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -611,6 +613,48 @@ export type IntFieldUpdateOperationsInput = {
   divide?: number
 }
 
+export type scheduled_classesCreateNestedManyWithoutClass_seriesInput = {
+  create?: Prisma.XOR<Prisma.scheduled_classesCreateWithoutClass_seriesInput, Prisma.scheduled_classesUncheckedCreateWithoutClass_seriesInput> | Prisma.scheduled_classesCreateWithoutClass_seriesInput[] | Prisma.scheduled_classesUncheckedCreateWithoutClass_seriesInput[]
+  connectOrCreate?: Prisma.scheduled_classesCreateOrConnectWithoutClass_seriesInput | Prisma.scheduled_classesCreateOrConnectWithoutClass_seriesInput[]
+  createMany?: Prisma.scheduled_classesCreateManyClass_seriesInputEnvelope
+  connect?: Prisma.scheduled_classesWhereUniqueInput | Prisma.scheduled_classesWhereUniqueInput[]
+}
+
+export type scheduled_classesUncheckedCreateNestedManyWithoutClass_seriesInput = {
+  create?: Prisma.XOR<Prisma.scheduled_classesCreateWithoutClass_seriesInput, Prisma.scheduled_classesUncheckedCreateWithoutClass_seriesInput> | Prisma.scheduled_classesCreateWithoutClass_seriesInput[] | Prisma.scheduled_classesUncheckedCreateWithoutClass_seriesInput[]
+  connectOrCreate?: Prisma.scheduled_classesCreateOrConnectWithoutClass_seriesInput | Prisma.scheduled_classesCreateOrConnectWithoutClass_seriesInput[]
+  createMany?: Prisma.scheduled_classesCreateManyClass_seriesInputEnvelope
+  connect?: Prisma.scheduled_classesWhereUniqueInput | Prisma.scheduled_classesWhereUniqueInput[]
+}
+
+export type scheduled_classesUpdateManyWithoutClass_seriesNestedInput = {
+  create?: Prisma.XOR<Prisma.scheduled_classesCreateWithoutClass_seriesInput, Prisma.scheduled_classesUncheckedCreateWithoutClass_seriesInput> | Prisma.scheduled_classesCreateWithoutClass_seriesInput[] | Prisma.scheduled_classesUncheckedCreateWithoutClass_seriesInput[]
+  connectOrCreate?: Prisma.scheduled_classesCreateOrConnectWithoutClass_seriesInput | Prisma.scheduled_classesCreateOrConnectWithoutClass_seriesInput[]
+  upsert?: Prisma.scheduled_classesUpsertWithWhereUniqueWithoutClass_seriesInput | Prisma.scheduled_classesUpsertWithWhereUniqueWithoutClass_seriesInput[]
+  createMany?: Prisma.scheduled_classesCreateManyClass_seriesInputEnvelope
+  set?: Prisma.scheduled_classesWhereUniqueInput | Prisma.scheduled_classesWhereUniqueInput[]
+  disconnect?: Prisma.scheduled_classesWhereUniqueInput | Prisma.scheduled_classesWhereUniqueInput[]
+  delete?: Prisma.scheduled_classesWhereUniqueInput | Prisma.scheduled_classesWhereUniqueInput[]
+  connect?: Prisma.scheduled_classesWhereUniqueInput | Prisma.scheduled_classesWhereUniqueInput[]
+  update?: Prisma.scheduled_classesUpdateWithWhereUniqueWithoutClass_seriesInput | Prisma.scheduled_classesUpdateWithWhereUniqueWithoutClass_seriesInput[]
+  updateMany?: Prisma.scheduled_classesUpdateManyWithWhereWithoutClass_seriesInput | Prisma.scheduled_classesUpdateManyWithWhereWithoutClass_seriesInput[]
+  deleteMany?: Prisma.scheduled_classesScalarWhereInput | Prisma.scheduled_classesScalarWhereInput[]
+}
+
+export type scheduled_classesUncheckedUpdateManyWithoutClass_seriesNestedInput = {
+  create?: Prisma.XOR<Prisma.scheduled_classesCreateWithoutClass_seriesInput, Prisma.scheduled_classesUncheckedCreateWithoutClass_seriesInput> | Prisma.scheduled_classesCreateWithoutClass_seriesInput[] | Prisma.scheduled_classesUncheckedCreateWithoutClass_seriesInput[]
+  connectOrCreate?: Prisma.scheduled_classesCreateOrConnectWithoutClass_seriesInput | Prisma.scheduled_classesCreateOrConnectWithoutClass_seriesInput[]
+  upsert?: Prisma.scheduled_classesUpsertWithWhereUniqueWithoutClass_seriesInput | Prisma.scheduled_classesUpsertWithWhereUniqueWithoutClass_seriesInput[]
+  createMany?: Prisma.scheduled_classesCreateManyClass_seriesInputEnvelope
+  set?: Prisma.scheduled_classesWhereUniqueInput | Prisma.scheduled_classesWhereUniqueInput[]
+  disconnect?: Prisma.scheduled_classesWhereUniqueInput | Prisma.scheduled_classesWhereUniqueInput[]
+  delete?: Prisma.scheduled_classesWhereUniqueInput | Prisma.scheduled_classesWhereUniqueInput[]
+  connect?: Prisma.scheduled_classesWhereUniqueInput | Prisma.scheduled_classesWhereUniqueInput[]
+  update?: Prisma.scheduled_classesUpdateWithWhereUniqueWithoutClass_seriesInput | Prisma.scheduled_classesUpdateWithWhereUniqueWithoutClass_seriesInput[]
+  updateMany?: Prisma.scheduled_classesUpdateManyWithWhereWithoutClass_seriesInput | Prisma.scheduled_classesUpdateManyWithWhereWithoutClass_seriesInput[]
+  deleteMany?: Prisma.scheduled_classesScalarWhereInput | Prisma.scheduled_classesScalarWhereInput[]
+}
+
 export type scheduled_classesCreateNestedOneWithoutClass_sessionsInput = {
   create?: Prisma.XOR<Prisma.scheduled_classesCreateWithoutClass_sessionsInput, Prisma.scheduled_classesUncheckedCreateWithoutClass_sessionsInput>
   connectOrCreate?: Prisma.scheduled_classesCreateOrConnectWithoutClass_sessionsInput
@@ -648,10 +692,10 @@ export type scheduled_classesCreateWithoutBranchesInput = {
   start_time: Date | string
   end_time?: Date | string | null
   is_active?: boolean
-  series_id?: string | null
   created_at?: Date | string
   updated_at?: Date | string
   disciplines: Prisma.disciplinesCreateNestedOneWithoutScheduled_classesInput
+  class_series?: Prisma.class_seriesCreateNestedOneWithoutScheduled_classesInput
   class_sessions?: Prisma.class_sessionsCreateNestedManyWithoutScheduled_classesInput
   attendance?: Prisma.attendanceCreateNestedManyWithoutScheduled_classesInput
 }
@@ -721,10 +765,10 @@ export type scheduled_classesCreateWithoutDisciplinesInput = {
   start_time: Date | string
   end_time?: Date | string | null
   is_active?: boolean
-  series_id?: string | null
   created_at?: Date | string
   updated_at?: Date | string
   branches: Prisma.branchesCreateNestedOneWithoutScheduled_classesInput
+  class_series?: Prisma.class_seriesCreateNestedOneWithoutScheduled_classesInput
   class_sessions?: Prisma.class_sessionsCreateNestedManyWithoutScheduled_classesInput
   attendance?: Prisma.attendanceCreateNestedManyWithoutScheduled_classesInput
 }
@@ -770,6 +814,62 @@ export type scheduled_classesUpdateManyWithWhereWithoutDisciplinesInput = {
   data: Prisma.XOR<Prisma.scheduled_classesUpdateManyMutationInput, Prisma.scheduled_classesUncheckedUpdateManyWithoutDisciplinesInput>
 }
 
+export type scheduled_classesCreateWithoutClass_seriesInput = {
+  id?: string
+  default_teacher_id?: string | null
+  day_of_week: number
+  start_time: Date | string
+  end_time?: Date | string | null
+  is_active?: boolean
+  created_at?: Date | string
+  updated_at?: Date | string
+  branches: Prisma.branchesCreateNestedOneWithoutScheduled_classesInput
+  disciplines: Prisma.disciplinesCreateNestedOneWithoutScheduled_classesInput
+  class_sessions?: Prisma.class_sessionsCreateNestedManyWithoutScheduled_classesInput
+  attendance?: Prisma.attendanceCreateNestedManyWithoutScheduled_classesInput
+}
+
+export type scheduled_classesUncheckedCreateWithoutClass_seriesInput = {
+  id?: string
+  branch_id: string
+  discipline_id: string
+  default_teacher_id?: string | null
+  day_of_week: number
+  start_time: Date | string
+  end_time?: Date | string | null
+  is_active?: boolean
+  created_at?: Date | string
+  updated_at?: Date | string
+  class_sessions?: Prisma.class_sessionsUncheckedCreateNestedManyWithoutScheduled_classesInput
+  attendance?: Prisma.attendanceUncheckedCreateNestedManyWithoutScheduled_classesInput
+}
+
+export type scheduled_classesCreateOrConnectWithoutClass_seriesInput = {
+  where: Prisma.scheduled_classesWhereUniqueInput
+  create: Prisma.XOR<Prisma.scheduled_classesCreateWithoutClass_seriesInput, Prisma.scheduled_classesUncheckedCreateWithoutClass_seriesInput>
+}
+
+export type scheduled_classesCreateManyClass_seriesInputEnvelope = {
+  data: Prisma.scheduled_classesCreateManyClass_seriesInput | Prisma.scheduled_classesCreateManyClass_seriesInput[]
+  skipDuplicates?: boolean
+}
+
+export type scheduled_classesUpsertWithWhereUniqueWithoutClass_seriesInput = {
+  where: Prisma.scheduled_classesWhereUniqueInput
+  update: Prisma.XOR<Prisma.scheduled_classesUpdateWithoutClass_seriesInput, Prisma.scheduled_classesUncheckedUpdateWithoutClass_seriesInput>
+  create: Prisma.XOR<Prisma.scheduled_classesCreateWithoutClass_seriesInput, Prisma.scheduled_classesUncheckedCreateWithoutClass_seriesInput>
+}
+
+export type scheduled_classesUpdateWithWhereUniqueWithoutClass_seriesInput = {
+  where: Prisma.scheduled_classesWhereUniqueInput
+  data: Prisma.XOR<Prisma.scheduled_classesUpdateWithoutClass_seriesInput, Prisma.scheduled_classesUncheckedUpdateWithoutClass_seriesInput>
+}
+
+export type scheduled_classesUpdateManyWithWhereWithoutClass_seriesInput = {
+  where: Prisma.scheduled_classesScalarWhereInput
+  data: Prisma.XOR<Prisma.scheduled_classesUpdateManyMutationInput, Prisma.scheduled_classesUncheckedUpdateManyWithoutClass_seriesInput>
+}
+
 export type scheduled_classesCreateWithoutClass_sessionsInput = {
   id?: string
   default_teacher_id?: string | null
@@ -777,11 +877,11 @@ export type scheduled_classesCreateWithoutClass_sessionsInput = {
   start_time: Date | string
   end_time?: Date | string | null
   is_active?: boolean
-  series_id?: string | null
   created_at?: Date | string
   updated_at?: Date | string
   branches: Prisma.branchesCreateNestedOneWithoutScheduled_classesInput
   disciplines: Prisma.disciplinesCreateNestedOneWithoutScheduled_classesInput
+  class_series?: Prisma.class_seriesCreateNestedOneWithoutScheduled_classesInput
   attendance?: Prisma.attendanceCreateNestedManyWithoutScheduled_classesInput
 }
 
@@ -823,11 +923,11 @@ export type scheduled_classesUpdateWithoutClass_sessionsInput = {
   start_time?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   end_time?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  series_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   branches?: Prisma.branchesUpdateOneRequiredWithoutScheduled_classesNestedInput
   disciplines?: Prisma.disciplinesUpdateOneRequiredWithoutScheduled_classesNestedInput
+  class_series?: Prisma.class_seriesUpdateOneWithoutScheduled_classesNestedInput
   attendance?: Prisma.attendanceUpdateManyWithoutScheduled_classesNestedInput
 }
 
@@ -853,11 +953,11 @@ export type scheduled_classesCreateWithoutAttendanceInput = {
   start_time: Date | string
   end_time?: Date | string | null
   is_active?: boolean
-  series_id?: string | null
   created_at?: Date | string
   updated_at?: Date | string
   branches: Prisma.branchesCreateNestedOneWithoutScheduled_classesInput
   disciplines: Prisma.disciplinesCreateNestedOneWithoutScheduled_classesInput
+  class_series?: Prisma.class_seriesCreateNestedOneWithoutScheduled_classesInput
   class_sessions?: Prisma.class_sessionsCreateNestedManyWithoutScheduled_classesInput
 }
 
@@ -899,11 +999,11 @@ export type scheduled_classesUpdateWithoutAttendanceInput = {
   start_time?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   end_time?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  series_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   branches?: Prisma.branchesUpdateOneRequiredWithoutScheduled_classesNestedInput
   disciplines?: Prisma.disciplinesUpdateOneRequiredWithoutScheduled_classesNestedInput
+  class_series?: Prisma.class_seriesUpdateOneWithoutScheduled_classesNestedInput
   class_sessions?: Prisma.class_sessionsUpdateManyWithoutScheduled_classesNestedInput
 }
 
@@ -942,10 +1042,10 @@ export type scheduled_classesUpdateWithoutBranchesInput = {
   start_time?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   end_time?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  series_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   disciplines?: Prisma.disciplinesUpdateOneRequiredWithoutScheduled_classesNestedInput
+  class_series?: Prisma.class_seriesUpdateOneWithoutScheduled_classesNestedInput
   class_sessions?: Prisma.class_sessionsUpdateManyWithoutScheduled_classesNestedInput
   attendance?: Prisma.attendanceUpdateManyWithoutScheduled_classesNestedInput
 }
@@ -998,10 +1098,10 @@ export type scheduled_classesUpdateWithoutDisciplinesInput = {
   start_time?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   end_time?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  series_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   branches?: Prisma.branchesUpdateOneRequiredWithoutScheduled_classesNestedInput
+  class_series?: Prisma.class_seriesUpdateOneWithoutScheduled_classesNestedInput
   class_sessions?: Prisma.class_sessionsUpdateManyWithoutScheduled_classesNestedInput
   attendance?: Prisma.attendanceUpdateManyWithoutScheduled_classesNestedInput
 }
@@ -1030,6 +1130,62 @@ export type scheduled_classesUncheckedUpdateManyWithoutDisciplinesInput = {
   end_time?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   series_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type scheduled_classesCreateManyClass_seriesInput = {
+  id?: string
+  branch_id: string
+  discipline_id: string
+  default_teacher_id?: string | null
+  day_of_week: number
+  start_time: Date | string
+  end_time?: Date | string | null
+  is_active?: boolean
+  created_at?: Date | string
+  updated_at?: Date | string
+}
+
+export type scheduled_classesUpdateWithoutClass_seriesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  default_teacher_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  day_of_week?: Prisma.IntFieldUpdateOperationsInput | number
+  start_time?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  end_time?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  branches?: Prisma.branchesUpdateOneRequiredWithoutScheduled_classesNestedInput
+  disciplines?: Prisma.disciplinesUpdateOneRequiredWithoutScheduled_classesNestedInput
+  class_sessions?: Prisma.class_sessionsUpdateManyWithoutScheduled_classesNestedInput
+  attendance?: Prisma.attendanceUpdateManyWithoutScheduled_classesNestedInput
+}
+
+export type scheduled_classesUncheckedUpdateWithoutClass_seriesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  branch_id?: Prisma.StringFieldUpdateOperationsInput | string
+  discipline_id?: Prisma.StringFieldUpdateOperationsInput | string
+  default_teacher_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  day_of_week?: Prisma.IntFieldUpdateOperationsInput | number
+  start_time?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  end_time?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  class_sessions?: Prisma.class_sessionsUncheckedUpdateManyWithoutScheduled_classesNestedInput
+  attendance?: Prisma.attendanceUncheckedUpdateManyWithoutScheduled_classesNestedInput
+}
+
+export type scheduled_classesUncheckedUpdateManyWithoutClass_seriesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  branch_id?: Prisma.StringFieldUpdateOperationsInput | string
+  discipline_id?: Prisma.StringFieldUpdateOperationsInput | string
+  default_teacher_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  day_of_week?: Prisma.IntFieldUpdateOperationsInput | number
+  start_time?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  end_time?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1088,6 +1244,7 @@ export type scheduled_classesSelect<ExtArgs extends runtime.Types.Extensions.Int
   updated_at?: boolean
   branches?: boolean | Prisma.branchesDefaultArgs<ExtArgs>
   disciplines?: boolean | Prisma.disciplinesDefaultArgs<ExtArgs>
+  class_series?: boolean | Prisma.scheduled_classes$class_seriesArgs<ExtArgs>
   class_sessions?: boolean | Prisma.scheduled_classes$class_sessionsArgs<ExtArgs>
   attendance?: boolean | Prisma.scheduled_classes$attendanceArgs<ExtArgs>
   _count?: boolean | Prisma.Scheduled_classesCountOutputTypeDefaultArgs<ExtArgs>
@@ -1107,6 +1264,7 @@ export type scheduled_classesSelectCreateManyAndReturn<ExtArgs extends runtime.T
   updated_at?: boolean
   branches?: boolean | Prisma.branchesDefaultArgs<ExtArgs>
   disciplines?: boolean | Prisma.disciplinesDefaultArgs<ExtArgs>
+  class_series?: boolean | Prisma.scheduled_classes$class_seriesArgs<ExtArgs>
 }, ExtArgs["result"]["scheduled_classes"]>
 
 export type scheduled_classesSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -1123,6 +1281,7 @@ export type scheduled_classesSelectUpdateManyAndReturn<ExtArgs extends runtime.T
   updated_at?: boolean
   branches?: boolean | Prisma.branchesDefaultArgs<ExtArgs>
   disciplines?: boolean | Prisma.disciplinesDefaultArgs<ExtArgs>
+  class_series?: boolean | Prisma.scheduled_classes$class_seriesArgs<ExtArgs>
 }, ExtArgs["result"]["scheduled_classes"]>
 
 export type scheduled_classesSelectScalar = {
@@ -1143,6 +1302,7 @@ export type scheduled_classesOmit<ExtArgs extends runtime.Types.Extensions.Inter
 export type scheduled_classesInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   branches?: boolean | Prisma.branchesDefaultArgs<ExtArgs>
   disciplines?: boolean | Prisma.disciplinesDefaultArgs<ExtArgs>
+  class_series?: boolean | Prisma.scheduled_classes$class_seriesArgs<ExtArgs>
   class_sessions?: boolean | Prisma.scheduled_classes$class_sessionsArgs<ExtArgs>
   attendance?: boolean | Prisma.scheduled_classes$attendanceArgs<ExtArgs>
   _count?: boolean | Prisma.Scheduled_classesCountOutputTypeDefaultArgs<ExtArgs>
@@ -1150,10 +1310,12 @@ export type scheduled_classesInclude<ExtArgs extends runtime.Types.Extensions.In
 export type scheduled_classesIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   branches?: boolean | Prisma.branchesDefaultArgs<ExtArgs>
   disciplines?: boolean | Prisma.disciplinesDefaultArgs<ExtArgs>
+  class_series?: boolean | Prisma.scheduled_classes$class_seriesArgs<ExtArgs>
 }
 export type scheduled_classesIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   branches?: boolean | Prisma.branchesDefaultArgs<ExtArgs>
   disciplines?: boolean | Prisma.disciplinesDefaultArgs<ExtArgs>
+  class_series?: boolean | Prisma.scheduled_classes$class_seriesArgs<ExtArgs>
 }
 
 export type $scheduled_classesPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1161,6 +1323,7 @@ export type $scheduled_classesPayload<ExtArgs extends runtime.Types.Extensions.I
   objects: {
     branches: Prisma.$branchesPayload<ExtArgs>
     disciplines: Prisma.$disciplinesPayload<ExtArgs>
+    class_series: Prisma.$class_seriesPayload<ExtArgs> | null
     class_sessions: Prisma.$class_sessionsPayload<ExtArgs>[]
     attendance: Prisma.$attendancePayload<ExtArgs>[]
   }
@@ -1572,6 +1735,7 @@ export interface Prisma__scheduled_classesClient<T, Null = never, ExtArgs extend
   readonly [Symbol.toStringTag]: "PrismaPromise"
   branches<T extends Prisma.branchesDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.branchesDefaultArgs<ExtArgs>>): Prisma.Prisma__branchesClient<runtime.Types.Result.GetResult<Prisma.$branchesPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   disciplines<T extends Prisma.disciplinesDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.disciplinesDefaultArgs<ExtArgs>>): Prisma.Prisma__disciplinesClient<runtime.Types.Result.GetResult<Prisma.$disciplinesPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  class_series<T extends Prisma.scheduled_classes$class_seriesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.scheduled_classes$class_seriesArgs<ExtArgs>>): Prisma.Prisma__class_seriesClient<runtime.Types.Result.GetResult<Prisma.$class_seriesPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   class_sessions<T extends Prisma.scheduled_classes$class_sessionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.scheduled_classes$class_sessionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$class_sessionsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   attendance<T extends Prisma.scheduled_classes$attendanceArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.scheduled_classes$attendanceArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$attendancePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
@@ -2012,6 +2176,25 @@ export type scheduled_classesDeleteManyArgs<ExtArgs extends runtime.Types.Extens
    * Limit how many scheduled_classes to delete.
    */
   limit?: number
+}
+
+/**
+ * scheduled_classes.class_series
+ */
+export type scheduled_classes$class_seriesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the class_series
+   */
+  select?: Prisma.class_seriesSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the class_series
+   */
+  omit?: Prisma.class_seriesOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.class_seriesInclude<ExtArgs> | null
+  where?: Prisma.class_seriesWhereInput
 }
 
 /**

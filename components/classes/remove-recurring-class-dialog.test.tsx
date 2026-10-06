@@ -120,7 +120,7 @@ describe("RemoveRecurringClassDialog", () => {
     });
     mocks.deactivateAllFutureClasses.mockResolvedValue({
       success: true,
-      data: { recurring: 5, oneTime: 2 },
+      data: { deactivated: 5 },
     });
   });
 
@@ -156,7 +156,7 @@ describe("RemoveRecurringClassDialog", () => {
     );
   });
 
-  it("renders three scope radios with series as default", () => {
+  it("renders three scope radios with series as default and concurrencias wording", () => {
     rendered = renderDialog();
 
     const content = openDialog();
@@ -165,9 +165,10 @@ describe("RemoveRecurringClassDialog", () => {
     expect(queryScopeRadio(content, "single")).toBeDefined();
     expect(queryScopeRadio(content, "all")).toBeDefined();
     expect(queryScopeRadio(content, "series")?.checked).toBe(true);
-    expect(content.textContent).toContain(
-      REMOVE_RECURRING_CLASS_MESSAGES.SCOPE_ALL_LABEL
-    );
+    // Round-4 copy: the recurring series is called "concurrencia".
+    expect(content.textContent).toContain("¿Quitar la concurrencia?");
+    expect(content.textContent).toContain("Toda la concurrencia (toda la semana)");
+    expect(content.textContent).toContain("Todas las concurrencias de la sucursal");
     expect(content.textContent).toContain(
       REMOVE_RECURRING_CLASS_MESSAGES.SCOPE_ALL_HINT
     );

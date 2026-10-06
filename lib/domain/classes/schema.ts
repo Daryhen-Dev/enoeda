@@ -27,6 +27,11 @@ export const createScheduledClassBatchSchema = z.object({
   default_teacher_id: z.uuid().nullable().optional(),
   days_of_week: z.array(z.number().int().min(0).max(6)).min(1),
   start_time: z.string().regex(/^\d{2}:\d{2}$/),
+  series_name: z
+    .string()
+    .trim()
+    .min(1, CLASS_MESSAGES.SERIES_NAME_REQUIRED)
+    .max(80, CLASS_MESSAGES.SERIES_NAME_MAX),
 });
 
 export const createOneTimeClassSchema = z.object({
@@ -48,18 +53,45 @@ export type CreateScheduledClassBatchInput = z.infer<
   typeof createScheduledClassBatchSchema
 >;
 export type CreateOneTimeClassInput = z.infer<typeof createOneTimeClassSchema>;
+export type ListClassSeriesInput = z.infer<typeof listClassSeriesSchema>;
+export type RenameClassSeriesInput = z.infer<typeof renameClassSeriesSchema>;
 
 export const deactivateScheduledClassSchema = z.object({
   id: z.uuid(),
   branch_id: z.uuid(),
 });
 
-// Targets the materialized series identity (scheduled_classes.series_id)
-// via any one of its rows; no longer relies on the
-// discipline + start_time heuristic.
-export const deactivateScheduledClassSeriesSchema = z.object({
+// Targets the materialized series identity (scheduled_classes.series_id).
+// The caller passes EITHER any one row of the series (scheduled_class_id —
+// the calendar dialog) OR the series identity itself (series_id — the
+// concurrencias section); passing both or neither is rejected.
+export const deactivateScheduledClassSeriesSchema = z
+  .object({
+    branch_id: z.uuid(),
+    scheduled_class_id: z.uuid().optional(),
+    series_id: z.uuid().optional(),
+  })
+  .refine(
+    (data) =>
+      Boolean(data.scheduled_class_id) !== Boolean(data.series_id),
+    {
+      message: CLASS_MESSAGES.SERIES_TARGET_REQUIRED,
+      path: ["series_id"],
+    }
+  );
+
+export const listClassSeriesSchema = z.object({
   branch_id: z.uuid(),
-  scheduled_class_id: z.uuid(),
+});
+
+export const renameClassSeriesSchema = z.object({
+  branch_id: z.uuid(),
+  series_id: z.uuid(),
+  name: z
+    .string()
+    .trim()
+    .min(1, CLASS_MESSAGES.SERIES_NAME_REQUIRED)
+    .max(80, CLASS_MESSAGES.SERIES_NAME_MAX),
 });
 
 export const deactivateAllFutureClassesSchema = z.object({

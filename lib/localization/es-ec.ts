@@ -158,6 +158,7 @@ export const DASHBOARD_SHELL_MESSAGES = {
   STAFF: "Personal",
   MANAGEMENT: "Administración",
   CALENDAR: "Calendario",
+  CONCURRENCIAS: "Concurrencias",
   PAYMENTS: "Pagos",
   PROFILE: "Mi perfil",
   PROFILE_NAME_UNAVAILABLE: "Perfil pendiente",
@@ -631,6 +632,13 @@ export const CLASS_MESSAGES = {
   PARTIAL_FAILURE_TITLE:
     "Algunos días no se pudieron crear por conflicto de horario:",
   DEACTIVATED: "Clase desactivada.",
+  SERIES_NAME_LABEL: "Nombre de la concurrencia",
+  SERIES_NAME_PLACEHOLDER: "Ej.: Karate infantil — Lunes y miércoles",
+  SERIES_NAME_REQUIRED: "El nombre de la concurrencia es obligatorio.",
+  SERIES_NAME_MAX:
+    "El nombre de la concurrencia no puede superar 80 caracteres.",
+  SERIES_TARGET_REQUIRED:
+    "Indique la clase o la concurrencia a quitar (no ambas).",
 } as const
 
 export const ONE_TIME_CLASS_MESSAGES = {
@@ -659,25 +667,69 @@ export const SUSPENSION_MESSAGES = {
 
 export const REMOVE_RECURRING_CLASS_MESSAGES = {
   ACTION: "Quitar clase",
-  DIALOG_TITLE: "¿Quitar la clase recurrente?",
+  DIALOG_TITLE: "¿Quitar la concurrencia?",
   DIALOG_DESCRIPTION:
     "Las clases dejarán de aparecer en el calendario a partir de hoy según el alcance seleccionado. Las clases pasadas permanecerán visibles en el calendario con su historial de asistencia. Esta acción no se puede deshacer desde la aplicación.",
   SCOPE_GROUP_LABEL: "Alcance de la eliminación",
-  SCOPE_SERIES_LABEL: "Todas las clases de este horario",
+  SCOPE_SERIES_LABEL: "Toda la concurrencia (toda la semana)",
   SCOPE_SERIES_HINT: (disciplineName: string, startTime: string) =>
     `Toda la semana para ${disciplineName} a las ${startTime}.`,
   SCOPE_SINGLE_LABEL: "Solo esta clase semanal",
   SCOPE_SINGLE_HINT:
     "Únicamente la clase de este día de la semana; las de los demás días en este horario siguen activas.",
-  SCOPE_ALL_LABEL: "Todo el horario futuro de la sucursal",
+  SCOPE_ALL_LABEL: "Todas las concurrencias de la sucursal",
   SCOPE_ALL_HINT:
-    "Todas las clases recurrentes y las clases únicas desde hoy",
+    "Todas las concurrencias desde hoy; las clases únicas no se ven afectadas.",
   CONFIRM_ACTION: "Quitar clase",
   SUCCESS: "Clase recurrente quitada correctamente.",
-  SUCCESS_SERIES: "Clases recurrentes quitadas correctamente.",
-  SUCCESS_ALL: "Todas las clases futuras fueron quitadas correctamente.",
+  SUCCESS_SERIES: "Concurrencia quitada correctamente.",
+  SUCCESS_ALL: "Todas las concurrencias futuras fueron quitadas correctamente.",
   ARIA_LABEL: (disciplineName: string, startTime: string) =>
-    `Quitar la clase recurrente de ${disciplineName}, a las ${startTime}`,
+    `Quitar la concurrencia de ${disciplineName}, a las ${startTime}`,
+} as const
+
+export const SCHEDULE_SERIES_MESSAGES = {
+  PAGE_TITLE: "Concurrencias",
+  PAGE_DESCRIPTION:
+    "Administre las concurrencias (clases recurrentes) de la sucursal: renómbrelas, quítelas o cree nuevas.",
+  NO_BRANCH_CONTEXT:
+    "No tiene una sucursal activa asignada. Contacte al administrador.",
+  LOAD_FAILURE:
+    "No se pudieron cargar las concurrencias. Inténtelo nuevamente.",
+  EMPTY_STATE:
+    "No hay concurrencias registradas para esta sucursal.",
+  NAME_LABEL: "Nombre",
+  DISCIPLINE_LABEL: "Disciplina",
+  DAYS_LABEL: "Días",
+  TIME_LABEL: "Hora",
+  TEACHER_LABEL: "Profesor",
+  CLASSES_LABEL: "Clases activas",
+  STATE_LABEL: "Estado",
+  ACTIONS_LABEL: "Acciones",
+  ACTIVE_LABEL: "Activa",
+  ALL_INACTIVE_LABEL: "Sin clases activas",
+  NO_TEACHER: "Sin profesor asignado",
+  ALL_INACTIVE_HINT:
+    "Todas las clases de esta concurrencia fueron quitadas; el historial se conserva.",
+  RENAME_ACTION: "Renombrar",
+  RENAME_TITLE: "Renombrar concurrencia",
+  RENAME_DESCRIPTION:
+    "El nombre identifica la concurrencia en esta sección; no cambia el horario ni la disciplina.",
+  RENAME_SAVE: "Guardar",
+  RENAME_SUCCESS: "Concurrencia renombrada correctamente.",
+  REMOVE_SERIES_ACTION: "Quitar serie",
+  REMOVE_SERIES_TITLE: "¿Quitar la serie?",
+  REMOVE_SERIES_DESCRIPTION:
+    "Todas las clases activas de esta concurrencia dejarán de aparecer a partir de hoy. Las clases pasadas permanecerán visibles con su historial. Esta acción no se puede deshacer desde la aplicación.",
+  REMOVE_SERIES_CONFIRM: "Quitar serie",
+  REMOVE_SERIES_SUCCESS: "Serie quitada correctamente.",
+  REMOVE_ALL_ACTION: "Quitar TODO lo futuro",
+  REMOVE_ALL_TITLE: "¿Quitar TODO lo futuro?",
+  REMOVE_ALL_DESCRIPTION:
+    "Se quitarán TODAS las concurrencias de la sucursal a partir de hoy. Las clases únicas no se ven afectadas. Las clases pasadas permanecerán visibles con su historial. Esta acción no se puede deshacer desde la aplicación.",
+  REMOVE_ALL_CONFIRM: "Sí, quitar todo lo futuro",
+  REMOVE_ALL_SUCCESS:
+    "Todas las concurrencias futuras fueron quitadas correctamente.",
 } as const
 
 export const TEACHER_CONFLICT_MESSAGES = {

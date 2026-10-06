@@ -415,6 +415,7 @@ export const ModelName = {
   student_disciplines: 'student_disciplines',
   discipline_events: 'discipline_events',
   scheduled_classes: 'scheduled_classes',
+  class_series: 'class_series',
   one_time_classes: 'one_time_classes',
   class_sessions: 'class_sessions',
   attendance: 'attendance',
@@ -438,7 +439,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "audit_log_entries" | "custom_oauth_providers" | "flow_state" | "identities" | "instances" | "mfa_amr_claims" | "mfa_challenges" | "mfa_factors" | "oauth_authorizations" | "oauth_client_states" | "oauth_clients" | "oauth_consents" | "one_time_tokens" | "refresh_tokens" | "saml_providers" | "saml_relay_states" | "schema_migrations" | "sessions" | "sso_domains" | "sso_providers" | "users" | "webauthn_challenges" | "webauthn_credentials" | "user_roles" | "branches" | "user_profiles" | "students" | "disciplines" | "student_disciplines" | "discipline_events" | "scheduled_classes" | "one_time_classes" | "class_sessions" | "attendance" | "discipline_levels" | "student_progress" | "student_notes" | "payments" | "class_payments"
+    modelProps: "audit_log_entries" | "custom_oauth_providers" | "flow_state" | "identities" | "instances" | "mfa_amr_claims" | "mfa_challenges" | "mfa_factors" | "oauth_authorizations" | "oauth_client_states" | "oauth_clients" | "oauth_consents" | "one_time_tokens" | "refresh_tokens" | "saml_providers" | "saml_relay_states" | "schema_migrations" | "sessions" | "sso_domains" | "sso_providers" | "users" | "webauthn_challenges" | "webauthn_credentials" | "user_roles" | "branches" | "user_profiles" | "students" | "disciplines" | "student_disciplines" | "discipline_events" | "scheduled_classes" | "class_series" | "one_time_classes" | "class_sessions" | "attendance" | "discipline_levels" | "student_progress" | "student_notes" | "payments" | "class_payments"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -2736,6 +2737,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    class_series: {
+      payload: Prisma.$class_seriesPayload<ExtArgs>
+      fields: Prisma.class_seriesFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.class_seriesFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$class_seriesPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.class_seriesFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$class_seriesPayload>
+        }
+        findFirst: {
+          args: Prisma.class_seriesFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$class_seriesPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.class_seriesFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$class_seriesPayload>
+        }
+        findMany: {
+          args: Prisma.class_seriesFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$class_seriesPayload>[]
+        }
+        create: {
+          args: Prisma.class_seriesCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$class_seriesPayload>
+        }
+        createMany: {
+          args: Prisma.class_seriesCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.class_seriesCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$class_seriesPayload>[]
+        }
+        delete: {
+          args: Prisma.class_seriesDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$class_seriesPayload>
+        }
+        update: {
+          args: Prisma.class_seriesUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$class_seriesPayload>
+        }
+        deleteMany: {
+          args: Prisma.class_seriesDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.class_seriesUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.class_seriesUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$class_seriesPayload>[]
+        }
+        upsert: {
+          args: Prisma.class_seriesUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$class_seriesPayload>
+        }
+        aggregate: {
+          args: Prisma.Class_seriesAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateClass_series>
+        }
+        groupBy: {
+          args: Prisma.class_seriesGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Class_seriesGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.class_seriesCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Class_seriesCountAggregateOutputType> | number
+        }
+      }
+    }
     one_time_classes: {
       payload: Prisma.$one_time_classesPayload<ExtArgs>
       fields: Prisma.one_time_classesFieldRefs
@@ -3863,6 +3938,16 @@ export const Scheduled_classesScalarFieldEnum = {
 export type Scheduled_classesScalarFieldEnum = (typeof Scheduled_classesScalarFieldEnum)[keyof typeof Scheduled_classesScalarFieldEnum]
 
 
+export const Class_seriesScalarFieldEnum = {
+  id: 'id',
+  branch_id: 'branch_id',
+  name: 'name',
+  created_at: 'created_at'
+} as const
+
+export type Class_seriesScalarFieldEnum = (typeof Class_seriesScalarFieldEnum)[keyof typeof Class_seriesScalarFieldEnum]
+
+
 export const One_time_classesScalarFieldEnum = {
   id: 'id',
   branch_id: 'branch_id',
@@ -4422,6 +4507,7 @@ export type GlobalOmitConfig = {
   student_disciplines?: Prisma.student_disciplinesOmit
   discipline_events?: Prisma.discipline_eventsOmit
   scheduled_classes?: Prisma.scheduled_classesOmit
+  class_series?: Prisma.class_seriesOmit
   one_time_classes?: Prisma.one_time_classesOmit
   class_sessions?: Prisma.class_sessionsOmit
   attendance?: Prisma.attendanceOmit

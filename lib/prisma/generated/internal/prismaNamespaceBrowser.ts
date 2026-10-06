@@ -82,6 +82,7 @@ export const ModelName = {
   student_disciplines: 'student_disciplines',
   discipline_events: 'discipline_events',
   scheduled_classes: 'scheduled_classes',
+  class_series: 'class_series',
   one_time_classes: 'one_time_classes',
   class_sessions: 'class_sessions',
   attendance: 'attendance',
@@ -602,6 +603,16 @@ export const Scheduled_classesScalarFieldEnum = {
 } as const
 
 export type Scheduled_classesScalarFieldEnum = (typeof Scheduled_classesScalarFieldEnum)[keyof typeof Scheduled_classesScalarFieldEnum]
+
+
+export const Class_seriesScalarFieldEnum = {
+  id: 'id',
+  branch_id: 'branch_id',
+  name: 'name',
+  created_at: 'created_at'
+} as const
+
+export type Class_seriesScalarFieldEnum = (typeof Class_seriesScalarFieldEnum)[keyof typeof Class_seriesScalarFieldEnum]
 
 
 export const One_time_classesScalarFieldEnum = {
