@@ -1,5 +1,5 @@
 import { parseDateOnly } from "@/lib/date";
-import { PAYMENT_MESSAGES } from "@/lib/localization/es-ec";
+import { PAYMENT_MESSAGES, PAYMENT_VALIDATION_MESSAGES } from "@/lib/localization/es-ec";
 import { z } from "zod";
 
 export const PAYMENT_BRANCH_MESSAGES = {
@@ -97,3 +97,21 @@ export const deletePaymentSchema = z.object({
   branch_id: z.string().uuid({ error: PAYMENT_BRANCH_MESSAGES.INVALID_BRANCH_ID }),
 }).strict();
 export type DeletePaymentInput = z.infer<typeof deletePaymentSchema>;
+
+export const paymentValidationQuerySchema = z.object({
+  branch_id: z.string().uuid({ error: PAYMENT_BRANCH_MESSAGES.INVALID_BRANCH_ID }),
+}).strict();
+export type PaymentValidationQueryInput = z.infer<typeof paymentValidationQuerySchema>;
+
+export const suspendOverdueEnrollmentsSchema = z.object({
+  branch_id: z.string().uuid({ error: PAYMENT_BRANCH_MESSAGES.INVALID_BRANCH_ID }),
+  student_discipline_ids: z
+    .array(z.string().uuid({ error: PAYMENT_VALIDATION_MESSAGES.SUSPEND_LIST_INVALID_ID }))
+    .min(1, { error: PAYMENT_VALIDATION_MESSAGES.SUSPEND_LIST_EMPTY })
+    .max(200, { error: PAYMENT_VALIDATION_MESSAGES.SUSPEND_LIST_TOO_LONG })
+    .refine((ids) => new Set(ids).size === ids.length, {
+      error: PAYMENT_VALIDATION_MESSAGES.SUSPEND_LIST_DUPLICATED,
+    }),
+  notes: z.string().max(500, { error: PAYMENT_VALIDATION_MESSAGES.NOTES_TOO_LONG }).optional(),
+}).strict();
+export type SuspendOverdueEnrollmentsInput = z.infer<typeof suspendOverdueEnrollmentsSchema>;

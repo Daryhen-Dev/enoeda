@@ -41,7 +41,11 @@ export interface OverdueStudentRow {
   next_due_date: Date;
 }
 
-function normalizeEcuadorTimeZone(
+/**
+ * Normalizes a branch `time_zone` value to an allowed Ecuador zone, falling
+ * back to the continental zone. Exported for reuse by payment validation flows.
+ */
+export function normalizeEcuadorTimeZone(
   timeZone: string | null | undefined
 ): EcuadorTimeZone {
   if (timeZone !== null && timeZone !== undefined) {

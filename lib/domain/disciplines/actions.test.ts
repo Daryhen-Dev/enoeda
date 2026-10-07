@@ -303,6 +303,26 @@ describe("suspendEnrollment — branch security", () => {
     expect(result.success).toBe(false);
     expect(result.error).toContain("otra sucursal");
   });
+
+  it("records reason 'manual' on the suspension audit event", async () => {
+    const tx = buildMockTx();
+    tx.student_disciplines.findUnique = vi.fn().mockResolvedValue({
+      id: ENROLLMENT_ID,
+      is_active: true,
+      student_id: STUDENT_ID,
+      students: { branch_id: BRANCH_A },
+    });
+    setupWithAuth(ctxBranchA, tx);
+
+    const result = await suspendEnrollment({
+      student_discipline_id: ENROLLMENT_ID,
+      branch_id: BRANCH_A,
+    });
+    expect(result.success).toBe(true);
+    expect(tx.discipline_events.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ event_type: "suspended", reason: "manual" }),
+    });
+  });
 });
 
 // =============================================================================

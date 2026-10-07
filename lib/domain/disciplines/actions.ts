@@ -438,6 +438,7 @@ export async function suspendEnrollment(
         data: {
           student_discipline_id: enrollment.id,
           event_type: "suspended",
+          reason: "manual",
           performed_by: ctx.userId,
           notes: parsed.data.notes ?? null,
         },
