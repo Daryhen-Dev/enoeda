@@ -53,7 +53,7 @@ Plus `suspended_this_month`: enrollments with a 'suspended' event with reason
       one transaction, re-checks every enrollment is still active, in branch,
       and beyond grace; writes `suspended_at` + 'suspended' event with reason
       'non_payment'). Tests.
-- [ ] T4: UI: `/dashboard/payments/validation?branch=` (admin only), grouped
+- [x] T4: UI: `/dashboard/payments/validation?branch=` (admin only), grouped
       tables, multi-select on "A suspender", confirmation dialog, link from the
       payments console. es-EC copy.
 - [ ] T5: Closure checks: vitest, tsc, eslint, next build. Migration applied to
@@ -113,6 +113,20 @@ Plus `suspended_this_month`: enrollments with a 'suspended' event with reason
   guarded updateMany re-asserts only enrollment is_active (concurrent
   student deactivation window, low impact); profile lookup swallows all
   errors; notes not trimmed.
+- T4 (delegated: gentle-ai-worker): page `/dashboard/payments/validation`
+  (admin/canManage only, no global read-only path), 4 metric cards, "A
+  suspender" selectable table + confirmation dialog (notes, pending state,
+  toast + router.refresh, error in dialog), read-only "En gracia",
+  "Suspendidas este mes", "Al día" tables; entry link on payments console
+  (canManage). Parent fixes: suspension timestamps formatted in branch time
+  zone (`formatDateTime(value, timeZone?)`, additive), header select-all
+  state derived from rows present. Writer: focused vitest 89 passed; tsc /
+  eslint clean; pnpm test 873 passed / 1 skipped; pnpm build OK.
+  Assess: high -> gentle-ai-verify PASS (incl. pnpm build; route dynamic).
+  Parent spot check after fixes: component vitest 6 passed; tsc/eslint clean.
+  Follow-ups: CardTitle renders div (section titles not semantic headings,
+  repo convention); no tests for read-only tables/page gating.
 
 ## Next step
-T4 (PR3 slice).
+T5: closure checks; apply migration 20260909000000 only after explicit
+user authorization; push/PRs are user decisions.
