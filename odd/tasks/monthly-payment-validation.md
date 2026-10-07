@@ -126,6 +126,10 @@ Plus `suspended_this_month`: enrollments with a 'suspended' event with reason
   Parent spot check after fixes: component vitest 6 passed; tsc/eslint clean.
   Follow-ups: CardTitle renders div (section titles not semantic headings,
   repo convention); no tests for read-only tables/page gating.
+- T5 (partial): `pnpm test` on HEAD dd0134c: 100 files passed / 1 skipped,
+  873 tests passed / 1 skipped. tsc, eslint and `pnpm build` green in the
+  T4 verification. PENDING: apply migration 20260909000000 to Supabase
+  (needs explicit user authorization); manual browser check by the user.
 
 ## Next step
 T5: closure checks; apply migration 20260909000000 only after explicit
