@@ -29,6 +29,20 @@ switcher (multi-assignment, no code change needed for that).
 - Fix the existing overdue queries to use the branch time zone too.
 - Delivery: chained PRs to main (stacked-to-main).
 
+## Change request (user-accepted, after T5)
+The dedicated page is too many clicks away (Pagos -> button). The full
+validation (cards, tables, bulk suspension) must also live at the bottom of
+the overview page "Resumen" (`/dashboard`). No new sidebar item. The
+"Validación mensual" button on the payments console stays and keeps pointing
+to `/dashboard/payments/validation`.
+
+- [x] T6: Extract the validation body into one self-loading server component
+      (`components/payments/monthly-payment-validation-section.tsx`) used by
+      both `app/dashboard/page.tsx` (bottom, only when `canManage`; a failed
+      load shows an inline alert without breaking the KPI cards) and
+      `app/dashboard/payments/validation/page.tsx`. Heading levels fit each
+      page. Tests + tsc + eslint + pnpm test + pnpm build.
+
 ## Out of scope
 Past-month history, automatic jobs, automatic reactivation on payment.
 
@@ -53,10 +67,10 @@ Plus `suspended_this_month`: enrollments with a 'suspended' event with reason
       one transaction, re-checks every enrollment is still active, in branch,
       and beyond grace; writes `suspended_at` + 'suspended' event with reason
       'non_payment'). Tests.
-- [ ] T4: UI: `/dashboard/payments/validation?branch=` (admin only), grouped
+- [x] T4: UI: `/dashboard/payments/validation?branch=` (admin only), grouped
       tables, multi-select on "A suspender", confirmation dialog, link from the
       payments console. es-EC copy.
-- [ ] T5: Closure checks: vitest, tsc, eslint, next build. Migration applied to
+- [x] T5: Closure checks: vitest, tsc, eslint, next build. Migration applied to
       Supabase only after explicit user authorization.
 
 ## Delivery
@@ -113,6 +127,49 @@ Plus `suspended_this_month`: enrollments with a 'suspended' event with reason
   guarded updateMany re-asserts only enrollment is_active (concurrent
   student deactivation window, low impact); profile lookup swallows all
   errors; notes not trimmed.
+- T4 (delegated: gentle-ai-worker): page `/dashboard/payments/validation`
+  (admin/canManage only, no global read-only path), 4 metric cards, "A
+  suspender" selectable table + confirmation dialog (notes, pending state,
+  toast + router.refresh, error in dialog), read-only "En gracia",
+  "Suspendidas este mes", "Al día" tables; entry link on payments console
+  (canManage). Parent fixes: suspension timestamps formatted in branch time
+  zone (`formatDateTime(value, timeZone?)`, additive), header select-all
+  state derived from rows present. Writer: focused vitest 89 passed; tsc /
+  eslint clean; pnpm test 873 passed / 1 skipped; pnpm build OK.
+  Assess: high -> gentle-ai-verify PASS (incl. pnpm build; route dynamic).
+  Parent spot check after fixes: component vitest 6 passed; tsc/eslint clean.
+  Follow-ups: CardTitle renders div (section titles not semantic headings,
+  repo convention); no tests for read-only tables/page gating.
+- T5 (partial): `pnpm test` on HEAD dd0134c: 100 files passed / 1 skipped,
+  873 tests passed / 1 skipped. tsc, eslint and `pnpm build` green in the
+  T4 verification.
+- Migration 20260909000000 APPLIED to the Supabase DB (user-authorized),
+  via `pg` with DATABASE_URL from .env.local, executing the committed file
+  (own BEGIN/COMMIT). Precheck: target columns absent, 20260908 present.
+  After: `branches.payment_grace_days smallint NOT NULL DEFAULT 0`,
+  `discipline_events.reason text NULL`, both CHECK constraints present;
+  3/3 branches grace 0; 4/4 events reason NULL (no data changed).
+- Live RLS probe (rolled-back transactions, real branch admin, SET LOCAL
+  ROLE authenticated + jwt claims like withUser): read/update grace on own
+  branch OK; update on another branch 0 rows; grace 61 rejected by
+  branches_payment_grace_days_ck (23514); insert discipline_events with
+  reason non_payment on own branch OK; nothing left behind.
+- Note: supabase_migrations.schema_migrations latest is 20260904000000;
+  this project applies migrations outside the Supabase CLI history (same as
+  20260908000000), so the history table was not touched.
+- PENDING (user): manual browser check; push and chained PRs.
+- T6 (delegated: gentle-ai-worker): shared async server component
+  `MonthlyPaymentValidationSection` (+ `monthly-payment-validation-format.ts`)
+  used by the standalone page (h1) and the bottom of Resumen (h2, only when
+  `canManage`, inside Suspense with aria-hidden skeleton fallback); load
+  failure renders an inline alert. Standalone page and Pagos button
+  unchanged; no sidebar item. Writer: vitest components/payments +
+  app/dashboard 14 passed; tsc/eslint clean; pnpm test 878 passed / 1
+  skipped; pnpm build OK. Assess: high -> gentle-ai-verify PASS (same five
+  commands green). Minor follow-ups: section test mock omits
+  `suspendOverdueEnrollments` (unexercised); constant heading id would
+  collide only if mounted twice on one page.
 
 ## Next step
-T4 (PR3 slice).
+T6. Then user: browser check; push + chained PRs (PR1 db8def9..7cb2c75,
+PR2 d567347, PR3 dd0134c..HEAD).

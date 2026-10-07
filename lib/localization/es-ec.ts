@@ -362,8 +362,11 @@ export function formatDate(value: Date): string {
   return new Intl.DateTimeFormat(USER_LOCALE, DATE_FORMAT_OPTIONS).format(value)
 }
 
-export function formatDateTime(value: Date): string {
-  return new Intl.DateTimeFormat(USER_LOCALE, DATE_TIME_FORMAT_OPTIONS).format(value)
+export function formatDateTime(value: Date, timeZone?: string): string {
+  return new Intl.DateTimeFormat(USER_LOCALE, {
+    ...DATE_TIME_FORMAT_OPTIONS,
+    ...(timeZone ? { timeZone } : {}),
+  }).format(value)
 }
 
 export function formatNumber(value: number): string {
@@ -1043,6 +1046,53 @@ export const PAYMENT_VALIDATION_MESSAGES = {
   NOTES_TOO_LONG: "La nota no puede exceder 500 caracteres.",
   SUSPEND_STALE_LIST:
     "Algunas inscripciones ya no cumplen las condiciones para suspender. Actualice la lista e inténtelo nuevamente.",
+  PAGE_TITLE: "Validación mensual",
+  PAGE_DESCRIPTION: (monthName: string) =>
+    `Clasificación de las inscripciones activas correspondientes a ${monthName}.`,
+  BACK_LINK: "Volver a pagos",
+  NOT_AUTHORIZED:
+    "Solo los administradores de la sucursal pueden revisar y suspender inscripciones por falta de pago.",
+  SERVICE_UNAVAILABLE: "No se pudo cargar la validación mensual.",
+  UP_TO_DATE: "Al día",
+  IN_GRACE: "En gracia",
+  TO_SUSPEND: "A suspender",
+  SUSPENDED_THIS_MONTH: "Suspendidas este mes",
+  STUDENT: "Estudiante",
+  DISCIPLINE: "Disciplina",
+  DUE_DATE: "Fecha de vencimiento",
+  DAYS_OVERDUE: "Días de atraso",
+  GRACE_DEADLINE: "Fin de gracia",
+  SUSPENDED_DATE: "Fecha",
+  PERFORMED_BY: "Realizado por",
+  CURRENT_STATE: "Estado actual",
+  FALLBACK_DASH: "—",
+  NEXT_DUE_DATE: "Próximo vencimiento",
+  NO_PAYMENTS_REGISTERED: "Sin pagos registrados",
+  SUSPENDED_BADGE: "Suspendida",
+  REACTIVATED_BADGE: "Reactivada",
+  SELECT_ALL_ARIA: "Seleccionar todas las inscripciones a suspender",
+  SELECT_ROW_ARIA: (studentName: string, disciplineName: string) =>
+    `Seleccionar ${studentName} – ${disciplineName}`,
+  SUSPEND_SELECTED: (count: string) => `Suspender seleccionadas (${count})`,
+  SUSPEND_DIALOG_TITLE: "Suspender inscripciones por falta de pago",
+  SUSPEND_DIALOG_DESCRIPTION: (count: string) =>
+    `Se suspenderán ${count} inscripciones por falta de pago. El estudiante conserva sus demás inscripciones; la reactivación es manual desde el detalle del estudiante.`,
+  NOTES_LABEL: "Nota (opcional)",
+  SUSPENDING: "Suspendiendo…",
+  CONFIRM_SUSPEND: "Suspender inscripciones",
+  SUSPEND_FAILURE: "No se pudieron suspender las inscripciones seleccionadas.",
+  SUSPEND_SUCCESS: (count: string) =>
+    `${count} inscripciones suspendidas por falta de pago.`,
+  TO_SUSPEND_CAPTION:
+    "Inscripciones fuera del plazo de gracia. Seleccione las que desea suspender.",
+  TO_SUSPEND_EMPTY: "No hay inscripciones para suspender.",
+  IN_GRACE_CAPTION: "Inscripciones con atraso dentro del plazo de gracia.",
+  IN_GRACE_EMPTY: "No hay inscripciones en gracia.",
+  SUSPENDED_MONTH_CAPTION:
+    "Inscripciones suspendidas por falta de pago durante el mes actual.",
+  SUSPENDED_MONTH_EMPTY: "No hay suspensiones registradas este mes.",
+  UP_TO_DATE_CAPTION: "Inscripciones al día con sus pagos.",
+  UP_TO_DATE_EMPTY: "No hay inscripciones al día.",
 } as const
 
 /** Student detail (resumen) page composition messages. */

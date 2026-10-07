@@ -2,7 +2,7 @@ import type { ReactNode } from "react"
 
 import { redirect } from "next/navigation"
 import Link from "next/link"
-import { AlertCircleIcon, SettingsIcon } from "lucide-react"
+import { AlertCircleIcon, SettingsIcon, ShieldCheckIcon } from "lucide-react"
 
 import { ClassPriceConfigDialog } from "@/components/payments/class-price-config-dialog"
 import { DisciplineFilterTabs } from "@/components/payments/discipline-filter-tabs"
@@ -25,6 +25,7 @@ import {
   OVERDUE_MESSAGES,
   PAYMENT_CONSOLE_MESSAGES,
   PAYMENT_MESSAGES,
+  PAYMENT_VALIDATION_MESSAGES,
   USER_LOCALE,
 } from "@/lib/localization/es-ec"
 
@@ -154,18 +155,32 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
           </p>
         </div>
         {branchResult.canManage && (
-          <Button
-            variant="outline"
-            nativeButton={false}
-            render={
-              <Link
-                href={`/dashboard/payments/settings?branch=${branchResult.branchId}`}
-              />
-            }
-          >
-            <SettingsIcon className="size-4" />
-            {PAYMENT_MESSAGES.SETTINGS_LINK}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              nativeButton={false}
+              render={
+                <Link
+                  href={`/dashboard/payments/validation?branch=${branchResult.branchId}`}
+                />
+              }
+            >
+              <ShieldCheckIcon className="size-4" />
+              {PAYMENT_VALIDATION_MESSAGES.PAGE_TITLE}
+            </Button>
+            <Button
+              variant="outline"
+              nativeButton={false}
+              render={
+                <Link
+                  href={`/dashboard/payments/settings?branch=${branchResult.branchId}`}
+                />
+              }
+            >
+              <SettingsIcon className="size-4" />
+              {PAYMENT_MESSAGES.SETTINGS_LINK}
+            </Button>
+          </div>
         )}
       </div>
 

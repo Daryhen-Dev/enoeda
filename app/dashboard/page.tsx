@@ -1,7 +1,10 @@
+import { Suspense } from "react"
+
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import { AlertCircleIcon, UsersIcon, AlertTriangleIcon } from "lucide-react"
 
+import MonthlyPaymentValidationSection from "@/components/payments/monthly-payment-validation-section"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import {
   Card,
@@ -9,6 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
 import { getDashboardKpis } from "@/lib/domain/dashboard"
 import { APP_ROLES } from "@/lib/auth/authorize"
 import { resolveBranchContext } from "@/lib/auth/branch-context"
@@ -20,6 +24,21 @@ import {
 
 interface DashboardOverviewProps {
   searchParams: Promise<{ branch?: string; [key: string]: string | undefined }>
+}
+
+/** Lightweight placeholder shown while the validation query streams in. */
+function MonthlyPaymentValidationFallback() {
+  return (
+    <div aria-hidden="true" className="flex flex-col gap-4">
+      <Skeleton className="h-8 w-64" />
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {Array.from({ length: 4 }, (_, index) => (
+          <Skeleton key={index} className="h-28" />
+        ))}
+      </div>
+      <Skeleton className="h-48" />
+    </div>
+  )
 }
 
 export default async function DashboardOverview({ searchParams }: DashboardOverviewProps) {
@@ -196,6 +215,16 @@ export default async function DashboardOverview({ searchParams }: DashboardOverv
           </Card>
         </Link>
       </div>
+
+      {branchResult.canManage && (
+        <Suspense fallback={<MonthlyPaymentValidationFallback />}>
+          <MonthlyPaymentValidationSection
+            branchId={branchResult.branchId}
+            timeZone={branchResult.timeZone}
+            headingLevel="h2"
+          />
+        </Suspense>
+      )}
     </div>
   )
 }
