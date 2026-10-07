@@ -1034,6 +1034,17 @@ export const PAYMENT_MESSAGES = {
   CHARGE_CLASS: "Cobrar clase",
 } as const
 
+/** Monthly payment validation (admin bulk suspension) messages. */
+export const PAYMENT_VALIDATION_MESSAGES = {
+  SUSPEND_LIST_EMPTY: "Seleccione al menos una inscripción para suspender.",
+  SUSPEND_LIST_TOO_LONG: "Puede suspender hasta 200 inscripciones por vez.",
+  SUSPEND_LIST_DUPLICATED: "La lista de inscripciones contiene elementos duplicados.",
+  SUSPEND_LIST_INVALID_ID: "Identificador de inscripción inválido.",
+  NOTES_TOO_LONG: "La nota no puede exceder 500 caracteres.",
+  SUSPEND_STALE_LIST:
+    "Algunas inscripciones ya no cumplen las condiciones para suspender. Actualice la lista e inténtelo nuevamente.",
+} as const
+
 /** Student detail (resumen) page composition messages. */
 export const STUDENT_DETAIL_MESSAGES = {
   ACTIVE_BADGE: "Activo",

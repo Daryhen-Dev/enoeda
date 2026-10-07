@@ -48,7 +48,7 @@ Plus `suspended_this_month`: enrollments with a 'suspended' event with reason
       Tests (migration text test, settings schema/actions).
 - [x] T2: Branch-time-zone "today" for `countOverdueStudents` /
       `listOverdueStudents` (callers pass the branch-local date). Tests.
-- [ ] T3: Domain: pure classifier + `getMonthlyPaymentValidation` (admin of
+- [x] T3: Domain: pure classifier + `getMonthlyPaymentValidation` (admin of
       branch, branch-local today) + `suspendOverdueEnrollments` (admin only,
       one transaction, re-checks every enrollment is still active, in branch,
       and beyond grace; writes `suspended_at` + 'suspended' event with reason
@@ -91,7 +91,28 @@ Plus `suspended_this_month`: enrollments with a 'suspended' event with reason
   pnpm test 834 passed / 1 skipped. Assess: high (payments hot path) ->
   gentle-ai-verify PASS (RLS: admin/teacher/global-admin can SELECT
   branches; time_zone CHECK matches). Residual: no live-DB round trip of
-  UTC-midnight date filters. Commit: see Progress.
+  UTC-midnight date filters. Commit 7cb2c75 fix(payments): evaluate overdue
+  and monthly summary on the branch-local date.
+- Slice PR1 = db8def9..7cb2c75 (T1+T2), base main 4a2a675. Not pushed.
+- T3 (delegated: gentle-ai-worker; first run stalled on a bash call and
+  timed out, resumed via subagent_continue from the partial tree): pure
+  `lib/domain/payments/validation.ts` (classifier, branch-local month
+  bounds), `validation-actions.ts` (`getMonthlyPaymentValidation`,
+  `suspendOverdueEnrollments`: admin-only, atomic re-check, guarded
+  updateMany + count check -> rollback, events reason non_payment),
+  schemas, es-EC copy; `suspendEnrollment` records reason 'manual'.
+  RLS: branch-admin FOR ALL on student_disciplines and discipline_events
+  (20260816000000); user_profiles readable only by owner of the row, so
+  `performed_by_name` is null for other performers (UI must handle).
+  Writer: focused vitest 107 passed; tsc/eslint clean; pnpm test 867 passed
+  / 1 skipped. Independent gentle-ai-verify: FAIL on one blocker - runtime
+  const exports from a "use server" file (Next.js build error once
+  imported). Parent fix: made both consts module-private; tsc clean;
+  focused vitest 103 passed.
+  Follow-ups (accepted, not fixed): redundant branch read for time_zone;
+  guarded updateMany re-asserts only enrollment is_active (concurrent
+  student deactivation window, low impact); profile lookup swallows all
+  errors; notes not trimmed.
 
 ## Next step
-T3 (opens PR2 slice after PR1 = T1+T2).
+T4 (PR3 slice).
