@@ -41,12 +41,12 @@ Plus `suspended_this_month`: enrollments with a 'suspended' event with reason
 `non_payment` in the current branch-local month.
 
 ## Tasks
-- [ ] T1: Migration: `branches.payment_grace_days smallint NOT NULL DEFAULT 0`
+- [x] T1: Migration: `branches.payment_grace_days smallint NOT NULL DEFAULT 0`
       CHECK 0..60; `discipline_events.reason text NULL` CHECK IN
       ('non_payment','manual'). Prisma schema + generated client sync.
       Settings: grace days in schema, get/save actions, settings form.
       Tests (migration text test, settings schema/actions).
-- [ ] T2: Branch-time-zone "today" for `countOverdueStudents` /
+- [x] T2: Branch-time-zone "today" for `countOverdueStudents` /
       `listOverdueStudents` (callers pass the branch-local date). Tests.
 - [ ] T3: Domain: pure classifier + `getMonthlyPaymentValidation` (admin of
       branch, branch-local today) + `suspendOverdueEnrollments` (admin only,
@@ -73,7 +73,25 @@ Plus `suspended_this_month`: enrollments with a 'suspended' event with reason
 - Branch `feat/monthly-payment-validation` created from main at 4a2a675.
 
 ## Evidence
-(pending)
+- T1 (delegated: gentle-ai-worker; writer trigger, 2+ non-trivial files):
+  migration 20260909000000 (additive, transactional), discipline_events.reason
+  in Prisma + regenerated client (4 semantic generated files; 7 LF/CRLF-only
+  generated files restored, not committed), settings schema/actions/form/copy.
+  Writer: vitest focused 16 passed; tsc clean; eslint clean; pnpm test 823
+  passed / 1 skipped. Assess: unassessable (untracked files) -> treated high
+  -> independent gentle-ai-verify PASS (same commands green). Parent spot
+  check: focused vitest 16 passed. Migration NOT applied to any DB.
+  Commit db8def9 feat(payments): add per-branch payment grace days and event
+  reason.
+- T2 (delegated: gentle-ai-worker): queries resolve branch-local today
+  inside the tx (`getBranchLocalToday`, branch `time_zone`, fallback
+  America/Guayaquil) and compare `@db.Date` columns with UTC-midnight
+  (`dateOnlyToUtcDate`); monthly summary bounds from branch-local month.
+  Callers unchanged. Writer: focused vitest 58 passed; tsc/eslint clean;
+  pnpm test 834 passed / 1 skipped. Assess: high (payments hot path) ->
+  gentle-ai-verify PASS (RLS: admin/teacher/global-admin can SELECT
+  branches; time_zone CHECK matches). Residual: no live-DB round trip of
+  UTC-midnight date filters. Commit: see Progress.
 
 ## Next step
-T1.
+T3 (opens PR2 slice after PR1 = T1+T2).
