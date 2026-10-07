@@ -72,6 +72,16 @@ export function parseDateOnly(value: string): Date {
   return new Date(year, month - 1, day);
 }
 
+/**
+ * Converts a date-only string into the UTC-midnight instant used by
+ * Postgres `date` columns (see formatDatabaseDateOnly).
+ */
+export function dateOnlyToUtcDate(value: string): Date {
+  const { year, month, day } = parseDateOnlyValues(value);
+
+  return new Date(Date.UTC(year, month - 1, day));
+}
+
 export function formatDateOnly(date: Date): string {
   if (Number.isNaN(date.getTime())) {
     throw new Error("Date must be valid.");

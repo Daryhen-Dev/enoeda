@@ -641,6 +641,7 @@ model discipline_events {
   performed_by          String              @db.Uuid
   event_date            DateTime            @default(now()) @db.Timestamptz(6)
   notes                 String?
+  reason                String?
   student_disciplines   student_disciplines @relation(fields: [student_discipline_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([student_discipline_id])

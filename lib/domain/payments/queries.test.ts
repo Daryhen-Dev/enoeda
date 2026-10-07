@@ -1,11 +1,13 @@
 /**
- * Payment query tests — branch-scoped overdue and current-month summary queries.
+ * Payment query tests — branch-scoped overdue and current-month summary queries,
+ * including branch time zone resolution for "today".
  */
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { TransactionClient } from "@/lib/prisma/client";
 import {
   countOverdueStudents,
+  getBranchLocalToday,
   getMonthlyPaymentSummaryQuery,
   listOverdueStudents,
 } from "./queries";
@@ -17,10 +19,17 @@ function createTransaction(value: unknown): TransactionClient {
   return value as TransactionClient;
 }
 
+function createBranchTimeZoneMock(timeZone: string | null) {
+  return vi
+    .fn()
+    .mockResolvedValue(timeZone === null ? null : { time_zone: timeZone });
+}
+
 describe("countOverdueStudents", () => {
   it("includes the branch filter", async () => {
     const mockFindMany = vi.fn().mockResolvedValue([{ student_id: "s1" }]);
     const mockTx = createTransaction({
+      branches: { findUnique: createBranchTimeZoneMock("America/Guayaquil") },
       student_disciplines: { findMany: mockFindMany },
     });
 
@@ -28,6 +37,107 @@ describe("countOverdueStudents", () => {
 
     const callArgs = mockFindMany.mock.calls[0][0];
     expect(callArgs.where.students).toMatchObject({ branch_id: BRANCH_ID });
+  });
+
+  it("compares against the branch-local UTC-midnight date", async () => {
+    vi.useFakeTimers();
+    try {
+      // 03:00Z is 22:00 on 2026-09-30 in Guayaquil (UTC-5).
+      vi.setSystemTime(new Date("2026-10-01T03:00:00Z"));
+      const mockFindMany = vi.fn().mockResolvedValue([]);
+      const mockTx = createTransaction({
+        branches: { findUnique: createBranchTimeZoneMock("America/Guayaquil") },
+        student_disciplines: { findMany: mockFindMany },
+      });
+
+      await countOverdueStudents(mockTx, BRANCH_ID);
+
+      expect(mockFindMany.mock.calls[0][0].where.next_due_date).toEqual({
+        lt: new Date("2026-09-30T00:00:00.000Z"),
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("resolves today from the branch time zone, not UTC", async () => {
+    vi.useFakeTimers();
+    try {
+      // 05:00Z is 2026-10-01 00:00 in Guayaquil (UTC-5) but 2026-09-30 23:00
+      // in Galápagos (UTC-6).
+      vi.setSystemTime(new Date("2026-10-01T05:00:00Z"));
+
+      const guayaquilFindMany = vi.fn().mockResolvedValue([]);
+      await countOverdueStudents(
+        createTransaction({
+          branches: {
+            findUnique: createBranchTimeZoneMock("America/Guayaquil"),
+          },
+          student_disciplines: { findMany: guayaquilFindMany },
+        }),
+        BRANCH_ID
+      );
+      expect(guayaquilFindMany.mock.calls[0][0].where.next_due_date).toEqual({
+        lt: new Date("2026-10-01T00:00:00.000Z"),
+      });
+
+      const galapagosFindMany = vi.fn().mockResolvedValue([]);
+      await countOverdueStudents(
+        createTransaction({
+          branches: {
+            findUnique: createBranchTimeZoneMock("Pacific/Galapagos"),
+          },
+          student_disciplines: { findMany: galapagosFindMany },
+        }),
+        BRANCH_ID
+      );
+      expect(galapagosFindMany.mock.calls[0][0].where.next_due_date).toEqual({
+        lt: new Date("2026-09-30T00:00:00.000Z"),
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("falls back to the continental Ecuador time zone without a branch row", async () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date("2026-10-01T03:00:00Z"));
+      const mockFindMany = vi.fn().mockResolvedValue([]);
+      const mockTx = createTransaction({
+        branches: { findUnique: createBranchTimeZoneMock(null) },
+        student_disciplines: { findMany: mockFindMany },
+      });
+
+      await countOverdueStudents(mockTx, BRANCH_ID);
+
+      expect(mockFindMany.mock.calls[0][0].where.next_due_date).toEqual({
+        lt: new Date("2026-09-30T00:00:00.000Z"),
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
+describe("getBranchLocalToday", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("returns the branch-local date for a fixed instant", async () => {
+    vi.setSystemTime(new Date("2026-10-01T03:00:00Z"));
+    const mockTx = createTransaction({
+      branches: { findUnique: createBranchTimeZoneMock("America/Guayaquil") },
+    });
+
+    await expect(getBranchLocalToday(mockTx, BRANCH_ID)).resolves.toBe(
+      "2026-09-30"
+    );
   });
 });
 
@@ -48,6 +158,7 @@ describe("listOverdueStudents", () => {
       },
     ]);
     const mockTx = createTransaction({
+      branches: { findUnique: createBranchTimeZoneMock("America/Guayaquil") },
       student_disciplines: { findMany: mockFindMany },
     });
 
@@ -63,12 +174,46 @@ describe("listOverdueStudents", () => {
       expect.objectContaining({ student_discipline_id: "enrollment-2" }),
     ]);
   });
+
+  it("uses the branch-local UTC-midnight date in the overdue filter", async () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date("2026-10-01T03:00:00Z"));
+      const mockFindMany = vi.fn().mockResolvedValue([]);
+      const mockTx = createTransaction({
+        branches: { findUnique: createBranchTimeZoneMock("America/Guayaquil") },
+        student_disciplines: { findMany: mockFindMany },
+      });
+
+      await listOverdueStudents(mockTx, BRANCH_ID);
+
+      expect(mockFindMany.mock.calls[0][0].where.next_due_date).toEqual({
+        lt: new Date("2026-09-30T00:00:00.000Z"),
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
 
 describe("getMonthlyPaymentSummaryQuery", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
+
+  function createSummaryTransaction(
+    monthlyFindMany: ReturnType<typeof vi.fn>,
+    classFindMany: ReturnType<typeof vi.fn>,
+    overdueFindMany: ReturnType<typeof vi.fn>,
+    timeZone: string | null = "America/Guayaquil"
+  ) {
+    return createTransaction({
+      branches: { findUnique: createBranchTimeZoneMock(timeZone) },
+      payments: { findMany: monthlyFindMany },
+      class_payments: { findMany: classFindMany },
+      student_disciplines: { findMany: overdueFindMany },
+    });
+  }
 
   it("scopes both sources to the branch and maps current activity by date and limit", async () => {
     const monthlyFindMany = vi.fn().mockResolvedValue(
@@ -96,11 +241,11 @@ describe("getMonthlyPaymentSummaryQuery", () => {
       },
     ]);
     const overdueFindMany = vi.fn().mockResolvedValue([]);
-    const mockTx = createTransaction({
-      payments: { findMany: monthlyFindMany },
-      class_payments: { findMany: classFindMany },
-      student_disciplines: { findMany: overdueFindMany },
-    });
+    const mockTx = createSummaryTransaction(
+      monthlyFindMany,
+      classFindMany,
+      overdueFindMany
+    );
 
     const summary = await getMonthlyPaymentSummaryQuery(
       mockTx,
@@ -131,5 +276,62 @@ describe("getMonthlyPaymentSummaryQuery", () => {
     );
     expect(summary.recentActivity).toHaveLength(10);
     expect(summary.recentActivity[0]?.type).toBe("class");
+  });
+
+  it("derives month bounds and the overdue filter from the branch-local date", async () => {
+    vi.useFakeTimers();
+    try {
+      // 03:00Z is 2026-09-30 in Guayaquil: September bounds, overdue < Sep 30.
+      vi.setSystemTime(new Date("2026-10-01T03:00:00Z"));
+      const monthlyFindMany = vi.fn().mockResolvedValue([]);
+      const classFindMany = vi.fn().mockResolvedValue([]);
+      const overdueFindMany = vi.fn().mockResolvedValue([]);
+      const mockTx = createSummaryTransaction(
+        monthlyFindMany,
+        classFindMany,
+        overdueFindMany
+      );
+
+      await getMonthlyPaymentSummaryQuery(mockTx, BRANCH_ID);
+
+      expect(monthlyFindMany.mock.calls[0][0].where.payment_date).toEqual({
+        gte: new Date("2026-09-01T00:00:00.000Z"),
+        lt: new Date("2026-10-01T00:00:00.000Z"),
+      });
+      expect(classFindMany.mock.calls[0][0].where.class_date).toEqual({
+        gte: new Date("2026-09-01T00:00:00.000Z"),
+        lt: new Date("2026-10-01T00:00:00.000Z"),
+      });
+      expect(overdueFindMany.mock.calls[0][0].where.next_due_date).toEqual({
+        lt: new Date("2026-09-30T00:00:00.000Z"),
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("rolls December month bounds over to the next year", async () => {
+    vi.useFakeTimers();
+    try {
+      // 03:00Z on 2027-01-01 is 2026-12-31 in Guayaquil.
+      vi.setSystemTime(new Date("2027-01-01T03:00:00Z"));
+      const monthlyFindMany = vi.fn().mockResolvedValue([]);
+      const classFindMany = vi.fn().mockResolvedValue([]);
+      const overdueFindMany = vi.fn().mockResolvedValue([]);
+      const mockTx = createSummaryTransaction(
+        monthlyFindMany,
+        classFindMany,
+        overdueFindMany
+      );
+
+      await getMonthlyPaymentSummaryQuery(mockTx, BRANCH_ID);
+
+      expect(monthlyFindMany.mock.calls[0][0].where.payment_date).toEqual({
+        gte: new Date("2026-12-01T00:00:00.000Z"),
+        lt: new Date("2027-01-01T00:00:00.000Z"),
+      });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

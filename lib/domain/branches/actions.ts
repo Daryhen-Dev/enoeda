@@ -405,6 +405,7 @@ export interface BranchPaymentSettings {
   branch_id: string;
   payment_due_day: number;
   payment_edit_window_days: number;
+  payment_grace_days: number;
 }
 
 export async function getBranchPaymentSettings(
@@ -418,7 +419,7 @@ export async function getBranchPaymentSettings(
       const branchError = assertCallerBranchAdmin(ctx, parsed.data);
       if (branchError) return { settings: null, error: branchError };
       const rows = await tx.$queryRaw<BranchPaymentSettings[]>`
-        SELECT id AS branch_id, payment_due_day, payment_edit_window_days
+        SELECT id AS branch_id, payment_due_day, payment_edit_window_days, payment_grace_days
         FROM public.branches
         WHERE id = ${parsed.data} AND is_active = true
       `;
@@ -447,9 +448,10 @@ export async function saveBranchPaymentSettings(
       const rows = await tx.$queryRaw<BranchPaymentSettings[]>`
         UPDATE public.branches
         SET payment_due_day = ${parsed.data.payment_due_day},
-            payment_edit_window_days = ${parsed.data.payment_edit_window_days}
+            payment_edit_window_days = ${parsed.data.payment_edit_window_days},
+            payment_grace_days = ${parsed.data.payment_grace_days}
         WHERE id = ${parsed.data.branch_id} AND is_active = true
-        RETURNING id AS branch_id, payment_due_day, payment_edit_window_days
+        RETURNING id AS branch_id, payment_due_day, payment_edit_window_days, payment_grace_days
       `;
       return { settings: rows[0] ?? null, error: null };
     });
