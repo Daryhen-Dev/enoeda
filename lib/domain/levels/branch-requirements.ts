@@ -13,6 +13,13 @@ export interface BranchLevelRequirementRow {
   branch_id: string;
   level_id: string;
   required_attended_sessions: number;
+  updated_at: Date;
+}
+
+/** One level's resolved override with the date its requirement last changed. */
+export interface BranchLevelOverride {
+  required: number;
+  updated_at: Date;
 }
 
 /**
@@ -36,11 +43,14 @@ export function resolveRequiredSessions(
 export function buildBranchRequirementMap(
   rows: readonly BranchLevelRequirementRow[],
   branchId: string
-): Map<string, number> {
-  const map = new Map<string, number>();
+): Map<string, BranchLevelOverride> {
+  const map = new Map<string, BranchLevelOverride>();
   for (const row of rows) {
     if (row.branch_id !== branchId) continue;
-    map.set(row.level_id, row.required_attended_sessions);
+    map.set(row.level_id, {
+      required: row.required_attended_sessions,
+      updated_at: row.updated_at,
+    });
   }
   return map;
 }

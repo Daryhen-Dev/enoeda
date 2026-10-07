@@ -183,6 +183,7 @@ export async function getStudentProgressSummary(
             branch_id: true,
             level_id: true,
             required_attended_sessions: true,
+            updated_at: true,
           },
         }),
       ]);
@@ -265,7 +266,7 @@ export async function getStudentProgressSummary(
               ? null
               : resolveRequiredSessions(
                   nextLevel.required_attended_sessions,
-                  overridesByLevel.get(nextLevel.id)
+                  overridesByLevel.get(nextLevel.id)?.required ?? null
                 ),
           period_started_at: currentProgress?.promoted_at ?? null,
           attended_sessions:

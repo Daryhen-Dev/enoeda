@@ -25,6 +25,7 @@ import {
 import {
   BRANCH_LEVEL_MESSAGES,
   COMMON_MESSAGES,
+  formatDate,
 } from "@/lib/localization/es-ec"
 
 interface BranchLevelRequirementsListProps {
@@ -85,6 +86,7 @@ export function BranchLevelRequirementsList({
                 <TableHead>{BRANCH_LEVEL_MESSAGES.PAGE_TITLE}</TableHead>
                 <TableHead>{BRANCH_LEVEL_MESSAGES.GENERAL_LABEL}</TableHead>
                 <TableHead>{BRANCH_LEVEL_MESSAGES.BRANCH_LABEL}</TableHead>
+                <TableHead>{COMMON_MESSAGES.LAST_UPDATED}</TableHead>
                 <TableHead className="sr-only">
                   {COMMON_MESSAGES.SAVE}
                 </TableHead>
@@ -122,6 +124,12 @@ function BranchLevelRow({
   const parsedValue = parseRequiredSessions(value)
   const isDirty = parsedValue !== null && parsedValue !== level.effective_required
   const canSave = isDirty && !isPending
+
+  /**
+   * The input edits the effective value; while dirty it stops tracking the
+   * server date so the row keeps the pre-edit state until saved.
+   */
+  const shownUpdatedAt = isDirty ? null : level.updated_at
 
   function handleSave() {
     if (parsedValue === null) {
@@ -200,6 +208,9 @@ function BranchLevelRow({
           />
           {error && <FieldError>{error}</FieldError>}
         </Field>
+      </TableCell>
+      <TableCell className="text-muted-foreground">
+        {shownUpdatedAt ? formatDate(shownUpdatedAt) : "—"}
       </TableCell>
       <TableCell>
         <div className="flex flex-wrap justify-end gap-2">

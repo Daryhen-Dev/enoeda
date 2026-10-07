@@ -4,7 +4,11 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { BRANCH_LEVEL_MESSAGES, COMMON_MESSAGES } from "@/lib/localization/es-ec";
+import {
+  BRANCH_LEVEL_MESSAGES,
+  COMMON_MESSAGES,
+  formatDate,
+} from "@/lib/localization/es-ec";
 
 const BRANCH_ID = "bbbbbbbb-1111-2222-8333-444444444444";
 const LEVEL_A = "d3333333-3333-4333-8333-333333333331";
@@ -48,6 +52,7 @@ const DISCIPLINES = [
         sort_order: 0,
         general_required: 10,
         branch_required: null,
+        updated_at: new Date("2026-03-01T12:00:00Z"),
         effective_required: 10,
       },
       {
@@ -57,6 +62,7 @@ const DISCIPLINES = [
         sort_order: 1,
         general_required: 20,
         branch_required: 5,
+        updated_at: new Date("2026-04-10T08:30:00Z"),
         effective_required: 5,
       },
     ],
@@ -148,7 +154,7 @@ describe("BranchLevelRequirementsList", () => {
     rendered = renderList();
 
     const whiteRow = queryRow("Blanco");
-    // The header column carries the "General" label; the row shows the value.
+    // The header column carries the "Clases default" label; the row shows the value.
     expect(document.body.textContent).toContain(
       BRANCH_LEVEL_MESSAGES.GENERAL_LABEL
     );
@@ -165,6 +171,32 @@ describe("BranchLevelRequirementsList", () => {
     expect(document.body.textContent).toContain(
       BRANCH_LEVEL_MESSAGES.OWNER_MANAGED_NOTE
     );
+  });
+
+  it("shows the last modification date of the requirement in every row", () => {
+    rendered = renderList();
+
+    expect(document.body.textContent).toContain(COMMON_MESSAGES.LAST_UPDATED);
+    // formatDate renders the stored dates in the user locale.
+    expect(document.body.textContent).toContain(
+      formatDate(new Date("2026-03-01T12:00:00Z"))
+    );
+    expect(document.body.textContent).toContain(
+      formatDate(new Date("2026-04-10T08:30:00Z"))
+    );
+  });
+
+  it("replaces the date with a dash while the input is dirty", async () => {
+    rendered = renderList();
+
+    const whiteRow = queryRow("Blanco");
+    const input = queryBranchInput(whiteRow);
+    await setInputValue(input, "12");
+
+    expect(document.body.textContent).not.toContain(
+      formatDate(new Date("2026-03-01T12:00:00Z"))
+    );
+    expect(whiteRow.textContent).toContain("—");
   });
 
   it("saves a changed branch value via setBranchLevelRequirement", async () => {

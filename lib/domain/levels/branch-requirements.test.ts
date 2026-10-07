@@ -25,23 +25,44 @@ describe("resolveRequiredSessions", () => {
   });
 });
 
+const UPDATED_AT = new Date("2026-01-15T12:00:00Z");
+const UPDATED_AT_LATER = new Date("2026-02-01T09:30:00Z");
+
 describe("buildBranchRequirementMap", () => {
   it("indexes overrides by level_id", () => {
     const map = buildBranchRequirementMap(
       [
-        { branch_id: BRANCH_A, level_id: LEVEL_1, required_attended_sessions: 4 },
-        { branch_id: BRANCH_A, level_id: LEVEL_2, required_attended_sessions: 8 },
+        {
+          branch_id: BRANCH_A,
+          level_id: LEVEL_1,
+          required_attended_sessions: 4,
+          updated_at: UPDATED_AT,
+        },
+        {
+          branch_id: BRANCH_A,
+          level_id: LEVEL_2,
+          required_attended_sessions: 8,
+          updated_at: UPDATED_AT_LATER,
+        },
       ],
       BRANCH_A
     );
-    expect(map.get(LEVEL_1)).toBe(4);
-    expect(map.get(LEVEL_2)).toBe(8);
+    expect(map.get(LEVEL_1)).toEqual({ required: 4, updated_at: UPDATED_AT });
+    expect(map.get(LEVEL_2)).toEqual({
+      required: 8,
+      updated_at: UPDATED_AT_LATER,
+    });
   });
 
   it("ignores overrides that belong to another branch", () => {
     const map = buildBranchRequirementMap(
       [
-        { branch_id: BRANCH_B, level_id: LEVEL_1, required_attended_sessions: 99 },
+        {
+          branch_id: BRANCH_B,
+          level_id: LEVEL_1,
+          required_attended_sessions: 99,
+          updated_at: UPDATED_AT,
+        },
       ],
       BRANCH_A
     );

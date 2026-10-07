@@ -362,6 +362,7 @@ describe("getStudentProgressSummary — branch level requirement overrides", () 
       branch_id: string;
       level_id: string;
       required_attended_sessions: number;
+      updated_at: Date;
     }>;
   }) {
     const tx = buildMockTx();
@@ -425,6 +426,7 @@ describe("getStudentProgressSummary — branch level requirement overrides", () 
           branch_id: BRANCH_A,
           level_id: OTHER_LEVEL_ID,
           required_attended_sessions: 5,
+          updated_at: new Date("2026-04-01T00:00:00Z"),
         },
       ],
     });
@@ -462,6 +464,7 @@ describe("getStudentProgressSummary — branch level requirement overrides", () 
           branch_id: BRANCH_B,
           level_id: OTHER_LEVEL_ID,
           required_attended_sessions: 99,
+          updated_at: new Date("2026-04-01T00:00:00Z"),
         },
       ],
     });

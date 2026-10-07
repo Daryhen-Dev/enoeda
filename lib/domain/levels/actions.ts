@@ -279,6 +279,11 @@ export interface BranchLevelRequirementView {
   general_required: number;
   /** This branch's override, or null when the general value applies. */
   branch_required: number | null;
+  /**
+   * Last change of the requirement that currently applies: the override's
+   * updated_at when one exists, otherwise the level's own updated_at.
+   */
+  updated_at: Date;
   /** What promotion actually requires on this branch. */
   effective_required: number;
 }
@@ -337,6 +342,7 @@ export async function listBranchLevelRequirements(
                 color: true,
                 sort_order: true,
                 required_attended_sessions: true,
+                updated_at: true,
               },
               orderBy: { sort_order: "asc" },
             },
@@ -349,6 +355,7 @@ export async function listBranchLevelRequirements(
             branch_id: true,
             level_id: true,
             required_attended_sessions: true,
+            updated_at: true,
           },
         }),
       ]);
@@ -364,17 +371,23 @@ export async function listBranchLevelRequirements(
           discipline_id: discipline.id,
           discipline_name: discipline.name,
           levels: discipline.discipline_levels.map((level) => {
-            const branchRequired = overridesByLevel.get(level.id) ?? null;
+            const override = overridesByLevel.get(level.id) ?? null;
             return {
               id: level.id,
               name: level.name,
               color: level.color,
               sort_order: level.sort_order,
               general_required: level.required_attended_sessions,
-              branch_required: branchRequired,
+              branch_required: override?.required ?? null,
+              /** Last change of the requirement that currently applies. */
+              updated_at: (
+                override ?? {
+                  updated_at: level.updated_at,
+                }
+              ).updated_at,
               effective_required: resolveRequiredSessions(
                 level.required_attended_sessions,
-                branchRequired
+                override?.required ?? null
               ),
             };
           }),

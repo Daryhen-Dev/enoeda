@@ -14,6 +14,7 @@ export const PRODUCT_TERMS = {
 } as const
 
 export const COMMON_MESSAGES = {
+  LAST_UPDATED: "Última modificación",
   CANCEL: "Cancelar",
   CREATE: "Crear",
   EDIT: "Editar",
@@ -827,8 +828,8 @@ export const BRANCH_LEVEL_MESSAGES = {
   INVALID_LEVEL_ID: "Identificador de nivel inválido.",
   REQUIRED_SESSIONS_INVALID:
     "Las sesiones requeridas deben ser un entero entre 0 y 1000.",
-  GENERAL_LABEL: "General",
-  BRANCH_LABEL: "Esta sucursal",
+  GENERAL_LABEL: "Clases default",
+  BRANCH_LABEL: "Clases requeridas",
   CUSTOM_BADGE: "Personalizado",
   USE_GENERAL_ACTION: "Usar valor general",
   OWNER_MANAGED_NOTE:
