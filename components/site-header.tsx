@@ -55,6 +55,44 @@ export function getSwitcherMode(
   return "select"
 }
 
+/**
+ * Mi perfil is not branch-scoped, so the branch switcher (and the static
+ * branch label) must not render there.
+ * Pure function — extracted for testability.
+ */
+export function isProfileRoute(pathname: string): boolean {
+  return pathname === "/dashboard/profile"
+}
+
+/**
+ * Header title for the current route. Longest-prefix match so nested routes
+ * (payment settings, validation) win over their parent. Unknown dashboard
+ * routes fall back to the overview title.
+ * Pure function — extracted for testability.
+ */
+export function getPageTitle(pathname: string): string {
+  const routes: ReadonlyArray<readonly [string, string]> = [
+    ["/dashboard/payments/validation", DASHBOARD_SHELL_MESSAGES.PAYMENT_VALIDATION],
+    ["/dashboard/payments/settings", DASHBOARD_SHELL_MESSAGES.PAYMENT_SETTINGS],
+    ["/dashboard/payments", DASHBOARD_SHELL_MESSAGES.PAYMENTS],
+    ["/dashboard/students", DASHBOARD_SHELL_MESSAGES.STUDENTS],
+    ["/dashboard/staff", DASHBOARD_SHELL_MESSAGES.STAFF],
+    ["/dashboard/schedule", DASHBOARD_SHELL_MESSAGES.CONCURRENCIAS],
+    ["/dashboard/belts", DASHBOARD_SHELL_MESSAGES.BELTS],
+    ["/dashboard/calendar", DASHBOARD_SHELL_MESSAGES.CALENDAR],
+    ["/dashboard/profile", DASHBOARD_SHELL_MESSAGES.PROFILE],
+    ["/dashboard/branches", DASHBOARD_SHELL_MESSAGES.BRANCHES],
+    ["/dashboard", DASHBOARD_SHELL_MESSAGES.OVERVIEW],
+  ]
+
+  for (const [prefix, title] of routes) {
+    if (pathname === prefix || pathname.startsWith(`${prefix}/`)) {
+      return title
+    }
+  }
+  return DASHBOARD_SHELL_MESSAGES.OVERVIEW
+}
+
 export function SiteHeader({
   displayName,
   branches,
@@ -86,10 +124,8 @@ export function SiteHeader({
 
   const currentBranch = availableBranches?.find((b) => b.id === currentBranchId)
   const mode = getSwitcherMode(availableBranches)
-  const pageTitle =
-    pathname === "/dashboard/calendar"
-      ? DASHBOARD_SHELL_MESSAGES.CALENDAR
-      : DASHBOARD_SHELL_MESSAGES.OVERVIEW
+  const showBranchSwitcher = !isProfileRoute(pathname)
+  const pageTitle = getPageTitle(pathname)
 
   return (
     <header className="flex h-(--header-height) shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
@@ -106,7 +142,7 @@ export function SiteHeader({
         </div>
 
         <div className="flex min-w-0 flex-wrap items-center gap-1 sm:ml-auto sm:gap-2">
-          {mode === "select" && availableBranches && (
+          {showBranchSwitcher && mode === "select" && availableBranches && (
             <>
               {/* Desktop: native select (compact, accessible) */}
               <div className="relative hidden sm:block">
@@ -198,7 +234,7 @@ export function SiteHeader({
             </>
           )}
 
-          {mode === "static" && currentBranch && (
+          {showBranchSwitcher && mode === "static" && currentBranch && (
             <span className="flex items-center gap-1.5 truncate text-sm text-muted-foreground">
               <BuildingIcon className="size-3.5 shrink-0" aria-hidden="true" />
               <span className="truncate">{currentBranch.name}</span>

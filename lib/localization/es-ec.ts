@@ -162,6 +162,8 @@ export const DASHBOARD_SHELL_MESSAGES = {
   CONCURRENCIAS: "Concurrencias",
   BELTS: "Cinturones",
   PAYMENTS: "Pagos",
+  PAYMENT_SETTINGS: "Configuración de pagos",
+  PAYMENT_VALIDATION: "Validación mensual",
   PROFILE: "Mi perfil",
   PROFILE_NAME_UNAVAILABLE: "Perfil pendiente",
 } as const
