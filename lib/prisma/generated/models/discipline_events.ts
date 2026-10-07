@@ -31,6 +31,7 @@ export type Discipline_eventsMinAggregateOutputType = {
   performed_by: string | null
   event_date: Date | null
   notes: string | null
+  reason: string | null
 }
 
 export type Discipline_eventsMaxAggregateOutputType = {
@@ -40,6 +41,7 @@ export type Discipline_eventsMaxAggregateOutputType = {
   performed_by: string | null
   event_date: Date | null
   notes: string | null
+  reason: string | null
 }
 
 export type Discipline_eventsCountAggregateOutputType = {
@@ -49,6 +51,7 @@ export type Discipline_eventsCountAggregateOutputType = {
   performed_by: number
   event_date: number
   notes: number
+  reason: number
   _all: number
 }
 
@@ -60,6 +63,7 @@ export type Discipline_eventsMinAggregateInputType = {
   performed_by?: true
   event_date?: true
   notes?: true
+  reason?: true
 }
 
 export type Discipline_eventsMaxAggregateInputType = {
@@ -69,6 +73,7 @@ export type Discipline_eventsMaxAggregateInputType = {
   performed_by?: true
   event_date?: true
   notes?: true
+  reason?: true
 }
 
 export type Discipline_eventsCountAggregateInputType = {
@@ -78,6 +83,7 @@ export type Discipline_eventsCountAggregateInputType = {
   performed_by?: true
   event_date?: true
   notes?: true
+  reason?: true
   _all?: true
 }
 
@@ -160,6 +166,7 @@ export type Discipline_eventsGroupByOutputType = {
   performed_by: string
   event_date: Date
   notes: string | null
+  reason: string | null
   _count: Discipline_eventsCountAggregateOutputType | null
   _min: Discipline_eventsMinAggregateOutputType | null
   _max: Discipline_eventsMaxAggregateOutputType | null
@@ -190,6 +197,7 @@ export type discipline_eventsWhereInput = {
   performed_by?: Prisma.UuidFilter<"discipline_events"> | string
   event_date?: Prisma.DateTimeFilter<"discipline_events"> | Date | string
   notes?: Prisma.StringNullableFilter<"discipline_events"> | string | null
+  reason?: Prisma.StringNullableFilter<"discipline_events"> | string | null
   student_disciplines?: Prisma.XOR<Prisma.Student_disciplinesScalarRelationFilter, Prisma.student_disciplinesWhereInput>
 }
 
@@ -200,6 +208,7 @@ export type discipline_eventsOrderByWithRelationInput = {
   performed_by?: Prisma.SortOrder
   event_date?: Prisma.SortOrder
   notes?: Prisma.SortOrderInput | Prisma.SortOrder
+  reason?: Prisma.SortOrderInput | Prisma.SortOrder
   student_disciplines?: Prisma.student_disciplinesOrderByWithRelationInput
 }
 
@@ -213,6 +222,7 @@ export type discipline_eventsWhereUniqueInput = Prisma.AtLeast<{
   performed_by?: Prisma.UuidFilter<"discipline_events"> | string
   event_date?: Prisma.DateTimeFilter<"discipline_events"> | Date | string
   notes?: Prisma.StringNullableFilter<"discipline_events"> | string | null
+  reason?: Prisma.StringNullableFilter<"discipline_events"> | string | null
   student_disciplines?: Prisma.XOR<Prisma.Student_disciplinesScalarRelationFilter, Prisma.student_disciplinesWhereInput>
 }, "id">
 
@@ -223,6 +233,7 @@ export type discipline_eventsOrderByWithAggregationInput = {
   performed_by?: Prisma.SortOrder
   event_date?: Prisma.SortOrder
   notes?: Prisma.SortOrderInput | Prisma.SortOrder
+  reason?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.discipline_eventsCountOrderByAggregateInput
   _max?: Prisma.discipline_eventsMaxOrderByAggregateInput
   _min?: Prisma.discipline_eventsMinOrderByAggregateInput
@@ -238,6 +249,7 @@ export type discipline_eventsScalarWhereWithAggregatesInput = {
   performed_by?: Prisma.UuidWithAggregatesFilter<"discipline_events"> | string
   event_date?: Prisma.DateTimeWithAggregatesFilter<"discipline_events"> | Date | string
   notes?: Prisma.StringNullableWithAggregatesFilter<"discipline_events"> | string | null
+  reason?: Prisma.StringNullableWithAggregatesFilter<"discipline_events"> | string | null
 }
 
 export type discipline_eventsCreateInput = {
@@ -246,6 +258,7 @@ export type discipline_eventsCreateInput = {
   performed_by: string
   event_date?: Date | string
   notes?: string | null
+  reason?: string | null
   student_disciplines: Prisma.student_disciplinesCreateNestedOneWithoutDiscipline_eventsInput
 }
 
@@ -256,6 +269,7 @@ export type discipline_eventsUncheckedCreateInput = {
   performed_by: string
   event_date?: Date | string
   notes?: string | null
+  reason?: string | null
 }
 
 export type discipline_eventsUpdateInput = {
@@ -264,6 +278,7 @@ export type discipline_eventsUpdateInput = {
   performed_by?: Prisma.StringFieldUpdateOperationsInput | string
   event_date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   student_disciplines?: Prisma.student_disciplinesUpdateOneRequiredWithoutDiscipline_eventsNestedInput
 }
 
@@ -274,6 +289,7 @@ export type discipline_eventsUncheckedUpdateInput = {
   performed_by?: Prisma.StringFieldUpdateOperationsInput | string
   event_date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type discipline_eventsCreateManyInput = {
@@ -283,6 +299,7 @@ export type discipline_eventsCreateManyInput = {
   performed_by: string
   event_date?: Date | string
   notes?: string | null
+  reason?: string | null
 }
 
 export type discipline_eventsUpdateManyMutationInput = {
@@ -291,6 +308,7 @@ export type discipline_eventsUpdateManyMutationInput = {
   performed_by?: Prisma.StringFieldUpdateOperationsInput | string
   event_date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type discipline_eventsUncheckedUpdateManyInput = {
@@ -300,6 +318,7 @@ export type discipline_eventsUncheckedUpdateManyInput = {
   performed_by?: Prisma.StringFieldUpdateOperationsInput | string
   event_date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type Discipline_eventsListRelationFilter = {
@@ -319,6 +338,7 @@ export type discipline_eventsCountOrderByAggregateInput = {
   performed_by?: Prisma.SortOrder
   event_date?: Prisma.SortOrder
   notes?: Prisma.SortOrder
+  reason?: Prisma.SortOrder
 }
 
 export type discipline_eventsMaxOrderByAggregateInput = {
@@ -328,6 +348,7 @@ export type discipline_eventsMaxOrderByAggregateInput = {
   performed_by?: Prisma.SortOrder
   event_date?: Prisma.SortOrder
   notes?: Prisma.SortOrder
+  reason?: Prisma.SortOrder
 }
 
 export type discipline_eventsMinOrderByAggregateInput = {
@@ -337,6 +358,7 @@ export type discipline_eventsMinOrderByAggregateInput = {
   performed_by?: Prisma.SortOrder
   event_date?: Prisma.SortOrder
   notes?: Prisma.SortOrder
+  reason?: Prisma.SortOrder
 }
 
 export type discipline_eventsCreateNestedManyWithoutStudent_disciplinesInput = {
@@ -387,6 +409,7 @@ export type discipline_eventsCreateWithoutStudent_disciplinesInput = {
   performed_by: string
   event_date?: Date | string
   notes?: string | null
+  reason?: string | null
 }
 
 export type discipline_eventsUncheckedCreateWithoutStudent_disciplinesInput = {
@@ -395,6 +418,7 @@ export type discipline_eventsUncheckedCreateWithoutStudent_disciplinesInput = {
   performed_by: string
   event_date?: Date | string
   notes?: string | null
+  reason?: string | null
 }
 
 export type discipline_eventsCreateOrConnectWithoutStudent_disciplinesInput = {
@@ -433,6 +457,7 @@ export type discipline_eventsScalarWhereInput = {
   performed_by?: Prisma.UuidFilter<"discipline_events"> | string
   event_date?: Prisma.DateTimeFilter<"discipline_events"> | Date | string
   notes?: Prisma.StringNullableFilter<"discipline_events"> | string | null
+  reason?: Prisma.StringNullableFilter<"discipline_events"> | string | null
 }
 
 export type discipline_eventsCreateManyStudent_disciplinesInput = {
@@ -441,6 +466,7 @@ export type discipline_eventsCreateManyStudent_disciplinesInput = {
   performed_by: string
   event_date?: Date | string
   notes?: string | null
+  reason?: string | null
 }
 
 export type discipline_eventsUpdateWithoutStudent_disciplinesInput = {
@@ -449,6 +475,7 @@ export type discipline_eventsUpdateWithoutStudent_disciplinesInput = {
   performed_by?: Prisma.StringFieldUpdateOperationsInput | string
   event_date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type discipline_eventsUncheckedUpdateWithoutStudent_disciplinesInput = {
@@ -457,6 +484,7 @@ export type discipline_eventsUncheckedUpdateWithoutStudent_disciplinesInput = {
   performed_by?: Prisma.StringFieldUpdateOperationsInput | string
   event_date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type discipline_eventsUncheckedUpdateManyWithoutStudent_disciplinesInput = {
@@ -465,6 +493,7 @@ export type discipline_eventsUncheckedUpdateManyWithoutStudent_disciplinesInput 
   performed_by?: Prisma.StringFieldUpdateOperationsInput | string
   event_date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 
@@ -476,6 +505,7 @@ export type discipline_eventsSelect<ExtArgs extends runtime.Types.Extensions.Int
   performed_by?: boolean
   event_date?: boolean
   notes?: boolean
+  reason?: boolean
   student_disciplines?: boolean | Prisma.student_disciplinesDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["discipline_events"]>
 
@@ -486,6 +516,7 @@ export type discipline_eventsSelectCreateManyAndReturn<ExtArgs extends runtime.T
   performed_by?: boolean
   event_date?: boolean
   notes?: boolean
+  reason?: boolean
   student_disciplines?: boolean | Prisma.student_disciplinesDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["discipline_events"]>
 
@@ -496,6 +527,7 @@ export type discipline_eventsSelectUpdateManyAndReturn<ExtArgs extends runtime.T
   performed_by?: boolean
   event_date?: boolean
   notes?: boolean
+  reason?: boolean
   student_disciplines?: boolean | Prisma.student_disciplinesDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["discipline_events"]>
 
@@ -506,9 +538,10 @@ export type discipline_eventsSelectScalar = {
   performed_by?: boolean
   event_date?: boolean
   notes?: boolean
+  reason?: boolean
 }
 
-export type discipline_eventsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "student_discipline_id" | "event_type" | "performed_by" | "event_date" | "notes", ExtArgs["result"]["discipline_events"]>
+export type discipline_eventsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "student_discipline_id" | "event_type" | "performed_by" | "event_date" | "notes" | "reason", ExtArgs["result"]["discipline_events"]>
 export type discipline_eventsInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   student_disciplines?: boolean | Prisma.student_disciplinesDefaultArgs<ExtArgs>
 }
@@ -531,6 +564,7 @@ export type $discipline_eventsPayload<ExtArgs extends runtime.Types.Extensions.I
     performed_by: string
     event_date: Date
     notes: string | null
+    reason: string | null
   }, ExtArgs["result"]["discipline_events"]>
   composites: {}
 }
@@ -961,6 +995,7 @@ export interface discipline_eventsFieldRefs {
   readonly performed_by: Prisma.FieldRef<"discipline_events", 'String'>
   readonly event_date: Prisma.FieldRef<"discipline_events", 'DateTime'>
   readonly notes: Prisma.FieldRef<"discipline_events", 'String'>
+  readonly reason: Prisma.FieldRef<"discipline_events", 'String'>
 }
     
 

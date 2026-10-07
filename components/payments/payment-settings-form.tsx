@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
-import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import {
   saveBranchPaymentSettings,
@@ -23,6 +23,7 @@ export function PaymentSettingsForm({ branchId, settings }: PaymentSettingsFormP
   const router = useRouter()
   const [dueDay, setDueDay] = useState(String(settings.payment_due_day))
   const [windowDays, setWindowDays] = useState(String(settings.payment_edit_window_days))
+  const [graceDays, setGraceDays] = useState(String(settings.payment_grace_days))
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
@@ -33,6 +34,7 @@ export function PaymentSettingsForm({ branchId, settings }: PaymentSettingsFormP
         branch_id: branchId,
         payment_due_day: Number(dueDay),
         payment_edit_window_days: Number(windowDays),
+        payment_grace_days: Number(graceDays),
       })
       if (!result.success) {
         setError(result.error ?? COMMON_MESSAGES.UNEXPECTED_ERROR)
@@ -54,6 +56,11 @@ export function PaymentSettingsForm({ branchId, settings }: PaymentSettingsFormP
         <Field>
           <FieldLabel htmlFor="payment-edit-window">{PAYMENT_MESSAGES.EDIT_WINDOW_LABEL}</FieldLabel>
           <Input id="payment-edit-window" type="number" min="0" max="365" value={windowDays} onChange={(event) => setWindowDays(event.target.value)} required />
+        </Field>
+        <Field>
+          <FieldLabel htmlFor="payment-grace-days">{PAYMENT_MESSAGES.GRACE_DAYS_LABEL}</FieldLabel>
+          <Input id="payment-grace-days" type="number" min="0" max="60" value={graceDays} onChange={(event) => setGraceDays(event.target.value)} required />
+          <FieldDescription>{PAYMENT_MESSAGES.GRACE_DAYS_HELP}</FieldDescription>
         </Field>
         {error && <FieldError>{error}</FieldError>}
       </FieldGroup>

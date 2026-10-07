@@ -119,6 +119,7 @@ export const branchPaymentSettingsSchema = z
     branch_id: branchIdSchema,
     payment_due_day: z.number().int().min(1).max(31),
     payment_edit_window_days: z.number().int().min(0).max(365),
+    payment_grace_days: z.number().int().min(0).max(60),
   })
   .strict();
 

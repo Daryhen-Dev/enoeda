@@ -1006,6 +1006,8 @@ export const PAYMENT_MESSAGES = {
   SETTINGS_DESCRIPTION: "Defina el vencimiento mensual y el plazo de corrección de pagos para esta sucursal.",
   DUE_DAY_LABEL: "Día de vencimiento mensual",
   EDIT_WINDOW_LABEL: "Días para corregir o eliminar",
+  GRACE_DAYS_LABEL: "Días de gracia",
+  GRACE_DAYS_HELP: "Días de tolerancia después del vencimiento antes de proponer la suspensión por falta de pago.",
   SETTINGS_SAVED: "Configuración de pagos actualizada correctamente.",
   SETTINGS_UNAVAILABLE: "No se pudo cargar la configuración de pagos.",
   SAVE_SETTINGS: "Guardar configuración",

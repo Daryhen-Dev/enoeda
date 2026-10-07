@@ -3990,7 +3990,8 @@ export const Discipline_eventsScalarFieldEnum = {
   event_type: 'event_type',
   performed_by: 'performed_by',
   event_date: 'event_date',
-  notes: 'notes'
+  notes: 'notes',
+  reason: 'reason'
 } as const
 
 export type Discipline_eventsScalarFieldEnum = (typeof Discipline_eventsScalarFieldEnum)[keyof typeof Discipline_eventsScalarFieldEnum]
