@@ -56,7 +56,7 @@ Plus `suspended_this_month`: enrollments with a 'suspended' event with reason
 - [x] T4: UI: `/dashboard/payments/validation?branch=` (admin only), grouped
       tables, multi-select on "A suspender", confirmation dialog, link from the
       payments console. es-EC copy.
-- [ ] T5: Closure checks: vitest, tsc, eslint, next build. Migration applied to
+- [x] T5: Closure checks: vitest, tsc, eslint, next build. Migration applied to
       Supabase only after explicit user authorization.
 
 ## Delivery
@@ -128,9 +128,24 @@ Plus `suspended_this_month`: enrollments with a 'suspended' event with reason
   repo convention); no tests for read-only tables/page gating.
 - T5 (partial): `pnpm test` on HEAD dd0134c: 100 files passed / 1 skipped,
   873 tests passed / 1 skipped. tsc, eslint and `pnpm build` green in the
-  T4 verification. PENDING: apply migration 20260909000000 to Supabase
-  (needs explicit user authorization); manual browser check by the user.
+  T4 verification.
+- Migration 20260909000000 APPLIED to the Supabase DB (user-authorized),
+  via `pg` with DATABASE_URL from .env.local, executing the committed file
+  (own BEGIN/COMMIT). Precheck: target columns absent, 20260908 present.
+  After: `branches.payment_grace_days smallint NOT NULL DEFAULT 0`,
+  `discipline_events.reason text NULL`, both CHECK constraints present;
+  3/3 branches grace 0; 4/4 events reason NULL (no data changed).
+- Live RLS probe (rolled-back transactions, real branch admin, SET LOCAL
+  ROLE authenticated + jwt claims like withUser): read/update grace on own
+  branch OK; update on another branch 0 rows; grace 61 rejected by
+  branches_payment_grace_days_ck (23514); insert discipline_events with
+  reason non_payment on own branch OK; nothing left behind.
+- Note: supabase_migrations.schema_migrations latest is 20260904000000;
+  this project applies migrations outside the Supabase CLI history (same as
+  20260908000000), so the history table was not touched.
+- PENDING (user): manual browser check; push and chained PRs.
 
 ## Next step
-T5: closure checks; apply migration 20260909000000 only after explicit
-user authorization; push/PRs are user decisions.
+User: browser check of /dashboard/payments/validation and settings grace
+days; decide push + chained PRs (PR1 db8def9..7cb2c75, PR2 d567347, PR3
+dd0134c..HEAD).
