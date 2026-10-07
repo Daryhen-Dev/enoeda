@@ -25,7 +25,7 @@ import { Input } from "@/components/ui/input"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { CreatedAccountDialog } from "@/components/owner/created-account-dialog"
-import { createBranchAdmin, revokeBranchRole } from "@/lib/domain/roles/actions"
+import { createBranchAdmin, revokeBranchRole, assignAdminToExistingAccount } from "@/lib/domain/roles/actions"
 import type { CreatedAccountResult, StaffAssignment } from "@/lib/domain/roles/actions"
 import { COMMON_MESSAGES, formatDate, OWNER_MESSAGES, ROLE_CREATION_MESSAGES, TOAST_MESSAGES } from "@/lib/localization/es-ec"
 
@@ -37,12 +37,15 @@ interface AdminAssignmentProps {
 export function AdminAssignment({ branchId, admins }: AdminAssignmentProps) {
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h3 className="text-lg font-semibold">{OWNER_MESSAGES.ADMINS_TITLE}</h3>
           <p className="text-sm text-muted-foreground">{OWNER_MESSAGES.ADMINS_DESCRIPTION}</p>
         </div>
-        <AssignAdminDialog branchId={branchId} />
+        <div className="flex items-center gap-2">
+          <AssignAdminDialog branchId={branchId} />
+          <AssignExistingAdminDialog branchId={branchId} />
+        </div>
       </div>
       {admins.length === 0 ? (
         <Empty><EmptyHeader><EmptyTitle>{OWNER_MESSAGES.ADMINS_EMPTY}</EmptyTitle><EmptyDescription>{OWNER_MESSAGES.ADMINS_EMPTY_DESCRIPTION}</EmptyDescription></EmptyHeader></Empty>
@@ -113,6 +116,39 @@ function AssignAdminDialog({ branchId }: { branchId: string }) {
     </SheetContent></Sheet>
     <CreatedAccountDialog credentials={createdResult} onClose={() => { setCreatedResult(null); router.refresh() }} />
   </>
+}
+
+function AssignExistingAdminDialog({ branchId }: { branchId: string }) {
+  const router = useRouter()
+  const [open, setOpen] = useState(false)
+  const [email, setEmail] = useState("")
+  const [error, setError] = useState<string | null>(null)
+  const [isPending, startTransition] = useTransition()
+
+  function resetForm() {
+    setEmail(""); setError(null)
+  }
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    startTransition(async () => {
+      const result = await assignAdminToExistingAccount({ email, branchId })
+      if (result.success) {
+        setOpen(false); resetForm()
+        toast.success(TOAST_MESSAGES.ADMIN_CARGO_ASSIGNED_EXISTING)
+        router.refresh()
+      } else setError(result.error ?? COMMON_MESSAGES.UNEXPECTED_ERROR)
+    })
+  }
+
+  return <Sheet open={open} onOpenChange={(nextOpen) => { setOpen(nextOpen); if (!nextOpen) resetForm() }}>
+    <SheetTrigger render={<Button variant="outline" size="default" />}>{OWNER_MESSAGES.ASSIGN_EXISTING_ADMIN}</SheetTrigger>
+    <SheetContent side="right" size="content"><SheetHeader><SheetTitle>{OWNER_MESSAGES.ASSIGN_EXISTING_ADMIN_TITLE}</SheetTitle><SheetDescription>{OWNER_MESSAGES.ASSIGN_EXISTING_ADMIN_DESCRIPTION}</SheetDescription></SheetHeader>
+      <form onSubmit={handleSubmit} className="flex flex-1 flex-col gap-4 overflow-y-auto px-4"><FieldGroup>
+        <Field data-invalid={Boolean(error)}><FieldLabel htmlFor="assign-existing-admin-email">{ROLE_CREATION_MESSAGES.EMAIL_LABEL}</FieldLabel><Input id="assign-existing-admin-email" type="email" placeholder={ROLE_CREATION_MESSAGES.EMAIL_PLACEHOLDER} value={email} onChange={(event) => setEmail(event.target.value)} aria-describedby={error ? "assign-existing-admin-error" : undefined} aria-invalid={Boolean(error)} required /></Field>
+        {error ? <FieldError id="assign-existing-admin-error">{error}</FieldError> : null}
+      </FieldGroup><Button type="submit" disabled={isPending || !email} className="self-start">{isPending ? COMMON_MESSAGES.LOADING : OWNER_MESSAGES.ASSIGN_EXISTING_ADMIN_ACTION}</Button></form>
+    </SheetContent></Sheet>
 }
 
 function RevokeAdminDialog({ branchId, userId }: { branchId: string; userId: string }) {

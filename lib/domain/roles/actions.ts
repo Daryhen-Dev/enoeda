@@ -18,6 +18,7 @@ import {
   createBranchAdminSchema,
   createBranchTeacherSchema,
   assignTeacherToExistingAccountSchema,
+  assignAdminToExistingAccountSchema,
   listBranchTeacherOptionsSchema,
   type AssignBranchAdminInput,
   type AssignBranchTeacherInput,
@@ -28,6 +29,7 @@ import {
   type CreateBranchAdminInput,
   type CreateBranchTeacherInput,
   type AssignTeacherToExistingAccountInput,
+  type AssignAdminToExistingAccountInput,
 } from "./schema";
 
 export interface ActionResult<T = unknown> {
@@ -565,6 +567,68 @@ export async function assignTeacherToExistingAccount(
       parsed.data
     );
     if (profileError) return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
+  }
+
+  return { success: true, data: { email: parsed.data.email } };
+}
+
+/**
+ * Owner grants the admin role to an ALREADY EXISTING Auth account, located by
+ * email alone. Mirrors `assignTeacherToExistingAccount` but gated owner-only
+ * like `createBranchAdmin`: it never creates an Auth account and never writes
+ * a canonical profile (an account without a profile displays "Perfil
+ * pendiente", consistent with the staff table). It blocks when the target
+ * already holds an active admin assignment for the branch and calls the
+ * authoritative `assign_branch_admin` RPC.
+ */
+export async function assignAdminToExistingAccount(
+  input: AssignAdminToExistingAccountInput
+): Promise<ActionResult<{ email: string }>> {
+  const parsed = assignAdminToExistingAccountSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: parsed.error.issues[0].message };
+
+  const identity = await getAuthenticatedContext();
+  if (!identity.ok) return { success: false, error: COMMON_MESSAGES.AUTHENTICATION_REQUIRED };
+  if (!identity.ctx.roles.includes("owner")) {
+    return { success: false, error: COMMON_MESSAGES.INSUFFICIENT_PERMISSIONS };
+  }
+
+  const admin = createAdminClient();
+  const lookup = await findAuthUserIdByEmail(admin, parsed.data.email);
+  if (lookup.status === "failed") {
+    return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
+  }
+  if (lookup.status === "not_found") {
+    return { success: false, error: ROLE_CREATION_MESSAGES.NO_ACCOUNT_FOR_EMAIL };
+  }
+
+  // Block when the target already holds an active admin assignment here.
+  const { data: activeAssignment, error: rolesError } = await admin
+    .from("user_roles")
+    .select("user_id")
+    .eq("user_id", lookup.userId)
+    .eq("role", "admin")
+    .eq("branch_id", parsed.data.branchId)
+    .is("revoked_at", null)
+    .maybeSingle();
+  if (rolesError) return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
+  if (activeAssignment) {
+    return { success: false, error: ROLE_CREATION_MESSAGES.ALREADY_ADMIN_IN_BRANCH };
+  }
+
+  // The RPC keeps database-side owner authorization authoritative.
+  const supabase = await createClient();
+  const { error: assignError } = await supabase.rpc("assign_branch_admin", {
+    p_target: lookup.userId,
+    p_branch_id: parsed.data.branchId,
+  });
+  if (assignError) {
+    return {
+      success: false,
+      error: isAuthorizationError(assignError.message)
+        ? COMMON_MESSAGES.INSUFFICIENT_PERMISSIONS
+        : COMMON_MESSAGES.UNEXPECTED_ERROR,
+    };
   }
 
   return { success: true, data: { email: parsed.data.email } };
