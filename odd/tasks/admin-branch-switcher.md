@@ -23,7 +23,7 @@ Scope corrections found while exploring:
 
 ## Tasks
 
-- [ ] T1: SiteHeader — per-route page titles (including nested payments
+- [x] T1: SiteHeader — per-route page titles (including nested payments
       settings/validation), hide branch switcher UI on /dashboard/profile, new
       es-EC message keys, unit tests for the pure helpers.
 - [ ] T2: Verification (vitest, tsc, eslint) + user browser check + closure
@@ -31,4 +31,15 @@ Scope corrections found while exploring:
 
 ## Evidence log
 
-- (pending)
+- T1 (commit `d207fc3`, branch `feat/admin-branch-switcher` from main
+  `a405148`): `getPageTitle` longest-prefix route map (nested payments
+  settings/validation win over parent; no sibling-prefix false matches),
+  `isProfileRoute` gates both the select and the static branch label,
+  keys `PAYMENT_SETTINGS`/`PAYMENT_VALIDATION` in `DASHBOARD_SHELL_MESSAGES`.
+  vitest site-header 23 passed; `pnpm test` 885 passed / 1 skipped; tsc and
+  eslint clean.
+- Finding: with the owner-granted second admin assignment (Carapungo +
+  San José de Morán) the combobox already renders on every branch-scoped
+  screen via existing `getSwitcherMode`; no permission/RLS change needed.
+  The screenshot predates the second assignment (single assignment → static
+  label).
