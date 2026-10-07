@@ -29,6 +29,20 @@ switcher (multi-assignment, no code change needed for that).
 - Fix the existing overdue queries to use the branch time zone too.
 - Delivery: chained PRs to main (stacked-to-main).
 
+## Change request (user-accepted, after T5)
+The dedicated page is too many clicks away (Pagos -> button). The full
+validation (cards, tables, bulk suspension) must also live at the bottom of
+the overview page "Resumen" (`/dashboard`). No new sidebar item. The
+"Validación mensual" button on the payments console stays and keeps pointing
+to `/dashboard/payments/validation`.
+
+- [x] T6: Extract the validation body into one self-loading server component
+      (`components/payments/monthly-payment-validation-section.tsx`) used by
+      both `app/dashboard/page.tsx` (bottom, only when `canManage`; a failed
+      load shows an inline alert without breaking the KPI cards) and
+      `app/dashboard/payments/validation/page.tsx`. Heading levels fit each
+      page. Tests + tsc + eslint + pnpm test + pnpm build.
+
 ## Out of scope
 Past-month history, automatic jobs, automatic reactivation on payment.
 
@@ -144,8 +158,18 @@ Plus `suspended_this_month`: enrollments with a 'suspended' event with reason
   this project applies migrations outside the Supabase CLI history (same as
   20260908000000), so the history table was not touched.
 - PENDING (user): manual browser check; push and chained PRs.
+- T6 (delegated: gentle-ai-worker): shared async server component
+  `MonthlyPaymentValidationSection` (+ `monthly-payment-validation-format.ts`)
+  used by the standalone page (h1) and the bottom of Resumen (h2, only when
+  `canManage`, inside Suspense with aria-hidden skeleton fallback); load
+  failure renders an inline alert. Standalone page and Pagos button
+  unchanged; no sidebar item. Writer: vitest components/payments +
+  app/dashboard 14 passed; tsc/eslint clean; pnpm test 878 passed / 1
+  skipped; pnpm build OK. Assess: high -> gentle-ai-verify PASS (same five
+  commands green). Minor follow-ups: section test mock omits
+  `suspendOverdueEnrollments` (unexercised); constant heading id would
+  collide only if mounted twice on one page.
 
 ## Next step
-User: browser check of /dashboard/payments/validation and settings grace
-days; decide push + chained PRs (PR1 db8def9..7cb2c75, PR2 d567347, PR3
-dd0134c..HEAD).
+T6. Then user: browser check; push + chained PRs (PR1 db8def9..7cb2c75,
+PR2 d567347, PR3 dd0134c..HEAD).
