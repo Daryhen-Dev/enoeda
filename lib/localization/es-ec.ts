@@ -645,6 +645,24 @@ export const CLASS_MESSAGES = {
     "Indique la clase o la concurrencia a quitar (no ambas).",
 } as const
 
+export const ROSTER_MESSAGES = {
+  NOT_FOUND:
+    "La clase indicada no existe o no tiene permisos para accederla.",
+  UNAUTHORIZED:
+    "Solo los administradores de la sucursal pueden modificar la lista de estudiantes.",
+  TARGET_REQUIRED:
+    "Indique el grupo mensual o la clase única a la que pertenece la lista.",
+  STUDENT_IDS_REQUIRED: "Debe indicar al menos un estudiante.",
+  STUDENT_IDS_TOO_LONG: "Puede agregar hasta 100 estudiantes por vez.",
+  STUDENT_IDS_UNIQUE: "La lista de estudiantes contiene elementos duplicados.",
+  SEARCH_MAX_LENGTH: "La búsqueda debe tener como máximo 100 caracteres.",
+  SKIPPED_ALREADY_ASSIGNED: "El estudiante ya está en la lista de esta clase.",
+  SKIPPED_NOT_ELIGIBLE:
+    "El estudiante no tiene una inscripción mensual activa en esta disciplina.",
+  SKIPPED_INACTIVE: "El estudiante está inactivo.",
+  SKIPPED_BRANCH_MISMATCH: "El estudiante no pertenece a esta sucursal.",
+} as const
+
 export const ONE_TIME_CLASS_MESSAGES = {
   CREATE_TITLE: "Crear clase única",
   CREATE_DESCRIPTION:

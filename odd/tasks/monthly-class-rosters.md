@@ -46,7 +46,7 @@ their roster.
       one-time classes; `student_disciplines.billing_mode`; RLS; Prisma sync.
 - [x] T3: Domain: remove teacher conflict detection; create monthly group
       (series + weekdays); calendar renders sessions only inside the month.
-- [ ] T4: Roster actions (add/remove/list) for series and one-time classes
+- [x] T4: Roster actions (add/remove/list) for series and one-time classes
       with eligibility rules.
 - [ ] T5: Clone group to next month with roster and skipped-students report.
 - [ ] T6: Attendance reads the assigned roster; teacher/admin add per-class
@@ -91,3 +91,9 @@ their roster.
   / 1 skipped; eslint clean on changed files.
   Follow-up noted: deactivateAllFutureClasses does not flip
   class_series.is_active (weekday rows go inactive, calendar still hides).
+- T4 (delegated: gentle-ai-worker): lib/domain/rosters (listClassRoster,
+  listRosterCandidates, addStudentsToRoster with per-student skip reasons,
+  removeStudentFromRoster; pure classifyRosterEligibility). Writes: branch
+  admin or owner; teachers read. Trigger prefixes mapped as safety net.
+  TDD: RED missing module -> GREEN 40/40. tsc clean; vitest 959 passed /
+  1 skipped; eslint clean.
