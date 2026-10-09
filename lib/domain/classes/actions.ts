@@ -765,8 +765,9 @@ export async function cloneClassGroupToNextMonth(
  * concurrencias admin section. Each group carries its discipline, period
  * month ("YYYY-MM"), active state, default teacher and roster student
  * count; the weekday slots and active row count come from its
- * scheduled_classes rows. An optional period_month filter ("YYYY-MM")
- * scopes the listing to a single month.
+ * scheduled_classes rows. has_clone reports whether the group was
+ * already cloned to the next month (clone-once flow). An optional
+ * period_month filter ("YYYY-MM") scopes the listing to a single month.
  * The teacher name is resolved through user_profiles via the admin
  * client (same pattern as listBranchStaff).
  * Owner/Admin-branch via RLS.
@@ -786,6 +787,8 @@ export interface ClassSeriesView {
   is_active: boolean;
   is_all_inactive: boolean;
   roster_student_count: number;
+  /** True when this group was already cloned to the next month. */
+  has_clone: boolean;
 }
 
 export async function listClassSeries(
@@ -844,6 +847,8 @@ export async function listClassSeries(
       // Roster student count per group (0 when the group has no roster).
       const seriesIds = seriesRows.map((series) => series.id);
       const rosterCounts = new Map<string, number>();
+      // Groups already cloned to the next month (clone-once flow).
+      const clonedSourceIds = new Set<string>();
       if (seriesIds.length > 0) {
         const rosterGroups = await tx.class_series_students.groupBy({
           by: ["series_id"],
@@ -852,6 +857,18 @@ export async function listClassSeries(
         });
         for (const group of rosterGroups) {
           rosterCounts.set(group.series_id, group._count._all);
+        }
+        const cloneRows = await tx.class_series.findMany({
+          where: {
+            branch_id,
+            cloned_from_series_id: { in: seriesIds },
+          },
+          select: { cloned_from_series_id: true },
+        });
+        for (const row of cloneRows) {
+          if (row.cloned_from_series_id) {
+            clonedSourceIds.add(row.cloned_from_series_id);
+          }
         }
       }
 
@@ -889,6 +906,7 @@ export async function listClassSeries(
           is_active: series.is_active,
           is_all_inactive: activeRows.length === 0,
           roster_student_count: rosterCounts.get(series.id) ?? 0,
+          has_clone: clonedSourceIds.has(series.id),
         });
       }
 

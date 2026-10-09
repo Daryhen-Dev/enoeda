@@ -26,6 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { createMonthlyClassGroup } from "@/lib/domain/classes/actions";
+import { RosterEditorSheet } from "@/components/rosters/roster-editor-sheet";
 import {
   CLASS_MESSAGES,
   COMMON_MESSAGES,
@@ -110,6 +111,9 @@ export function ScheduledClassCreateDialog({
   const [teacherId, setTeacherId] = useState(NO_TEACHER_VALUE);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  /** Set right after a successful create — switches the sheet to a success state with the roster follow-up. */
+  const [createdSeriesId, setCreatedSeriesId] = useState<string | null>(null);
+  const [rosterOpen, setRosterOpen] = useState(false);
 
   function resetForm() {
     setSeriesName("");
@@ -120,6 +124,7 @@ export function ScheduledClassCreateDialog({
     setStartTime("09:00");
     setTeacherId(NO_TEACHER_VALUE);
     setError(null);
+    setCreatedSeriesId(null);
   }
 
   function toggleDay(day: number, checked: boolean) {
@@ -156,21 +161,22 @@ export function ScheduledClassCreateDialog({
         return;
       }
 
-      setOpen(false);
       resetForm();
+      setCreatedSeriesId(result.data.series_id);
       toast.success(CLASS_MESSAGES.MONTHLY_GROUP_CREATED);
       router.refresh();
     });
   }
 
   return (
-    <Sheet
-      open={open}
-      onOpenChange={(nextOpen) => {
-        setOpen(nextOpen);
-        if (!nextOpen) resetForm();
-      }}
-    >
+    <>
+      <Sheet
+        open={open}
+        onOpenChange={(nextOpen) => {
+          setOpen(nextOpen);
+          if (!nextOpen) resetForm();
+        }}
+      >
       <SheetTrigger render={<Button variant="default" size="default" />}>
         <PlusIcon data-icon="inline-start" />
         {CLASS_MESSAGES.CREATE_TITLE}
@@ -183,6 +189,25 @@ export function ScheduledClassCreateDialog({
           </SheetDescription>
         </SheetHeader>
 
+        {createdSeriesId ? (
+          <div className="flex flex-1 flex-col gap-4 px-4">
+            <p className="text-sm">{CLASS_MESSAGES.MONTHLY_GROUP_CREATED}</p>
+            <p className="text-sm text-muted-foreground">
+              {CLASS_MESSAGES.MONTHLY_GROUP_CREATED_DESCRIPTION}
+            </p>
+            <Button
+              onClick={() => {
+                setOpen(false);
+                setRosterOpen(true);
+              }}
+            >
+              {CLASS_MESSAGES.ASSIGN_STUDENTS_ACTION}
+            </Button>
+            <Button variant="outline" onClick={() => setOpen(false)}>
+              {COMMON_MESSAGES.CANCEL}
+            </Button>
+          </div>
+        ) : (
         <form
           onSubmit={handleSubmit}
           className="flex flex-1 flex-col gap-4 overflow-y-auto px-4"
@@ -330,7 +355,20 @@ export function ScheduledClassCreateDialog({
             {isPending ? COMMON_MESSAGES.LOADING : COMMON_MESSAGES.CREATE}
           </Button>
         </form>
+        )}
       </SheetContent>
-    </Sheet>
+      </Sheet>
+      {createdSeriesId && (
+        <RosterEditorSheet
+          branchId={branchId}
+          target={{ kind: "series", series_id: createdSeriesId }}
+          open={rosterOpen}
+          onOpenChange={(nextOpen) => {
+            setRosterOpen(nextOpen);
+            if (!nextOpen) setCreatedSeriesId(null);
+          }}
+        />
+      )}
+    </>
   );
 }

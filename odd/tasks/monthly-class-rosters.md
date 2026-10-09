@@ -53,7 +53,7 @@ their roster.
       students to a session with inline class payment.
 - [x] T7: Guests: guest table, add guest in attendance, convert to student.
 - [x] T8: Billing mode: set at enrollment, per-class excluded from overdue.
-- [ ] T9: Admin UI: monthly group create dialog, roster editor, clone action.
+- [x] T9: Admin UI: monthly group create dialog, roster editor, clone action.
 
 ## Evidence
 - T1: `scripts/wipe-class-student-test-data.sql` (single transaction, not a
@@ -146,3 +146,13 @@ their roster.
   alumno" (StudentFormDialog prefilled, controlled open, onCreated(id) ->
   link). TDD RED -> GREEN. tsc clean; vitest 1054 passed / 1 skipped; eslint
   clean.
+- T9 (delegated: gentle-ai-worker): components/rosters/roster-editor-sheet.tsx
+  (roster list with remove confirm, debounced candidate search, multi-add,
+  skipped summary with reasons, eligibility hint). Series list: "Alumnos (N)",
+  "Clonar al mes siguiente" with source->target month confirm, skipped dialog
+  and "Editar alumnos del nuevo grupo"; clone disabled when inactive or
+  has_clone (listClassSeries now returns has_clone); default month filter =
+  current month with "Todos". Calendar session block: group name/month and
+  roster actions for recurring and one-time sessions. Create dialogs offer
+  "Asignar alumnos" after success. tsc clean; vitest 1066 passed / 1 skipped;
+  eslint clean; pnpm build OK (27 pages).

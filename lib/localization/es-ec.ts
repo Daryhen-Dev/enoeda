@@ -636,6 +636,9 @@ export const CLASS_MESSAGES = {
   INVALID_PERIOD_MONTH: "El mes debe tener el formato AAAA-MM.",
   DUPLICATE_DAYS: "Los días de la semana no pueden repetirse.",
   MONTHLY_GROUP_CREATED: "Grupo mensual creado correctamente.",
+  MONTHLY_GROUP_CREATED_DESCRIPTION:
+    "El grupo mensual y sus clases semanales fueron creados. El grupo aún no tiene alumnos asignados.",
+  ASSIGN_STUDENTS_ACTION: "Asignar alumnos",
   DEACTIVATED: "Clase desactivada.",
   SERIES_NAME_LABEL: "Nombre del grupo",
   SERIES_NAME_PLACEHOLDER: "Ej.: Karate infantil — Lunes y miércoles",
@@ -664,6 +667,39 @@ export const ROSTER_MESSAGES = {
   SKIPPED_BRANCH_MISMATCH: "El estudiante no pertenece a esta sucursal.",
 } as const
 
+export const ROSTER_EDITOR_MESSAGES = {
+  SERIES_TITLE: "Alumnos del grupo",
+  ONE_TIME_TITLE: "Alumnos de la clase única",
+  DESCRIPTION:
+    "Administre la lista de alumnos que pueden asistir a esta clase.",
+  ROSTER_HEADING: "Alumnos en la lista",
+  ROSTER_EMPTY_TITLE: "Aún no hay alumnos en la lista",
+  ROSTER_EMPTY_DESCRIPTION:
+    "Agregue alumnos desde la búsqueda de abajo: solo aparecen alumnos activos con inscripción mensual activa en esta disciplina.",
+  CANDIDATES_HEADING: "Agregar alumnos",
+  CANDIDATES_SEARCH_LABEL: "Buscar alumnos",
+  CANDIDATES_SEARCH_PLACEHOLDER: "Nombre, apellido o cédula…",
+  CANDIDATES_EMPTY:
+    "No hay alumnos elegibles para agregar. Solo aparecen alumnos activos con inscripción mensual activa en esta disciplina; los alumnos por clase se agregan desde la hoja de asistencia.",
+  ADD_SELECTED_ACTION: "Agregar seleccionados",
+  ADD_SUCCESS: (addedCount: number) =>
+    addedCount === 1
+      ? "1 alumno agregado a la lista."
+      : `${addedCount} alumnos agregados a la lista.`,
+  SKIPPED_SUMMARY_TITLE: "Alumnos no agregados:",
+  REMOVE_ACTION: "Quitar",
+  REMOVE_ARIA_LABEL: (name: string) => `Quitar a ${name} de la lista`,
+  REMOVE_CONFIRM_TITLE: "¿Quitar de la lista?",
+  REMOVE_CONFIRM_DESCRIPTION: (name: string) =>
+    `${name} dejará de estar asignado a esta clase. Su historial de asistencia se conserva.`,
+  REMOVE_CONFIRM_ACTION: "Quitar de la lista",
+  REMOVE_SUCCESS: "Alumno quitado de la lista correctamente.",
+  CANDIDATES_HEADING_ARIA: "Resultados de búsqueda de alumnos candidatos",
+  ROSTER_LIST_ARIA_LABEL: "Lista de alumnos asignados",
+  ROSTER_ONE_TIME_ACTION: "Alumnos",
+  ROSTER_SERIES_ACTION: "Alumnos del grupo",
+} as const
+
 export const CLONE_MESSAGES = {
   SOURCE_INACTIVE:
     "El grupo original está inactivo y no se puede clonar.",
@@ -687,6 +723,8 @@ export const ONE_TIME_CLASS_MESSAGES = {
     "Agregue una clase para una sola fecha, fuera del horario semanal recurrente.",
   DATE_LABEL: "Fecha",
   CREATED: "Clase única creada correctamente.",
+  CREATED_DESCRIPTION:
+    "La clase única fue creada. Aún no tiene alumnos asignados.",
   ONE_TIME_BADGE: "Única",
 } as const
 
@@ -741,7 +779,7 @@ export const SCHEDULE_SERIES_MESSAGES = {
   DISCIPLINE_LABEL: "Disciplina",
   MONTH_LABEL: "Mes",
   MONTH_FILTER_LABEL: "Filtrar por mes",
-  MONTH_FILTER_ALL: "Todos los meses",
+  MONTH_FILTER_ALL: "Todos",
   DAYS_LABEL: "Días",
   TIME_LABEL: "Hora",
   TEACHER_LABEL: "Profesor",
@@ -772,6 +810,21 @@ export const SCHEDULE_SERIES_MESSAGES = {
   REMOVE_ALL_CONFIRM: "Sí, quitar todo lo futuro",
   REMOVE_ALL_SUCCESS:
     "Todas las concurrencias futuras fueron quitadas correctamente.",
+  ROSTER_ACTION: "Alumnos",
+  ROSTER_BUTTON_ARIA_LABEL: (name: string, count: number) =>
+    `Alumnos del grupo ${name} (${count})`,
+  CLONE_ACTION: "Clonar al mes siguiente",
+  CLONE_TITLE: "¿Clonar al mes siguiente?",
+  CLONE_DESCRIPTION: (name: string, sourceMonth: string, targetMonth: string) =>
+    `Se creará el grupo «${name}» para ${targetMonth} a partir de ${sourceMonth}, copiando los días, horarios, profesor y alumnos elegibles.`,
+  CLONE_CONFIRM: "Clonar",
+  CLONE_SUCCESS:
+    "Grupo clonado al mes siguiente correctamente.",
+  SKIPPED_TITLE: "Alumnos omitidos al clonar",
+  SKIPPED_DESCRIPTION:
+    "Estos alumnos no se copiaron al nuevo grupo porque no cumplen los requisitos actuales: alumno activo con inscripción mensual activa en la disciplina. Puede ajustar la lista del nuevo grupo a continuación.",
+  SKIPPED_CLOSE: "Cerrar",
+  EDIT_NEW_GROUP_ACTION: "Editar alumnos del nuevo grupo",
 } as const
 
 /**

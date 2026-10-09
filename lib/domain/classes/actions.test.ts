@@ -829,6 +829,7 @@ describe("listClassSeries behavior", () => {
         is_active: true,
         is_all_inactive: false,
         roster_student_count: 5,
+        has_clone: false,
       },
       {
         series_id: SERIES_B_ID,
@@ -844,6 +845,7 @@ describe("listClassSeries behavior", () => {
         is_active: false,
         is_all_inactive: true,
         roster_student_count: 0,
+        has_clone: false,
       },
     ]);
   });
@@ -860,6 +862,68 @@ describe("listClassSeries behavior", () => {
         where: {
           branch_id: BRANCH_A,
           period_month: new Date(Date.UTC(2026, 8, 1)),
+        },
+      })
+    );
+  });
+
+  it("flags has_clone ONLY for groups that already have a clone", async () => {
+    mockTx.class_series.findMany.mockImplementation((args: {
+      where: { cloned_from_series_id?: { in: string[] } };
+    }) => {
+      if (args.where.cloned_from_series_id) {
+        return Promise.resolve([{ cloned_from_series_id: SERIES_ID }]);
+      }
+      return Promise.resolve([
+        {
+          id: SERIES_ID,
+          name: "Karate — 17:00",
+          is_active: true,
+          period_month: new Date(Date.UTC(2026, 8, 1)),
+          default_teacher_id: null,
+          disciplines: { id: DISCIPLINE_A, name: "Karate" },
+        },
+        {
+          id: SERIES_B_ID,
+          name: "Yoga — 08:00",
+          is_active: true,
+          period_month: new Date(Date.UTC(2026, 9, 1)),
+          default_teacher_id: null,
+          disciplines: { id: DISCIPLINE_A, name: "Yoga" },
+        },
+      ]);
+    });
+    mockTx.scheduled_classes.findMany.mockResolvedValue([
+      {
+        series_id: SERIES_ID,
+        is_active: true,
+        day_of_week: 1,
+        default_teacher_id: null,
+        start_time: new Date(1970, 0, 1, 17, 0),
+      },
+      {
+        series_id: SERIES_B_ID,
+        is_active: true,
+        day_of_week: 2,
+        default_teacher_id: null,
+        start_time: new Date(1970, 0, 1, 8, 0),
+      },
+    ]);
+    mockTx.class_series_students.groupBy.mockResolvedValue([]);
+
+    const result = await listClassSeries({ branch_id: BRANCH_A });
+
+    expect(result.success).toBe(true);
+    const byId = new Map(
+      (result.data ?? []).map((view) => [view.series_id, view.has_clone])
+    );
+    expect(byId.get(SERIES_ID)).toBe(true);
+    expect(byId.get(SERIES_B_ID)).toBe(false);
+    expect(mockTx.class_series.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          branch_id: BRANCH_A,
+          cloned_from_series_id: { in: [SERIES_ID, SERIES_B_ID] },
         },
       })
     );
