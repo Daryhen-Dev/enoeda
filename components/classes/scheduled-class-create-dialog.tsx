@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import type { FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { PlusIcon } from "lucide-react";
@@ -25,7 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { createScheduledClassBatch } from "@/lib/domain/classes/actions";
+import { createMonthlyClassGroup } from "@/lib/domain/classes/actions";
 import {
   CLASS_MESSAGES,
   COMMON_MESSAGES,
@@ -45,6 +45,46 @@ const NO_TEACHER_VALUE = "__none__";
 
 const SERIES_NAME_MAX_LENGTH = 80;
 
+const GROUP_TIME_ZONE = "America/Guayaquil";
+
+/** How many months ahead the selector offers (including the current one). */
+const MONTH_OPTION_COUNT = 12;
+
+interface MonthOption {
+  /** "YYYY-MM" value sent to the server action. */
+  value: string;
+  /** es-EC display label, e.g. "Septiembre de 2026". */
+  label: string;
+}
+
+/**
+ * Month options starting at the CURRENT month in America/Guayaquil,
+ * covering the next 12 months. Computed once per dialog mount.
+ */
+function buildMonthOptions(): MonthOption[] {
+  const nowParts = new Intl.DateTimeFormat("en-CA", {
+    year: "numeric",
+    month: "2-digit",
+    timeZone: GROUP_TIME_ZONE,
+  }).formatToParts(new Date());
+  const year = Number(nowParts.find((p) => p.type === "year")?.value);
+  const month = Number(nowParts.find((p) => p.type === "month")?.value);
+
+  const options: MonthOption[] = [];
+  for (let offset = 0; offset < MONTH_OPTION_COUNT; offset++) {
+    const date = new Date(Date.UTC(year, month - 1 + offset, 1));
+    const value = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
+    const rawLabel = new Intl.DateTimeFormat("es-EC", {
+      month: "long",
+      year: "numeric",
+      timeZone: "UTC",
+    }).format(date);
+    const label = rawLabel.charAt(0).toUpperCase() + rawLabel.slice(1);
+    options.push({ value, label });
+  }
+  return options;
+}
+
 function validateSeriesName(name: string): string | null {
   const trimmed = name.trim();
   if (trimmed.length === 0) return CLASS_MESSAGES.SERIES_NAME_REQUIRED;
@@ -59,28 +99,27 @@ export function ScheduledClassCreateDialog({
   teachers,
 }: ScheduledClassCreateDialogProps) {
   const router = useRouter();
+  const monthOptions = useMemo(() => buildMonthOptions(), []);
   const [open, setOpen] = useState(false);
   const [seriesName, setSeriesName] = useState("");
   const [nameError, setNameError] = useState<string | null>(null);
   const [disciplineId, setDisciplineId] = useState("");
+  const [periodMonth, setPeriodMonth] = useState(monthOptions[0].value);
   const [daysOfWeek, setDaysOfWeek] = useState<number[]>([]);
   const [startTime, setStartTime] = useState("09:00");
   const [teacherId, setTeacherId] = useState(NO_TEACHER_VALUE);
   const [error, setError] = useState<string | null>(null);
-  const [partialFailures, setPartialFailures] = useState<
-    Array<{ day_of_week: number; error: string }>
-  >([]);
   const [isPending, startTransition] = useTransition();
 
   function resetForm() {
     setSeriesName("");
     setNameError(null);
     setDisciplineId("");
+    setPeriodMonth(monthOptions[0].value);
     setDaysOfWeek([]);
     setStartTime("09:00");
     setTeacherId(NO_TEACHER_VALUE);
     setError(null);
-    setPartialFailures([]);
   }
 
   function toggleDay(day: number, checked: boolean) {
@@ -101,14 +140,15 @@ export function ScheduledClassCreateDialog({
     setNameError(null);
 
     startTransition(async () => {
-      const result = await createScheduledClassBatch({
+      const result = await createMonthlyClassGroup({
         branch_id: branchId,
         discipline_id: disciplineId,
         default_teacher_id:
           teacherId === NO_TEACHER_VALUE ? null : teacherId,
+        series_name: seriesName,
+        period_month: periodMonth,
         days_of_week: daysOfWeek,
         start_time: startTime,
-        series_name: seriesName,
       });
 
       if (!result.success || !result.data) {
@@ -116,26 +156,9 @@ export function ScheduledClassCreateDialog({
         return;
       }
 
-      const { created, failed } = result.data;
-
-      if (failed.length === 0) {
-        setOpen(false);
-        resetForm();
-        toast.success(
-          created.length > 1
-            ? CLASS_MESSAGES.CREATED_BATCH(created.length)
-            : CLASS_MESSAGES.CREATED
-        );
-        router.refresh();
-        return;
-      }
-
-      // Partial success: some days created, some conflicted — keep the
-      // dialog open and show exactly what happened per day so the admin
-      // stays in control of the outcome.
-      setPartialFailures(failed);
-      setError(null);
-      toast.success(CLASS_MESSAGES.CREATED_BATCH(created.length));
+      setOpen(false);
+      resetForm();
+      toast.success(CLASS_MESSAGES.MONTHLY_GROUP_CREATED);
       router.refresh();
     });
   }
@@ -209,6 +232,29 @@ export function ScheduledClassCreateDialog({
               </Select>
             </Field>
             <Field>
+              <FieldLabel htmlFor="class-month">
+                {CLASS_MESSAGES.MONTH_LABEL}
+              </FieldLabel>
+              <Select
+                value={periodMonth}
+                onValueChange={(value) => {
+                  if (value) setPeriodMonth(value);
+                }}
+                items={monthOptions.map((m) => ({ value: m.value, label: m.label }))}
+              >
+                <SelectTrigger id="class-month" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {monthOptions.map((m) => (
+                    <SelectItem key={m.value} value={m.value}>
+                      {m.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field>
               <FieldLabel>{CLASS_MESSAGES.DAYS_LABEL}</FieldLabel>
               <div
                 className="flex flex-col gap-2"
@@ -272,22 +318,6 @@ export function ScheduledClassCreateDialog({
               </Select>
             </Field>
             {error && <FieldError>{error}</FieldError>}
-
-            {partialFailures.length > 0 && (
-              <div
-                role="alert"
-                className="rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive"
-              >
-                <p className="font-medium">{CLASS_MESSAGES.PARTIAL_FAILURE_TITLE}</p>
-                <ul className="mt-1 list-inside list-disc">
-                  {partialFailures.map((f) => (
-                    <li key={f.day_of_week}>
-                      {WEEKDAY_LABELS[f.day_of_week]}: {f.error}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
           </FieldGroup>
 
           <Button

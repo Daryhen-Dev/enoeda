@@ -35,6 +35,7 @@ vi.mock("@/lib/auth/assert-branch-assignment", () => ({ assertActiveBranchAssign
 
 import { getSessionsForRange } from "./actions";
 
+const GROUP_A = "77777777-8888-9999-8444-555555555555";
 const BRANCH = "aaaaaaaa-1111-2222-8333-444444444444";
 const CLASS = "11111111-2222-3333-8444-555555555555";
 const ONE_TIME_CLASS = "33333333-4444-5555-8666-777777777777";
@@ -52,8 +53,27 @@ function setupAuth() {
   });
 }
 
-function makeClass(teacherId: string, isActive = true) {
-  return { id: CLASS, day_of_week: 0, start_time: new Date("1970-01-01T08:00:00Z"), default_teacher_id: teacherId, is_active: isActive, disciplines: { id: "d1", name: "Yoga", code: "YG" } };
+/** Current month as "YYYY-MM" — the default group month for helpers. */
+function currentMonth(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function makeClass(teacherId: string, isActive = true, group?: { periodMonth: string; isActive: boolean }) {
+  return {
+    id: CLASS,
+    day_of_week: 0,
+    start_time: new Date("1970-01-01T08:00:00Z"),
+    default_teacher_id: teacherId,
+    is_active: isActive,
+    disciplines: { id: "d1", name: "Yoga", code: "YG" },
+    class_series: {
+      id: GROUP_A,
+      name: "Yoga mensual",
+      period_month: new Date(`${group?.periodMonth ?? currentMonth()}-01T00:00:00Z`),
+      is_active: group?.isActive ?? true,
+    },
+  };
 }
 
 function makeOneTimeClass(opts: {
@@ -111,7 +131,7 @@ describe("getSessionsForRange resolver integration", () => {
   beforeEach(() => { vi.clearAllMocks(); mockTx.class_sessions.findMany.mockResolvedValue([]); mockTx.one_time_classes.findMany.mockResolvedValue([]); });
 
   it("calls $queryRaw and uses resolved teacher instead of default_teacher_id", async () => {
-    mockFindMany.mockResolvedValue([makeClass(T_A)]);
+    mockFindMany.mockResolvedValue([makeClass(T_A, true, { periodMonth: "2026-09", isActive: true })]);
     mockQueryRaw.mockResolvedValue([{ class_id: CLASS, session_date: "2026-09-07", resolve_effective_teacher: T_B }]);
     setupAuth();
     const r = await getSessionsForRange({ branch_id: BRANCH, start_date: "2026-09-07", end_date: "2026-09-07" });
@@ -121,7 +141,7 @@ describe("getSessionsForRange resolver integration", () => {
   });
 
   it("falls back to default_teacher_id when resolver returns null", async () => {
-    mockFindMany.mockResolvedValue([makeClass(T_A)]);
+    mockFindMany.mockResolvedValue([makeClass(T_A, true, { periodMonth: "2026-09", isActive: true })]);
     mockQueryRaw.mockResolvedValue([{ class_id: CLASS, session_date: "2026-09-07", resolve_effective_teacher: null }]);
     setupAuth();
     const r = await getSessionsForRange({ branch_id: BRANCH, start_date: "2026-09-07", end_date: "2026-09-07" });
@@ -131,13 +151,56 @@ describe("getSessionsForRange resolver integration", () => {
 
   it("preserves override teacher from class_sessions", async () => {
     const T_OVR = "cccc1111-2222-3333-8444-555555555555";
-    mockFindMany.mockResolvedValue([makeClass(T_A)]);
+    mockFindMany.mockResolvedValue([makeClass(T_A, true, { periodMonth: "2026-09", isActive: true })]);
     mockQueryRaw.mockResolvedValue([{ class_id: CLASS, session_date: "2026-09-07", resolve_effective_teacher: T_OVR }]);
     mockTx.class_sessions.findMany.mockResolvedValue([{ scheduled_class_id: CLASS, session_date: new Date("2026-09-07"), status: "scheduled", suspension_category: null, suspension_reason: null, assigned_teacher_id: T_OVR }]);
     setupAuth();
     const r = await getSessionsForRange({ branch_id: BRANCH, start_date: "2026-09-07", end_date: "2026-09-07" });
     expect(r.success).toBe(true);
     expect(r.data![0].teacher_id).toBe(T_OVR);
+  });
+
+  it("produces occurrences ONLY inside the group month and stamps series data", async () => {
+    // A range fully inside the group's month must still render weekly
+    // occurrences (the gate only cuts dates OUTSIDE the month).
+    mockFindMany.mockResolvedValue([makeClass(T_A, true, { periodMonth: "2026-09", isActive: true })]);
+    mockQueryRaw.mockResolvedValue([]);
+    setupAuth();
+    // Range spans two months; the group belongs to 2026-09 only.
+    const r = await getSessionsForRange({
+      branch_id: BRANCH,
+      start_date: "2026-09-07",
+      end_date: "2026-10-12",
+    });
+    expect(r.success).toBe(true);
+    const classSessions = r.data!.filter((s) => s.scheduled_class_id === CLASS);
+    // Every Monday of September 2026 renders; October Mondays do not.
+    expect(classSessions.map((s) => s.session_date)).toEqual([
+      "2026-09-07",
+      "2026-09-14",
+      "2026-09-21",
+      "2026-09-28",
+    ]);
+    expect(classSessions[0].series_id).toBe(GROUP_A);
+    expect(classSessions[0].series_name).toBe("Yoga mensual");
+    expect(classSessions[0].period_month).toBe("2026-09");
+  });
+
+  it("treats an inactive group like an inactive template: past occurrences only", async () => {
+    mockFindMany.mockResolvedValue([makeClass(T_A, true, { periodMonth: "2026-09", isActive: false })]);
+    mockQueryRaw.mockResolvedValue([]);
+    setupAuth();
+    const todayStr = formatDateOnly(new Date());
+    const r = await getSessionsForRange({
+      branch_id: BRANCH,
+      start_date: "2026-09-01",
+      end_date: "2026-09-30",
+    });
+    expect(r.success).toBe(true);
+    const classSessions = r.data!.filter((s) => s.scheduled_class_id === CLASS);
+    expect(
+      classSessions.every((s) => s.session_date < todayStr)
+    ).toBe(true);
   });
 
   it("yields past occurrences only for an inactive template", async () => {

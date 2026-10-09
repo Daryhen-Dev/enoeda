@@ -1,5 +1,5 @@
 /**
- * Class mutations — branch context enforcement + series/all-future behavior.
+ * Class mutations — branch context enforcement + monthly group behavior.
  *
  * Covers scenarios S3.1–S3.8:
  * - Each mutation rejects on branch mismatch (NO write)
@@ -7,15 +7,15 @@
  * - branchId not in caller assignments rejected
  *
  * Schema tests use the zod schemas directly. Behavior tests for
- * deactivateScheduledClassSeries / deactivateAllFutureClasses use mock
- * withAuthenticatedUser to isolate branch guard behavior and the
- * series_id → updateMany / two-table updateMany flows.
+ * deactivateScheduledClassSeries / deactivateAllFutureClasses /
+ * createMonthlyClassGroup / assignTeacher use mock withAuthenticatedUser
+ * to isolate branch guard behavior and the transaction flows.
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Import the schemas directly to test validation
 import {
-  updateScheduledClassSchema,
+  createMonthlyClassGroupSchema,
   deactivateScheduledClassSchema,
   deactivateScheduledClassSeriesSchema,
   deactivateAllFutureClassesSchema,
@@ -39,8 +39,8 @@ vi.mock("@/lib/supabase/admin", () => ({
 }));
 
 import {
-  createScheduledClass,
-  createScheduledClassBatch,
+  createMonthlyClassGroup,
+  assignTeacher,
   deactivateScheduledClassSeries,
   deactivateAllFutureClasses,
   listClassSeries,
@@ -55,34 +55,13 @@ const SERIES_ID = "99999999-8888-7777-8666-555555555555";
 const SERIES_B_ID = "99999999-8888-7777-8666-555555555556";
 const TEACHER_A = "dddddddd-1111-2222-8333-444444444444";
 
-function makeSeriesRow(overrides: {
-  series_id: string;
-  is_active: boolean;
-  day_of_week: number;
-  default_teacher_id?: string | null;
-  discipline_name?: string;
-}) {
-  return {
-    series_id: overrides.series_id,
-    is_active: overrides.is_active,
-    day_of_week: overrides.day_of_week,
-    default_teacher_id:
-      overrides.default_teacher_id === undefined
-        ? TEACHER_A
-        : overrides.default_teacher_id,
-    start_time: new Date(1970, 0, 1, 17, 0),
-    disciplines: {
-      id: DISCIPLINE_A,
-      name: overrides.discipline_name ?? "Karate",
-    },
-  };
-}
-
 const mockTx = {
   scheduled_classes: {
     findFirst: vi.fn(),
+    findUnique: vi.fn(),
     findMany: vi.fn(),
     updateMany: vi.fn(),
+    update: vi.fn(),
     create: vi.fn(),
   },
   class_series: {
@@ -90,6 +69,12 @@ const mockTx = {
     findMany: vi.fn(),
     updateMany: vi.fn(),
     create: vi.fn(),
+  },
+  class_series_students: {
+    groupBy: vi.fn(),
+  },
+  class_sessions: {
+    upsert: vi.fn(),
   },
   one_time_classes: {
     updateMany: vi.fn(),
@@ -127,24 +112,6 @@ function setupAuth() {
 }
 
 describe("Schema branch_id enforcement (fail-closed)", () => {
-  describe("updateScheduledClassSchema", () => {
-    it("rejects when branch_id is absent", () => {
-      const result = updateScheduledClassSchema.safeParse({
-        id: CLASS_ID,
-        // no branch_id — should fail after our change makes it required
-      });
-      expect(result.success).toBe(false);
-    });
-
-    it("accepts valid branch_id", () => {
-      const result = updateScheduledClassSchema.safeParse({
-        id: CLASS_ID,
-        branch_id: BRANCH_A,
-      });
-      expect(result.success).toBe(true);
-    });
-  });
-
   describe("deactivateScheduledClassSchema", () => {
     it("rejects when branch_id is absent", () => {
       const result = deactivateScheduledClassSchema.safeParse({
@@ -300,7 +267,7 @@ describe("Schema branch_id enforcement (fail-closed)", () => {
       expect(result.success).toBe(false);
     });
 
-    it("accepts valid branch_id", () => {
+    it("accepts valid branch_id without a force flag", () => {
       const result = assignTeacherSchema.safeParse({
         target_type: "recurring",
         scheduled_class_id: CLASS_ID,
@@ -309,6 +276,89 @@ describe("Schema branch_id enforcement (fail-closed)", () => {
       });
       expect(result.success).toBe(true);
     });
+
+    it("rejects a session target without session_date", () => {
+      const result = assignTeacherSchema.safeParse({
+        target_type: "session",
+        scheduled_class_id: CLASS_ID,
+        teacher_id: "22222222-3333-4444-8555-666666666666",
+        branch_id: BRANCH_A,
+      });
+      expect(result.success).toBe(false);
+    });
+  });
+});
+
+describe("createMonthlyClassGroupSchema", () => {
+  const validInput = {
+    branch_id: BRANCH_A,
+    discipline_id: DISCIPLINE_A,
+    series_name: "Karate infantil",
+    period_month: "2026-09",
+    days_of_week: [1, 3],
+    start_time: "17:00",
+  };
+
+  it("accepts a valid monthly group payload", () => {
+    const result = createMonthlyClassGroupSchema.safeParse(validInput);
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts an optional null default_teacher_id", () => {
+    const result = createMonthlyClassGroupSchema.safeParse({
+      ...validInput,
+      default_teacher_id: null,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects an invalid month format", () => {
+    const result = createMonthlyClassGroupSchema.safeParse({
+      ...validInput,
+      period_month: "2026-13",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects a full date instead of a month", () => {
+    const result = createMonthlyClassGroupSchema.safeParse({
+      ...validInput,
+      period_month: "2026-09-15",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects duplicate weekdays", () => {
+    const result = createMonthlyClassGroupSchema.safeParse({
+      ...validInput,
+      days_of_week: [1, 1, 3],
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects an empty weekday list", () => {
+    const result = createMonthlyClassGroupSchema.safeParse({
+      ...validInput,
+      days_of_week: [],
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects an out-of-range weekday", () => {
+    const result = createMonthlyClassGroupSchema.safeParse({
+      ...validInput,
+      days_of_week: [7],
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects an empty series name via the schema (no writes)", () => {
+    const result = createMonthlyClassGroupSchema.safeParse({
+      ...validInput,
+      series_name: "   ",
+    });
+    expect(result.success).toBe(false);
+    expect(mockTx.class_series.create).not.toHaveBeenCalled();
   });
 });
 
@@ -362,6 +412,23 @@ describe("deactivateScheduledClassSeries behavior", () => {
     });
   });
 
+  it("also deactivates the class_series group itself", async () => {
+    mockTx.class_series.findFirst.mockResolvedValue({ id: SERIES_ID });
+    mockTx.scheduled_classes.updateMany.mockResolvedValue({ count: 2 });
+    mockTx.class_series.updateMany.mockResolvedValue({ count: 1 });
+
+    const result = await deactivateScheduledClassSeries({
+      branch_id: BRANCH_A,
+      series_id: SERIES_ID,
+    });
+
+    expect(result).toEqual({ success: true, data: { deactivated: 2 } });
+    expect(mockTx.class_series.updateMany).toHaveBeenCalledWith({
+      where: { id: SERIES_ID, branch_id: BRANCH_A, is_active: true },
+      data: { is_active: false },
+    });
+  });
+
   it("fails with NOT_FOUND when the given series_id is foreign or absent", async () => {
     mockTx.class_series.findFirst.mockResolvedValue(null);
 
@@ -376,18 +443,6 @@ describe("deactivateScheduledClassSeries behavior", () => {
 
   it("fails with NOT_FOUND when the row does not exist (no update)", async () => {
     mockTx.scheduled_classes.findFirst.mockResolvedValue(null);
-
-    const result = await deactivateScheduledClassSeries({
-      branch_id: BRANCH_A,
-      scheduled_class_id: CLASS_ID,
-    });
-
-    expect(result).toEqual({ success: false, error: CLASS_MESSAGES.NOT_FOUND });
-    expect(mockTx.scheduled_classes.updateMany).not.toHaveBeenCalled();
-  });
-
-  it("fails with NOT_FOUND when the row has a null series_id (no update)", async () => {
-    mockTx.scheduled_classes.findFirst.mockResolvedValue({ series_id: null });
 
     const result = await deactivateScheduledClassSeries({
       branch_id: BRANCH_A,
@@ -457,43 +512,43 @@ describe("deactivateAllFutureClasses behavior", () => {
   });
 });
 
-describe("createScheduledClassBatch behavior", () => {
+describe("createMonthlyClassGroup behavior", () => {
+  const validInput = {
+    branch_id: BRANCH_A,
+    discipline_id: DISCIPLINE_A,
+    series_name: "Karate infantil",
+    period_month: "2026-09",
+    days_of_week: [1, 3],
+    start_time: "17:00",
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
     mockAssertBranch.mockReturnValue({ ok: true });
     setupAuth();
-  });
-
-  it("inserts the named class_series row first, then day rows sharing its series_id", async () => {
     mockTx.class_series.create.mockResolvedValue({ id: SERIES_ID });
     mockTx.scheduled_classes.create.mockImplementation(
       ({ data }: { data: { day_of_week: number } }) =>
         Promise.resolve({ id: `row-${data.day_of_week}` })
     );
+  });
 
-    const result = await createScheduledClassBatch({
-      branch_id: BRANCH_A,
-      discipline_id: DISCIPLINE_A,
-      days_of_week: [1, 3],
-      start_time: "17:00",
-      series_name: "Karate infantil",
-    });
+  it("creates the group and one weekday row per day in ONE transaction, all-or-nothing", async () => {
+    const result = await createMonthlyClassGroup(validInput);
 
     expect(result).toEqual({
       success: true,
-      data: {
-        created: [
-          { day_of_week: 1, id: "row-1" },
-          { day_of_week: 3, id: "row-3" },
-        ],
-        failed: [],
-      },
+      data: { series_id: expect.any(String), class_ids: ["row-1", "row-3"] },
     });
+    expect(mockWithAuth).toHaveBeenCalledTimes(1);
     expect(mockTx.class_series.create).toHaveBeenCalledWith({
       data: {
         id: expect.any(String),
         branch_id: BRANCH_A,
         name: "Karate infantil",
+        discipline_id: DISCIPLINE_A,
+        default_teacher_id: null,
+        period_month: new Date(Date.UTC(2026, 8, 1)),
       },
       select: { id: true },
     });
@@ -507,23 +562,45 @@ describe("createScheduledClassBatch behavior", () => {
     const seriesCreateCall = mockTx.class_series.create.mock.calls[0][0] as {
       data: { id: string };
     };
-    // Every day row shares the series identity stamped on the catalog row.
+    // Every weekday row belongs to the group stamped on the catalog row.
     expect(firstCall.data.series_id).toBe(seriesCreateCall.data.id);
     expect(secondCall.data.series_id).toBe(seriesCreateCall.data.id);
+    expect(result.data!.series_id).toBe(seriesCreateCall.data.id);
   });
 
-  it("creates NO day rows when the class_series insert fails", async () => {
+  it("stores period_month as the FIRST day of the given month (UTC midnight)", async () => {
+    await createMonthlyClassGroup({ ...validInput, period_month: "2026-02" });
+
+    const call = mockTx.class_series.create.mock.calls[0][0] as {
+      data: { period_month: Date };
+    };
+    expect(call.data.period_month).toEqual(new Date(Date.UTC(2026, 1, 1)));
+  });
+
+  it("propagates the default teacher to the group AND every weekday row", async () => {
+    await createMonthlyClassGroup({
+      ...validInput,
+      default_teacher_id: TEACHER_A,
+    });
+
+    const seriesCall = mockTx.class_series.create.mock.calls[0][0] as {
+      data: { default_teacher_id: string | null };
+    };
+    expect(seriesCall.data.default_teacher_id).toBe(TEACHER_A);
+    const rowCalls = mockTx.scheduled_classes.create.mock.calls as Array<
+      [{ data: { default_teacher_id: string | null } }]
+    >;
+    for (const call of rowCalls) {
+      expect(call[0].data.default_teacher_id).toBe(TEACHER_A);
+    }
+  });
+
+  it("creates NO weekday rows when the class_series insert fails", async () => {
     mockTx.class_series.create.mockRejectedValue(
       new Error(CLASS_MESSAGES.BRANCH_CONTEXT_REQUIRED)
     );
 
-    const result = await createScheduledClassBatch({
-      branch_id: BRANCH_A,
-      discipline_id: DISCIPLINE_A,
-      days_of_week: [1],
-      start_time: "17:00",
-      series_name: "Karate infantil",
-    });
+    const result = await createMonthlyClassGroup(validInput);
 
     expect(result).toEqual({
       success: false,
@@ -532,57 +609,102 @@ describe("createScheduledClassBatch behavior", () => {
     expect(mockTx.scheduled_classes.create).not.toHaveBeenCalled();
   });
 
-  it("rejects an empty series name via the schema (no writes)", async () => {
-    const result = await createScheduledClassBatch({
-      branch_id: BRANCH_A,
-      discipline_id: DISCIPLINE_A,
-      days_of_week: [1],
-      start_time: "17:00",
-      series_name: "   ",
+  it("rejects an invalid month via the schema (no writes)", async () => {
+    const result = await createMonthlyClassGroup({
+      ...validInput,
+      period_month: "2099-00",
     });
 
     expect(result.success).toBe(false);
-    expect(result.error).toBe(CLASS_MESSAGES.SERIES_NAME_REQUIRED);
+    expect(mockTx.class_series.create).not.toHaveBeenCalled();
+    expect(mockTx.scheduled_classes.create).not.toHaveBeenCalled();
+  });
+
+  it("rejects duplicate weekdays via the schema (no writes)", async () => {
+    const result = await createMonthlyClassGroup({
+      ...validInput,
+      days_of_week: [1, 1],
+    });
+
+    expect(result.success).toBe(false);
+    expect(mockTx.class_series.create).not.toHaveBeenCalled();
+    expect(mockTx.scheduled_classes.create).not.toHaveBeenCalled();
+  });
+
+  it("short-circuits without any DB access when the branch guard fails", async () => {
+    mockAssertBranch.mockReturnValue({
+      ok: false,
+      error: CLASS_MESSAGES.BRANCH_CONTEXT_REQUIRED,
+    });
+
+    const result = await createMonthlyClassGroup(validInput);
+
+    expect(result).toEqual({
+      success: false,
+      error: CLASS_MESSAGES.BRANCH_CONTEXT_REQUIRED,
+    });
     expect(mockTx.class_series.create).not.toHaveBeenCalled();
     expect(mockTx.scheduled_classes.create).not.toHaveBeenCalled();
   });
 });
 
-describe("createScheduledClass behavior", () => {
+describe("assignTeacher behavior (no conflict path)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockAssertBranch.mockReturnValue({ ok: true });
     setupAuth();
+    mockTx.scheduled_classes.findUnique.mockResolvedValue({
+      branch_id: BRANCH_A,
+    });
+    mockTx.scheduled_classes.update.mockResolvedValue({ id: CLASS_ID });
+    mockTx.class_sessions.upsert.mockResolvedValue({ id: CLASS_ID });
   });
 
-  it("autogenerates the 1-row series name from discipline + weekday + time", async () => {
-    mockTx.disciplines.findUnique.mockResolvedValue({ name: "Karate" });
-    mockTx.class_series.create.mockResolvedValue({ id: SERIES_ID });
-    mockTx.scheduled_classes.create.mockResolvedValue({ id: CLASS_ID });
-
-    const result = await createScheduledClass({
+  it("assigns a recurring teacher directly and never returns conflict data", async () => {
+    const result = await assignTeacher({
+      target_type: "recurring",
+      scheduled_class_id: CLASS_ID,
+      teacher_id: TEACHER_A,
       branch_id: BRANCH_A,
-      discipline_id: DISCIPLINE_A,
-      day_of_week: 1,
-      start_time: "17:00",
     });
 
-    expect(result).toEqual({ success: true, data: { id: CLASS_ID } });
-    expect(mockTx.class_series.create).toHaveBeenCalledWith({
-      data: {
-        id: expect.any(String),
-        branch_id: BRANCH_A,
-        name: `Karate — Martes 17:00`,
-      },
-      select: { id: true },
+    expect(result.success).toBe(true);
+    expect(result.data).toEqual({
+      teacher_assigned: true,
+      message: expect.any(String),
     });
-    const classCreateCall = mockTx.scheduled_classes.create.mock.calls[0][0] as {
-      data: { series_id: string };
-    };
-    const seriesCreateCall = mockTx.class_series.create.mock.calls[0][0] as {
-      data: { id: string };
-    };
-    expect(classCreateCall.data.series_id).toBe(seriesCreateCall.data.id);
+    const data = result.data as Record<string, unknown> | undefined;
+    expect(data).not.toHaveProperty("conflict");
+    expect(data).not.toHaveProperty("conflicting_assignments");
+    expect(data).not.toHaveProperty("requires_confirmation");
+    expect(mockTx.scheduled_classes.update).toHaveBeenCalledWith({
+      where: { id: CLASS_ID },
+      data: { default_teacher_id: TEACHER_A },
+    });
+    expect(mockTx.class_sessions.upsert).not.toHaveBeenCalled();
+  });
+
+  it("assigns a session-level override directly (upsert)", async () => {
+    const result = await assignTeacher({
+      target_type: "session",
+      scheduled_class_id: CLASS_ID,
+      session_date: "2026-09-07",
+      teacher_id: TEACHER_A,
+      branch_id: BRANCH_A,
+    });
+
+    expect(result.success).toBe(true);
+    expect(mockTx.class_sessions.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          scheduled_class_id_session_date: {
+            scheduled_class_id: CLASS_ID,
+            session_date: new Date("2026-09-07"),
+          },
+        },
+      })
+    );
+    expect(mockTx.scheduled_classes.update).not.toHaveBeenCalled();
   });
 });
 
@@ -606,21 +728,50 @@ describe("listClassSeries behavior", () => {
     });
   });
 
-  it("groups rows per series with days/teacher from ACTIVE rows and flags fully inactive series", async () => {
+  it("returns monthly-group views with discipline, month, active state and roster count", async () => {
     mockTx.class_series.findMany.mockResolvedValue([
-      { id: SERIES_ID, name: "Karate — 17:00" },
-      { id: SERIES_B_ID, name: "Yoga — 08:00" },
+      {
+        id: SERIES_ID,
+        name: "Karate — 17:00",
+        is_active: true,
+        period_month: new Date(Date.UTC(2026, 8, 1)),
+        default_teacher_id: TEACHER_A,
+        disciplines: { id: DISCIPLINE_A, name: "Karate" },
+      },
+      {
+        id: SERIES_B_ID,
+        name: "Yoga — 08:00",
+        is_active: false,
+        period_month: new Date(Date.UTC(2026, 9, 1)),
+        default_teacher_id: null,
+        disciplines: { id: DISCIPLINE_A, name: "Yoga" },
+      },
     ]);
     mockTx.scheduled_classes.findMany.mockResolvedValue([
-      makeSeriesRow({ series_id: SERIES_ID, is_active: true, day_of_week: 1 }),
-      makeSeriesRow({ series_id: SERIES_ID, is_active: true, day_of_week: 3 }),
-      makeSeriesRow({
+      {
+        series_id: SERIES_ID,
+        is_active: true,
+        day_of_week: 1,
+        default_teacher_id: TEACHER_A,
+        start_time: new Date(1970, 0, 1, 17, 0),
+      },
+      {
+        series_id: SERIES_ID,
+        is_active: true,
+        day_of_week: 3,
+        default_teacher_id: TEACHER_A,
+        start_time: new Date(1970, 0, 1, 17, 0),
+      },
+      {
         series_id: SERIES_B_ID,
         is_active: false,
         day_of_week: 2,
         default_teacher_id: null,
-        discipline_name: "Yoga",
-      }),
+        start_time: new Date(1970, 0, 1, 8, 0),
+      },
+    ]);
+    mockTx.class_series_students.groupBy.mockResolvedValue([
+      { series_id: SERIES_ID, _count: { _all: 5 } },
     ]);
 
     const result = await listClassSeries({ branch_id: BRANCH_A });
@@ -632,26 +783,58 @@ describe("listClassSeries behavior", () => {
         name: "Karate — 17:00",
         discipline_id: DISCIPLINE_A,
         discipline_name: "Karate",
+        period_month: "2026-09",
         days_of_week: [1, 3],
         start_time: "17:00",
         default_teacher_id: TEACHER_A,
         teacher_name: "María Pérez",
         active_row_count: 2,
+        is_active: true,
         is_all_inactive: false,
+        roster_student_count: 5,
       },
       {
         series_id: SERIES_B_ID,
         name: "Yoga — 08:00",
         discipline_id: DISCIPLINE_A,
         discipline_name: "Yoga",
+        period_month: "2026-10",
         days_of_week: [],
-        start_time: "17:00",
+        start_time: "08:00",
         default_teacher_id: null,
         teacher_name: null,
         active_row_count: 0,
+        is_active: false,
         is_all_inactive: true,
+        roster_student_count: 0,
       },
     ]);
+  });
+
+  it("accepts an optional period_month filter and scopes the series query to it", async () => {
+    mockTx.class_series.findMany.mockResolvedValue([]);
+    mockTx.scheduled_classes.findMany.mockResolvedValue([]);
+    mockTx.class_series_students.groupBy.mockResolvedValue([]);
+
+    await listClassSeries({ branch_id: BRANCH_A, period_month: "2026-09" });
+
+    expect(mockTx.class_series.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          branch_id: BRANCH_A,
+          period_month: new Date(Date.UTC(2026, 8, 1)),
+        },
+      })
+    );
+  });
+
+  it("rejects an invalid period_month filter via the schema", async () => {
+    const result = await listClassSeries({
+      branch_id: BRANCH_A,
+      period_month: "2026-13",
+    });
+    expect(result.success).toBe(false);
+    expect(mockTx.class_series.findMany).not.toHaveBeenCalled();
   });
 
   it("short-circuits without any DB access when the branch guard fails", async () => {

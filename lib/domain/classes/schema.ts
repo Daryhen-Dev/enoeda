@@ -13,25 +13,28 @@ export const suspensionCategoryEnum = z.enum([
 
 export type SuspensionCategory = z.infer<typeof suspensionCategoryEnum>;
 
-export const createScheduledClassSchema = z.object({
-  branch_id: z.uuid(),
-  discipline_id: z.uuid(),
-  default_teacher_id: z.uuid().nullable().optional(),
-  day_of_week: z.number().int().min(0).max(6),
-  start_time: z.string().regex(/^\d{2}:\d{2}$/),
-});
+/** "YYYY-MM" period selector shared by monthly-group inputs and filters. */
+export const periodMonthSchema = z
+  .string()
+  .regex(/^\d{4}-(0[1-9]|1[0-2])$/, CLASS_MESSAGES.INVALID_PERIOD_MONTH);
 
-export const createScheduledClassBatchSchema = z.object({
+export const createMonthlyClassGroupSchema = z.object({
   branch_id: z.uuid(),
   discipline_id: z.uuid(),
   default_teacher_id: z.uuid().nullable().optional(),
-  days_of_week: z.array(z.number().int().min(0).max(6)).min(1),
-  start_time: z.string().regex(/^\d{2}:\d{2}$/),
   series_name: z
     .string()
     .trim()
     .min(1, CLASS_MESSAGES.SERIES_NAME_REQUIRED)
     .max(80, CLASS_MESSAGES.SERIES_NAME_MAX),
+  period_month: periodMonthSchema,
+  days_of_week: z
+    .array(z.number().int().min(0).max(6))
+    .min(1)
+    .refine((days) => new Set(days).size === days.length, {
+      message: CLASS_MESSAGES.DUPLICATE_DAYS,
+    }),
+  start_time: z.string().regex(/^\d{2}:\d{2}$/),
 });
 
 export const createOneTimeClassSchema = z.object({
@@ -42,15 +45,8 @@ export const createOneTimeClassSchema = z.object({
   start_time: z.string().regex(/^\d{2}:\d{2}$/),
 });
 
-export const updateScheduledClassSchema = createScheduledClassSchema
-  .partial()
-  .extend({
-    id: z.uuid(),
-    branch_id: z.uuid(),
-  });
-
-export type CreateScheduledClassBatchInput = z.infer<
-  typeof createScheduledClassBatchSchema
+export type CreateMonthlyClassGroupInput = z.infer<
+  typeof createMonthlyClassGroupSchema
 >;
 export type CreateOneTimeClassInput = z.infer<typeof createOneTimeClassSchema>;
 export type ListClassSeriesInput = z.infer<typeof listClassSeriesSchema>;
@@ -82,6 +78,7 @@ export const deactivateScheduledClassSeriesSchema = z
 
 export const listClassSeriesSchema = z.object({
   branch_id: z.uuid(),
+  period_month: periodMonthSchema.optional(),
 });
 
 export const renameClassSeriesSchema = z.object({
@@ -134,7 +131,6 @@ export const assignTeacherSchema = z
     scheduled_class_id: z.uuid(),
     session_date: z.string().date().optional(),
     teacher_id: z.uuid(),
-    force: z.boolean().default(false),
     branch_id: z.uuid(),
   })
   .refine((data) => data.target_type !== "session" || !!data.session_date, {
@@ -149,8 +145,6 @@ export const getSuspensionReportSchema = z.object({
   group_by: z.enum(["month", "week", "day"]).default("month"),
 });
 
-export type CreateScheduledClassInput = z.infer<typeof createScheduledClassSchema>;
-export type UpdateScheduledClassInput = z.infer<typeof updateScheduledClassSchema>;
 export type DeactivateScheduledClassInput = z.infer<typeof deactivateScheduledClassSchema>;
 export type DeactivateScheduledClassSeriesInput = z.infer<
   typeof deactivateScheduledClassSeriesSchema

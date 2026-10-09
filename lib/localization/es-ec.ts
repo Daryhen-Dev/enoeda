@@ -620,11 +620,8 @@ export const CLASS_MESSAGES = {
     "La clase no pertenece a la sucursal activa. Seleccione la sucursal correcta.",
   NOT_FOUND:
     "La clase solicitada no existe o no tiene permisos para accederla.",
-  OVERLAP: "Ya existe una clase en ese horario para esta sucursal y día.",
-  OVERLAP_ON_DAY: (dayLabel: string) =>
-    `Ya existe una clase en ese horario el día ${dayLabel}.`,
   CREATE_DESCRIPTION:
-    "Agregue una clase recurrente al horario semanal. Puede seleccionar varios días para crearlas todas de una vez.",
+    "Cree un grupo mensual de clases: se generan todas las clases semanales del mes seleccionado en una sola operación.",
   DISCIPLINE_LABEL: "Disciplina",
   DISCIPLINE_PLACEHOLDER: "Seleccionar…",
   DAY_LABEL: "Día",
@@ -632,22 +629,18 @@ export const CLASS_MESSAGES = {
   START_TIME_LABEL: "Hora de inicio",
   TEACHER_LABEL: "Profesor",
   NO_TEACHER_OPTION: "Sin profesor asignado",
-  DAY_PREFIX: "Día",
   SESSION_DATE_REQUIRED: "La fecha de la sesión es obligatoria.",
-  CREATE_TITLE: "Crear clase recurrente",
-  CREATED: "Clase creada correctamente.",
-  CREATED_BATCH: (count: number) =>
-    count === 1
-      ? "Se creó 1 clase correctamente."
-      : `Se crearon ${count} clases correctamente.`,
-  PARTIAL_FAILURE_TITLE:
-    "Algunos días no se pudieron crear por conflicto de horario:",
+  CREATE_TITLE: "Crear grupo mensual de clases",
+  MONTH_LABEL: "Mes",
+  INVALID_PERIOD_MONTH: "El mes debe tener el formato AAAA-MM.",
+  DUPLICATE_DAYS: "Los días de la semana no pueden repetirse.",
+  MONTHLY_GROUP_CREATED: "Grupo mensual creado correctamente.",
   DEACTIVATED: "Clase desactivada.",
-  SERIES_NAME_LABEL: "Nombre de la concurrencia",
+  SERIES_NAME_LABEL: "Nombre del grupo",
   SERIES_NAME_PLACEHOLDER: "Ej.: Karate infantil — Lunes y miércoles",
-  SERIES_NAME_REQUIRED: "El nombre de la concurrencia es obligatorio.",
+  SERIES_NAME_REQUIRED: "El nombre del grupo es obligatorio.",
   SERIES_NAME_MAX:
-    "El nombre de la concurrencia no puede superar 80 caracteres.",
+    "El nombre del grupo no puede superar 80 caracteres.",
   SERIES_TARGET_REQUIRED:
     "Indique la clase o la concurrencia a quitar (no ambas).",
 } as const
@@ -659,7 +652,6 @@ export const ONE_TIME_CLASS_MESSAGES = {
   DATE_LABEL: "Fecha",
   CREATED: "Clase única creada correctamente.",
   ONE_TIME_BADGE: "Única",
-  OVERLAP: "Ya existe una clase en ese horario en esa fecha.",
 } as const
 
 export const SUSPENSION_MESSAGES = {
@@ -711,6 +703,9 @@ export const SCHEDULE_SERIES_MESSAGES = {
     "No hay concurrencias registradas para esta sucursal.",
   NAME_LABEL: "Nombre",
   DISCIPLINE_LABEL: "Disciplina",
+  MONTH_LABEL: "Mes",
+  MONTH_FILTER_LABEL: "Filtrar por mes",
+  MONTH_FILTER_ALL: "Todos los meses",
   DAYS_LABEL: "Días",
   TIME_LABEL: "Hora",
   TEACHER_LABEL: "Profesor",
@@ -743,17 +738,25 @@ export const SCHEDULE_SERIES_MESSAGES = {
     "Todas las concurrencias futuras fueron quitadas correctamente.",
 } as const
 
+/**
+ * Session-level teacher assignment copy. The former conflict-detection
+ * flow was removed (no schedule restrictions any more); only the action
+ * labels used by the calendar session block remain in
+ * TEACHER_CONFLICT_MESSAGES — the assignment sheet itself reads from
+ * TEACHER_ASSIGN_MESSAGES.
+ */
 export const TEACHER_CONFLICT_MESSAGES = {
-  WARNING: "Este profesor ya está asignado a otra clase el mismo día y horario. Si continúa, esa clase quedará sin profesor asignado.",
-  CONFIRM: "Confirmar y continuar",
-  AFFECTED_TITLE: "Clases que quedarán sin profesor",
-  ASSIGNED: "Profesor asignado correctamente.",
   ASSIGN_ACTION: "Asignar profesor",
   CHANGE_ACTION: "Cambiar profesor",
+} as const
+
+export const TEACHER_ASSIGN_MESSAGES = {
+  ASSIGNED: "Profesor asignado correctamente.",
   ASSIGN_TITLE: "Asignar profesor a la sesión",
   ASSIGN_DESCRIPTION: "Seleccione el profesor que dará esta clase en la fecha indicada.",
   TEACHER_LABEL: "Profesor",
   TEACHER_PLACEHOLDER: "Seleccionar…",
+  CONFIRM: "Asignar",
 } as const
 
 export const ENROLLMENT_MESSAGES = {

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useMemo, useState, useTransition } from "react"
 import type { FormEvent } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
@@ -37,6 +37,13 @@ import {
 import { Field, FieldError, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
   Table,
   TableBody,
   TableCell,
@@ -67,16 +74,41 @@ interface SeriesListProps {
 
 const SERIES_NAME_MAX_LENGTH = 80
 
+const ALL_MONTHS_VALUE = "__all__"
+
+/** "YYYY-MM" → es-EC display label, e.g. "Septiembre de 2026". */
+function formatMonth(periodMonth: string): string {
+  const [year, month] = periodMonth.split("-").map(Number)
+  const rawLabel = new Intl.DateTimeFormat("es-EC", {
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(Date.UTC(year, month - 1, 1)))
+  return rawLabel.charAt(0).toUpperCase() + rawLabel.slice(1)
+}
+
 function formatDays(daysOfWeek: number[]): string {
   return daysOfWeek.map((day) => WEEKDAY_LABELS[day]).join(", ")
 }
 
 /**
- * Concurrencias section — admin list of the branch's recurring series with
- * rename, per-series removal and the destructive "remove ALL future"
- * action. Removal is soft (is_active=false); history is never deleted.
+ * Concurrencias section — admin list of the branch's monthly class groups
+ * (class_series) with a month filter, rename, per-group removal and the
+ * destructive "remove ALL future" action. Removal is soft
+ * (is_active=false on the group and its weekday rows); history is never
+ * deleted.
  */
 export function SeriesList({ branchId, series, disciplines, teachers }: SeriesListProps) {
+  const [monthFilter, setMonthFilter] = useState(ALL_MONTHS_VALUE)
+  const monthOptions = useMemo(
+    () => [...new Set(series.map((item) => item.period_month))].sort(),
+    [series]
+  )
+  const visibleSeries =
+    monthFilter === ALL_MONTHS_VALUE
+      ? series
+      : series.filter((item) => item.period_month === monthFilter)
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -87,8 +119,39 @@ export function SeriesList({ branchId, series, disciplines, teachers }: SeriesLi
           teachers={teachers}
         />
       </div>
-      <RemoveAllFutureAction branchId={branchId} disabled={series.length === 0} />
-      {series.length === 0 ? (
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <Field>
+          <FieldLabel htmlFor="series-month-filter">
+            {SCHEDULE_SERIES_MESSAGES.MONTH_FILTER_LABEL}
+          </FieldLabel>
+          <Select
+            value={monthFilter}
+            onValueChange={(value) => {
+              if (value) setMonthFilter(value)
+            }}
+            items={[
+              { value: ALL_MONTHS_VALUE, label: SCHEDULE_SERIES_MESSAGES.MONTH_FILTER_ALL },
+              ...monthOptions.map((month) => ({ value: month, label: formatMonth(month) })),
+            ]}
+          >
+            <SelectTrigger id="series-month-filter" className="w-56">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL_MONTHS_VALUE}>
+                {SCHEDULE_SERIES_MESSAGES.MONTH_FILTER_ALL}
+              </SelectItem>
+              {monthOptions.map((month) => (
+                <SelectItem key={month} value={month}>
+                  {formatMonth(month)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Field>
+        <RemoveAllFutureAction branchId={branchId} disabled={series.length === 0} />
+      </div>
+      {visibleSeries.length === 0 ? (
         <Empty>
           <EmptyHeader>
             <EmptyTitle>{SCHEDULE_SERIES_MESSAGES.EMPTY_STATE}</EmptyTitle>
@@ -101,6 +164,7 @@ export function SeriesList({ branchId, series, disciplines, teachers }: SeriesLi
             <TableRow>
               <TableHead>{SCHEDULE_SERIES_MESSAGES.NAME_LABEL}</TableHead>
               <TableHead>{SCHEDULE_SERIES_MESSAGES.DISCIPLINE_LABEL}</TableHead>
+              <TableHead>{SCHEDULE_SERIES_MESSAGES.MONTH_LABEL}</TableHead>
               <TableHead>{SCHEDULE_SERIES_MESSAGES.DAYS_LABEL}</TableHead>
               <TableHead>{SCHEDULE_SERIES_MESSAGES.TIME_LABEL}</TableHead>
               <TableHead>{SCHEDULE_SERIES_MESSAGES.TEACHER_LABEL}</TableHead>
@@ -110,10 +174,11 @@ export function SeriesList({ branchId, series, disciplines, teachers }: SeriesLi
             </TableRow>
           </TableHeader>
           <TableBody>
-            {series.map((item) => (
+            {visibleSeries.map((item) => (
               <TableRow key={item.series_id}>
                 <TableCell className="font-medium">{item.name}</TableCell>
                 <TableCell>{item.discipline_name}</TableCell>
+                <TableCell>{formatMonth(item.period_month)}</TableCell>
                 <TableCell>{formatDays(item.days_of_week)}</TableCell>
                 <TableCell>{item.start_time}</TableCell>
                 <TableCell>

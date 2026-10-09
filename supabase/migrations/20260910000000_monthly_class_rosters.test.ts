@@ -9,12 +9,13 @@ const migrationPath = resolve(
 const sql = readFileSync(migrationPath, "utf-8");
 
 describe("Monthly class rosters migration — structural validation", () => {
-  it("drops the scheduled_classes overlap restriction", () => {
+  it("drops the overlap restrictions on recurring and one-time classes", () => {
     expect(sql).toMatch(
       /ALTER TABLE public\.scheduled_classes DROP CONSTRAINT scheduled_classes_no_overlap;/
     );
-    // one_time_classes keeps its own anti-overlap exclusion
-    expect(sql).not.toMatch(/one_time_classes_no_overlap/);
+    expect(sql).toMatch(
+      /ALTER TABLE public\.one_time_classes DROP CONSTRAINT one_time_classes_no_overlap;/
+    );
   });
 
   it("rewrites revoke_teacher_with_reassignment without the teacher-conflict scan", () => {
@@ -152,10 +153,11 @@ describe("Monthly class rosters migration — structural validation", () => {
     expect(sql).not.toMatch(/\bDELETE FROM\b/i);
     expect(sql).not.toMatch(/\bTRUNCATE\b/i);
     expect(sql).not.toMatch(/\bDROP\s+(TABLE|COLUMN|INDEX|POLICY|FUNCTION)\b/i);
-    // The only allowed DROP CONSTRAINT statements: the overlap restriction
-    // and the replaced single-column series FK.
+    // The only allowed DROP CONSTRAINT statements: the two overlap
+    // restrictions and the replaced single-column series FK.
     const dropConstraints = sql.match(/DROP CONSTRAINT \w+/g) ?? [];
-    expect(dropConstraints).toHaveLength(2);
+    expect(dropConstraints).toHaveLength(3);
+    expect(dropConstraints).toContain("DROP CONSTRAINT one_time_classes_no_overlap");
     expect(dropConstraints).toContain("DROP CONSTRAINT scheduled_classes_no_overlap");
     expect(dropConstraints).toContain("DROP CONSTRAINT scheduled_classes_series_id_fkey");
   });

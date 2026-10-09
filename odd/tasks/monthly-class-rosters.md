@@ -44,7 +44,7 @@ their roster.
 - [x] T2: Migration: drop `scheduled_classes_no_overlap`; `class_series` gains
       discipline, default teacher, month; roster tables for series and
       one-time classes; `student_disciplines.billing_mode`; RLS; Prisma sync.
-- [ ] T3: Domain: remove teacher conflict detection; create monthly group
+- [x] T3: Domain: remove teacher conflict detection; create monthly group
       (series + weekdays); calendar renders sessions only inside the month.
 - [ ] T4: Roster actions (add/remove/list) for series and one-time classes
       with eligibility rules.
@@ -75,3 +75,19 @@ their roster.
   lib/domain/classes/actions.ts, resolved in T3. Migration NOT applied yet.
   Known gap for T8: deactivating an enrollment or switching it to per_class
   does not remove existing roster rows; handled at application level.
+- T3 (delegated: gentle-ai-worker): createMonthlyClassGroup (one transaction:
+  class_series + one scheduled_classes row per weekday; period_month first of
+  month) replaces createScheduledClassBatch; createScheduledClass and
+  updateScheduledClass removed (UI-unused). Teacher conflict detection, force
+  flag, TeacherConflictDialog and conflict-scoping.property.test.ts removed.
+  getSessionsForRange renders recurring occurrences only inside the group
+  month; inactive group behaves like inactive template. listClassSeries returns
+  discipline, month, active flag, roster count, optional month filter.
+  deactivateScheduledClassSeries also deactivates the group. Create dialog
+  gains a month selector; series list shows month and filter.
+  Parent fix: one_time_classes_no_overlap is also dropped in migration
+  20260910000000 (user decision: no schedule restrictions) and its error
+  mapping removed. TDD: RED 22 failed -> GREEN. tsc clean; vitest 919 passed
+  / 1 skipped; eslint clean on changed files.
+  Follow-up noted: deactivateAllFutureClasses does not flip
+  class_series.is_active (weekday rows go inactive, calendar still hides).

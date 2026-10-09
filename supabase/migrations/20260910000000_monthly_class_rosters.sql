@@ -1,7 +1,8 @@
 -- Monthly class groups with assigned student rosters (T2)
 --
 -- Capabilities realized:
---   - No schedule restrictions: scheduled_classes_no_overlap is dropped and
+--   - No schedule restrictions: scheduled_classes_no_overlap and
+--     one_time_classes_no_overlap are dropped and
 --     revoke_teacher_with_reassignment loses its teacher-conflict scan, so
 --     classes may overlap and a teacher may teach two classes at the same
 --     time. The no_default_teacher and revoked_is_default blocks remain.
@@ -29,6 +30,7 @@ BEGIN;
 -- =============================================================================
 
 ALTER TABLE public.scheduled_classes DROP CONSTRAINT scheduled_classes_no_overlap;
+ALTER TABLE public.one_time_classes DROP CONSTRAINT one_time_classes_no_overlap;
 
 CREATE OR REPLACE FUNCTION public.revoke_teacher_with_reassignment(
   p_target_user_id uuid, p_branch_id uuid
