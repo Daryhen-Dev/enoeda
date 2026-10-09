@@ -1,6 +1,7 @@
 "use server";
 
 import { withAuthenticatedUser } from "@/lib/auth/server-context";
+import type { AuthenticatedContext } from "@/lib/auth/server-context";
 import { assertActiveBranchAssignment } from "@/lib/auth/assert-branch-assignment";
 import {
   authorizeBranchRead,
@@ -24,6 +25,7 @@ import {
 import { classifyRosterEligibility } from "@/lib/domain/rosters";
 import {
   assignTeacherSchema,
+  clearSessionSubstitutionSchema,
   cloneClassGroupSchema,
   createMonthlyClassGroupSchema,
   createOneTimeClassSchema,
@@ -36,6 +38,8 @@ import {
   listUpcomingOneTimeClassesSchema,
   reinstateSessionSchema,
   renameClassSeriesSchema,
+  setClassSeriesTeacherSchema,
+  setOneTimeClassTeacherSchema,
   suspendSessionSchema,
 } from "./schema";
 
@@ -1643,7 +1647,268 @@ export async function reinstateSession(
 }
 
 /**
- * Assign a teacher to a recurring class or specific session.
+ * Owner/admin gate shared by the teacher-substitution mutations:
+ * teachers of the branch are rejected even though they hold a valid
+ * branch assignment (owner passes). Same gate as cloneClassGroupToNextMonth.
+ */
+function assertAdminOfBranchOrOwner(
+  ctx: AuthenticatedContext,
+  branchId: string
+): void {
+  const isAdmin = ctx.assignments.some(
+    (assignment) => assignment.role === "admin" && assignment.branchId === branchId
+  );
+  if (!isAdmin && !ctx.roles.includes("owner")) {
+    throw new Error(TEACHER_ASSIGN_MESSAGES.UNAUTHORIZED);
+  }
+}
+
+/**
+ * Change the teacher of a WHOLE monthly class group (class_series) from now
+ * on, through the set_class_series_teacher RPC:
+ *   - Past occurrences keep the previous teacher (attribution periods are
+ *     closed/opened at the RPC's cutoff = now()).
+ *   - Explicit day substitutions (class_sessions.assigned_teacher_id) are
+ *     kept untouched.
+ *   - teacher_id may be null (the group is left without a teacher).
+ *
+ * The series must belong to the caller's branch (NOT_FOUND otherwise) and
+ * the teacher (when given) must hold an active teacher role in the branch
+ * — both enforced again by the RPC. The call runs inside the RLS-bound
+ * transaction (withAuthenticatedUser) so auth.uid() is set for the RPC's
+ * own authorization check.
+ * Owner/Admin-branch only.
+ */
+export async function setClassSeriesTeacher(
+  input: unknown
+): Promise<ActionResult<{ updated_class_count: number }>> {
+  const parsed = setClassSeriesTeacherSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message };
+  }
+
+  const { branch_id, series_id, teacher_id } = parsed.data;
+
+  try {
+    const result = await withAuthenticatedUser(async (tx, ctx) => {
+      // Branch assignment assertion — fail-closed
+      const branchCheck = assertActiveBranchAssignment(ctx, branch_id);
+      if (!branchCheck.ok) {
+        throw new Error(branchCheck.error);
+      }
+
+      assertAdminOfBranchOrOwner(ctx, branch_id);
+
+      // The group must belong to the caller's branch (RLS scopes the
+      // lookup: a foreign series is indistinguishable from an absent one).
+      const series = await tx.class_series.findFirst({
+        where: { id: series_id, branch_id },
+        select: { id: true },
+      });
+      if (!series) {
+        throw new Error(CLASS_MESSAGES.NOT_FOUND);
+      }
+
+      // Group-wide change through the SECURITY DEFINER RPC (cutoff-based
+      // attribution periods). Prisma deserializes the returned jsonb.
+      const rows = await tx.$queryRaw<
+        { result: { updatedClassCount: number; cutoff: string } }[]
+      >`SELECT public.set_class_series_teacher(
+        ${series_id}::uuid, ${teacher_id}::uuid) AS result`;
+      const rpcResult = rows[0]?.result;
+      if (!rpcResult) {
+        throw new Error(COMMON_MESSAGES.UNEXPECTED_ERROR);
+      }
+
+      return { updated_class_count: rpcResult.updatedClassCount };
+    }, {
+      mapTransactionError: (error) => {
+        if (!(error instanceof Error)) return undefined;
+        if (error.message.includes("invalid_teacher")) {
+          return TEACHER_ASSIGN_MESSAGES.INVALID_TEACHER;
+        }
+        if (error.message.includes("class_series_not_found")) {
+          return CLASS_MESSAGES.NOT_FOUND;
+        }
+        if (error.message.includes("unauthorized")) {
+          return TEACHER_ASSIGN_MESSAGES.UNAUTHORIZED;
+        }
+        return (
+          error.message === CLASS_MESSAGES.NOT_FOUND ||
+          error.message === TEACHER_ASSIGN_MESSAGES.UNAUTHORIZED ||
+          error.message === CLASS_MESSAGES.BRANCH_CONTEXT_REQUIRED ||
+          error.message.includes("permisos")
+        )
+          ? error.message
+          : undefined;
+      },
+    });
+
+    if (!result.success) return result;
+    return { success: true, data: result.data };
+  } catch {
+    return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
+  }
+}
+
+/**
+ * Change the teacher of a one-time class. Works for ANY date: past
+ * corrections are allowed on purpose (a class already taught can have its
+ * recorded teacher fixed), so no cutoff or correction window applies — the
+ * change is a plain update of one_time_classes.teacher_id.
+ * The class must belong to the caller's branch and be active; the teacher
+ * (when given) must hold an active teacher role in the branch.
+ * Owner/Admin-branch only.
+ */
+export async function setOneTimeClassTeacher(
+  input: unknown
+): Promise<ActionResult<{ id: string }>> {
+  const parsed = setOneTimeClassTeacherSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message };
+  }
+
+  const { branch_id, one_time_class_id, teacher_id } = parsed.data;
+
+  try {
+    const result = await withAuthenticatedUser(async (tx, ctx) => {
+      // Branch assignment assertion — fail-closed
+      const branchCheck = assertActiveBranchAssignment(ctx, branch_id);
+      if (!branchCheck.ok) {
+        throw new Error(branchCheck.error);
+      }
+
+      assertAdminOfBranchOrOwner(ctx, branch_id);
+
+      // The class must belong to the caller's branch and be active
+      // (RLS scopes the lookup).
+      const cls = await tx.one_time_classes.findFirst({
+        where: { id: one_time_class_id, branch_id },
+        select: { id: true, is_active: true },
+      });
+      if (!cls || !cls.is_active) {
+        throw new Error(CLASS_MESSAGES.NOT_FOUND);
+      }
+
+      // Active teacher role in this branch (same rule as the RPCs).
+      if (teacher_id !== null) {
+        const role = await tx.user_roles.findFirst({
+          where: {
+            user_id: teacher_id,
+            role: "teacher",
+            branch_id,
+            revoked_at: null,
+          },
+          select: { user_id: true },
+        });
+        if (!role) {
+          throw new Error(TEACHER_ASSIGN_MESSAGES.INVALID_TEACHER);
+        }
+      }
+
+      const updated = await tx.one_time_classes.update({
+        where: { id: one_time_class_id },
+        data: { teacher_id },
+        select: { id: true },
+      });
+      return { id: updated.id };
+    }, {
+      mapTransactionError: (error) =>
+        error instanceof Error &&
+        (error.message === CLASS_MESSAGES.NOT_FOUND ||
+          error.message === TEACHER_ASSIGN_MESSAGES.INVALID_TEACHER ||
+          error.message === TEACHER_ASSIGN_MESSAGES.UNAUTHORIZED ||
+          error.message === CLASS_MESSAGES.BRANCH_CONTEXT_REQUIRED ||
+          error.message.includes("permisos"))
+          ? error.message
+          : undefined,
+    });
+
+    if (!result.success) return result;
+    return { success: true, data: result.data };
+  } catch {
+    return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
+  }
+}
+
+/**
+ * Undo a day substitution: class_sessions.assigned_teacher_id → NULL for
+ * that occurrence. The class_sessions row is KEPT (it may hold a
+ * suspension status), so an occurrence without a substitution and an
+ * occurrence that was never materialized both report cleared=false
+ * without writing.
+ * Owner/Admin-branch only.
+ */
+export async function clearSessionSubstitution(
+  input: unknown
+): Promise<ActionResult<{ cleared: boolean }>> {
+  const parsed = clearSessionSubstitutionSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message };
+  }
+
+  const { branch_id, scheduled_class_id, session_date } = parsed.data;
+
+  try {
+    const result = await withAuthenticatedUser(async (tx, ctx) => {
+      // Branch assignment assertion — fail-closed
+      const branchCheck = assertActiveBranchAssignment(ctx, branch_id);
+      if (!branchCheck.ok) {
+        throw new Error(branchCheck.error);
+      }
+
+      assertAdminOfBranchOrOwner(ctx, branch_id);
+
+      // Branch context enforcement (fail-closed)
+      const guard = await assertClassInContext(tx, scheduled_class_id, branch_id);
+      if (!guard.ok) {
+        throw new Error(guard.error);
+      }
+
+      const session = await tx.class_sessions.findUnique({
+        where: {
+          scheduled_class_id_session_date: {
+            scheduled_class_id,
+            session_date: new Date(session_date),
+          },
+        },
+        select: { id: true, assigned_teacher_id: true },
+      });
+      // No materialized row or no override: nothing to clear.
+      if (!session || session.assigned_teacher_id === null) {
+        return { cleared: false };
+      }
+
+      await tx.class_sessions.update({
+        where: { id: session.id },
+        data: { assigned_teacher_id: null },
+      });
+      return { cleared: true };
+    }, {
+      mapTransactionError: (error) =>
+        error instanceof Error &&
+        (error.message === CLASS_MESSAGES.BRANCH_MISMATCH ||
+          error.message === CLASS_MESSAGES.NOT_FOUND ||
+          error.message === TEACHER_ASSIGN_MESSAGES.UNAUTHORIZED ||
+          error.message === CLASS_MESSAGES.BRANCH_CONTEXT_REQUIRED ||
+          error.message.includes("permisos"))
+          ? error.message
+          : undefined,
+    });
+
+    if (!result.success) return result;
+    return { success: true, data: result.data };
+  } catch {
+    return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
+  }
+}
+
+/**
+ * Assign a teacher to a specific session (upsert class_sessions row).
+ * Group-wide changes go through setClassSeriesTeacher instead — the
+ * former target_type "recurring" path was removed because it rewrote past
+ * occurrences without attribution history.
+ * The teacher must hold an active teacher role in the branch.
  * There are no schedule restrictions any more: no conflict detection
  * runs and the assignment always applies directly.
  * Owner/Admin-branch via RLS.
@@ -1656,7 +1921,7 @@ export async function assignTeacher(
     return { success: false, error: parsed.error.issues[0].message };
   }
 
-  const { target_type, scheduled_class_id, session_date, teacher_id, branch_id } =
+  const { scheduled_class_id, session_date, teacher_id, branch_id } =
     parsed.data;
 
   try {
@@ -1673,29 +1938,36 @@ export async function assignTeacher(
         throw new Error(guard.error);
       }
 
-      if (target_type === "recurring") {
-        await tx.scheduled_classes.update({
-          where: { id: scheduled_class_id },
-          data: { default_teacher_id: teacher_id },
-        });
-      } else {
-        await tx.class_sessions.upsert({
-          where: {
-            scheduled_class_id_session_date: {
-              scheduled_class_id,
-              session_date: new Date(session_date!),
-            },
-          },
-          create: {
+      // Active teacher role in this branch (same rule as the RPCs).
+      const role = await tx.user_roles.findFirst({
+        where: {
+          user_id: teacher_id,
+          role: "teacher",
+          branch_id,
+          revoked_at: null,
+        },
+        select: { user_id: true },
+      });
+      if (!role) {
+        throw new Error(TEACHER_ASSIGN_MESSAGES.INVALID_TEACHER);
+      }
+
+      await tx.class_sessions.upsert({
+        where: {
+          scheduled_class_id_session_date: {
             scheduled_class_id,
             session_date: new Date(session_date!),
-            assigned_teacher_id: teacher_id,
           },
-          update: {
-            assigned_teacher_id: teacher_id,
-          },
-        });
-      }
+        },
+        create: {
+          scheduled_class_id,
+          session_date: new Date(session_date!),
+          assigned_teacher_id: teacher_id,
+        },
+        update: {
+          assigned_teacher_id: teacher_id,
+        },
+      });
 
       return {
         teacher_assigned: true,
@@ -1705,7 +1977,8 @@ export async function assignTeacher(
       mapTransactionError: (error) =>
         error instanceof Error &&
         (error.message === CLASS_MESSAGES.BRANCH_MISMATCH ||
-          error.message === CLASS_MESSAGES.NOT_FOUND)
+          error.message === CLASS_MESSAGES.NOT_FOUND ||
+          error.message === TEACHER_ASSIGN_MESSAGES.INVALID_TEACHER)
           ? error.message
           : undefined,
     });

@@ -861,6 +861,18 @@ export const TEACHER_ASSIGN_MESSAGES = {
   TEACHER_LABEL: "Profesor",
   TEACHER_PLACEHOLDER: "Seleccionar…",
   CONFIRM: "Asignar",
+  INVALID_TEACHER:
+    "El profesor debe tener un rol activo de profesor en esta sucursal.",
+  UNAUTHORIZED:
+    "Solo el propietario o un administrador de la sucursal puede gestionar los profesores.",
+  SERIES_UPDATED: (count: number) =>
+    count === 1
+      ? "Profesor actualizado en 1 clase del grupo desde hoy. Las clases pasadas conservan al profesor anterior."
+      : `Profesor actualizado en ${count} clases del grupo desde hoy. Las clases pasadas conservan al profesor anterior.`,
+  ONE_TIME_UPDATED: "Profesor de la clase única actualizado correctamente.",
+  SUBSTITUTION_CLEARED:
+    "Sustitución eliminada: la clase vuelve al profesor habitual.",
+  SUBSTITUTION_NONE: "No había sustitución para esta fecha.",
 } as const
 
 export const ENROLLMENT_MESSAGES = {
