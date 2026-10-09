@@ -124,6 +124,8 @@ async function countOverdueStudentsOn(
     where: {
       ...disciplineWhere,
       is_active: true,
+      // Per-class enrollments are never overdue (T8).
+      billing_mode: "monthly",
       next_due_date: { lt: today },
       students: { branch_id: branchId },
     },
@@ -152,6 +154,8 @@ export async function listOverdueStudents(
     where: {
       ...disciplineWhere,
       is_active: true,
+      // Per-class enrollments are never overdue (T8).
+      billing_mode: "monthly",
       next_due_date: { lt: today },
       students: { branch_id: branchId },
     },

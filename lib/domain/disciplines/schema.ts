@@ -34,10 +34,17 @@ export const disciplineCreateSchema = z.object({
   code: z.string().min(1, { error: DISCIPLINE_MESSAGES.CODE_REQUIRED }).max(50, { error: DISCIPLINE_MESSAGES.CODE_MAX_LENGTH }).regex(/^[a-z0-9-]+$/, { error: DISCIPLINE_MESSAGES.CODE_FORMAT }),
 });
 
+export const billingModeSchema = z.enum(["monthly", "per_class"], {
+  error: ENROLLMENT_MESSAGES.BILLING_MODE_LABEL_INVALID,
+});
+
+export type BillingMode = z.infer<typeof billingModeSchema>;
+
 export const enrollStudentSchema = z.object({
   student_id: z.uuid({ error: DISCIPLINE_MESSAGES.INVALID_ID }),
   discipline_ids: z.array(z.uuid()).min(1, { error: ENROLLMENT_MESSAGES.MIN_ONE_DISCIPLINE }),
   branch_id: z.uuid({ error: ENROLLMENT_MESSAGES.BRANCH_REQUIRED }),
+  billing_mode: billingModeSchema.default("monthly"),
   enrolled_at: z.string().regex(DATE_PATTERN, { error: ENROLLMENT_MESSAGES.DATE_FORMAT }).refine(isValidCalendarDate, { error: ENROLLMENT_MESSAGES.INVALID_DATE }).refine(isNotFuture, { error: ENROLLMENT_MESSAGES.DATE_NOT_FUTURE }).optional(),
 });
 
@@ -45,6 +52,12 @@ export const enrollmentActionSchema = z.object({
   student_discipline_id: z.uuid(),
   branch_id: z.uuid({ error: ENROLLMENT_MESSAGES.BRANCH_REQUIRED }),
   notes: z.string().max(500).optional(),
+});
+
+export const setEnrollmentBillingModeSchema = z.object({
+  student_discipline_id: z.uuid(),
+  branch_id: z.uuid({ error: ENROLLMENT_MESSAGES.BRANCH_REQUIRED }),
+  billing_mode: billingModeSchema,
 });
 
 export const studentDisciplinesQuerySchema = z.object({
@@ -59,5 +72,7 @@ export const activeDisciplinesForBranchSchema = z.object({
 
 export type ActiveDisciplinesForBranchInput = z.infer<typeof activeDisciplinesForBranchSchema>;
 export type DisciplineCreateInput = z.infer<typeof disciplineCreateSchema>;
-export type EnrollStudentInput = z.infer<typeof enrollStudentSchema>;
+// z.input: billing_mode is optional for callers (server-side default 'monthly')
+export type EnrollStudentInput = z.input<typeof enrollStudentSchema>;
 export type EnrollmentActionInput = z.infer<typeof enrollmentActionSchema>;
+export type SetEnrollmentBillingModeInput = z.infer<typeof setEnrollmentBillingModeSchema>;

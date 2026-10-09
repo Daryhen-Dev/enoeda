@@ -247,6 +247,7 @@ export const STUDENT_DIRECTORY_MESSAGES = {
   ADMINISTRATIVE_ACTIONS_LABEL: "Acciones administrativas",
   MONTHLY_DUE_DATE: "Vencimiento mensual",
   NO_PAYMENTS_REGISTERED: "Sin pagos registrados.",
+  PER_CLASS_DUE_DATE: "Por clase",
   DUE_IN_DAYS: (days: number) =>
     days === 1 ? "1 día restante" : `${days} días restantes`,
   DUE_TODAY: "Vence hoy",
@@ -816,6 +817,23 @@ export const ENROLLMENT_MESSAGES = {
   ALREADY_SUSPENDED: "La inscripción ya está suspendida.",
   NOT_FOUND: "Inscripción no encontrada.",
   ALREADY_ENROLLED: "El estudiante ya está inscripto en esta disciplina.",
+  BILLING_MODE_LABEL: "Modalidad de pago",
+  BILLING_MODE_LABEL_INVALID: "La modalidad de pago debe ser mensual o por clase.",
+  BILLING_MODE_MONTHLY: "Mensual",
+  BILLING_MODE_PER_CLASS: "Por clase",
+  BILLING_MODE_UNAUTHORIZED:
+    "Solo los administradores de la sucursal pueden cambiar la modalidad de pago.",
+  CHANGE_BILLING_MODE_ACTION: "Cambiar modalidad",
+  BILLING_MODE_DIALOG_TITLE: "Cambiar modalidad de pago",
+  BILLING_MODE_TO_PER_CLASS_DESCRIPTION:
+    "El estudiante dejará de aparecer en las listas de clases actuales y futuras de esta disciplina y no podrá registrar pagos mensuales. Cobrará por clase asistida.",
+  BILLING_MODE_TO_MONTHLY_DESCRIPTION:
+    "El estudiante volverá a pagar mensualmente. El próximo vencimiento se fijará con el primer pago mensual.",
+  BILLING_MODE_CONFIRM: "Cambiar modalidad",
+  BILLING_MODE_CHANGED_TOAST: "Modalidad de pago actualizada.",
+  BILLING_MODE_ROSTERS_REMOVED_TOAST: (count: number) =>
+    `Se quitó al estudiante de ${count} ${count === 1 ? "lista de clase" : "listas de clase"}.`,
+  EVENT_BILLING_MODE_CHANGED: "Cambio de modalidad",
 } as const
 
 
@@ -1101,6 +1119,8 @@ export const PAYMENT_MESSAGES = {
   CHARGE_CLASS: "Cobrar clase",
   ALREADY_PAID: "Este estudiante ya tiene un pago registrado para esta clase.",
   OCCURRENCE_EXCLUSIVE: "Indique solo una clase: programada o única.",
+  MONTHLY_NOT_ALLOWED_FOR_PER_CLASS:
+    "No se pueden registrar pagos mensuales en una inscripción por clase.",
 } as const
 
 /** Monthly payment validation (admin bulk suspension) messages. */

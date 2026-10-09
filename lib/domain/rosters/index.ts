@@ -16,6 +16,9 @@ export {
   type RosterEligibilityStudent,
 } from "./eligibility";
 
+export { removeStudentFromCurrentAndFutureRosters } from "./cleanup";
+export type { RemoveStudentFromFutureRostersInput } from "./cleanup";
+
 export {
   addStudentsToRoster,
   listClassRoster,

@@ -19,7 +19,19 @@ import { PromoteStudentDialog } from "@/components/students/promote-student-dial
 import { RegisterClassPaymentDialog } from "@/components/payments/register-class-payment-dialog"
 import { RegisterMonthlyPaymentDialog } from "@/components/payments/register-monthly-payment-dialog"
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import {
   reactivateEnrollment,
+  setEnrollmentBillingMode,
   suspendEnrollment,
 } from "@/lib/domain/disciplines/actions"
 import type { StudentDisciplineRecord } from "@/lib/domain/disciplines/actions"
@@ -75,6 +87,7 @@ export function StudentDisciplineCard({
   const [correctionOpen, setCorrectionOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
   const disciplineName = enrollment.discipline_name
+  const isPerClass = enrollment.billing_mode === "per_class"
 
   function handleSuspend() {
     startTransition(async () => {
@@ -106,6 +119,30 @@ export function StudentDisciplineCard({
     })
   }
 
+  function handleChangeBillingMode() {
+    const nextMode = isPerClass ? "monthly" : "per_class"
+    startTransition(async () => {
+      const result = await setEnrollmentBillingMode({
+        branch_id: branchId,
+        student_discipline_id: enrollment.id,
+        billing_mode: nextMode,
+      })
+      if (result.success) {
+        toast.success(ENROLLMENT_MESSAGES.BILLING_MODE_CHANGED_TOAST)
+        if (result.data!.removed_roster_entries > 0) {
+          toast.info(
+            ENROLLMENT_MESSAGES.BILLING_MODE_ROSTERS_REMOVED_TOAST(
+              result.data!.removed_roster_entries
+            )
+          )
+        }
+        router.refresh()
+      } else {
+        toast.error(result.error ?? COMMON_MESSAGES.UNEXPECTED_ERROR)
+      }
+    })
+  }
+
   return (
     <article className="flex flex-col gap-3 rounded-lg border bg-card p-3">
       <div className="flex flex-wrap items-center gap-2">
@@ -114,6 +151,11 @@ export function StudentDisciplineCard({
           {enrollment.is_active
             ? ENROLLMENT_MESSAGES.ACTIVE_LABEL
             : ENROLLMENT_MESSAGES.SUSPENDED_LABEL}
+        </Badge>
+        <Badge variant="secondary">
+          {isPerClass
+            ? ENROLLMENT_MESSAGES.BILLING_MODE_PER_CLASS
+            : ENROLLMENT_MESSAGES.BILLING_MODE_MONTHLY}
         </Badge>
         <span className="text-xs text-muted-foreground">
           {ENROLLMENT_MESSAGES.ENROLLED_LABEL}{" "}
@@ -187,14 +229,16 @@ export function StudentDisciplineCard({
         <div className="flex flex-wrap items-center gap-2">
           {enrollment.is_active ? (
             <>
-              <RegisterMonthlyPaymentDialog
-                studentDisciplineId={enrollment.id}
-                branchId={branchId}
-                triggerVariant="default"
-                triggerAriaLabel={STUDENT_DETAIL_MESSAGES.MONTHLY_PAYMENT_ARIA(
-                  disciplineName
-                )}
-              />
+              {!isPerClass && (
+                <RegisterMonthlyPaymentDialog
+                  studentDisciplineId={enrollment.id}
+                  branchId={branchId}
+                  triggerVariant="default"
+                  triggerAriaLabel={STUDENT_DETAIL_MESSAGES.MONTHLY_PAYMENT_ARIA(
+                    disciplineName
+                  )}
+                />
+              )}
               <RegisterClassPaymentDialog
                 studentDisciplineId={enrollment.id}
                 branchId={branchId}
@@ -250,6 +294,42 @@ export function StudentDisciplineCard({
                   </DropdownMenuGroup>
                 </DropdownMenuContent>
               </DropdownMenu>
+              <AlertDialog>
+                <AlertDialogTrigger
+                  render={
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={isPending}
+                      aria-label={`${ENROLLMENT_MESSAGES.CHANGE_BILLING_MODE_ACTION}: ${disciplineName}`}
+                    />
+                  }
+                >
+                  {ENROLLMENT_MESSAGES.CHANGE_BILLING_MODE_ACTION}
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      {ENROLLMENT_MESSAGES.BILLING_MODE_DIALOG_TITLE}
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      {isPerClass
+                        ? ENROLLMENT_MESSAGES.BILLING_MODE_TO_MONTHLY_DESCRIPTION
+                        : ENROLLMENT_MESSAGES.BILLING_MODE_TO_PER_CLASS_DESCRIPTION}
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>{COMMON_MESSAGES.CANCEL}</AlertDialogCancel>
+                    <AlertDialogAction
+                      disabled={isPending}
+                      onClick={handleChangeBillingMode}
+                      aria-label={`${ENROLLMENT_MESSAGES.BILLING_MODE_CONFIRM}: ${disciplineName}`}
+                    >
+                      {ENROLLMENT_MESSAGES.BILLING_MODE_CONFIRM}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
               <PromoteStudentDialog
                 studentId={studentId}
                 disciplineId={enrollment.discipline_id}

@@ -52,7 +52,7 @@ their roster.
 - [x] T6: Attendance reads the assigned roster; teacher/admin add per-class
       students to a session with inline class payment.
 - [ ] T7: Guests: guest table, add guest in attendance, convert to student.
-- [ ] T8: Billing mode: set at enrollment, per-class excluded from overdue.
+- [x] T8: Billing mode: set at enrollment, per-class excluded from overdue.
 - [ ] T9: Admin UI: monthly group create dialog, roster editor, clone action.
 
 ## Evidence
@@ -119,3 +119,17 @@ their roster.
   UI: source badges, per-class adder with default-checked payment, "Cobrar
   clase" for unpaid per-class rows. TDD RED 15 failed -> GREEN. tsc clean;
   vitest 996 passed / 1 skipped; eslint clean.
+- T8 (delegated: gentle-ai-worker; done before T7 because guest conversion
+  creates an enrollment): enrollStudent stores billing_mode; new
+  setEnrollmentBillingMode (admin/owner) — monthly->per_class removes the
+  student from current/future rosters of the discipline and clears
+  next_due_date; every change audited as discipline_events
+  'billing_mode_changed' (CHECKs extended in unapplied 20260910000000).
+  suspendEnrollment also cleans current/future rosters. Overdue counts,
+  lists, payment validation and batch suspend filter billing_mode='monthly';
+  monthly payment register/correct rejects per_class. UI: mode badge and
+  admin change control on the discipline card, "Por clase" in the student
+  list, "Modalidad de pago" radio in the student form. TDD RED 22 failed ->
+  GREEN. tsc clean; vitest 1027 passed / 1 skipped; eslint clean on changed
+  files (1 pre-existing error in lib/domain/students/actions.test.ts:46,
+  untouched).

@@ -63,6 +63,7 @@ interface StudentFormValues {
   date_of_birth: string
   discipline_ids: string[]
   enrolled_at: string
+  billing_mode: "monthly" | "per_class"
 }
 
 interface StudentFormDialogProps {
@@ -93,6 +94,7 @@ function getDefaultValues(): StudentFormValues {
     date_of_birth: "",
     discipline_ids: [],
     enrolled_at: getTodayString(),
+    billing_mode: "monthly",
   }
 }
 
@@ -128,6 +130,7 @@ export function StudentFormDialog({
   const phoneId = useId()
   const dateOfBirthId = useId()
   const enrolledAtId = useId()
+  const billingModeId = useId()
   const form = useForm<StudentFormValues>({
     defaultValues: {
       ...getDefaultValues(),
@@ -170,6 +173,7 @@ export function StudentFormDialog({
         date_of_birth: formatDateForInput(result.data.date_of_birth),
         discipline_ids: [],
         enrolled_at: getTodayString(),
+        billing_mode: "monthly",
       })
     } catch {
       setActionError(STUDENT_FORM_MESSAGES.LOAD_FAILURE)
@@ -236,6 +240,7 @@ export function StudentFormDialog({
             discipline_ids: values.discipline_ids,
             branch_id: values.branch_id,
             enrolled_at: values.enrolled_at || undefined,
+            billing_mode: values.billing_mode,
           })
           if (!enrollResult.success) {
             setActionError(enrollResult.error ?? STUDENT_FORM_MESSAGES.SAVE_FAILURE)
@@ -504,6 +509,49 @@ export function StudentFormDialog({
                     />
                     <FieldError id={`${enrolledAtId}-error`} errors={[errors.enrolled_at]} />
                   </Field>
+
+                  <Controller
+                    control={form.control}
+                    name="billing_mode"
+                    render={({ field }) => (
+                      <Field>
+                        <FieldLabel htmlFor={billingModeId}>
+                          {ENROLLMENT_MESSAGES.BILLING_MODE_LABEL}
+                        </FieldLabel>
+                        <div
+                          id={billingModeId}
+                          role="radiogroup"
+                          aria-label={ENROLLMENT_MESSAGES.BILLING_MODE_LABEL}
+                          className="flex flex-col gap-2"
+                        >
+                          <label className="flex items-center gap-2 text-sm">
+                            <input
+                              type="radio"
+                              name={`${billingModeId}-billing-mode`}
+                              value="monthly"
+                              className="accent-primary"
+                              checked={field.value === "monthly"}
+                              onChange={() => field.onChange("monthly")}
+                              disabled={isPending}
+                            />
+                            {ENROLLMENT_MESSAGES.BILLING_MODE_MONTHLY}
+                          </label>
+                          <label className="flex items-center gap-2 text-sm">
+                            <input
+                              type="radio"
+                              name={`${billingModeId}-billing-mode`}
+                              value="per_class"
+                              className="accent-primary"
+                              checked={field.value === "per_class"}
+                              onChange={() => field.onChange("per_class")}
+                              disabled={isPending}
+                            />
+                            {ENROLLMENT_MESSAGES.BILLING_MODE_PER_CLASS}
+                          </label>
+                        </div>
+                      </Field>
+                    )}
+                  />
                 </>
               )}
             </FieldGroup>

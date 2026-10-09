@@ -62,6 +62,15 @@ describe("Monthly class rosters migration — structural validation", () => {
     );
   });
 
+  it("extends the discipline_events type and reason checks for billing-mode audit events", () => {
+    expect(sql).toMatch(
+      /ALTER TABLE public\.discipline_events\s+DROP CONSTRAINT discipline_events_type_ck,\s+ADD CONSTRAINT discipline_events_type_ck\s+CHECK \(event_type IN \('enrolled','suspended','reactivated','billing_mode_changed'\)\)/
+    );
+    expect(sql).toMatch(
+      /ALTER TABLE public\.discipline_events\s+DROP CONSTRAINT discipline_events_reason_ck,\s+ADD CONSTRAINT discipline_events_reason_ck\s+CHECK \(reason IS NULL OR reason IN \('non_payment', 'manual', 'monthly', 'per_class'\)\)/
+    );
+  });
+
   it("creates both roster tables with cascade FKs and per-class uniqueness", () => {
     expect(sql).toMatch(
       /CREATE TABLE public\.class_series_students \(\s+id\s+uuid PRIMARY KEY DEFAULT gen_random_uuid\(\),\s+series_id\s+uuid NOT NULL REFERENCES public\.class_series\(id\) ON DELETE CASCADE,\s+student_id\s+uuid NOT NULL REFERENCES public\.students\(id\) ON DELETE CASCADE,\s+added_by\s+uuid REFERENCES auth\.users\(id\) ON DELETE SET NULL,\s+created_at timestamptz NOT NULL DEFAULT now\(\),\s+CONSTRAINT class_series_students_series_student_uq UNIQUE \(series_id, student_id\)\s+\);/
@@ -172,11 +181,15 @@ describe("Monthly class rosters migration — structural validation", () => {
     expect(sql).not.toMatch(/\bTRUNCATE\b/i);
     expect(sql).not.toMatch(/\bDROP\s+(TABLE|COLUMN|INDEX|POLICY|FUNCTION)\b/i);
     // The only allowed DROP CONSTRAINT statements: the two overlap
-    // restrictions and the replaced single-column series FK.
+    // restrictions, the replaced single-column series FK, and the
+    // discipline_events type/reason checks extended for the
+    // billing_mode_changed audit event (T8).
     const dropConstraints = sql.match(/DROP CONSTRAINT \w+/g) ?? [];
-    expect(dropConstraints).toHaveLength(3);
+    expect(dropConstraints).toHaveLength(5);
     expect(dropConstraints).toContain("DROP CONSTRAINT one_time_classes_no_overlap");
     expect(dropConstraints).toContain("DROP CONSTRAINT scheduled_classes_no_overlap");
     expect(dropConstraints).toContain("DROP CONSTRAINT scheduled_classes_series_id_fkey");
+    expect(dropConstraints).toContain("DROP CONSTRAINT discipline_events_type_ck");
+    expect(dropConstraints).toContain("DROP CONSTRAINT discipline_events_reason_ck");
   });
 });

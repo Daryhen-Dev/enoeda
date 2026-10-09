@@ -3,12 +3,15 @@ export {
   disciplineIdSchema,
   enrollStudentSchema,
   enrollmentActionSchema,
+  setEnrollmentBillingModeSchema,
   studentDisciplinesQuerySchema,
   activeDisciplinesForBranchSchema,
   type ActiveDisciplinesForBranchInput,
+  type BillingMode,
   type DisciplineCreateInput,
   type EnrollStudentInput,
   type EnrollmentActionInput,
+  type SetEnrollmentBillingModeInput,
 } from "./schema";
 
 export {
@@ -19,6 +22,7 @@ export {
   listActiveDisciplinesForBranch,
   listDisciplines,
   reactivateEnrollment,
+  setEnrollmentBillingMode,
   suspendEnrollment,
   type ActionResult,
   type DisciplineRecord,

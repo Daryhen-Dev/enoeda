@@ -155,13 +155,21 @@ export async function registerMonthlyPayment(
 
       const enrollment = await tx.student_disciplines.findUnique({
         where: { id: parsed.data.student_discipline_id },
-        select: { id: true, students: { select: { branch_id: true } } },
+        select: { id: true, billing_mode: true, students: { select: { branch_id: true } } },
       });
       if (!enrollment) {
         return { id: null, next_due_date: null, error: PAYMENT_MESSAGES.ENROLLMENT_NOT_FOUND };
       }
       if (enrollment.students.branch_id !== parsed.data.branch_id) {
         return { id: null, next_due_date: null, error: BRANCH_ASSERTION_MESSAGES.CROSS_BRANCH_DENIED };
+      }
+      // Per-class enrollments cannot receive monthly payments (T8).
+      if (enrollment.billing_mode !== "monthly") {
+        return {
+          id: null,
+          next_due_date: null,
+          error: PAYMENT_MESSAGES.MONTHLY_NOT_ALLOWED_FOR_PER_CLASS,
+        };
       }
 
       const settings = await getBranchPaymentSettings(tx, parsed.data.branch_id);
@@ -527,6 +535,18 @@ export async function correctMonthlyPayment(
     if (!payment) return { id: null, next_due_date: null, error: PAYMENT_MESSAGES.PAYMENT_NOT_FOUND };
     if (payment.student_disciplines.students.branch_id !== parsed.data.branch_id) {
       return { id: null, next_due_date: null, error: BRANCH_ASSERTION_MESSAGES.CROSS_BRANCH_DENIED };
+    }
+    // Per-class enrollments cannot receive monthly payments (T8).
+    const enrollmentMode = await tx.student_disciplines.findUnique({
+      where: { id: payment.student_discipline_id },
+      select: { billing_mode: true },
+    });
+    if (enrollmentMode?.billing_mode !== "monthly") {
+      return {
+        id: null,
+        next_due_date: null,
+        error: PAYMENT_MESSAGES.MONTHLY_NOT_ALLOWED_FOR_PER_CLASS,
+      };
     }
     const settings = await getBranchPaymentSettings(tx, parsed.data.branch_id);
     if (!settings) {

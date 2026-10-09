@@ -13,7 +13,12 @@
 --     (id, branch_id, discipline_id), so every weekday row matches its
 --     group's branch and discipline (cascade delete with the group).
 --   - student_disciplines.billing_mode ('monthly' | 'per_class') marks
---     per-class students, who never belong to a roster.
+--     per-class students, who never belong to a roster. The billing mode is
+--     set per enrollment; switching an enrollment to per_class is paired at
+--     application level with removal from current/future rosters of that
+--     discipline (T8). discipline_events gains the 'billing_mode_changed'
+--     event type and the 'monthly'/'per_class' reason values so the change
+--     is auditable.
 --   - class_payments gains one_time_class_id (at most one occurrence set),
 --     with partial unique indexes preventing double charging a per-class
 --     student for the same occurrence (T6).
@@ -119,6 +124,18 @@ ALTER TABLE public.student_disciplines
   ADD COLUMN billing_mode text NOT NULL DEFAULT 'monthly',
   ADD CONSTRAINT student_disciplines_billing_mode_ck
     CHECK (billing_mode IN ('monthly','per_class'));
+
+-- Billing-mode changes are audited on discipline_events with the new mode as
+-- the reason, so both closed value lists gain the new values.
+ALTER TABLE public.discipline_events
+  DROP CONSTRAINT discipline_events_type_ck,
+  ADD CONSTRAINT discipline_events_type_ck
+    CHECK (event_type IN ('enrolled','suspended','reactivated','billing_mode_changed'));
+
+ALTER TABLE public.discipline_events
+  DROP CONSTRAINT discipline_events_reason_ck,
+  ADD CONSTRAINT discipline_events_reason_ck
+    CHECK (reason IS NULL OR reason IN ('non_payment', 'manual', 'monthly', 'per_class'));
 
 -- =============================================================================
 -- 5. Roster tables

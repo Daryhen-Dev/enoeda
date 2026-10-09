@@ -19,12 +19,15 @@ import {
   disciplineCreateSchema,
   enrollStudentSchema,
   enrollmentActionSchema,
+  setEnrollmentBillingModeSchema,
   studentDisciplinesQuerySchema,
   type ActiveDisciplinesForBranchInput,
   type DisciplineCreateInput,
   type EnrollStudentInput,
   type EnrollmentActionInput,
+  type SetEnrollmentBillingModeInput,
 } from "./schema";
+import { removeStudentFromCurrentAndFutureRosters } from "@/lib/domain/rosters/cleanup";
 
 export interface ActionResult<T = unknown> {
   success: boolean;
@@ -51,6 +54,7 @@ export interface StudentDisciplineRecord {
   enrolled_at: Date;
   is_active: boolean;
   suspended_at: Date | null;
+  billing_mode: "monthly" | "per_class";
 }
 
 export interface EnrollmentEvent {
@@ -172,6 +176,7 @@ export async function getStudentDisciplines(
           enrolled_at: true,
           is_active: true,
           suspended_at: true,
+          billing_mode: true,
           disciplines: { select: { name: true } },
         },
         orderBy: { enrolled_at: "desc" },
@@ -192,6 +197,7 @@ export async function getStudentDisciplines(
       enrolled_at: row.enrolled_at,
       is_active: row.is_active,
       suspended_at: row.suspended_at,
+      billing_mode: row.billing_mode === "per_class" ? "per_class" : "monthly",
     }));
 
     return { success: true, data: records };
@@ -314,7 +320,7 @@ export async function enrollStudent(
     return { success: false, error: parsed.error.issues[0].message };
   }
 
-  const { student_id, discipline_ids, enrolled_at, branch_id } = parsed.data;
+  const { student_id, discipline_ids, enrolled_at, branch_id, billing_mode } = parsed.data;
 
   try {
     const result = await withAuthenticatedUser(async (tx, ctx) => {
@@ -342,6 +348,7 @@ export async function enrollStudent(
             discipline_id,
             enrolled_at: enrolled_at ? new Date(enrolled_at) : undefined,
             is_active: true,
+            billing_mode,
           },
           select: {
             id: true,
@@ -394,10 +401,13 @@ export async function enrollStudent(
  * Suspend an active enrollment.
  * Owner/Admin-branch via RLS.
  * Requires branch context; validates enrollment belongs to caller's branch.
+ * Also removes the student from the current/future rosters of that
+ * discipline (the roster eligibility trigger only checks on insert) and
+ * reports the removed count without breaking existing callers.
  */
 export async function suspendEnrollment(
   input: EnrollmentActionInput
-): Promise<ActionResult<{ id: string }>> {
+): Promise<ActionResult<{ id: string; removed_roster_entries: number }>> {
   const parsed = enrollmentActionSchema.safeParse(input);
   if (!parsed.success) {
     return { success: false, error: parsed.error.issues[0].message };
@@ -413,7 +423,13 @@ export async function suspendEnrollment(
 
       const enrollment = await tx.student_disciplines.findUnique({
         where: { id: parsed.data.student_discipline_id },
-        select: { id: true, is_active: true, student_id: true, students: { select: { branch_id: true } } },
+        select: {
+          id: true,
+          is_active: true,
+          student_id: true,
+          discipline_id: true,
+          students: { select: { branch_id: true } },
+        },
       });
 
       if (!enrollment) {
@@ -433,6 +449,16 @@ export async function suspendEnrollment(
         where: { id: enrollment.id },
         data: { is_active: false, suspended_at: new Date() },
       });
+      // The roster eligibility trigger only checks on insert, so stale
+      // current/future roster rows must be cleaned at application level.
+      const removedRosterEntries = await removeStudentFromCurrentAndFutureRosters(
+        tx,
+        {
+          branchId: parsed.data.branch_id,
+          studentId: enrollment.student_id,
+          disciplineId: enrollment.discipline_id,
+        }
+      );
 
       await tx.discipline_events.create({
         data: {
@@ -444,7 +470,7 @@ export async function suspendEnrollment(
         },
       });
 
-      return { id: enrollment.id, error: null };
+      return { id: enrollment.id, removed_roster_entries: removedRosterEntries, error: null };
     });
 
     if (!result.success) return result;
@@ -455,7 +481,151 @@ export async function suspendEnrollment(
       };
     }
 
-    return { success: true, data: { id: result.data.id } };
+    return {
+      success: true,
+      data: {
+        id: result.data.id,
+        removed_roster_entries: result.data.removed_roster_entries,
+      },
+    };
+  } catch {
+    return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
+  }
+}
+
+/**
+ * Set the billing mode of one enrollment (student × discipline).
+ * Branch admin or owner only; the enrollment must belong to the branch.
+ * Switching monthly -> per_class removes the student from the current and
+ * future rosters of that discipline (the DB trigger only checks on insert)
+ * and clears next_due_date, which stays NULL for per-class students.
+ * Switching per_class -> monthly keeps next_due_date NULL until the first
+ * monthly payment reconciles it. Every change is audited with a
+ * 'billing_mode_changed' discipline event whose reason is the new mode.
+ */
+export async function setEnrollmentBillingMode(
+  input: SetEnrollmentBillingModeInput
+): Promise<
+  ActionResult<{ billing_mode: "monthly" | "per_class"; removed_roster_entries: number }>
+> {
+  const parsed = setEnrollmentBillingModeSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message };
+  }
+
+  try {
+    const result = await withAuthenticatedUser(async (tx, ctx) => {
+      // Branch context validation — owners have global reach and skip the
+      // per-branch assignment assertion (same rule as roster writes).
+      const isOwner = ctx.roles.includes("owner");
+      const branchError = assertCallerBranchContext(ctx, parsed.data.branch_id);
+      if (branchError && !isOwner) {
+        return {
+          billing_mode: null,
+          removed_roster_entries: 0,
+          error: branchError,
+        };
+      }
+
+      // Branch admin or owner only (teachers are read-only).
+      const isBranchAdmin = ctx.assignments.some(
+        (assignment) =>
+          assignment.role === "admin" &&
+          assignment.branchId === parsed.data.branch_id
+      );
+      if (!isBranchAdmin && !isOwner) {
+        return {
+          billing_mode: null,
+          removed_roster_entries: 0,
+          error: ENROLLMENT_MESSAGES.BILLING_MODE_UNAUTHORIZED,
+        };
+      }
+
+      const enrollment = await tx.student_disciplines.findUnique({
+        where: { id: parsed.data.student_discipline_id },
+        select: {
+          id: true,
+          student_id: true,
+          discipline_id: true,
+          billing_mode: true,
+          students: { select: { branch_id: true } },
+        },
+      });
+
+      if (!enrollment) {
+        return {
+          billing_mode: null,
+          removed_roster_entries: 0,
+          error: ENROLLMENT_MESSAGES.NOT_FOUND,
+        };
+      }
+
+      if (enrollment.students.branch_id !== parsed.data.branch_id) {
+        return {
+          billing_mode: null,
+          removed_roster_entries: 0,
+          error: BRANCH_ASSERTION_MESSAGES.CROSS_BRANCH_DENIED,
+        };
+      }
+
+      if (enrollment.billing_mode === parsed.data.billing_mode) {
+        return {
+          billing_mode: parsed.data.billing_mode,
+          removed_roster_entries: 0,
+          error: null,
+        };
+      }
+
+      let removedRosterEntries = 0;
+      if (parsed.data.billing_mode === "per_class") {
+        removedRosterEntries = await removeStudentFromCurrentAndFutureRosters(
+          tx,
+          {
+            branchId: parsed.data.branch_id,
+            studentId: enrollment.student_id,
+            disciplineId: enrollment.discipline_id,
+          }
+        );
+      }
+
+      await tx.student_disciplines.update({
+        where: { id: enrollment.id },
+        data: {
+          billing_mode: parsed.data.billing_mode,
+          next_due_date: null,
+        },
+      });
+
+      await tx.discipline_events.create({
+        data: {
+          student_discipline_id: enrollment.id,
+          event_type: "billing_mode_changed",
+          reason: parsed.data.billing_mode,
+          performed_by: ctx.userId,
+        },
+      });
+
+      return {
+        billing_mode: parsed.data.billing_mode,
+        removed_roster_entries: removedRosterEntries,
+        error: null,
+      };
+    });
+
+    if (!result.success) return result;
+    if (result.data.billing_mode === null) {
+      return {
+        success: false,
+        error: result.data.error ?? COMMON_MESSAGES.UNEXPECTED_ERROR,
+      };
+    }
+    return {
+      success: true,
+      data: {
+        billing_mode: result.data.billing_mode,
+        removed_roster_entries: result.data.removed_roster_entries,
+      },
+    };
   } catch {
     return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
   }
