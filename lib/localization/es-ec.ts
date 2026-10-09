@@ -856,11 +856,31 @@ export const TEACHER_CONFLICT_MESSAGES = {
 
 export const TEACHER_ASSIGN_MESSAGES = {
   ASSIGNED: "Profesor asignado correctamente.",
-  ASSIGN_TITLE: "Asignar profesor a la sesión",
-  ASSIGN_DESCRIPTION: "Seleccione el profesor que dará esta clase en la fecha indicada.",
+  // Session-level (per-date) assignment = a day substitution of a recurring
+  // occurrence; the copy must make that scope explicit.
+  ASSIGN_TITLE: "Cambiar profesor solo de esta clase",
+  ASSIGN_DESCRIPTION:
+    "El cambio aplica únicamente a esta fecha: es una sustitución del día. Las demás clases del grupo conservan a su profesor habitual.",
   TEACHER_LABEL: "Profesor",
   TEACHER_PLACEHOLDER: "Seleccionar…",
   CONFIRM: "Asignar",
+  // Group-wide (monthly class group) teacher change.
+  GROUP_ACTION: "Cambiar profesor",
+  GROUP_TRIGGER_ARIA_LABEL: (name: string) =>
+    `Cambiar profesor del grupo ${name}`,
+  GROUP_TITLE: "Cambiar profesor del grupo",
+  GROUP_DESCRIPTION:
+    "El cambio aplica desde ahora. Las clases ya dictadas conservan su profesor y las sustituciones de días puntuales se mantienen.",
+  NO_TEACHER_OPTION: "Sin profesor",
+  GROUP_CONFIRM: "Guardar",
+  // One-time class teacher change.
+  ONE_TIME_ACTION: "Cambiar profesor",
+  ONE_TIME_TRIGGER_ARIA_LABEL: (date: string) =>
+    `Cambiar profesor de la clase única del ${date}`,
+  ONE_TIME_TITLE: "Cambiar profesor de la clase única",
+  ONE_TIME_DESCRIPTION:
+    "Seleccione el profesor que dará esta clase única o déjela sin profesor.",
+  ONE_TIME_CONFIRM: "Guardar",
   INVALID_TEACHER:
     "El profesor debe tener un rol activo de profesor en esta sucursal.",
   UNAUTHORIZED:
@@ -873,6 +893,13 @@ export const TEACHER_ASSIGN_MESSAGES = {
   SUBSTITUTION_CLEARED:
     "Sustitución eliminada: la clase vuelve al profesor habitual.",
   SUBSTITUTION_NONE: "No había sustitución para esta fecha.",
+  CLEAR_SUBSTITUTION_ACTION: "Quitar sustitución",
+  CLEAR_SUBSTITUTION_TRIGGER_ARIA_LABEL: (date: string) =>
+    `Quitar la sustitución del ${date}`,
+  CLEAR_SUBSTITUTION_TITLE: "¿Quitar la sustitución?",
+  CLEAR_SUBSTITUTION_DESCRIPTION:
+    "La clase de este día volverá a ser dictada por el profesor del grupo.",
+  CLEAR_SUBSTITUTION_CONFIRM: "Quitar sustitución",
 } as const
 
 export const ENROLLMENT_MESSAGES = {

@@ -34,7 +34,7 @@ Branch: feat/teacher-substitution, stacked on feat/class-schedules-wording.
       a baseline period for rows without one, update class_series and rows).
 - [x] T2: Domain: setClassSeriesTeacher, setOneTimeClassTeacher,
       clearSessionSubstitution; drop target "recurring".
-- [ ] T3: UI: group teacher change in the schedule list, one-time teacher
+- [x] T3: UI: group teacher change in the schedule list, one-time teacher
       change (calendar + schedule list), "Quitar sustitución".
 - [ ] T4: Apply migration to Supabase (user-authorized pattern), verify.
 
@@ -52,3 +52,13 @@ Branch: feat/teacher-substitution, stacked on feat/class-schedules-wording.
   assignTeacher is session-only and now validates the teacher role.
   TDD RED (ENOENT / 36 failed) -> GREEN. tsc clean; vitest 1127 passed /
   1 skipped; eslint clean.
+- T3 (delegated: gentle-ai-worker): schedule list "Cambiar profesor" per
+  monthly group (teacher or "Sin profesor", from-now explanation, disabled
+  for inactive groups); new components/classes/one-time-teacher-dialog.tsx
+  used in the calendar session block and the "Clases únicas" rows; "Quitar
+  sustitución" with confirm in the calendar for substituted recurring
+  sessions; per-day "Cambiar profesor" copy now states it is a date-only
+  substitution. 13 new component tests (written alongside, no RED captured;
+  Base UI Select option clicks are not exercised in jsdom, payload mapping
+  covered via preselection). Parent re-ran the 3 UI test files twice: 22/22.
+  tsc clean; vitest 1140 passed / 1 skipped; eslint clean; pnpm build OK.
