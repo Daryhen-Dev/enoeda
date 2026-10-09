@@ -163,3 +163,19 @@ their roster.
   CONSTRAINT all defined in earlier migrations. Migration NOT applied yet
   (pending user authorization). NOT NULL columns without backfill rely on
   the T1 wipe (tables empty).
+- Migration 20260910000000 APPLIED to Supabase dboqqtfsywhjqhbpxdbm
+  (user-authorized) via `pg` + DATABASE_URL, executing the committed file as
+  one transaction (own BEGIN/COMMIT). Precheck: all target tables 0 rows, the
+  5 dropped constraints present, new tables/columns absent. Post-check: both
+  overlap constraints gone; class_guests / class_series_students /
+  one_time_class_students exist with RLS enabled+forced (7/4/4 policies);
+  class_series monthly columns, series_id NOT NULL with composite FK,
+  billing_mode default 'monthly', class_payments.one_time_class_id, clone-once
+  and double-charge unique indexes, eligibility/guest triggers, extended
+  discipline_events CHECKs; revoke_teacher_with_reassignment without conflict
+  scan. Live probe (rolled back, 0 rows left): overlapping weekday rows
+  allowed; monthly student added; per_class student rejected
+  (roster_student_not_eligible); mid-month period rejected; non-owner branch
+  admin sees own roster rows and 0 rows from other branches.
+  Note: supabase_migrations.schema_migrations is not updated by this path
+  (latest recorded there stays 20260904000000, same as prior applies).
