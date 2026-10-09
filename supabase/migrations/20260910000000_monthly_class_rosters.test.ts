@@ -147,6 +147,24 @@ describe("Monthly class rosters migration — structural validation", () => {
     }
   });
 
+  it("adds one_time_class_id to class_payments with an exclusive-occurrence CHECK", () => {
+    expect(sql).toMatch(
+      /ALTER TABLE public\.class_payments\s+ADD COLUMN one_time_class_id uuid REFERENCES public\.one_time_classes\(id\) ON DELETE SET NULL,\s+ADD CONSTRAINT class_payments_single_occurrence_ck\s+CHECK \(scheduled_class_id IS NULL OR one_time_class_id IS NULL\)/
+    );
+    expect(sql).toMatch(
+      /CREATE INDEX class_payments_one_time_class_id_idx\s+ON public\.class_payments \(one_time_class_id\)/
+    );
+  });
+
+  it("adds partial unique indexes preventing double charging per occurrence", () => {
+    expect(sql).toMatch(
+      /CREATE UNIQUE INDEX class_payments_scheduled_occurrence_uq\s+ON public\.class_payments \(student_discipline_id, scheduled_class_id, class_date\)\s+WHERE scheduled_class_id IS NOT NULL/
+    );
+    expect(sql).toMatch(
+      /CREATE UNIQUE INDEX class_payments_one_time_occurrence_uq\s+ON public\.class_payments \(student_discipline_id, one_time_class_id\)\s+WHERE one_time_class_id IS NOT NULL/
+    );
+  });
+
   it("is transactional and destructive statements are limited to the two intentional constraint drops", () => {
     expect(sql.trimStart()).toMatch(/^--[\s\S]*?BEGIN;/);
     expect(sql.trimEnd()).toMatch(/COMMIT;\s*$/);

@@ -745,6 +745,7 @@ model one_time_classes {
   disciplines   disciplines  @relation(fields: [discipline_id], references: [id], onUpdate: NoAction)
   attendance    attendance[]
   one_time_class_students one_time_class_students[]
+  class_payments          class_payments[]
 
   @@index([branch_id])
   @@index([discipline_id])
@@ -919,12 +920,19 @@ model class_payments {
   amount                Decimal             @db.Decimal(10, 2)
   class_date            DateTime            @default(dbgenerated("CURRENT_DATE")) @db.Date
   scheduled_class_id    String?             @db.Uuid
+  one_time_class_id     String?             @db.Uuid
   recorded_by           String              @db.Uuid
   created_at            DateTime            @default(now()) @db.Timestamptz(6)
   student_disciplines   student_disciplines @relation(fields: [student_discipline_id], references: [id], onUpdate: NoAction)
+  one_time_classes      one_time_classes?   @relation(fields: [one_time_class_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
 
   @@index([student_discipline_id])
   @@index([class_date])
+  @@index([one_time_class_id])
+  // Uniqueness is enforced in the DB via two PARTIAL unique indexes — a
+  // per-class student is charged at most once per class occurrence.
+  @@unique([student_discipline_id, scheduled_class_id, class_date], map: "class_payments_scheduled_occurrence_uq", where: raw("(scheduled_class_id IS NOT NULL)"))
+  @@unique([student_discipline_id, one_time_class_id], map: "class_payments_one_time_occurrence_uq", where: raw("(one_time_class_id IS NOT NULL)"))
   @@schema("public")
 }
 

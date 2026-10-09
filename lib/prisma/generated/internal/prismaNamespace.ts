@@ -4330,6 +4330,7 @@ export const Class_paymentsScalarFieldEnum = {
   amount: 'amount',
   class_date: 'class_date',
   scheduled_class_id: 'scheduled_class_id',
+  one_time_class_id: 'one_time_class_id',
   recorded_by: 'recorded_by',
   created_at: 'created_at'
 } as const

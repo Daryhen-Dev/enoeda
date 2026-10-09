@@ -49,7 +49,7 @@ their roster.
 - [x] T4: Roster actions (add/remove/list) for series and one-time classes
       with eligibility rules.
 - [x] T5: Clone group to next month with roster and skipped-students report.
-- [ ] T6: Attendance reads the assigned roster; teacher/admin add per-class
+- [x] T6: Attendance reads the assigned roster; teacher/admin add per-class
       students to a session with inline class payment.
 - [ ] T7: Guests: guest table, add guest in attendance, convert to student.
 - [ ] T8: Billing mode: set at enrollment, per-class excluded from overdue.
@@ -106,3 +106,16 @@ their roster.
   groups. Parent fixes: new series id taken from the create result; type
   mapping into RosterEligibilityStudent. tsc clean; vitest 973 passed /
   1 skipped; eslint clean.
+- T6 (delegated: gentle-ai-worker): migration 20260910000000 (still unapplied)
+  gains class_payments.one_time_class_id, single-occurrence CHECK and
+  double-charge partial unique indexes. Attendance list = roster + per-class
+  students in the occurrence + history rows (read-only), with source badge,
+  billing mode and payment flag. takeAttendance accepts only roster and
+  already-added per-class students. New listPerClassCandidates and
+  addPerClassStudentToSession (attendance + inline class payment in one
+  transaction; missing price or duplicate payment -> no writes). Shared
+  createClassPaymentForOccurrence helper; registerClassPayment accepts
+  one_time_class_id and now also requires active branch payment settings.
+  UI: source badges, per-class adder with default-checked payment, "Cobrar
+  clase" for unpaid per-class rows. TDD RED 15 failed -> GREEN. tsc clean;
+  vitest 996 passed / 1 skipped; eslint clean.

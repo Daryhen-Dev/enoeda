@@ -11,8 +11,11 @@ import {
   BRANCH_READ_ACCESS,
 } from "@/lib/auth/branch-read-access";
 import { formatDatabaseDateOnly, formatDateOnly, parseDateOnly } from "@/lib/date";
-import type { TransactionClient } from "@/lib/prisma/client";
 import { BRANCH_MESSAGES, COMMON_MESSAGES, PAYMENT_MESSAGES } from "@/lib/localization/es-ec";
+import {
+  createClassPaymentForOccurrence,
+  getBranchPaymentSettings,
+} from "./class-payment";
 import {
   configureDisciplineClassPriceSchema,
   registerMonthlyPaymentSchema,
@@ -75,11 +78,6 @@ export interface ClassPaymentRecord {
   created_at: Date;
 }
 
-interface BranchPaymentSettingsRow {
-  payment_due_day: number;
-  payment_edit_window_days: number;
-}
-
 interface PaymentResourceRow {
   id: string;
   created_at: Date;
@@ -93,18 +91,6 @@ function mapPaymentTransactionError(error: unknown): string | undefined {
     return PAYMENT_MESSAGES.PERIOD_OVERLAP;
   }
   return undefined;
-}
-
-async function getBranchPaymentSettings(
-  tx: TransactionClient,
-  branchId: string
-): Promise<BranchPaymentSettingsRow | null> {
-  const rows = await tx.$queryRaw<BranchPaymentSettingsRow[]>`
-    SELECT payment_due_day, payment_edit_window_days
-    FROM public.branches
-    WHERE id = ${branchId} AND is_active = true
-  `;
-  return rows[0] ?? null;
 }
 
 /**
@@ -236,6 +222,9 @@ export async function registerMonthlyPayment(
 /**
  * Admin + Teacher registers a per-class payment.
  * Amount is auto-read from disciplines.class_price; rejects when NULL.
+ * Optionally binds the payment to a class occurrence (scheduled_class_id or
+ * one_time_class_id); the partial unique indexes from migration
+ * 20260910000000 prevent double charging the same occurrence.
  * Requires branch context; validates enrollment belongs to the caller's branch.
  */
 export async function registerClassPayment(
@@ -254,52 +243,23 @@ export async function registerClassPayment(
         return { id: null, amount: null, error: branchError };
       }
 
-      const enrollment = await tx.student_disciplines.findUnique({
-        where: { id: parsed.data.student_discipline_id },
-        select: {
-          id: true,
-          disciplines: { select: { class_price: true } },
-          students: { select: { branch_id: true } },
-        },
+      const created = await createClassPaymentForOccurrence({
+        tx,
+        student_discipline_id: parsed.data.student_discipline_id,
+        branch_id: parsed.data.branch_id,
+        recorded_by: ctx.userId,
+        class_date: parsed.data.class_date
+          ? parseDateOnly(parsed.data.class_date)
+          : undefined,
+        scheduled_class_id: parsed.data.scheduled_class_id ?? null,
+        one_time_class_id: parsed.data.one_time_class_id ?? null,
       });
 
-      if (!enrollment) {
-        return { id: null, amount: null, error: PAYMENT_MESSAGES.ENROLLMENT_NOT_FOUND };
+      if (!created.ok) {
+        return { id: null, amount: null, error: created.error };
       }
 
-      // Cross-branch guard
-      if (enrollment.students.branch_id !== parsed.data.branch_id) {
-        return { id: null, amount: null, error: BRANCH_ASSERTION_MESSAGES.CROSS_BRANCH_DENIED };
-      }
-
-      const classPrice = enrollment.disciplines.class_price;
-      if (classPrice === null || classPrice === undefined) {
-        return { id: null, amount: null, error: PAYMENT_MESSAGES.CLASS_PRICE_NOT_SET };
-      }
-
-      const settings = await getBranchPaymentSettings(tx, parsed.data.branch_id);
-      if (!settings) {
-        return { id: null, amount: null, error: BRANCH_MESSAGES.INACTIVE_OR_NOT_FOUND };
-      }
-
-      const classPayment = await tx.class_payments.create({
-        data: {
-          student_discipline_id: enrollment.id,
-          amount: classPrice,
-          class_date: parsed.data.class_date
-            ? parseDateOnly(parsed.data.class_date)
-            : undefined,
-          scheduled_class_id: parsed.data.scheduled_class_id ?? null,
-          recorded_by: ctx.userId,
-        },
-        select: { id: true, amount: true },
-      });
-
-      return {
-        id: classPayment.id,
-        amount: Number(classPayment.amount),
-        error: null,
-      };
+      return { id: created.id, amount: created.amount, error: null };
     });
 
     if (!result.success) return result;

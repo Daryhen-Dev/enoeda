@@ -14,6 +14,9 @@
 --     group's branch and discipline (cascade delete with the group).
 --   - student_disciplines.billing_mode ('monthly' | 'per_class') marks
 --     per-class students, who never belong to a roster.
+--   - class_payments gains one_time_class_id (at most one occurrence set),
+--     with partial unique indexes preventing double charging a per-class
+--     student for the same occurrence (T6).
 --   - Roster tables class_series_students / one_time_class_students with
 --     eligibility triggers (same branch as the class, active student, active
 --     monthly-billed enrollment in the class discipline) and branch-scoped
@@ -288,5 +291,28 @@ CREATE POLICY "Teacher branch-scoped read on one_time_class_students"
 
 REVOKE INSERT, UPDATE, DELETE ON public.one_time_class_students FROM anon;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.one_time_class_students TO authenticated;
+
+-- =============================================================================
+-- 6. class_payments: per-class payments can bind to a one-time class
+--    occurrence, and a student can be charged at most once per occurrence
+-- =============================================================================
+
+ALTER TABLE public.class_payments
+  ADD COLUMN one_time_class_id uuid REFERENCES public.one_time_classes(id) ON DELETE SET NULL,
+  ADD CONSTRAINT class_payments_single_occurrence_ck
+    CHECK (scheduled_class_id IS NULL OR one_time_class_id IS NULL);
+
+CREATE INDEX class_payments_one_time_class_id_idx
+  ON public.class_payments (one_time_class_id);
+
+-- Prevent double charging: at most one class payment per student,
+-- occurrence and class date.
+CREATE UNIQUE INDEX class_payments_scheduled_occurrence_uq
+  ON public.class_payments (student_discipline_id, scheduled_class_id, class_date)
+  WHERE scheduled_class_id IS NOT NULL;
+
+CREATE UNIQUE INDEX class_payments_one_time_occurrence_uq
+  ON public.class_payments (student_discipline_id, one_time_class_id)
+  WHERE one_time_class_id IS NOT NULL;
 
 COMMIT;

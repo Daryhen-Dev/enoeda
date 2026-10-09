@@ -832,6 +832,8 @@ export const ATTENDANCE_MESSAGES = {
   CORRECTION_WINDOW_EXCEEDED: "Solo se puede corregir la asistencia dentro de los 7 días posteriores a la sesión.",
   CAPTURE_WINDOW_EXCEEDED: "No se puede registrar asistencia para sesiones con más de 30 días de antigüedad.",
   LOAD_FAILURE: "No se pudo cargar la asistencia.",
+  STUDENT_NOT_PER_CLASS: "El estudiante no tiene una inscripción por clase activa en esta disciplina.",
+  STUDENT_ALREADY_ADDED: "El estudiante ya está registrado en esta sesión.",
 } as const
 
 export const LEVEL_MESSAGES = {
@@ -1014,6 +1016,24 @@ export const ATTENDANCE_FORM_MESSAGES = {
   SUSPENDED_NOTE: "La sesión está suspendida. No se puede registrar asistencia.",
   TAKE_ATTENDANCE: "Tomar asistencia",
   STATS_LABEL: "Asistencia",
+  SOURCE_ROSTER: "Alumno del grupo",
+  SOURCE_PER_CLASS: "Por clase",
+  SOURCE_HISTORY: "Historial",
+  ADD_PER_CLASS_TITLE: "Agregar alumno por clase",
+  ADD_PER_CLASS_SEARCH_LABEL: "Buscar alumno por clase",
+  ADD_PER_CLASS_SEARCH_PLACEHOLDER: "Nombre, apellido o cédula…",
+  ADD_PER_CLASS_NO_RESULTS: "Sin candidatos disponibles.",
+  ADD_PER_CLASS_REGISTER_PAYMENT: (amount: string) =>
+    `Registrar pago de la clase (${amount})`,
+  ADD_PER_CLASS_CONFIRM: "Agregar a la sesión",
+  ADD_PER_CLASS_PRICE_UNSET:
+    "Esta disciplina no tiene precio por clase configurado.",
+  ADDING: "Agregando…",
+  ADD_FAILURE: "No se pudo agregar el estudiante a la sesión.",
+  CANDIDATES_SEARCH_LABEL: "Buscar por nombre, apellido o cédula",
+  ATTENDED_STATE_PRESENT: "Presente",
+  ATTENDED_STATE_ABSENT: "Ausente",
+  ATTENDED_STATE_UNMARKED: "Sin registrar",
 } as const
 
 export const ATTENDANCE_TOAST = {
@@ -1079,6 +1099,8 @@ export const PAYMENT_MESSAGES = {
   SAVING: "Guardando…",
   REGISTER_ACTION: "Registrar",
   CHARGE_CLASS: "Cobrar clase",
+  ALREADY_PAID: "Este estudiante ya tiene un pago registrado para esta clase.",
+  OCCURRENCE_EXCLUSIVE: "Indique solo una clase: programada o única.",
 } as const
 
 /** Monthly payment validation (admin bulk suspension) messages. */

@@ -4,7 +4,7 @@ import { useState } from "react"
 import { LoaderCircleIcon, ClipboardCheckIcon } from "lucide-react"
 
 import { getAttendanceForSession } from "@/lib/domain/attendance/actions"
-import type { EligibleStudentAttendance } from "@/lib/domain/attendance/actions"
+import type { SessionAttendanceEntry } from "@/lib/domain/attendance/actions"
 import { AttendanceSheet } from "@/components/attendance/attendance-sheet"
 import {
   Sheet,
@@ -48,7 +48,7 @@ export function AttendanceSheetDialog({
 }: AttendanceSheetDialogProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [students, setStudents] = useState<EligibleStudentAttendance[]>([])
+  const [students, setStudents] = useState<SessionAttendanceEntry[]>([])
   const [loadError, setLoadError] = useState<string | null>(null)
 
   async function handleOpen(nextIsOpen: boolean) {
