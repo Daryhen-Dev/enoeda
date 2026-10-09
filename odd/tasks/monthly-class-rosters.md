@@ -179,3 +179,14 @@ their roster.
   admin sees own roster rows and 0 rows from other branches.
   Note: supabase_migrations.schema_migrations is not updated by this path
   (latest recorded there stays 20260904000000, same as prior applies).
+
+## Fix — pg concurrent query deprecation (user report)
+Dev overlay at /dashboard: "Calling client.query() when the client is already
+executing a query is deprecated" (pg 8.23, breaks in pg@9). Cause: Promise.all
+over queries on the same interactive-transaction client (one pg connection).
+10 sites (5 pre-existing on main, e.g. dashboard KPIs; 5 from this branch)
+serialized with identical queries/order; new guard
+lib/domain/transaction-concurrency.test.ts fails on any Promise.all touching
+tx (RED listed exactly the 10 sites). Page-level Promise.all of independent
+server actions reviewed and left as is. tsc clean; vitest 1067 passed /
+1 skipped; eslint clean.

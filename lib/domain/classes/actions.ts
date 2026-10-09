@@ -649,9 +649,9 @@ export async function cloneClassGroupToNextMonth(
         select: { student_id: true },
       });
       const studentIds = rosterRows.map((row) => row.student_id);
-      const [students, enrollments] = await Promise.all([
+      const students =
         studentIds.length > 0
-          ? tx.students.findMany({
+          ? await tx.students.findMany({
               where: { id: { in: studentIds } },
               select: {
                 id: true,
@@ -661,9 +661,10 @@ export async function cloneClassGroupToNextMonth(
                 surname: true,
               },
             })
-          : Promise.resolve([]),
+          : [];
+      const enrollments =
         studentIds.length > 0
-          ? tx.student_disciplines.findMany({
+          ? await tx.student_disciplines.findMany({
               where: {
                 student_id: { in: studentIds },
                 discipline_id: source.discipline_id,
@@ -674,8 +675,7 @@ export async function cloneClassGroupToNextMonth(
                 billing_mode: true,
               },
             })
-          : Promise.resolve([]),
-      ]);
+          : [];
 
       const studentById = new Map(
         students.map((student) => [student.id, student])

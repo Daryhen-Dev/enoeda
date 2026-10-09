@@ -391,34 +391,33 @@ export async function addStudentsToRoster(
         throw new Error(ROSTER_MESSAGES.NOT_FOUND);
       }
 
-      const [students, enrollments, assigned] = await Promise.all([
-        tx.students.findMany({
-          where: { id: { in: student_ids } },
-          select: { id: true, branch_id: true, is_active: true },
-        }),
-        tx.student_disciplines.findMany({
-          where: {
-            student_id: { in: student_ids },
-            discipline_id: target.disciplineId,
-          },
-          select: { student_id: true, is_active: true, billing_mode: true },
-        }),
+      const students = await tx.students.findMany({
+        where: { id: { in: student_ids } },
+        select: { id: true, branch_id: true, is_active: true },
+      });
+      const enrollments = await tx.student_disciplines.findMany({
+        where: {
+          student_id: { in: student_ids },
+          discipline_id: target.disciplineId,
+        },
+        select: { student_id: true, is_active: true, billing_mode: true },
+      });
+      const assigned =
         target.kind === "series"
-          ? tx.class_series_students.findMany({
+          ? await tx.class_series_students.findMany({
               where: {
                 series_id: target.targetId,
                 student_id: { in: student_ids },
               },
               select: { student_id: true },
             })
-          : tx.one_time_class_students.findMany({
+          : await tx.one_time_class_students.findMany({
               where: {
                 one_time_class_id: target.targetId,
                 student_id: { in: student_ids },
               },
               select: { student_id: true },
-            }),
-      ]);
+            });
 
       const studentById = new Map(
         students.map((s) => [

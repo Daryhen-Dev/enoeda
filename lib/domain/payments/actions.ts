@@ -314,40 +314,38 @@ export async function getStudentPayments(
         return { __branchError: BRANCH_ASSERTION_MESSAGES.CROSS_BRANCH_DENIED } as const;
       }
 
-      const [monthly, perClass] = await Promise.all([
-        tx.payments.findMany({
-          where: { student_disciplines: { student_id: parsed.data.student_id } },
-          select: {
-            id: true,
-            amount: true,
-            months_covered: true,
-            period_start: true,
-            period_end: true,
-            payment_date: true,
-            recorded_by: true,
-            note: true,
-            created_at: true,
-            student_disciplines: {
-              select: { disciplines: { select: { name: true } } },
-            },
+      const monthly = await tx.payments.findMany({
+        where: { student_disciplines: { student_id: parsed.data.student_id } },
+        select: {
+          id: true,
+          amount: true,
+          months_covered: true,
+          period_start: true,
+          period_end: true,
+          payment_date: true,
+          recorded_by: true,
+          note: true,
+          created_at: true,
+          student_disciplines: {
+            select: { disciplines: { select: { name: true } } },
           },
-          orderBy: { created_at: "desc" },
-        }),
-        tx.class_payments.findMany({
-          where: { student_disciplines: { student_id: parsed.data.student_id } },
-          select: {
-            id: true,
-            amount: true,
-            class_date: true,
-            recorded_by: true,
-            created_at: true,
-            student_disciplines: {
-              select: { disciplines: { select: { name: true } } },
-            },
+        },
+        orderBy: { created_at: "desc" },
+      });
+      const perClass = await tx.class_payments.findMany({
+        where: { student_disciplines: { student_id: parsed.data.student_id } },
+        select: {
+          id: true,
+          amount: true,
+          class_date: true,
+          recorded_by: true,
+          created_at: true,
+          student_disciplines: {
+            select: { disciplines: { select: { name: true } } },
           },
-          orderBy: { created_at: "desc" },
-        }),
-      ]);
+        },
+        orderBy: { created_at: "desc" },
+      });
 
       return {
         monthly: monthly.map((row) => ({

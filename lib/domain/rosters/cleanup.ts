@@ -34,22 +34,20 @@ export async function removeStudentFromCurrentAndFutureRosters(
   const todayUtc = dateOnlyToUtcDate(today);
   const currentMonthStart = dateOnlyToUtcDate(`${today.slice(0, 7)}-01`);
 
-  const [series, upcomingOneTimeClasses] = await Promise.all([
-    tx.class_series.findMany({
-      where: {
-        discipline_id: disciplineId,
-        period_month: { gte: currentMonthStart },
-      },
-      select: { id: true },
-    }),
-    tx.one_time_classes.findMany({
-      where: {
-        discipline_id: disciplineId,
-        class_date: { gte: todayUtc },
-      },
-      select: { id: true },
-    }),
-  ]);
+  const series = await tx.class_series.findMany({
+    where: {
+      discipline_id: disciplineId,
+      period_month: { gte: currentMonthStart },
+    },
+    select: { id: true },
+  });
+  const upcomingOneTimeClasses = await tx.one_time_classes.findMany({
+    where: {
+      discipline_id: disciplineId,
+      class_date: { gte: todayUtc },
+    },
+    select: { id: true },
+  });
 
   let removed = 0;
 

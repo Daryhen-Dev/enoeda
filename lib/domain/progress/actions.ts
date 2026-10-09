@@ -120,73 +120,58 @@ export async function getStudentProgressSummary(
         return [];
       }
 
-      const [progressRecords, levels, attendanceRecords, requirementOverrides] =
-        await Promise.all([
-        tx.student_progress.findMany({
-          where: {
-            student_id: parsed.data.student_id,
-            discipline_id: { in: disciplineIds },
-          },
-          select: {
-            id: true,
-            discipline_id: true,
-            level_id: true,
-            promoted_at: true,
-            created_at: true,
-          },
-          orderBy: [
-            { promoted_at: "desc" },
-            { created_at: "desc" },
-            { id: "desc" },
+      const progressRecords = await tx.student_progress.findMany({
+        where: {
+          student_id: parsed.data.student_id,
+          discipline_id: { in: disciplineIds },
+        },
+      });
+      const levels = await tx.discipline_levels.findMany({
+        where: { discipline_id: { in: disciplineIds } },
+        select: {
+          id: true,
+          discipline_id: true,
+          name: true,
+          color: true,
+          sort_order: true,
+          required_attended_sessions: true,
+        },
+        orderBy: [{ discipline_id: "asc" }, { sort_order: "asc" }],
+      });
+      const attendanceRecords = await tx.attendance.findMany({
+        where: {
+          student_id: parsed.data.student_id,
+          attended: true,
+          OR: [
+            {
+              scheduled_classes: {
+                branch_id: parsed.data.branch_id,
+                discipline_id: { in: disciplineIds },
+              },
+            },
+            {
+              one_time_classes: {
+                branch_id: parsed.data.branch_id,
+                discipline_id: { in: disciplineIds },
+              },
+            },
           ],
-        }),
-        tx.discipline_levels.findMany({
-          where: { discipline_id: { in: disciplineIds } },
-          select: {
-            id: true,
-            discipline_id: true,
-            name: true,
-            color: true,
-            sort_order: true,
-            required_attended_sessions: true,
-          },
-          orderBy: [{ discipline_id: "asc" }, { sort_order: "asc" }],
-        }),
-        tx.attendance.findMany({
-          where: {
-            student_id: parsed.data.student_id,
-            attended: true,
-            OR: [
-              {
-                scheduled_classes: {
-                  branch_id: parsed.data.branch_id,
-                  discipline_id: { in: disciplineIds },
-                },
-              },
-              {
-                one_time_classes: {
-                  branch_id: parsed.data.branch_id,
-                  discipline_id: { in: disciplineIds },
-                },
-              },
-            ],
-          },
-          select: {
-            session_date: true,
-            scheduled_classes: { select: { discipline_id: true } },
-            one_time_classes: { select: { discipline_id: true } },
-          },
-        }),
-        tx.branch_level_requirements.findMany({
-          where: { branch_id: parsed.data.branch_id },
-          select: {
-            branch_id: true,
-            level_id: true,
-            required_attended_sessions: true,
-            updated_at: true,
-          },
-        }),
-      ]);
+        },
+        select: {
+          session_date: true,
+          scheduled_classes: { select: { discipline_id: true } },
+          one_time_classes: { select: { discipline_id: true } },
+        },
+      });
+      const requirementOverrides = await tx.branch_level_requirements.findMany({
+        where: { branch_id: parsed.data.branch_id },
+        select: {
+          branch_id: true,
+          level_id: true,
+          required_attended_sessions: true,
+          updated_at: true,
+        },
+      });
 
       const currentProgressByDiscipline = new Map<
         string,
