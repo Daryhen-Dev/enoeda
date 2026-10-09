@@ -156,3 +156,10 @@ their roster.
   roster actions for recurring and one-time sessions. Create dialogs offer
   "Asignar alumnos" after success. tsc clean; vitest 1066 passed / 1 skipped;
   eslint clean; pnpm build OK (27 pages).
+- Independent verification (gentle-ai-verify) at 00617cb: tree clean; tsc
+  clean; vitest 1066 passed / 1 skipped; eslint clean on 56 changed files;
+  pnpm build OK; all generated Prisma models tracked; migration
+  20260910000000 wrapped in BEGIN/COMMIT, no data deletion, 5 DROP
+  CONSTRAINT all defined in earlier migrations. Migration NOT applied yet
+  (pending user authorization). NOT NULL columns without backfill rely on
+  the T1 wipe (tables empty).
