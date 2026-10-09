@@ -50,6 +50,9 @@ export type CreateMonthlyClassGroupInput = z.infer<
 >;
 export type CreateOneTimeClassInput = z.infer<typeof createOneTimeClassSchema>;
 export type ListClassSeriesInput = z.infer<typeof listClassSeriesSchema>;
+export type ListUpcomingOneTimeClassesInput = z.infer<
+  typeof listUpcomingOneTimeClassesSchema
+>;
 export type RenameClassSeriesInput = z.infer<typeof renameClassSeriesSchema>;
 
 export const deactivateScheduledClassSchema = z.object({
@@ -60,7 +63,7 @@ export const deactivateScheduledClassSchema = z.object({
 // Targets the materialized series identity (scheduled_classes.series_id).
 // The caller passes EITHER any one row of the series (scheduled_class_id —
 // the calendar dialog) OR the series identity itself (series_id — the
-// concurrencias section); passing both or neither is rejected.
+// class-schedules section); passing both or neither is rejected.
 export const deactivateScheduledClassSeriesSchema = z
   .object({
     branch_id: z.uuid(),
@@ -79,6 +82,10 @@ export const deactivateScheduledClassSeriesSchema = z
 export const listClassSeriesSchema = z.object({
   branch_id: z.uuid(),
   period_month: periodMonthSchema.optional(),
+});
+
+export const listUpcomingOneTimeClassesSchema = z.object({
+  branch_id: z.uuid(),
 });
 
 export const renameClassSeriesSchema = z.object({

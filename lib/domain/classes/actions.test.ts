@@ -15,6 +15,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Import the schemas directly to test validation
 import {
+  listUpcomingOneTimeClassesSchema,
   createMonthlyClassGroupSchema,
   deactivateScheduledClassSchema,
   deactivateScheduledClassSeriesSchema,
@@ -44,6 +45,7 @@ import {
   deactivateScheduledClassSeries,
   deactivateAllFutureClasses,
   listClassSeries,
+  listUpcomingOneTimeClasses,
   renameClassSeries,
 } from "./actions";
 import { CLASS_MESSAGES } from "@/lib/localization/es-ec";
@@ -53,6 +55,7 @@ const DISCIPLINE_A = "cccccccc-1111-2222-8333-444444444444";
 const CLASS_ID = "11111111-2222-3333-8444-555555555555";
 const SERIES_ID = "99999999-8888-7777-8666-555555555555";
 const SERIES_B_ID = "99999999-8888-7777-8666-555555555556";
+const ONE_TIME_ID = "77777777-8888-7777-8333-444444444444";
 const TEACHER_A = "dddddddd-1111-2222-8333-444444444444";
 
 const mockTx = {
@@ -77,7 +80,11 @@ const mockTx = {
     upsert: vi.fn(),
   },
   one_time_classes: {
+    findMany: vi.fn(),
     updateMany: vi.fn(),
+  },
+  one_time_class_students: {
+    groupBy: vi.fn(),
   },
   disciplines: {
     findUnique: vi.fn(),
@@ -146,7 +153,7 @@ describe("Schema branch_id enforcement (fail-closed)", () => {
       expect(result.success).toBe(true);
     });
 
-    it("accepts a series payload keyed by series_id (concurrencias section)", () => {
+    it("accepts a series payload keyed by series_id (class-schedules section)", () => {
       const result = deactivateScheduledClassSeriesSchema.safeParse({
         branch_id: BRANCH_A,
         series_id: SERIES_ID,
@@ -391,7 +398,7 @@ describe("deactivateScheduledClassSeries behavior", () => {
     });
   });
 
-  it("deactivates directly by series_id without a row lookup (concurrencias section)", async () => {
+  it("deactivates directly by series_id without a row lookup (class-schedules section)", async () => {
     mockTx.class_series.findFirst.mockResolvedValue({ id: SERIES_ID });
     mockTx.scheduled_classes.updateMany.mockResolvedValue({ count: 2 });
 
@@ -988,5 +995,169 @@ describe("renameClassSeries behavior", () => {
     });
 
     expect(result).toEqual({ success: false, error: CLASS_MESSAGES.NOT_FOUND });
+  });
+});
+
+describe("listUpcomingOneTimeClassesSchema", () => {
+  it("accepts a valid branch_id", () => {
+    const result = listUpcomingOneTimeClassesSchema.safeParse({
+      branch_id: BRANCH_A,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects when branch_id is absent", () => {
+    const result = listUpcomingOneTimeClassesSchema.safeParse({});
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects invalid branch_id format", () => {
+    const result = listUpcomingOneTimeClassesSchema.safeParse({
+      branch_id: "not-a-uuid",
+    });
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("listUpcomingOneTimeClasses behavior", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockAssertBranch.mockReturnValue({ ok: true });
+    setupAuth();
+    mockAdminFrom.mockImplementation((table: string) => {
+      if (table !== "user_profiles") return {};
+      return {
+        select: () => ({
+          in: async () => ({
+            data: [
+              { user_id: TEACHER_A, first_name: "María", surname: "Pérez" },
+            ],
+            error: null,
+          }),
+        }),
+      };
+    });
+  });
+
+  /** Same "today in America/Guayaquil" computation as the action. */
+  function branchToday(): string {
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      timeZone: "America/Guayaquil",
+    }).formatToParts(new Date());
+    const year = parts.find((part) => part.type === "year")?.value ?? "2026";
+    const month = parts.find((part) => part.type === "month")?.value ?? "01";
+    const day = parts.find((part) => part.type === "day")?.value ?? "01";
+    return `${year}-${month}-${day}`;
+  }
+
+  function parseUtcDateOnly(value: string): Date {
+    const [year, month, day] = value.split("-").map(Number);
+    return new Date(Date.UTC(year, month - 1, day));
+  }
+
+  it("returns upcoming one-time classes with date, time, discipline, teacher and roster count", async () => {
+    mockTx.one_time_classes.findMany.mockResolvedValue([
+      {
+        id: ONE_TIME_ID,
+        class_date: parseUtcDateOnly("2026-11-05"),
+        start_time: new Date(1970, 0, 1, 9, 30),
+        teacher_id: TEACHER_A,
+        is_active: true,
+        disciplines: { id: DISCIPLINE_A, name: "Karate" },
+      },
+      {
+        id: "88888888-9999-8888-8333-444444444444",
+        class_date: parseUtcDateOnly("2026-11-05"),
+        start_time: new Date(1970, 0, 1, 15, 0),
+        teacher_id: null,
+        is_active: true,
+        disciplines: { id: DISCIPLINE_A, name: "Yoga" },
+      },
+    ]);
+    mockTx.one_time_class_students.groupBy.mockResolvedValue([
+      { one_time_class_id: ONE_TIME_ID, _count: { _all: 4 } },
+    ]);
+
+    const result = await listUpcomingOneTimeClasses({ branch_id: BRANCH_A });
+
+    expect(result.success).toBe(true);
+    expect(result.data).toEqual([
+      {
+        one_time_class_id: ONE_TIME_ID,
+        class_date: "2026-11-05",
+        start_time: "09:30",
+        discipline_id: DISCIPLINE_A,
+        discipline_name: "Karate",
+        teacher_id: TEACHER_A,
+        teacher_name: "María Pérez",
+        roster_student_count: 4,
+      },
+      {
+        one_time_class_id: "88888888-9999-8888-8333-444444444444",
+        class_date: "2026-11-05",
+        start_time: "15:00",
+        discipline_id: DISCIPLINE_A,
+        discipline_name: "Yoga",
+        teacher_id: null,
+        teacher_name: null,
+        roster_student_count: 0,
+      },
+    ]);
+  });
+
+  it("scopes the query to active classes from today (America/Guayaquil), ordered by date then time", async () => {
+    mockTx.one_time_classes.findMany.mockResolvedValue([]);
+    mockTx.one_time_class_students.groupBy.mockResolvedValue([]);
+
+    await listUpcomingOneTimeClasses({ branch_id: BRANCH_A });
+
+    expect(mockTx.one_time_classes.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          branch_id: BRANCH_A,
+          is_active: true,
+          class_date: { gte: parseUtcDateOnly(branchToday()) },
+        },
+        orderBy: [{ class_date: "asc" }, { start_time: "asc" }],
+      })
+    );
+  });
+
+  it("does not count rosters when there are no upcoming classes", async () => {
+    mockTx.one_time_classes.findMany.mockResolvedValue([]);
+
+    const result = await listUpcomingOneTimeClasses({ branch_id: BRANCH_A });
+
+    expect(result.success).toBe(true);
+    expect(result.data).toEqual([]);
+    expect(mockTx.one_time_class_students.groupBy).not.toHaveBeenCalled();
+  });
+
+  it("rejects an invalid branch_id via the schema (no DB access)", async () => {
+    const result = await listUpcomingOneTimeClasses({
+      branch_id: "not-a-uuid",
+    });
+
+    expect(result.success).toBe(false);
+    expect(mockTx.one_time_classes.findMany).not.toHaveBeenCalled();
+  });
+
+  it("short-circuits without any DB access when the branch guard fails", async () => {
+    mockAssertBranch.mockReturnValue({
+      ok: false,
+      error: CLASS_MESSAGES.BRANCH_CONTEXT_REQUIRED,
+    });
+
+    const result = await listUpcomingOneTimeClasses({ branch_id: BRANCH_A });
+
+    expect(result).toEqual({
+      success: false,
+      error: CLASS_MESSAGES.BRANCH_CONTEXT_REQUIRED,
+    });
+    expect(mockTx.one_time_classes.findMany).not.toHaveBeenCalled();
+    expect(mockTx.one_time_class_students.groupBy).not.toHaveBeenCalled();
   });
 });
