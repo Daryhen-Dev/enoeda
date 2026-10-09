@@ -41,7 +41,7 @@ their roster.
 ## Tasks
 - [x] T1: Wipe script for class/student test data (preserve staff accounts,
       branches, disciplines, levels); user confirms, then run on Supabase.
-- [ ] T2: Migration: drop `scheduled_classes_no_overlap`; `class_series` gains
+- [x] T2: Migration: drop `scheduled_classes_no_overlap`; `class_series` gains
       discipline, default teacher, month; roster tables for series and
       one-time classes; `student_disciplines.billing_mode`; RLS; Prisma sync.
 - [ ] T3: Domain: remove teacher conflict detection; create monthly group
@@ -64,3 +64,14 @@ their roster.
   0 student-only auth accounts existed. Post-check: all target tables 0 rows;
   4 active staff accounts preserved. `student_invitations` was already
   dropped by 20260904000000, so it is not referenced.
+- T2 (delegated: gentle-ai-worker): migration 20260910000000_monthly_class_rosters
+  (drop scheduled_classes_no_overlap; revoke_teacher_with_reassignment without
+  conflict scan; class_series monthly fields, start-of-month CHECK, clone-once
+  partial unique, composite FK from scheduled_classes; billing_mode CHECK;
+  class_series_students / one_time_class_students with eligibility triggers
+  and branch-scoped RLS). Structural test RED (ENOENT) -> GREEN 10/10. Prisma
+  schema synced and client regenerated (new model files force-added). Full
+  vitest 906 passed / 1 skipped. tsc: 5 expected errors in
+  lib/domain/classes/actions.ts, resolved in T3. Migration NOT applied yet.
+  Known gap for T8: deactivating an enrollment or switching it to per_class
+  does not remove existing roster rows; handled at application level.

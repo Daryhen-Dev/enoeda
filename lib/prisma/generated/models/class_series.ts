@@ -28,21 +28,39 @@ export type Class_seriesMinAggregateOutputType = {
   id: string | null
   branch_id: string | null
   name: string | null
+  discipline_id: string | null
+  default_teacher_id: string | null
+  period_month: Date | null
+  cloned_from_series_id: string | null
+  is_active: boolean | null
   created_at: Date | null
+  updated_at: Date | null
 }
 
 export type Class_seriesMaxAggregateOutputType = {
   id: string | null
   branch_id: string | null
   name: string | null
+  discipline_id: string | null
+  default_teacher_id: string | null
+  period_month: Date | null
+  cloned_from_series_id: string | null
+  is_active: boolean | null
   created_at: Date | null
+  updated_at: Date | null
 }
 
 export type Class_seriesCountAggregateOutputType = {
   id: number
   branch_id: number
   name: number
+  discipline_id: number
+  default_teacher_id: number
+  period_month: number
+  cloned_from_series_id: number
+  is_active: number
   created_at: number
+  updated_at: number
   _all: number
 }
 
@@ -51,21 +69,39 @@ export type Class_seriesMinAggregateInputType = {
   id?: true
   branch_id?: true
   name?: true
+  discipline_id?: true
+  default_teacher_id?: true
+  period_month?: true
+  cloned_from_series_id?: true
+  is_active?: true
   created_at?: true
+  updated_at?: true
 }
 
 export type Class_seriesMaxAggregateInputType = {
   id?: true
   branch_id?: true
   name?: true
+  discipline_id?: true
+  default_teacher_id?: true
+  period_month?: true
+  cloned_from_series_id?: true
+  is_active?: true
   created_at?: true
+  updated_at?: true
 }
 
 export type Class_seriesCountAggregateInputType = {
   id?: true
   branch_id?: true
   name?: true
+  discipline_id?: true
+  default_teacher_id?: true
+  period_month?: true
+  cloned_from_series_id?: true
+  is_active?: true
   created_at?: true
+  updated_at?: true
   _all?: true
 }
 
@@ -145,7 +181,13 @@ export type Class_seriesGroupByOutputType = {
   id: string
   branch_id: string
   name: string
+  discipline_id: string
+  default_teacher_id: string | null
+  period_month: Date
+  cloned_from_series_id: string | null
+  is_active: boolean
   created_at: Date
+  updated_at: Date
   _count: Class_seriesCountAggregateOutputType | null
   _min: Class_seriesMinAggregateOutputType | null
   _max: Class_seriesMaxAggregateOutputType | null
@@ -173,37 +215,77 @@ export type class_seriesWhereInput = {
   id?: Prisma.UuidFilter<"class_series"> | string
   branch_id?: Prisma.UuidFilter<"class_series"> | string
   name?: Prisma.StringFilter<"class_series"> | string
+  discipline_id?: Prisma.UuidFilter<"class_series"> | string
+  default_teacher_id?: Prisma.UuidNullableFilter<"class_series"> | string | null
+  period_month?: Prisma.DateTimeFilter<"class_series"> | Date | string
+  cloned_from_series_id?: Prisma.UuidNullableFilter<"class_series"> | string | null
+  is_active?: Prisma.BoolFilter<"class_series"> | boolean
   created_at?: Prisma.DateTimeFilter<"class_series"> | Date | string
+  updated_at?: Prisma.DateTimeFilter<"class_series"> | Date | string
   branches?: Prisma.XOR<Prisma.BranchesScalarRelationFilter, Prisma.branchesWhereInput>
+  disciplines?: Prisma.XOR<Prisma.DisciplinesScalarRelationFilter, Prisma.disciplinesWhereInput>
+  default_teacher?: Prisma.XOR<Prisma.UsersNullableScalarRelationFilter, Prisma.usersWhereInput> | null
+  cloned_from_series?: Prisma.XOR<Prisma.Class_seriesNullableScalarRelationFilter, Prisma.class_seriesWhereInput> | null
+  cloned_series?: Prisma.Class_seriesListRelationFilter
   scheduled_classes?: Prisma.Scheduled_classesListRelationFilter
+  class_series_students?: Prisma.Class_series_studentsListRelationFilter
 }
 
 export type class_seriesOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   branch_id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  discipline_id?: Prisma.SortOrder
+  default_teacher_id?: Prisma.SortOrderInput | Prisma.SortOrder
+  period_month?: Prisma.SortOrder
+  cloned_from_series_id?: Prisma.SortOrderInput | Prisma.SortOrder
+  is_active?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
+  updated_at?: Prisma.SortOrder
   branches?: Prisma.branchesOrderByWithRelationInput
+  disciplines?: Prisma.disciplinesOrderByWithRelationInput
+  default_teacher?: Prisma.usersOrderByWithRelationInput
+  cloned_from_series?: Prisma.class_seriesOrderByWithRelationInput
+  cloned_series?: Prisma.class_seriesOrderByRelationAggregateInput
   scheduled_classes?: Prisma.scheduled_classesOrderByRelationAggregateInput
+  class_series_students?: Prisma.class_series_studentsOrderByRelationAggregateInput
 }
 
 export type class_seriesWhereUniqueInput = Prisma.AtLeast<{
   id?: string
+  cloned_from_series_id?: string
+  id_branch_id_discipline_id?: Prisma.class_seriesIdBranch_idDiscipline_idCompoundUniqueInput
   AND?: Prisma.class_seriesWhereInput | Prisma.class_seriesWhereInput[]
   OR?: Prisma.class_seriesWhereInput[]
   NOT?: Prisma.class_seriesWhereInput | Prisma.class_seriesWhereInput[]
   branch_id?: Prisma.UuidFilter<"class_series"> | string
   name?: Prisma.StringFilter<"class_series"> | string
+  discipline_id?: Prisma.UuidFilter<"class_series"> | string
+  default_teacher_id?: Prisma.UuidNullableFilter<"class_series"> | string | null
+  period_month?: Prisma.DateTimeFilter<"class_series"> | Date | string
+  is_active?: Prisma.BoolFilter<"class_series"> | boolean
   created_at?: Prisma.DateTimeFilter<"class_series"> | Date | string
+  updated_at?: Prisma.DateTimeFilter<"class_series"> | Date | string
   branches?: Prisma.XOR<Prisma.BranchesScalarRelationFilter, Prisma.branchesWhereInput>
+  disciplines?: Prisma.XOR<Prisma.DisciplinesScalarRelationFilter, Prisma.disciplinesWhereInput>
+  default_teacher?: Prisma.XOR<Prisma.UsersNullableScalarRelationFilter, Prisma.usersWhereInput> | null
+  cloned_from_series?: Prisma.XOR<Prisma.Class_seriesNullableScalarRelationFilter, Prisma.class_seriesWhereInput> | null
+  cloned_series?: Prisma.Class_seriesListRelationFilter
   scheduled_classes?: Prisma.Scheduled_classesListRelationFilter
-}, "id">
+  class_series_students?: Prisma.Class_series_studentsListRelationFilter
+}, "id" | "id_branch_id_discipline_id" | "cloned_from_series_id">
 
 export type class_seriesOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   branch_id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  discipline_id?: Prisma.SortOrder
+  default_teacher_id?: Prisma.SortOrderInput | Prisma.SortOrder
+  period_month?: Prisma.SortOrder
+  cloned_from_series_id?: Prisma.SortOrderInput | Prisma.SortOrder
+  is_active?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
+  updated_at?: Prisma.SortOrder
   _count?: Prisma.class_seriesCountOrderByAggregateInput
   _max?: Prisma.class_seriesMaxOrderByAggregateInput
   _min?: Prisma.class_seriesMinOrderByAggregateInput
@@ -216,59 +298,112 @@ export type class_seriesScalarWhereWithAggregatesInput = {
   id?: Prisma.UuidWithAggregatesFilter<"class_series"> | string
   branch_id?: Prisma.UuidWithAggregatesFilter<"class_series"> | string
   name?: Prisma.StringWithAggregatesFilter<"class_series"> | string
+  discipline_id?: Prisma.UuidWithAggregatesFilter<"class_series"> | string
+  default_teacher_id?: Prisma.UuidNullableWithAggregatesFilter<"class_series"> | string | null
+  period_month?: Prisma.DateTimeWithAggregatesFilter<"class_series"> | Date | string
+  cloned_from_series_id?: Prisma.UuidNullableWithAggregatesFilter<"class_series"> | string | null
+  is_active?: Prisma.BoolWithAggregatesFilter<"class_series"> | boolean
   created_at?: Prisma.DateTimeWithAggregatesFilter<"class_series"> | Date | string
+  updated_at?: Prisma.DateTimeWithAggregatesFilter<"class_series"> | Date | string
 }
 
 export type class_seriesCreateInput = {
   id?: string
   name: string
+  period_month: Date | string
+  is_active?: boolean
   created_at?: Date | string
+  updated_at?: Date | string
   branches: Prisma.branchesCreateNestedOneWithoutClass_seriesInput
+  disciplines: Prisma.disciplinesCreateNestedOneWithoutClass_seriesInput
+  default_teacher?: Prisma.usersCreateNestedOneWithoutClass_series_default_teacherInput
+  cloned_from_series?: Prisma.class_seriesCreateNestedOneWithoutCloned_seriesInput
+  cloned_series?: Prisma.class_seriesCreateNestedManyWithoutCloned_from_seriesInput
   scheduled_classes?: Prisma.scheduled_classesCreateNestedManyWithoutClass_seriesInput
+  class_series_students?: Prisma.class_series_studentsCreateNestedManyWithoutClass_seriesInput
 }
 
 export type class_seriesUncheckedCreateInput = {
   id?: string
   branch_id: string
   name: string
+  discipline_id: string
+  default_teacher_id?: string | null
+  period_month: Date | string
+  cloned_from_series_id?: string | null
+  is_active?: boolean
   created_at?: Date | string
+  updated_at?: Date | string
+  cloned_series?: Prisma.class_seriesUncheckedCreateNestedManyWithoutCloned_from_seriesInput
   scheduled_classes?: Prisma.scheduled_classesUncheckedCreateNestedManyWithoutClass_seriesInput
+  class_series_students?: Prisma.class_series_studentsUncheckedCreateNestedManyWithoutClass_seriesInput
 }
 
 export type class_seriesUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  period_month?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   branches?: Prisma.branchesUpdateOneRequiredWithoutClass_seriesNestedInput
+  disciplines?: Prisma.disciplinesUpdateOneRequiredWithoutClass_seriesNestedInput
+  default_teacher?: Prisma.usersUpdateOneWithoutClass_series_default_teacherNestedInput
+  cloned_from_series?: Prisma.class_seriesUpdateOneWithoutCloned_seriesNestedInput
+  cloned_series?: Prisma.class_seriesUpdateManyWithoutCloned_from_seriesNestedInput
   scheduled_classes?: Prisma.scheduled_classesUpdateManyWithoutClass_seriesNestedInput
+  class_series_students?: Prisma.class_series_studentsUpdateManyWithoutClass_seriesNestedInput
 }
 
 export type class_seriesUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   branch_id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  discipline_id?: Prisma.StringFieldUpdateOperationsInput | string
+  default_teacher_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  period_month?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  cloned_from_series_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  cloned_series?: Prisma.class_seriesUncheckedUpdateManyWithoutCloned_from_seriesNestedInput
   scheduled_classes?: Prisma.scheduled_classesUncheckedUpdateManyWithoutClass_seriesNestedInput
+  class_series_students?: Prisma.class_series_studentsUncheckedUpdateManyWithoutClass_seriesNestedInput
 }
 
 export type class_seriesCreateManyInput = {
   id?: string
   branch_id: string
   name: string
+  discipline_id: string
+  default_teacher_id?: string | null
+  period_month: Date | string
+  cloned_from_series_id?: string | null
+  is_active?: boolean
   created_at?: Date | string
+  updated_at?: Date | string
 }
 
 export type class_seriesUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  period_month?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type class_seriesUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   branch_id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  discipline_id?: Prisma.StringFieldUpdateOperationsInput | string
+  default_teacher_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  period_month?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  cloned_from_series_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type Class_seriesListRelationFilter = {
@@ -281,30 +416,101 @@ export type class_seriesOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
+export type Class_seriesScalarRelationFilter = {
+  is?: Prisma.class_seriesWhereInput
+  isNot?: Prisma.class_seriesWhereInput
+}
+
 export type Class_seriesNullableScalarRelationFilter = {
   is?: Prisma.class_seriesWhereInput | null
   isNot?: Prisma.class_seriesWhereInput | null
+}
+
+export type class_seriesIdBranch_idDiscipline_idCompoundUniqueInput = {
+  id: string
+  branch_id: string
+  discipline_id: string
 }
 
 export type class_seriesCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   branch_id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  discipline_id?: Prisma.SortOrder
+  default_teacher_id?: Prisma.SortOrder
+  period_month?: Prisma.SortOrder
+  cloned_from_series_id?: Prisma.SortOrder
+  is_active?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
+  updated_at?: Prisma.SortOrder
 }
 
 export type class_seriesMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   branch_id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  discipline_id?: Prisma.SortOrder
+  default_teacher_id?: Prisma.SortOrder
+  period_month?: Prisma.SortOrder
+  cloned_from_series_id?: Prisma.SortOrder
+  is_active?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
+  updated_at?: Prisma.SortOrder
 }
 
 export type class_seriesMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   branch_id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  discipline_id?: Prisma.SortOrder
+  default_teacher_id?: Prisma.SortOrder
+  period_month?: Prisma.SortOrder
+  cloned_from_series_id?: Prisma.SortOrder
+  is_active?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
+  updated_at?: Prisma.SortOrder
+}
+
+export type class_seriesCreateNestedManyWithoutDefault_teacherInput = {
+  create?: Prisma.XOR<Prisma.class_seriesCreateWithoutDefault_teacherInput, Prisma.class_seriesUncheckedCreateWithoutDefault_teacherInput> | Prisma.class_seriesCreateWithoutDefault_teacherInput[] | Prisma.class_seriesUncheckedCreateWithoutDefault_teacherInput[]
+  connectOrCreate?: Prisma.class_seriesCreateOrConnectWithoutDefault_teacherInput | Prisma.class_seriesCreateOrConnectWithoutDefault_teacherInput[]
+  createMany?: Prisma.class_seriesCreateManyDefault_teacherInputEnvelope
+  connect?: Prisma.class_seriesWhereUniqueInput | Prisma.class_seriesWhereUniqueInput[]
+}
+
+export type class_seriesUncheckedCreateNestedManyWithoutDefault_teacherInput = {
+  create?: Prisma.XOR<Prisma.class_seriesCreateWithoutDefault_teacherInput, Prisma.class_seriesUncheckedCreateWithoutDefault_teacherInput> | Prisma.class_seriesCreateWithoutDefault_teacherInput[] | Prisma.class_seriesUncheckedCreateWithoutDefault_teacherInput[]
+  connectOrCreate?: Prisma.class_seriesCreateOrConnectWithoutDefault_teacherInput | Prisma.class_seriesCreateOrConnectWithoutDefault_teacherInput[]
+  createMany?: Prisma.class_seriesCreateManyDefault_teacherInputEnvelope
+  connect?: Prisma.class_seriesWhereUniqueInput | Prisma.class_seriesWhereUniqueInput[]
+}
+
+export type class_seriesUpdateManyWithoutDefault_teacherNestedInput = {
+  create?: Prisma.XOR<Prisma.class_seriesCreateWithoutDefault_teacherInput, Prisma.class_seriesUncheckedCreateWithoutDefault_teacherInput> | Prisma.class_seriesCreateWithoutDefault_teacherInput[] | Prisma.class_seriesUncheckedCreateWithoutDefault_teacherInput[]
+  connectOrCreate?: Prisma.class_seriesCreateOrConnectWithoutDefault_teacherInput | Prisma.class_seriesCreateOrConnectWithoutDefault_teacherInput[]
+  upsert?: Prisma.class_seriesUpsertWithWhereUniqueWithoutDefault_teacherInput | Prisma.class_seriesUpsertWithWhereUniqueWithoutDefault_teacherInput[]
+  createMany?: Prisma.class_seriesCreateManyDefault_teacherInputEnvelope
+  set?: Prisma.class_seriesWhereUniqueInput | Prisma.class_seriesWhereUniqueInput[]
+  disconnect?: Prisma.class_seriesWhereUniqueInput | Prisma.class_seriesWhereUniqueInput[]
+  delete?: Prisma.class_seriesWhereUniqueInput | Prisma.class_seriesWhereUniqueInput[]
+  connect?: Prisma.class_seriesWhereUniqueInput | Prisma.class_seriesWhereUniqueInput[]
+  update?: Prisma.class_seriesUpdateWithWhereUniqueWithoutDefault_teacherInput | Prisma.class_seriesUpdateWithWhereUniqueWithoutDefault_teacherInput[]
+  updateMany?: Prisma.class_seriesUpdateManyWithWhereWithoutDefault_teacherInput | Prisma.class_seriesUpdateManyWithWhereWithoutDefault_teacherInput[]
+  deleteMany?: Prisma.class_seriesScalarWhereInput | Prisma.class_seriesScalarWhereInput[]
+}
+
+export type class_seriesUncheckedUpdateManyWithoutDefault_teacherNestedInput = {
+  create?: Prisma.XOR<Prisma.class_seriesCreateWithoutDefault_teacherInput, Prisma.class_seriesUncheckedCreateWithoutDefault_teacherInput> | Prisma.class_seriesCreateWithoutDefault_teacherInput[] | Prisma.class_seriesUncheckedCreateWithoutDefault_teacherInput[]
+  connectOrCreate?: Prisma.class_seriesCreateOrConnectWithoutDefault_teacherInput | Prisma.class_seriesCreateOrConnectWithoutDefault_teacherInput[]
+  upsert?: Prisma.class_seriesUpsertWithWhereUniqueWithoutDefault_teacherInput | Prisma.class_seriesUpsertWithWhereUniqueWithoutDefault_teacherInput[]
+  createMany?: Prisma.class_seriesCreateManyDefault_teacherInputEnvelope
+  set?: Prisma.class_seriesWhereUniqueInput | Prisma.class_seriesWhereUniqueInput[]
+  disconnect?: Prisma.class_seriesWhereUniqueInput | Prisma.class_seriesWhereUniqueInput[]
+  delete?: Prisma.class_seriesWhereUniqueInput | Prisma.class_seriesWhereUniqueInput[]
+  connect?: Prisma.class_seriesWhereUniqueInput | Prisma.class_seriesWhereUniqueInput[]
+  update?: Prisma.class_seriesUpdateWithWhereUniqueWithoutDefault_teacherInput | Prisma.class_seriesUpdateWithWhereUniqueWithoutDefault_teacherInput[]
+  updateMany?: Prisma.class_seriesUpdateManyWithWhereWithoutDefault_teacherInput | Prisma.class_seriesUpdateManyWithWhereWithoutDefault_teacherInput[]
+  deleteMany?: Prisma.class_seriesScalarWhereInput | Prisma.class_seriesScalarWhereInput[]
 }
 
 export type class_seriesCreateNestedManyWithoutBranchesInput = {
@@ -349,34 +555,234 @@ export type class_seriesUncheckedUpdateManyWithoutBranchesNestedInput = {
   deleteMany?: Prisma.class_seriesScalarWhereInput | Prisma.class_seriesScalarWhereInput[]
 }
 
+export type class_seriesCreateNestedManyWithoutDisciplinesInput = {
+  create?: Prisma.XOR<Prisma.class_seriesCreateWithoutDisciplinesInput, Prisma.class_seriesUncheckedCreateWithoutDisciplinesInput> | Prisma.class_seriesCreateWithoutDisciplinesInput[] | Prisma.class_seriesUncheckedCreateWithoutDisciplinesInput[]
+  connectOrCreate?: Prisma.class_seriesCreateOrConnectWithoutDisciplinesInput | Prisma.class_seriesCreateOrConnectWithoutDisciplinesInput[]
+  createMany?: Prisma.class_seriesCreateManyDisciplinesInputEnvelope
+  connect?: Prisma.class_seriesWhereUniqueInput | Prisma.class_seriesWhereUniqueInput[]
+}
+
+export type class_seriesUncheckedCreateNestedManyWithoutDisciplinesInput = {
+  create?: Prisma.XOR<Prisma.class_seriesCreateWithoutDisciplinesInput, Prisma.class_seriesUncheckedCreateWithoutDisciplinesInput> | Prisma.class_seriesCreateWithoutDisciplinesInput[] | Prisma.class_seriesUncheckedCreateWithoutDisciplinesInput[]
+  connectOrCreate?: Prisma.class_seriesCreateOrConnectWithoutDisciplinesInput | Prisma.class_seriesCreateOrConnectWithoutDisciplinesInput[]
+  createMany?: Prisma.class_seriesCreateManyDisciplinesInputEnvelope
+  connect?: Prisma.class_seriesWhereUniqueInput | Prisma.class_seriesWhereUniqueInput[]
+}
+
+export type class_seriesUpdateManyWithoutDisciplinesNestedInput = {
+  create?: Prisma.XOR<Prisma.class_seriesCreateWithoutDisciplinesInput, Prisma.class_seriesUncheckedCreateWithoutDisciplinesInput> | Prisma.class_seriesCreateWithoutDisciplinesInput[] | Prisma.class_seriesUncheckedCreateWithoutDisciplinesInput[]
+  connectOrCreate?: Prisma.class_seriesCreateOrConnectWithoutDisciplinesInput | Prisma.class_seriesCreateOrConnectWithoutDisciplinesInput[]
+  upsert?: Prisma.class_seriesUpsertWithWhereUniqueWithoutDisciplinesInput | Prisma.class_seriesUpsertWithWhereUniqueWithoutDisciplinesInput[]
+  createMany?: Prisma.class_seriesCreateManyDisciplinesInputEnvelope
+  set?: Prisma.class_seriesWhereUniqueInput | Prisma.class_seriesWhereUniqueInput[]
+  disconnect?: Prisma.class_seriesWhereUniqueInput | Prisma.class_seriesWhereUniqueInput[]
+  delete?: Prisma.class_seriesWhereUniqueInput | Prisma.class_seriesWhereUniqueInput[]
+  connect?: Prisma.class_seriesWhereUniqueInput | Prisma.class_seriesWhereUniqueInput[]
+  update?: Prisma.class_seriesUpdateWithWhereUniqueWithoutDisciplinesInput | Prisma.class_seriesUpdateWithWhereUniqueWithoutDisciplinesInput[]
+  updateMany?: Prisma.class_seriesUpdateManyWithWhereWithoutDisciplinesInput | Prisma.class_seriesUpdateManyWithWhereWithoutDisciplinesInput[]
+  deleteMany?: Prisma.class_seriesScalarWhereInput | Prisma.class_seriesScalarWhereInput[]
+}
+
+export type class_seriesUncheckedUpdateManyWithoutDisciplinesNestedInput = {
+  create?: Prisma.XOR<Prisma.class_seriesCreateWithoutDisciplinesInput, Prisma.class_seriesUncheckedCreateWithoutDisciplinesInput> | Prisma.class_seriesCreateWithoutDisciplinesInput[] | Prisma.class_seriesUncheckedCreateWithoutDisciplinesInput[]
+  connectOrCreate?: Prisma.class_seriesCreateOrConnectWithoutDisciplinesInput | Prisma.class_seriesCreateOrConnectWithoutDisciplinesInput[]
+  upsert?: Prisma.class_seriesUpsertWithWhereUniqueWithoutDisciplinesInput | Prisma.class_seriesUpsertWithWhereUniqueWithoutDisciplinesInput[]
+  createMany?: Prisma.class_seriesCreateManyDisciplinesInputEnvelope
+  set?: Prisma.class_seriesWhereUniqueInput | Prisma.class_seriesWhereUniqueInput[]
+  disconnect?: Prisma.class_seriesWhereUniqueInput | Prisma.class_seriesWhereUniqueInput[]
+  delete?: Prisma.class_seriesWhereUniqueInput | Prisma.class_seriesWhereUniqueInput[]
+  connect?: Prisma.class_seriesWhereUniqueInput | Prisma.class_seriesWhereUniqueInput[]
+  update?: Prisma.class_seriesUpdateWithWhereUniqueWithoutDisciplinesInput | Prisma.class_seriesUpdateWithWhereUniqueWithoutDisciplinesInput[]
+  updateMany?: Prisma.class_seriesUpdateManyWithWhereWithoutDisciplinesInput | Prisma.class_seriesUpdateManyWithWhereWithoutDisciplinesInput[]
+  deleteMany?: Prisma.class_seriesScalarWhereInput | Prisma.class_seriesScalarWhereInput[]
+}
+
 export type class_seriesCreateNestedOneWithoutScheduled_classesInput = {
   create?: Prisma.XOR<Prisma.class_seriesCreateWithoutScheduled_classesInput, Prisma.class_seriesUncheckedCreateWithoutScheduled_classesInput>
   connectOrCreate?: Prisma.class_seriesCreateOrConnectWithoutScheduled_classesInput
   connect?: Prisma.class_seriesWhereUniqueInput
 }
 
-export type class_seriesUpdateOneWithoutScheduled_classesNestedInput = {
+export type class_seriesUpdateOneRequiredWithoutScheduled_classesNestedInput = {
   create?: Prisma.XOR<Prisma.class_seriesCreateWithoutScheduled_classesInput, Prisma.class_seriesUncheckedCreateWithoutScheduled_classesInput>
   connectOrCreate?: Prisma.class_seriesCreateOrConnectWithoutScheduled_classesInput
   upsert?: Prisma.class_seriesUpsertWithoutScheduled_classesInput
+  connect?: Prisma.class_seriesWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.class_seriesUpdateToOneWithWhereWithoutScheduled_classesInput, Prisma.class_seriesUpdateWithoutScheduled_classesInput>, Prisma.class_seriesUncheckedUpdateWithoutScheduled_classesInput>
+}
+
+export type class_seriesCreateNestedOneWithoutCloned_seriesInput = {
+  create?: Prisma.XOR<Prisma.class_seriesCreateWithoutCloned_seriesInput, Prisma.class_seriesUncheckedCreateWithoutCloned_seriesInput>
+  connectOrCreate?: Prisma.class_seriesCreateOrConnectWithoutCloned_seriesInput
+  connect?: Prisma.class_seriesWhereUniqueInput
+}
+
+export type class_seriesCreateNestedManyWithoutCloned_from_seriesInput = {
+  create?: Prisma.XOR<Prisma.class_seriesCreateWithoutCloned_from_seriesInput, Prisma.class_seriesUncheckedCreateWithoutCloned_from_seriesInput> | Prisma.class_seriesCreateWithoutCloned_from_seriesInput[] | Prisma.class_seriesUncheckedCreateWithoutCloned_from_seriesInput[]
+  connectOrCreate?: Prisma.class_seriesCreateOrConnectWithoutCloned_from_seriesInput | Prisma.class_seriesCreateOrConnectWithoutCloned_from_seriesInput[]
+  createMany?: Prisma.class_seriesCreateManyCloned_from_seriesInputEnvelope
+  connect?: Prisma.class_seriesWhereUniqueInput | Prisma.class_seriesWhereUniqueInput[]
+}
+
+export type class_seriesUncheckedCreateNestedManyWithoutCloned_from_seriesInput = {
+  create?: Prisma.XOR<Prisma.class_seriesCreateWithoutCloned_from_seriesInput, Prisma.class_seriesUncheckedCreateWithoutCloned_from_seriesInput> | Prisma.class_seriesCreateWithoutCloned_from_seriesInput[] | Prisma.class_seriesUncheckedCreateWithoutCloned_from_seriesInput[]
+  connectOrCreate?: Prisma.class_seriesCreateOrConnectWithoutCloned_from_seriesInput | Prisma.class_seriesCreateOrConnectWithoutCloned_from_seriesInput[]
+  createMany?: Prisma.class_seriesCreateManyCloned_from_seriesInputEnvelope
+  connect?: Prisma.class_seriesWhereUniqueInput | Prisma.class_seriesWhereUniqueInput[]
+}
+
+export type class_seriesUpdateOneWithoutCloned_seriesNestedInput = {
+  create?: Prisma.XOR<Prisma.class_seriesCreateWithoutCloned_seriesInput, Prisma.class_seriesUncheckedCreateWithoutCloned_seriesInput>
+  connectOrCreate?: Prisma.class_seriesCreateOrConnectWithoutCloned_seriesInput
+  upsert?: Prisma.class_seriesUpsertWithoutCloned_seriesInput
   disconnect?: Prisma.class_seriesWhereInput | boolean
   delete?: Prisma.class_seriesWhereInput | boolean
   connect?: Prisma.class_seriesWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.class_seriesUpdateToOneWithWhereWithoutScheduled_classesInput, Prisma.class_seriesUpdateWithoutScheduled_classesInput>, Prisma.class_seriesUncheckedUpdateWithoutScheduled_classesInput>
+  update?: Prisma.XOR<Prisma.XOR<Prisma.class_seriesUpdateToOneWithWhereWithoutCloned_seriesInput, Prisma.class_seriesUpdateWithoutCloned_seriesInput>, Prisma.class_seriesUncheckedUpdateWithoutCloned_seriesInput>
+}
+
+export type class_seriesUpdateManyWithoutCloned_from_seriesNestedInput = {
+  create?: Prisma.XOR<Prisma.class_seriesCreateWithoutCloned_from_seriesInput, Prisma.class_seriesUncheckedCreateWithoutCloned_from_seriesInput> | Prisma.class_seriesCreateWithoutCloned_from_seriesInput[] | Prisma.class_seriesUncheckedCreateWithoutCloned_from_seriesInput[]
+  connectOrCreate?: Prisma.class_seriesCreateOrConnectWithoutCloned_from_seriesInput | Prisma.class_seriesCreateOrConnectWithoutCloned_from_seriesInput[]
+  upsert?: Prisma.class_seriesUpsertWithWhereUniqueWithoutCloned_from_seriesInput | Prisma.class_seriesUpsertWithWhereUniqueWithoutCloned_from_seriesInput[]
+  createMany?: Prisma.class_seriesCreateManyCloned_from_seriesInputEnvelope
+  set?: Prisma.class_seriesWhereUniqueInput | Prisma.class_seriesWhereUniqueInput[]
+  disconnect?: Prisma.class_seriesWhereUniqueInput | Prisma.class_seriesWhereUniqueInput[]
+  delete?: Prisma.class_seriesWhereUniqueInput | Prisma.class_seriesWhereUniqueInput[]
+  connect?: Prisma.class_seriesWhereUniqueInput | Prisma.class_seriesWhereUniqueInput[]
+  update?: Prisma.class_seriesUpdateWithWhereUniqueWithoutCloned_from_seriesInput | Prisma.class_seriesUpdateWithWhereUniqueWithoutCloned_from_seriesInput[]
+  updateMany?: Prisma.class_seriesUpdateManyWithWhereWithoutCloned_from_seriesInput | Prisma.class_seriesUpdateManyWithWhereWithoutCloned_from_seriesInput[]
+  deleteMany?: Prisma.class_seriesScalarWhereInput | Prisma.class_seriesScalarWhereInput[]
+}
+
+export type class_seriesUncheckedUpdateManyWithoutCloned_from_seriesNestedInput = {
+  create?: Prisma.XOR<Prisma.class_seriesCreateWithoutCloned_from_seriesInput, Prisma.class_seriesUncheckedCreateWithoutCloned_from_seriesInput> | Prisma.class_seriesCreateWithoutCloned_from_seriesInput[] | Prisma.class_seriesUncheckedCreateWithoutCloned_from_seriesInput[]
+  connectOrCreate?: Prisma.class_seriesCreateOrConnectWithoutCloned_from_seriesInput | Prisma.class_seriesCreateOrConnectWithoutCloned_from_seriesInput[]
+  upsert?: Prisma.class_seriesUpsertWithWhereUniqueWithoutCloned_from_seriesInput | Prisma.class_seriesUpsertWithWhereUniqueWithoutCloned_from_seriesInput[]
+  createMany?: Prisma.class_seriesCreateManyCloned_from_seriesInputEnvelope
+  set?: Prisma.class_seriesWhereUniqueInput | Prisma.class_seriesWhereUniqueInput[]
+  disconnect?: Prisma.class_seriesWhereUniqueInput | Prisma.class_seriesWhereUniqueInput[]
+  delete?: Prisma.class_seriesWhereUniqueInput | Prisma.class_seriesWhereUniqueInput[]
+  connect?: Prisma.class_seriesWhereUniqueInput | Prisma.class_seriesWhereUniqueInput[]
+  update?: Prisma.class_seriesUpdateWithWhereUniqueWithoutCloned_from_seriesInput | Prisma.class_seriesUpdateWithWhereUniqueWithoutCloned_from_seriesInput[]
+  updateMany?: Prisma.class_seriesUpdateManyWithWhereWithoutCloned_from_seriesInput | Prisma.class_seriesUpdateManyWithWhereWithoutCloned_from_seriesInput[]
+  deleteMany?: Prisma.class_seriesScalarWhereInput | Prisma.class_seriesScalarWhereInput[]
+}
+
+export type class_seriesCreateNestedOneWithoutClass_series_studentsInput = {
+  create?: Prisma.XOR<Prisma.class_seriesCreateWithoutClass_series_studentsInput, Prisma.class_seriesUncheckedCreateWithoutClass_series_studentsInput>
+  connectOrCreate?: Prisma.class_seriesCreateOrConnectWithoutClass_series_studentsInput
+  connect?: Prisma.class_seriesWhereUniqueInput
+}
+
+export type class_seriesUpdateOneRequiredWithoutClass_series_studentsNestedInput = {
+  create?: Prisma.XOR<Prisma.class_seriesCreateWithoutClass_series_studentsInput, Prisma.class_seriesUncheckedCreateWithoutClass_series_studentsInput>
+  connectOrCreate?: Prisma.class_seriesCreateOrConnectWithoutClass_series_studentsInput
+  upsert?: Prisma.class_seriesUpsertWithoutClass_series_studentsInput
+  connect?: Prisma.class_seriesWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.class_seriesUpdateToOneWithWhereWithoutClass_series_studentsInput, Prisma.class_seriesUpdateWithoutClass_series_studentsInput>, Prisma.class_seriesUncheckedUpdateWithoutClass_series_studentsInput>
+}
+
+export type class_seriesCreateWithoutDefault_teacherInput = {
+  id?: string
+  name: string
+  period_month: Date | string
+  is_active?: boolean
+  created_at?: Date | string
+  updated_at?: Date | string
+  branches: Prisma.branchesCreateNestedOneWithoutClass_seriesInput
+  disciplines: Prisma.disciplinesCreateNestedOneWithoutClass_seriesInput
+  cloned_from_series?: Prisma.class_seriesCreateNestedOneWithoutCloned_seriesInput
+  cloned_series?: Prisma.class_seriesCreateNestedManyWithoutCloned_from_seriesInput
+  scheduled_classes?: Prisma.scheduled_classesCreateNestedManyWithoutClass_seriesInput
+  class_series_students?: Prisma.class_series_studentsCreateNestedManyWithoutClass_seriesInput
+}
+
+export type class_seriesUncheckedCreateWithoutDefault_teacherInput = {
+  id?: string
+  branch_id: string
+  name: string
+  discipline_id: string
+  period_month: Date | string
+  cloned_from_series_id?: string | null
+  is_active?: boolean
+  created_at?: Date | string
+  updated_at?: Date | string
+  cloned_series?: Prisma.class_seriesUncheckedCreateNestedManyWithoutCloned_from_seriesInput
+  scheduled_classes?: Prisma.scheduled_classesUncheckedCreateNestedManyWithoutClass_seriesInput
+  class_series_students?: Prisma.class_series_studentsUncheckedCreateNestedManyWithoutClass_seriesInput
+}
+
+export type class_seriesCreateOrConnectWithoutDefault_teacherInput = {
+  where: Prisma.class_seriesWhereUniqueInput
+  create: Prisma.XOR<Prisma.class_seriesCreateWithoutDefault_teacherInput, Prisma.class_seriesUncheckedCreateWithoutDefault_teacherInput>
+}
+
+export type class_seriesCreateManyDefault_teacherInputEnvelope = {
+  data: Prisma.class_seriesCreateManyDefault_teacherInput | Prisma.class_seriesCreateManyDefault_teacherInput[]
+  skipDuplicates?: boolean
+}
+
+export type class_seriesUpsertWithWhereUniqueWithoutDefault_teacherInput = {
+  where: Prisma.class_seriesWhereUniqueInput
+  update: Prisma.XOR<Prisma.class_seriesUpdateWithoutDefault_teacherInput, Prisma.class_seriesUncheckedUpdateWithoutDefault_teacherInput>
+  create: Prisma.XOR<Prisma.class_seriesCreateWithoutDefault_teacherInput, Prisma.class_seriesUncheckedCreateWithoutDefault_teacherInput>
+}
+
+export type class_seriesUpdateWithWhereUniqueWithoutDefault_teacherInput = {
+  where: Prisma.class_seriesWhereUniqueInput
+  data: Prisma.XOR<Prisma.class_seriesUpdateWithoutDefault_teacherInput, Prisma.class_seriesUncheckedUpdateWithoutDefault_teacherInput>
+}
+
+export type class_seriesUpdateManyWithWhereWithoutDefault_teacherInput = {
+  where: Prisma.class_seriesScalarWhereInput
+  data: Prisma.XOR<Prisma.class_seriesUpdateManyMutationInput, Prisma.class_seriesUncheckedUpdateManyWithoutDefault_teacherInput>
+}
+
+export type class_seriesScalarWhereInput = {
+  AND?: Prisma.class_seriesScalarWhereInput | Prisma.class_seriesScalarWhereInput[]
+  OR?: Prisma.class_seriesScalarWhereInput[]
+  NOT?: Prisma.class_seriesScalarWhereInput | Prisma.class_seriesScalarWhereInput[]
+  id?: Prisma.UuidFilter<"class_series"> | string
+  branch_id?: Prisma.UuidFilter<"class_series"> | string
+  name?: Prisma.StringFilter<"class_series"> | string
+  discipline_id?: Prisma.UuidFilter<"class_series"> | string
+  default_teacher_id?: Prisma.UuidNullableFilter<"class_series"> | string | null
+  period_month?: Prisma.DateTimeFilter<"class_series"> | Date | string
+  cloned_from_series_id?: Prisma.UuidNullableFilter<"class_series"> | string | null
+  is_active?: Prisma.BoolFilter<"class_series"> | boolean
+  created_at?: Prisma.DateTimeFilter<"class_series"> | Date | string
+  updated_at?: Prisma.DateTimeFilter<"class_series"> | Date | string
 }
 
 export type class_seriesCreateWithoutBranchesInput = {
   id?: string
   name: string
+  period_month: Date | string
+  is_active?: boolean
   created_at?: Date | string
+  updated_at?: Date | string
+  disciplines: Prisma.disciplinesCreateNestedOneWithoutClass_seriesInput
+  default_teacher?: Prisma.usersCreateNestedOneWithoutClass_series_default_teacherInput
+  cloned_from_series?: Prisma.class_seriesCreateNestedOneWithoutCloned_seriesInput
+  cloned_series?: Prisma.class_seriesCreateNestedManyWithoutCloned_from_seriesInput
   scheduled_classes?: Prisma.scheduled_classesCreateNestedManyWithoutClass_seriesInput
+  class_series_students?: Prisma.class_series_studentsCreateNestedManyWithoutClass_seriesInput
 }
 
 export type class_seriesUncheckedCreateWithoutBranchesInput = {
   id?: string
   name: string
+  discipline_id: string
+  default_teacher_id?: string | null
+  period_month: Date | string
+  cloned_from_series_id?: string | null
+  is_active?: boolean
   created_at?: Date | string
+  updated_at?: Date | string
+  cloned_series?: Prisma.class_seriesUncheckedCreateNestedManyWithoutCloned_from_seriesInput
   scheduled_classes?: Prisma.scheduled_classesUncheckedCreateNestedManyWithoutClass_seriesInput
+  class_series_students?: Prisma.class_series_studentsUncheckedCreateNestedManyWithoutClass_seriesInput
 }
 
 export type class_seriesCreateOrConnectWithoutBranchesInput = {
@@ -405,28 +811,90 @@ export type class_seriesUpdateManyWithWhereWithoutBranchesInput = {
   data: Prisma.XOR<Prisma.class_seriesUpdateManyMutationInput, Prisma.class_seriesUncheckedUpdateManyWithoutBranchesInput>
 }
 
-export type class_seriesScalarWhereInput = {
-  AND?: Prisma.class_seriesScalarWhereInput | Prisma.class_seriesScalarWhereInput[]
-  OR?: Prisma.class_seriesScalarWhereInput[]
-  NOT?: Prisma.class_seriesScalarWhereInput | Prisma.class_seriesScalarWhereInput[]
-  id?: Prisma.UuidFilter<"class_series"> | string
-  branch_id?: Prisma.UuidFilter<"class_series"> | string
-  name?: Prisma.StringFilter<"class_series"> | string
-  created_at?: Prisma.DateTimeFilter<"class_series"> | Date | string
+export type class_seriesCreateWithoutDisciplinesInput = {
+  id?: string
+  name: string
+  period_month: Date | string
+  is_active?: boolean
+  created_at?: Date | string
+  updated_at?: Date | string
+  branches: Prisma.branchesCreateNestedOneWithoutClass_seriesInput
+  default_teacher?: Prisma.usersCreateNestedOneWithoutClass_series_default_teacherInput
+  cloned_from_series?: Prisma.class_seriesCreateNestedOneWithoutCloned_seriesInput
+  cloned_series?: Prisma.class_seriesCreateNestedManyWithoutCloned_from_seriesInput
+  scheduled_classes?: Prisma.scheduled_classesCreateNestedManyWithoutClass_seriesInput
+  class_series_students?: Prisma.class_series_studentsCreateNestedManyWithoutClass_seriesInput
+}
+
+export type class_seriesUncheckedCreateWithoutDisciplinesInput = {
+  id?: string
+  branch_id: string
+  name: string
+  default_teacher_id?: string | null
+  period_month: Date | string
+  cloned_from_series_id?: string | null
+  is_active?: boolean
+  created_at?: Date | string
+  updated_at?: Date | string
+  cloned_series?: Prisma.class_seriesUncheckedCreateNestedManyWithoutCloned_from_seriesInput
+  scheduled_classes?: Prisma.scheduled_classesUncheckedCreateNestedManyWithoutClass_seriesInput
+  class_series_students?: Prisma.class_series_studentsUncheckedCreateNestedManyWithoutClass_seriesInput
+}
+
+export type class_seriesCreateOrConnectWithoutDisciplinesInput = {
+  where: Prisma.class_seriesWhereUniqueInput
+  create: Prisma.XOR<Prisma.class_seriesCreateWithoutDisciplinesInput, Prisma.class_seriesUncheckedCreateWithoutDisciplinesInput>
+}
+
+export type class_seriesCreateManyDisciplinesInputEnvelope = {
+  data: Prisma.class_seriesCreateManyDisciplinesInput | Prisma.class_seriesCreateManyDisciplinesInput[]
+  skipDuplicates?: boolean
+}
+
+export type class_seriesUpsertWithWhereUniqueWithoutDisciplinesInput = {
+  where: Prisma.class_seriesWhereUniqueInput
+  update: Prisma.XOR<Prisma.class_seriesUpdateWithoutDisciplinesInput, Prisma.class_seriesUncheckedUpdateWithoutDisciplinesInput>
+  create: Prisma.XOR<Prisma.class_seriesCreateWithoutDisciplinesInput, Prisma.class_seriesUncheckedCreateWithoutDisciplinesInput>
+}
+
+export type class_seriesUpdateWithWhereUniqueWithoutDisciplinesInput = {
+  where: Prisma.class_seriesWhereUniqueInput
+  data: Prisma.XOR<Prisma.class_seriesUpdateWithoutDisciplinesInput, Prisma.class_seriesUncheckedUpdateWithoutDisciplinesInput>
+}
+
+export type class_seriesUpdateManyWithWhereWithoutDisciplinesInput = {
+  where: Prisma.class_seriesScalarWhereInput
+  data: Prisma.XOR<Prisma.class_seriesUpdateManyMutationInput, Prisma.class_seriesUncheckedUpdateManyWithoutDisciplinesInput>
 }
 
 export type class_seriesCreateWithoutScheduled_classesInput = {
   id?: string
   name: string
+  period_month: Date | string
+  is_active?: boolean
   created_at?: Date | string
+  updated_at?: Date | string
   branches: Prisma.branchesCreateNestedOneWithoutClass_seriesInput
+  disciplines: Prisma.disciplinesCreateNestedOneWithoutClass_seriesInput
+  default_teacher?: Prisma.usersCreateNestedOneWithoutClass_series_default_teacherInput
+  cloned_from_series?: Prisma.class_seriesCreateNestedOneWithoutCloned_seriesInput
+  cloned_series?: Prisma.class_seriesCreateNestedManyWithoutCloned_from_seriesInput
+  class_series_students?: Prisma.class_series_studentsCreateNestedManyWithoutClass_seriesInput
 }
 
 export type class_seriesUncheckedCreateWithoutScheduled_classesInput = {
   id?: string
   branch_id: string
   name: string
+  discipline_id: string
+  default_teacher_id?: string | null
+  period_month: Date | string
+  cloned_from_series_id?: string | null
+  is_active?: boolean
   created_at?: Date | string
+  updated_at?: Date | string
+  cloned_series?: Prisma.class_seriesUncheckedCreateNestedManyWithoutCloned_from_seriesInput
+  class_series_students?: Prisma.class_series_studentsUncheckedCreateNestedManyWithoutClass_seriesInput
 }
 
 export type class_seriesCreateOrConnectWithoutScheduled_classesInput = {
@@ -448,41 +916,455 @@ export type class_seriesUpdateToOneWithWhereWithoutScheduled_classesInput = {
 export type class_seriesUpdateWithoutScheduled_classesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  period_month?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   branches?: Prisma.branchesUpdateOneRequiredWithoutClass_seriesNestedInput
+  disciplines?: Prisma.disciplinesUpdateOneRequiredWithoutClass_seriesNestedInput
+  default_teacher?: Prisma.usersUpdateOneWithoutClass_series_default_teacherNestedInput
+  cloned_from_series?: Prisma.class_seriesUpdateOneWithoutCloned_seriesNestedInput
+  cloned_series?: Prisma.class_seriesUpdateManyWithoutCloned_from_seriesNestedInput
+  class_series_students?: Prisma.class_series_studentsUpdateManyWithoutClass_seriesNestedInput
 }
 
 export type class_seriesUncheckedUpdateWithoutScheduled_classesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   branch_id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  discipline_id?: Prisma.StringFieldUpdateOperationsInput | string
+  default_teacher_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  period_month?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  cloned_from_series_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  cloned_series?: Prisma.class_seriesUncheckedUpdateManyWithoutCloned_from_seriesNestedInput
+  class_series_students?: Prisma.class_series_studentsUncheckedUpdateManyWithoutClass_seriesNestedInput
+}
+
+export type class_seriesCreateWithoutCloned_seriesInput = {
+  id?: string
+  name: string
+  period_month: Date | string
+  is_active?: boolean
+  created_at?: Date | string
+  updated_at?: Date | string
+  branches: Prisma.branchesCreateNestedOneWithoutClass_seriesInput
+  disciplines: Prisma.disciplinesCreateNestedOneWithoutClass_seriesInput
+  default_teacher?: Prisma.usersCreateNestedOneWithoutClass_series_default_teacherInput
+  cloned_from_series?: Prisma.class_seriesCreateNestedOneWithoutCloned_seriesInput
+  scheduled_classes?: Prisma.scheduled_classesCreateNestedManyWithoutClass_seriesInput
+  class_series_students?: Prisma.class_series_studentsCreateNestedManyWithoutClass_seriesInput
+}
+
+export type class_seriesUncheckedCreateWithoutCloned_seriesInput = {
+  id?: string
+  branch_id: string
+  name: string
+  discipline_id: string
+  default_teacher_id?: string | null
+  period_month: Date | string
+  cloned_from_series_id?: string | null
+  is_active?: boolean
+  created_at?: Date | string
+  updated_at?: Date | string
+  scheduled_classes?: Prisma.scheduled_classesUncheckedCreateNestedManyWithoutClass_seriesInput
+  class_series_students?: Prisma.class_series_studentsUncheckedCreateNestedManyWithoutClass_seriesInput
+}
+
+export type class_seriesCreateOrConnectWithoutCloned_seriesInput = {
+  where: Prisma.class_seriesWhereUniqueInput
+  create: Prisma.XOR<Prisma.class_seriesCreateWithoutCloned_seriesInput, Prisma.class_seriesUncheckedCreateWithoutCloned_seriesInput>
+}
+
+export type class_seriesCreateWithoutCloned_from_seriesInput = {
+  id?: string
+  name: string
+  period_month: Date | string
+  is_active?: boolean
+  created_at?: Date | string
+  updated_at?: Date | string
+  branches: Prisma.branchesCreateNestedOneWithoutClass_seriesInput
+  disciplines: Prisma.disciplinesCreateNestedOneWithoutClass_seriesInput
+  default_teacher?: Prisma.usersCreateNestedOneWithoutClass_series_default_teacherInput
+  cloned_series?: Prisma.class_seriesCreateNestedManyWithoutCloned_from_seriesInput
+  scheduled_classes?: Prisma.scheduled_classesCreateNestedManyWithoutClass_seriesInput
+  class_series_students?: Prisma.class_series_studentsCreateNestedManyWithoutClass_seriesInput
+}
+
+export type class_seriesUncheckedCreateWithoutCloned_from_seriesInput = {
+  id?: string
+  branch_id: string
+  name: string
+  discipline_id: string
+  default_teacher_id?: string | null
+  period_month: Date | string
+  is_active?: boolean
+  created_at?: Date | string
+  updated_at?: Date | string
+  cloned_series?: Prisma.class_seriesUncheckedCreateNestedManyWithoutCloned_from_seriesInput
+  scheduled_classes?: Prisma.scheduled_classesUncheckedCreateNestedManyWithoutClass_seriesInput
+  class_series_students?: Prisma.class_series_studentsUncheckedCreateNestedManyWithoutClass_seriesInput
+}
+
+export type class_seriesCreateOrConnectWithoutCloned_from_seriesInput = {
+  where: Prisma.class_seriesWhereUniqueInput
+  create: Prisma.XOR<Prisma.class_seriesCreateWithoutCloned_from_seriesInput, Prisma.class_seriesUncheckedCreateWithoutCloned_from_seriesInput>
+}
+
+export type class_seriesCreateManyCloned_from_seriesInputEnvelope = {
+  data: Prisma.class_seriesCreateManyCloned_from_seriesInput | Prisma.class_seriesCreateManyCloned_from_seriesInput[]
+  skipDuplicates?: boolean
+}
+
+export type class_seriesUpsertWithoutCloned_seriesInput = {
+  update: Prisma.XOR<Prisma.class_seriesUpdateWithoutCloned_seriesInput, Prisma.class_seriesUncheckedUpdateWithoutCloned_seriesInput>
+  create: Prisma.XOR<Prisma.class_seriesCreateWithoutCloned_seriesInput, Prisma.class_seriesUncheckedCreateWithoutCloned_seriesInput>
+  where?: Prisma.class_seriesWhereInput
+}
+
+export type class_seriesUpdateToOneWithWhereWithoutCloned_seriesInput = {
+  where?: Prisma.class_seriesWhereInput
+  data: Prisma.XOR<Prisma.class_seriesUpdateWithoutCloned_seriesInput, Prisma.class_seriesUncheckedUpdateWithoutCloned_seriesInput>
+}
+
+export type class_seriesUpdateWithoutCloned_seriesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  period_month?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  branches?: Prisma.branchesUpdateOneRequiredWithoutClass_seriesNestedInput
+  disciplines?: Prisma.disciplinesUpdateOneRequiredWithoutClass_seriesNestedInput
+  default_teacher?: Prisma.usersUpdateOneWithoutClass_series_default_teacherNestedInput
+  cloned_from_series?: Prisma.class_seriesUpdateOneWithoutCloned_seriesNestedInput
+  scheduled_classes?: Prisma.scheduled_classesUpdateManyWithoutClass_seriesNestedInput
+  class_series_students?: Prisma.class_series_studentsUpdateManyWithoutClass_seriesNestedInput
+}
+
+export type class_seriesUncheckedUpdateWithoutCloned_seriesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  branch_id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  discipline_id?: Prisma.StringFieldUpdateOperationsInput | string
+  default_teacher_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  period_month?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  cloned_from_series_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  scheduled_classes?: Prisma.scheduled_classesUncheckedUpdateManyWithoutClass_seriesNestedInput
+  class_series_students?: Prisma.class_series_studentsUncheckedUpdateManyWithoutClass_seriesNestedInput
+}
+
+export type class_seriesUpsertWithWhereUniqueWithoutCloned_from_seriesInput = {
+  where: Prisma.class_seriesWhereUniqueInput
+  update: Prisma.XOR<Prisma.class_seriesUpdateWithoutCloned_from_seriesInput, Prisma.class_seriesUncheckedUpdateWithoutCloned_from_seriesInput>
+  create: Prisma.XOR<Prisma.class_seriesCreateWithoutCloned_from_seriesInput, Prisma.class_seriesUncheckedCreateWithoutCloned_from_seriesInput>
+}
+
+export type class_seriesUpdateWithWhereUniqueWithoutCloned_from_seriesInput = {
+  where: Prisma.class_seriesWhereUniqueInput
+  data: Prisma.XOR<Prisma.class_seriesUpdateWithoutCloned_from_seriesInput, Prisma.class_seriesUncheckedUpdateWithoutCloned_from_seriesInput>
+}
+
+export type class_seriesUpdateManyWithWhereWithoutCloned_from_seriesInput = {
+  where: Prisma.class_seriesScalarWhereInput
+  data: Prisma.XOR<Prisma.class_seriesUpdateManyMutationInput, Prisma.class_seriesUncheckedUpdateManyWithoutCloned_from_seriesInput>
+}
+
+export type class_seriesCreateWithoutClass_series_studentsInput = {
+  id?: string
+  name: string
+  period_month: Date | string
+  is_active?: boolean
+  created_at?: Date | string
+  updated_at?: Date | string
+  branches: Prisma.branchesCreateNestedOneWithoutClass_seriesInput
+  disciplines: Prisma.disciplinesCreateNestedOneWithoutClass_seriesInput
+  default_teacher?: Prisma.usersCreateNestedOneWithoutClass_series_default_teacherInput
+  cloned_from_series?: Prisma.class_seriesCreateNestedOneWithoutCloned_seriesInput
+  cloned_series?: Prisma.class_seriesCreateNestedManyWithoutCloned_from_seriesInput
+  scheduled_classes?: Prisma.scheduled_classesCreateNestedManyWithoutClass_seriesInput
+}
+
+export type class_seriesUncheckedCreateWithoutClass_series_studentsInput = {
+  id?: string
+  branch_id: string
+  name: string
+  discipline_id: string
+  default_teacher_id?: string | null
+  period_month: Date | string
+  cloned_from_series_id?: string | null
+  is_active?: boolean
+  created_at?: Date | string
+  updated_at?: Date | string
+  cloned_series?: Prisma.class_seriesUncheckedCreateNestedManyWithoutCloned_from_seriesInput
+  scheduled_classes?: Prisma.scheduled_classesUncheckedCreateNestedManyWithoutClass_seriesInput
+}
+
+export type class_seriesCreateOrConnectWithoutClass_series_studentsInput = {
+  where: Prisma.class_seriesWhereUniqueInput
+  create: Prisma.XOR<Prisma.class_seriesCreateWithoutClass_series_studentsInput, Prisma.class_seriesUncheckedCreateWithoutClass_series_studentsInput>
+}
+
+export type class_seriesUpsertWithoutClass_series_studentsInput = {
+  update: Prisma.XOR<Prisma.class_seriesUpdateWithoutClass_series_studentsInput, Prisma.class_seriesUncheckedUpdateWithoutClass_series_studentsInput>
+  create: Prisma.XOR<Prisma.class_seriesCreateWithoutClass_series_studentsInput, Prisma.class_seriesUncheckedCreateWithoutClass_series_studentsInput>
+  where?: Prisma.class_seriesWhereInput
+}
+
+export type class_seriesUpdateToOneWithWhereWithoutClass_series_studentsInput = {
+  where?: Prisma.class_seriesWhereInput
+  data: Prisma.XOR<Prisma.class_seriesUpdateWithoutClass_series_studentsInput, Prisma.class_seriesUncheckedUpdateWithoutClass_series_studentsInput>
+}
+
+export type class_seriesUpdateWithoutClass_series_studentsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  period_month?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  branches?: Prisma.branchesUpdateOneRequiredWithoutClass_seriesNestedInput
+  disciplines?: Prisma.disciplinesUpdateOneRequiredWithoutClass_seriesNestedInput
+  default_teacher?: Prisma.usersUpdateOneWithoutClass_series_default_teacherNestedInput
+  cloned_from_series?: Prisma.class_seriesUpdateOneWithoutCloned_seriesNestedInput
+  cloned_series?: Prisma.class_seriesUpdateManyWithoutCloned_from_seriesNestedInput
+  scheduled_classes?: Prisma.scheduled_classesUpdateManyWithoutClass_seriesNestedInput
+}
+
+export type class_seriesUncheckedUpdateWithoutClass_series_studentsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  branch_id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  discipline_id?: Prisma.StringFieldUpdateOperationsInput | string
+  default_teacher_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  period_month?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  cloned_from_series_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  cloned_series?: Prisma.class_seriesUncheckedUpdateManyWithoutCloned_from_seriesNestedInput
+  scheduled_classes?: Prisma.scheduled_classesUncheckedUpdateManyWithoutClass_seriesNestedInput
+}
+
+export type class_seriesCreateManyDefault_teacherInput = {
+  id?: string
+  branch_id: string
+  name: string
+  discipline_id: string
+  period_month: Date | string
+  cloned_from_series_id?: string | null
+  is_active?: boolean
+  created_at?: Date | string
+  updated_at?: Date | string
+}
+
+export type class_seriesUpdateWithoutDefault_teacherInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  period_month?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  branches?: Prisma.branchesUpdateOneRequiredWithoutClass_seriesNestedInput
+  disciplines?: Prisma.disciplinesUpdateOneRequiredWithoutClass_seriesNestedInput
+  cloned_from_series?: Prisma.class_seriesUpdateOneWithoutCloned_seriesNestedInput
+  cloned_series?: Prisma.class_seriesUpdateManyWithoutCloned_from_seriesNestedInput
+  scheduled_classes?: Prisma.scheduled_classesUpdateManyWithoutClass_seriesNestedInput
+  class_series_students?: Prisma.class_series_studentsUpdateManyWithoutClass_seriesNestedInput
+}
+
+export type class_seriesUncheckedUpdateWithoutDefault_teacherInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  branch_id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  discipline_id?: Prisma.StringFieldUpdateOperationsInput | string
+  period_month?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  cloned_from_series_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  cloned_series?: Prisma.class_seriesUncheckedUpdateManyWithoutCloned_from_seriesNestedInput
+  scheduled_classes?: Prisma.scheduled_classesUncheckedUpdateManyWithoutClass_seriesNestedInput
+  class_series_students?: Prisma.class_series_studentsUncheckedUpdateManyWithoutClass_seriesNestedInput
+}
+
+export type class_seriesUncheckedUpdateManyWithoutDefault_teacherInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  branch_id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  discipline_id?: Prisma.StringFieldUpdateOperationsInput | string
+  period_month?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  cloned_from_series_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type class_seriesCreateManyBranchesInput = {
   id?: string
   name: string
+  discipline_id: string
+  default_teacher_id?: string | null
+  period_month: Date | string
+  cloned_from_series_id?: string | null
+  is_active?: boolean
   created_at?: Date | string
+  updated_at?: Date | string
 }
 
 export type class_seriesUpdateWithoutBranchesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  period_month?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  disciplines?: Prisma.disciplinesUpdateOneRequiredWithoutClass_seriesNestedInput
+  default_teacher?: Prisma.usersUpdateOneWithoutClass_series_default_teacherNestedInput
+  cloned_from_series?: Prisma.class_seriesUpdateOneWithoutCloned_seriesNestedInput
+  cloned_series?: Prisma.class_seriesUpdateManyWithoutCloned_from_seriesNestedInput
   scheduled_classes?: Prisma.scheduled_classesUpdateManyWithoutClass_seriesNestedInput
+  class_series_students?: Prisma.class_series_studentsUpdateManyWithoutClass_seriesNestedInput
 }
 
 export type class_seriesUncheckedUpdateWithoutBranchesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  discipline_id?: Prisma.StringFieldUpdateOperationsInput | string
+  default_teacher_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  period_month?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  cloned_from_series_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  cloned_series?: Prisma.class_seriesUncheckedUpdateManyWithoutCloned_from_seriesNestedInput
   scheduled_classes?: Prisma.scheduled_classesUncheckedUpdateManyWithoutClass_seriesNestedInput
+  class_series_students?: Prisma.class_series_studentsUncheckedUpdateManyWithoutClass_seriesNestedInput
 }
 
 export type class_seriesUncheckedUpdateManyWithoutBranchesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  discipline_id?: Prisma.StringFieldUpdateOperationsInput | string
+  default_teacher_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  period_month?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  cloned_from_series_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type class_seriesCreateManyDisciplinesInput = {
+  id?: string
+  branch_id: string
+  name: string
+  default_teacher_id?: string | null
+  period_month: Date | string
+  cloned_from_series_id?: string | null
+  is_active?: boolean
+  created_at?: Date | string
+  updated_at?: Date | string
+}
+
+export type class_seriesUpdateWithoutDisciplinesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  period_month?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  branches?: Prisma.branchesUpdateOneRequiredWithoutClass_seriesNestedInput
+  default_teacher?: Prisma.usersUpdateOneWithoutClass_series_default_teacherNestedInput
+  cloned_from_series?: Prisma.class_seriesUpdateOneWithoutCloned_seriesNestedInput
+  cloned_series?: Prisma.class_seriesUpdateManyWithoutCloned_from_seriesNestedInput
+  scheduled_classes?: Prisma.scheduled_classesUpdateManyWithoutClass_seriesNestedInput
+  class_series_students?: Prisma.class_series_studentsUpdateManyWithoutClass_seriesNestedInput
+}
+
+export type class_seriesUncheckedUpdateWithoutDisciplinesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  branch_id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  default_teacher_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  period_month?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  cloned_from_series_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  cloned_series?: Prisma.class_seriesUncheckedUpdateManyWithoutCloned_from_seriesNestedInput
+  scheduled_classes?: Prisma.scheduled_classesUncheckedUpdateManyWithoutClass_seriesNestedInput
+  class_series_students?: Prisma.class_series_studentsUncheckedUpdateManyWithoutClass_seriesNestedInput
+}
+
+export type class_seriesUncheckedUpdateManyWithoutDisciplinesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  branch_id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  default_teacher_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  period_month?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  cloned_from_series_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type class_seriesCreateManyCloned_from_seriesInput = {
+  id?: string
+  branch_id: string
+  name: string
+  discipline_id: string
+  default_teacher_id?: string | null
+  period_month: Date | string
+  is_active?: boolean
+  created_at?: Date | string
+  updated_at?: Date | string
+}
+
+export type class_seriesUpdateWithoutCloned_from_seriesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  period_month?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  branches?: Prisma.branchesUpdateOneRequiredWithoutClass_seriesNestedInput
+  disciplines?: Prisma.disciplinesUpdateOneRequiredWithoutClass_seriesNestedInput
+  default_teacher?: Prisma.usersUpdateOneWithoutClass_series_default_teacherNestedInput
+  cloned_series?: Prisma.class_seriesUpdateManyWithoutCloned_from_seriesNestedInput
+  scheduled_classes?: Prisma.scheduled_classesUpdateManyWithoutClass_seriesNestedInput
+  class_series_students?: Prisma.class_series_studentsUpdateManyWithoutClass_seriesNestedInput
+}
+
+export type class_seriesUncheckedUpdateWithoutCloned_from_seriesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  branch_id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  discipline_id?: Prisma.StringFieldUpdateOperationsInput | string
+  default_teacher_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  period_month?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  cloned_series?: Prisma.class_seriesUncheckedUpdateManyWithoutCloned_from_seriesNestedInput
+  scheduled_classes?: Prisma.scheduled_classesUncheckedUpdateManyWithoutClass_seriesNestedInput
+  class_series_students?: Prisma.class_series_studentsUncheckedUpdateManyWithoutClass_seriesNestedInput
+}
+
+export type class_seriesUncheckedUpdateManyWithoutCloned_from_seriesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  branch_id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  discipline_id?: Prisma.StringFieldUpdateOperationsInput | string
+  default_teacher_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  period_month?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 
@@ -491,11 +1373,15 @@ export type class_seriesUncheckedUpdateManyWithoutBranchesInput = {
  */
 
 export type Class_seriesCountOutputType = {
+  cloned_series: number
   scheduled_classes: number
+  class_series_students: number
 }
 
 export type Class_seriesCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  cloned_series?: boolean | Class_seriesCountOutputTypeCountCloned_seriesArgs
   scheduled_classes?: boolean | Class_seriesCountOutputTypeCountScheduled_classesArgs
+  class_series_students?: boolean | Class_seriesCountOutputTypeCountClass_series_studentsArgs
 }
 
 /**
@@ -511,8 +1397,22 @@ export type Class_seriesCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types
 /**
  * Class_seriesCountOutputType without action
  */
+export type Class_seriesCountOutputTypeCountCloned_seriesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.class_seriesWhereInput
+}
+
+/**
+ * Class_seriesCountOutputType without action
+ */
 export type Class_seriesCountOutputTypeCountScheduled_classesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.scheduled_classesWhereInput
+}
+
+/**
+ * Class_seriesCountOutputType without action
+ */
+export type Class_seriesCountOutputTypeCountClass_series_studentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.class_series_studentsWhereInput
 }
 
 
@@ -520,9 +1420,20 @@ export type class_seriesSelect<ExtArgs extends runtime.Types.Extensions.Internal
   id?: boolean
   branch_id?: boolean
   name?: boolean
+  discipline_id?: boolean
+  default_teacher_id?: boolean
+  period_month?: boolean
+  cloned_from_series_id?: boolean
+  is_active?: boolean
   created_at?: boolean
+  updated_at?: boolean
   branches?: boolean | Prisma.branchesDefaultArgs<ExtArgs>
+  disciplines?: boolean | Prisma.disciplinesDefaultArgs<ExtArgs>
+  default_teacher?: boolean | Prisma.class_series$default_teacherArgs<ExtArgs>
+  cloned_from_series?: boolean | Prisma.class_series$cloned_from_seriesArgs<ExtArgs>
+  cloned_series?: boolean | Prisma.class_series$cloned_seriesArgs<ExtArgs>
   scheduled_classes?: boolean | Prisma.class_series$scheduled_classesArgs<ExtArgs>
+  class_series_students?: boolean | Prisma.class_series$class_series_studentsArgs<ExtArgs>
   _count?: boolean | Prisma.Class_seriesCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["class_series"]>
 
@@ -530,49 +1441,95 @@ export type class_seriesSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   id?: boolean
   branch_id?: boolean
   name?: boolean
+  discipline_id?: boolean
+  default_teacher_id?: boolean
+  period_month?: boolean
+  cloned_from_series_id?: boolean
+  is_active?: boolean
   created_at?: boolean
+  updated_at?: boolean
   branches?: boolean | Prisma.branchesDefaultArgs<ExtArgs>
+  disciplines?: boolean | Prisma.disciplinesDefaultArgs<ExtArgs>
+  default_teacher?: boolean | Prisma.class_series$default_teacherArgs<ExtArgs>
+  cloned_from_series?: boolean | Prisma.class_series$cloned_from_seriesArgs<ExtArgs>
 }, ExtArgs["result"]["class_series"]>
 
 export type class_seriesSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   branch_id?: boolean
   name?: boolean
+  discipline_id?: boolean
+  default_teacher_id?: boolean
+  period_month?: boolean
+  cloned_from_series_id?: boolean
+  is_active?: boolean
   created_at?: boolean
+  updated_at?: boolean
   branches?: boolean | Prisma.branchesDefaultArgs<ExtArgs>
+  disciplines?: boolean | Prisma.disciplinesDefaultArgs<ExtArgs>
+  default_teacher?: boolean | Prisma.class_series$default_teacherArgs<ExtArgs>
+  cloned_from_series?: boolean | Prisma.class_series$cloned_from_seriesArgs<ExtArgs>
 }, ExtArgs["result"]["class_series"]>
 
 export type class_seriesSelectScalar = {
   id?: boolean
   branch_id?: boolean
   name?: boolean
+  discipline_id?: boolean
+  default_teacher_id?: boolean
+  period_month?: boolean
+  cloned_from_series_id?: boolean
+  is_active?: boolean
   created_at?: boolean
+  updated_at?: boolean
 }
 
-export type class_seriesOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "branch_id" | "name" | "created_at", ExtArgs["result"]["class_series"]>
+export type class_seriesOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "branch_id" | "name" | "discipline_id" | "default_teacher_id" | "period_month" | "cloned_from_series_id" | "is_active" | "created_at" | "updated_at", ExtArgs["result"]["class_series"]>
 export type class_seriesInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   branches?: boolean | Prisma.branchesDefaultArgs<ExtArgs>
+  disciplines?: boolean | Prisma.disciplinesDefaultArgs<ExtArgs>
+  default_teacher?: boolean | Prisma.class_series$default_teacherArgs<ExtArgs>
+  cloned_from_series?: boolean | Prisma.class_series$cloned_from_seriesArgs<ExtArgs>
+  cloned_series?: boolean | Prisma.class_series$cloned_seriesArgs<ExtArgs>
   scheduled_classes?: boolean | Prisma.class_series$scheduled_classesArgs<ExtArgs>
+  class_series_students?: boolean | Prisma.class_series$class_series_studentsArgs<ExtArgs>
   _count?: boolean | Prisma.Class_seriesCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type class_seriesIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   branches?: boolean | Prisma.branchesDefaultArgs<ExtArgs>
+  disciplines?: boolean | Prisma.disciplinesDefaultArgs<ExtArgs>
+  default_teacher?: boolean | Prisma.class_series$default_teacherArgs<ExtArgs>
+  cloned_from_series?: boolean | Prisma.class_series$cloned_from_seriesArgs<ExtArgs>
 }
 export type class_seriesIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   branches?: boolean | Prisma.branchesDefaultArgs<ExtArgs>
+  disciplines?: boolean | Prisma.disciplinesDefaultArgs<ExtArgs>
+  default_teacher?: boolean | Prisma.class_series$default_teacherArgs<ExtArgs>
+  cloned_from_series?: boolean | Prisma.class_series$cloned_from_seriesArgs<ExtArgs>
 }
 
 export type $class_seriesPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "class_series"
   objects: {
     branches: Prisma.$branchesPayload<ExtArgs>
+    disciplines: Prisma.$disciplinesPayload<ExtArgs>
+    default_teacher: Prisma.$usersPayload<ExtArgs> | null
+    cloned_from_series: Prisma.$class_seriesPayload<ExtArgs> | null
+    cloned_series: Prisma.$class_seriesPayload<ExtArgs>[]
     scheduled_classes: Prisma.$scheduled_classesPayload<ExtArgs>[]
+    class_series_students: Prisma.$class_series_studentsPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     branch_id: string
     name: string
+    discipline_id: string
+    default_teacher_id: string | null
+    period_month: Date
+    cloned_from_series_id: string | null
+    is_active: boolean
     created_at: Date
+    updated_at: Date
   }, ExtArgs["result"]["class_series"]>
   composites: {}
 }
@@ -968,7 +1925,12 @@ readonly fields: class_seriesFieldRefs;
 export interface Prisma__class_seriesClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   branches<T extends Prisma.branchesDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.branchesDefaultArgs<ExtArgs>>): Prisma.Prisma__branchesClient<runtime.Types.Result.GetResult<Prisma.$branchesPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  disciplines<T extends Prisma.disciplinesDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.disciplinesDefaultArgs<ExtArgs>>): Prisma.Prisma__disciplinesClient<runtime.Types.Result.GetResult<Prisma.$disciplinesPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  default_teacher<T extends Prisma.class_series$default_teacherArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.class_series$default_teacherArgs<ExtArgs>>): Prisma.Prisma__usersClient<runtime.Types.Result.GetResult<Prisma.$usersPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  cloned_from_series<T extends Prisma.class_series$cloned_from_seriesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.class_series$cloned_from_seriesArgs<ExtArgs>>): Prisma.Prisma__class_seriesClient<runtime.Types.Result.GetResult<Prisma.$class_seriesPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  cloned_series<T extends Prisma.class_series$cloned_seriesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.class_series$cloned_seriesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$class_seriesPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   scheduled_classes<T extends Prisma.class_series$scheduled_classesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.class_series$scheduled_classesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$scheduled_classesPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  class_series_students<T extends Prisma.class_series$class_series_studentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.class_series$class_series_studentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$class_series_studentsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1001,7 +1963,13 @@ export interface class_seriesFieldRefs {
   readonly id: Prisma.FieldRef<"class_series", 'String'>
   readonly branch_id: Prisma.FieldRef<"class_series", 'String'>
   readonly name: Prisma.FieldRef<"class_series", 'String'>
+  readonly discipline_id: Prisma.FieldRef<"class_series", 'String'>
+  readonly default_teacher_id: Prisma.FieldRef<"class_series", 'String'>
+  readonly period_month: Prisma.FieldRef<"class_series", 'DateTime'>
+  readonly cloned_from_series_id: Prisma.FieldRef<"class_series", 'String'>
+  readonly is_active: Prisma.FieldRef<"class_series", 'Boolean'>
   readonly created_at: Prisma.FieldRef<"class_series", 'DateTime'>
+  readonly updated_at: Prisma.FieldRef<"class_series", 'DateTime'>
 }
     
 
@@ -1403,6 +2371,68 @@ export type class_seriesDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.
 }
 
 /**
+ * class_series.default_teacher
+ */
+export type class_series$default_teacherArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the users
+   */
+  select?: Prisma.usersSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the users
+   */
+  omit?: Prisma.usersOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.usersInclude<ExtArgs> | null
+  where?: Prisma.usersWhereInput
+}
+
+/**
+ * class_series.cloned_from_series
+ */
+export type class_series$cloned_from_seriesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the class_series
+   */
+  select?: Prisma.class_seriesSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the class_series
+   */
+  omit?: Prisma.class_seriesOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.class_seriesInclude<ExtArgs> | null
+  where?: Prisma.class_seriesWhereInput
+}
+
+/**
+ * class_series.cloned_series
+ */
+export type class_series$cloned_seriesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the class_series
+   */
+  select?: Prisma.class_seriesSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the class_series
+   */
+  omit?: Prisma.class_seriesOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.class_seriesInclude<ExtArgs> | null
+  where?: Prisma.class_seriesWhereInput
+  orderBy?: Prisma.class_seriesOrderByWithRelationInput | Prisma.class_seriesOrderByWithRelationInput[]
+  cursor?: Prisma.class_seriesWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.Class_seriesScalarFieldEnum | Prisma.Class_seriesScalarFieldEnum[]
+}
+
+/**
  * class_series.scheduled_classes
  */
 export type class_series$scheduled_classesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1424,6 +2454,30 @@ export type class_series$scheduled_classesArgs<ExtArgs extends runtime.Types.Ext
   take?: number
   skip?: number
   distinct?: Prisma.Scheduled_classesScalarFieldEnum | Prisma.Scheduled_classesScalarFieldEnum[]
+}
+
+/**
+ * class_series.class_series_students
+ */
+export type class_series$class_series_studentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the class_series_students
+   */
+  select?: Prisma.class_series_studentsSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the class_series_students
+   */
+  omit?: Prisma.class_series_studentsOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.class_series_studentsInclude<ExtArgs> | null
+  where?: Prisma.class_series_studentsWhereInput
+  orderBy?: Prisma.class_series_studentsOrderByWithRelationInput | Prisma.class_series_studentsOrderByWithRelationInput[]
+  cursor?: Prisma.class_series_studentsWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.Class_series_studentsScalarFieldEnum | Prisma.Class_series_studentsScalarFieldEnum[]
 }
 
 /**

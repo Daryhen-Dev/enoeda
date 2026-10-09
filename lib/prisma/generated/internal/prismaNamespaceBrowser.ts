@@ -83,12 +83,14 @@ export const ModelName = {
   discipline_events: 'discipline_events',
   scheduled_classes: 'scheduled_classes',
   class_series: 'class_series',
+  class_series_students: 'class_series_students',
   one_time_classes: 'one_time_classes',
   class_sessions: 'class_sessions',
   attendance: 'attendance',
   discipline_levels: 'discipline_levels',
   student_progress: 'student_progress',
   student_notes: 'student_notes',
+  one_time_class_students: 'one_time_class_students',
   branch_level_requirements: 'branch_level_requirements',
   payments: 'payments',
   class_payments: 'class_payments'
@@ -570,6 +572,7 @@ export const Student_disciplinesScalarFieldEnum = {
   is_active: 'is_active',
   suspended_at: 'suspended_at',
   next_due_date: 'next_due_date',
+  billing_mode: 'billing_mode',
   created_at: 'created_at',
   updated_at: 'updated_at'
 } as const
@@ -611,10 +614,27 @@ export const Class_seriesScalarFieldEnum = {
   id: 'id',
   branch_id: 'branch_id',
   name: 'name',
-  created_at: 'created_at'
+  discipline_id: 'discipline_id',
+  default_teacher_id: 'default_teacher_id',
+  period_month: 'period_month',
+  cloned_from_series_id: 'cloned_from_series_id',
+  is_active: 'is_active',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
 } as const
 
 export type Class_seriesScalarFieldEnum = (typeof Class_seriesScalarFieldEnum)[keyof typeof Class_seriesScalarFieldEnum]
+
+
+export const Class_series_studentsScalarFieldEnum = {
+  id: 'id',
+  series_id: 'series_id',
+  student_id: 'student_id',
+  added_by: 'added_by',
+  created_at: 'created_at'
+} as const
+
+export type Class_series_studentsScalarFieldEnum = (typeof Class_series_studentsScalarFieldEnum)[keyof typeof Class_series_studentsScalarFieldEnum]
 
 
 export const One_time_classesScalarFieldEnum = {
@@ -707,6 +727,17 @@ export const Student_notesScalarFieldEnum = {
 } as const
 
 export type Student_notesScalarFieldEnum = (typeof Student_notesScalarFieldEnum)[keyof typeof Student_notesScalarFieldEnum]
+
+
+export const One_time_class_studentsScalarFieldEnum = {
+  id: 'id',
+  one_time_class_id: 'one_time_class_id',
+  student_id: 'student_id',
+  added_by: 'added_by',
+  created_at: 'created_at'
+} as const
+
+export type One_time_class_studentsScalarFieldEnum = (typeof One_time_class_studentsScalarFieldEnum)[keyof typeof One_time_class_studentsScalarFieldEnum]
 
 
 export const Branch_level_requirementsScalarFieldEnum = {
