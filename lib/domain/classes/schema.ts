@@ -95,6 +95,13 @@ export const deactivateAllFutureClassesSchema = z.object({
   branch_id: z.uuid(),
 });
 
+export const cloneClassGroupSchema = z.object({
+  branch_id: z.uuid(),
+  series_id: z.uuid(),
+});
+
+export type CloneClassGroupInput = z.infer<typeof cloneClassGroupSchema>;
+
 export const getSessionsForRangeSchema = z.object({
   branch_id: z.uuid(),
   start_date: z.string().date(),

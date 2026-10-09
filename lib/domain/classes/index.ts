@@ -1,5 +1,6 @@
 export {
   assignTeacherSchema,
+  cloneClassGroupSchema,
   createMonthlyClassGroupSchema,
   createOneTimeClassSchema,
   deactivateAllFutureClassesSchema,
@@ -13,6 +14,7 @@ export {
   suspendSessionSchema,
   suspensionCategoryEnum,
   type AssignTeacherInput,
+  type CloneClassGroupInput,
   type CreateMonthlyClassGroupInput,
   type CreateOneTimeClassInput,
   type DeactivateAllFutureClassesInput,
@@ -29,6 +31,7 @@ export {
 
 export {
   assignTeacher,
+  cloneClassGroupToNextMonth,
   createMonthlyClassGroup,
   createOneTimeClass,
   deactivateAllFutureClasses,
@@ -43,7 +46,9 @@ export {
   type ActionResult,
   type AssignTeacherResult,
   type ClassSeriesView,
+  type CloneClassGroupResult,
   type MonthlyClassGroupResult,
+  type SkippedRosterStudent,
   type SessionView,
   type SuspensionReportRow,
 } from "./actions";

@@ -663,6 +663,23 @@ export const ROSTER_MESSAGES = {
   SKIPPED_BRANCH_MISMATCH: "El estudiante no pertenece a esta sucursal.",
 } as const
 
+export const CLONE_MESSAGES = {
+  SOURCE_INACTIVE:
+    "El grupo original está inactivo y no se puede clonar.",
+  ALREADY_CLONED:
+    "Este grupo ya fue clonado para el siguiente mes.",
+  NO_ACTIVE_SLOTS:
+    "El grupo original no tiene clases activas para copiar.",
+  UNAUTHORIZED:
+    "Solo los administradores de la sucursal pueden clonar grupos mensuales.",
+  SUCCESS_SUMMARY: (
+    month: string,
+    copiedCount: number,
+    skippedCount: number
+  ) =>
+    `Grupo clonado para ${month}: ${copiedCount} alumnos copiados, ${skippedCount} omitidos.`,
+} as const
+
 export const ONE_TIME_CLASS_MESSAGES = {
   CREATE_TITLE: "Crear clase única",
   CREATE_DESCRIPTION:

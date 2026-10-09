@@ -16,11 +16,14 @@ import {
 } from "@/lib/date";
 import {
   CLASS_MESSAGES,
+  CLONE_MESSAGES,
   COMMON_MESSAGES,
   TEACHER_ASSIGN_MESSAGES,
 } from "@/lib/localization/es-ec";
+import { classifyRosterEligibility } from "@/lib/domain/rosters";
 import {
   assignTeacherSchema,
+  cloneClassGroupSchema,
   createMonthlyClassGroupSchema,
   createOneTimeClassSchema,
   deactivateAllFutureClassesSchema,
@@ -448,10 +451,30 @@ export async function deactivateAllFutureClasses(
         throw new Error(branchCheck.error);
       }
 
+      const activeRows = await tx.scheduled_classes.findMany({
+        where: { branch_id, is_active: true },
+        select: { series_id: true },
+      });
+
       const recurringUpdate = await tx.scheduled_classes.updateMany({
         where: { branch_id, is_active: true },
         data: { is_active: false },
       });
+
+      // T3 follow-up: deactivate the monthly groups (class_series) whose
+      // weekday rows were just deactivated, so clone flows and the series
+      // list see them as inactive groups too.
+      const seriesIds = [...new Set(activeRows.map((row) => row.series_id))];
+      if (seriesIds.length > 0) {
+        await tx.class_series.updateMany({
+          where: {
+            id: { in: seriesIds },
+            branch_id,
+            is_active: true,
+          },
+          data: { is_active: false },
+        });
+      }
 
       return { deactivated: recurringUpdate.count };
     }, {
@@ -461,6 +484,273 @@ export async function deactivateAllFutureClasses(
           error.message.includes("permisos"))
           ? error.message
           : undefined,
+    });
+
+    if (!result.success) return result;
+    return { success: true, data: result.data };
+  } catch {
+    return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
+  }
+}
+
+/**
+ * Clone a monthly class group (class_series) into the NEXT month with its
+ * weekday slots and roster — the "prepare next month" flow.
+ *
+ * In ONE transaction:
+ *   - The source group is loaded (branch-scoped: a foreign series is
+ *     indistinguishable from an absent one → NOT_FOUND) and must be active.
+ *   - The target month is the source period_month + 1 month (Dec → Jan of
+ *     the next year), stored as the first day of that month (UTC).
+ *   - A group can be cloned only ONCE: the pre-check against
+ *     cloned_from_series_id plus the mapped partial unique index
+ *     class_series_cloned_from_series_id_uq (race safety net) both yield
+ *     ALREADY_CLONED.
+ *   - Only ACTIVE scheduled_classes rows of the source are copied (day,
+ *     time, teacher); a group without active weekday rows is rejected with
+ *     NO_ACTIVE_SLOTS.
+ *   - The roster (class_series_students) is copied through the same
+ *     eligibility rules as manual roster edits (classifyRosterEligibility):
+ *     eligible students are inserted with added_by = caller, the rest are
+ *     reported as skipped with their first_name/surname and reason, so the
+ *     admin can fix the roster afterwards.
+ *
+ * Authorization: admin of the branch (owner passes through, teachers are
+ * rejected) — same fail-closed branch-assignment assertion as
+ * createMonthlyClassGroup plus an explicit admin-role check.
+ */
+export interface SkippedRosterStudent {
+  student_id: string;
+  first_name: string;
+  surname: string;
+  reason: "branch_mismatch" | "inactive" | "not_eligible";
+}
+
+export interface CloneClassGroupResult {
+  series_id: string;
+  /** Target group month as "YYYY-MM". */
+  period_month: string;
+  class_ids: string[];
+  copied_student_count: number;
+  skipped: SkippedRosterStudent[];
+}
+
+export async function cloneClassGroupToNextMonth(
+  input: unknown
+): Promise<ActionResult<CloneClassGroupResult>> {
+  const parsed = cloneClassGroupSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message };
+  }
+
+  const { branch_id, series_id } = parsed.data;
+
+  try {
+    const result = await withAuthenticatedUser(async (tx, ctx) => {
+      // Branch assignment assertion — fail-closed
+      const branchCheck = assertActiveBranchAssignment(ctx, branch_id);
+      if (!branchCheck.ok) {
+        throw new Error(branchCheck.error);
+      }
+
+      // Clone writes are admin-only: teachers of the branch are rejected
+      // even though they hold a valid branch assignment (owner passes).
+      const isAdmin = ctx.assignments.some(
+        (assignment) =>
+          assignment.role === "admin" && assignment.branchId === branch_id
+      );
+      if (!isAdmin && !ctx.roles.includes("owner")) {
+        throw new Error(CLONE_MESSAGES.UNAUTHORIZED);
+      }
+
+      // Load the source group (RLS scopes the lookup to the caller's
+      // branch: a foreign series is indistinguishable from an absent one).
+      const source = await tx.class_series.findFirst({
+        where: { id: series_id, branch_id },
+        select: {
+          id: true,
+          name: true,
+          discipline_id: true,
+          default_teacher_id: true,
+          period_month: true,
+          is_active: true,
+        },
+      });
+      if (!source) {
+        throw new Error(CLASS_MESSAGES.NOT_FOUND);
+      }
+      if (!source.is_active) {
+        throw new Error(CLONE_MESSAGES.SOURCE_INACTIVE);
+      }
+
+      // Clone-once pre-check (the partial unique index is the hard stop).
+      const existingClone = await tx.class_series.findFirst({
+        where: { cloned_from_series_id: series_id },
+        select: { id: true },
+      });
+      if (existingClone) {
+        throw new Error(CLONE_MESSAGES.ALREADY_CLONED);
+      }
+
+      // Only ACTIVE weekday rows are copied; nothing to copy → reject.
+      const activeRows = await tx.scheduled_classes.findMany({
+        where: { series_id, branch_id, is_active: true },
+        select: {
+          day_of_week: true,
+          start_time: true,
+          default_teacher_id: true,
+        },
+      });
+      if (activeRows.length === 0) {
+        throw new Error(CLONE_MESSAGES.NO_ACTIVE_SLOTS);
+      }
+
+      // Target month = source month + 1 (Dec → Jan of the next year),
+      // normalized to the first day of the month in UTC like every
+      // Postgres `date` value handled through lib/date.
+      const sourceMonth = source.period_month;
+      const targetMonth = new Date(
+        Date.UTC(sourceMonth.getUTCFullYear(), sourceMonth.getUTCMonth() + 1, 1)
+      );
+
+      const { id: newSeriesId } = await tx.class_series.create({
+        data: {
+          branch_id,
+          name: source.name,
+          discipline_id: source.discipline_id,
+          default_teacher_id: source.default_teacher_id,
+          period_month: targetMonth,
+          cloned_from_series_id: source.id,
+        },
+        select: { id: true },
+      });
+
+      const classIds: string[] = [];
+      for (const row of activeRows) {
+        const created = await tx.scheduled_classes.create({
+          data: {
+            branch_id,
+            discipline_id: source.discipline_id,
+            default_teacher_id: row.default_teacher_id,
+            day_of_week: row.day_of_week,
+            start_time: row.start_time,
+            series_id: newSeriesId,
+          },
+          select: { id: true },
+        });
+        classIds.push(created.id);
+      }
+
+      // Copy the roster with the same eligibility rules as manual roster
+      // edits: active student of the branch with an active monthly-billed
+      // enrollment in the group's discipline.
+      const rosterRows = await tx.class_series_students.findMany({
+        where: { series_id },
+        select: { student_id: true },
+      });
+      const studentIds = rosterRows.map((row) => row.student_id);
+      const [students, enrollments] = await Promise.all([
+        studentIds.length > 0
+          ? tx.students.findMany({
+              where: { id: { in: studentIds } },
+              select: {
+                id: true,
+                branch_id: true,
+                is_active: true,
+                first_name: true,
+                surname: true,
+              },
+            })
+          : Promise.resolve([]),
+        studentIds.length > 0
+          ? tx.student_disciplines.findMany({
+              where: {
+                student_id: { in: studentIds },
+                discipline_id: source.discipline_id,
+              },
+              select: {
+                student_id: true,
+                is_active: true,
+                billing_mode: true,
+              },
+            })
+          : Promise.resolve([]),
+      ]);
+
+      const studentById = new Map(
+        students.map((student) => [student.id, student])
+      );
+      const enrollmentByStudentId = new Map(
+        enrollments.map((enrollment) => [enrollment.student_id, enrollment])
+      );
+
+      const eligibleStudentIds: string[] = [];
+      const skipped: SkippedRosterStudent[] = [];
+      for (const rosterRow of rosterRows) {
+        const student = studentById.get(rosterRow.student_id);
+        const status = classifyRosterEligibility(
+          student
+            ? {
+                student_id: student.id,
+                branch_id: student.branch_id,
+                is_active: student.is_active,
+              }
+            : null,
+          enrollmentByStudentId.get(rosterRow.student_id) ?? null,
+          branch_id
+        );
+        if (status === "eligible") {
+          eligibleStudentIds.push(rosterRow.student_id);
+        } else if (student) {
+          skipped.push({
+            student_id: rosterRow.student_id,
+            first_name: student.first_name,
+            surname: student.surname,
+            reason: status,
+          });
+        }
+      }
+
+      if (eligibleStudentIds.length > 0) {
+        await tx.class_series_students.createMany({
+          data: eligibleStudentIds.map((studentId) => ({
+            series_id: newSeriesId,
+            student_id: studentId,
+            added_by: ctx.userId,
+          })),
+        });
+      }
+
+      return {
+        series_id: newSeriesId,
+        period_month: formatDatabaseDateOnly(targetMonth).slice(0, 7),
+        class_ids: classIds,
+        copied_student_count: eligibleStudentIds.length,
+        skipped,
+      };
+    }, {
+      mapTransactionError: (error) => {
+        if (!(error instanceof Error)) return undefined;
+        // Race safety net: two admins cloning at once — the partial unique
+        // index class_series_cloned_from_series_id_uq fires and is mapped
+        // to the same message as the pre-check.
+        if (
+          error.message.includes("class_series_cloned_from_series_id_uq")
+        ) {
+          return CLONE_MESSAGES.ALREADY_CLONED;
+        }
+        return (
+          error.message === CLASS_MESSAGES.NOT_FOUND ||
+          error.message === CLONE_MESSAGES.SOURCE_INACTIVE ||
+          error.message === CLONE_MESSAGES.ALREADY_CLONED ||
+          error.message === CLONE_MESSAGES.NO_ACTIVE_SLOTS ||
+          error.message === CLONE_MESSAGES.UNAUTHORIZED ||
+          error.message === CLASS_MESSAGES.BRANCH_CONTEXT_REQUIRED ||
+          error.message.includes("permisos")
+        )
+          ? error.message
+          : undefined;
+      },
     });
 
     if (!result.success) return result;

@@ -48,7 +48,7 @@ their roster.
       (series + weekdays); calendar renders sessions only inside the month.
 - [x] T4: Roster actions (add/remove/list) for series and one-time classes
       with eligibility rules.
-- [ ] T5: Clone group to next month with roster and skipped-students report.
+- [x] T5: Clone group to next month with roster and skipped-students report.
 - [ ] T6: Attendance reads the assigned roster; teacher/admin add per-class
       students to a session with inline class payment.
 - [ ] T7: Guests: guest table, add guest in attendance, convert to student.
@@ -96,4 +96,13 @@ their roster.
   removeStudentFromRoster; pure classifyRosterEligibility). Writes: branch
   admin or owner; teachers read. Trigger prefixes mapped as safety net.
   TDD: RED missing module -> GREEN 40/40. tsc clean; vitest 959 passed /
+  1 skipped; eslint clean.
+- T5 (delegated: gentle-ai-worker, interrupted mid-run; parent finished it):
+  cloneClassGroupToNextMonth (admin/owner only, one transaction): month
+  rollover, clone-once pre-check + mapped class_series_cloned_from_series_id_uq,
+  SOURCE_INACTIVE, NO_ACTIVE_SLOTS, copies active weekday rows, copies roster
+  through classifyRosterEligibility and reports skipped students with names
+  and reasons. deactivateAllFutureClasses now also deactivates affected
+  groups. Parent fixes: new series id taken from the create result; type
+  mapping into RosterEligibilityStudent. tsc clean; vitest 973 passed /
   1 skipped; eslint clean.

@@ -481,6 +481,11 @@ describe("deactivateAllFutureClasses behavior", () => {
   });
 
   it("soft-deactivates ONLY recurring templates and returns the count", async () => {
+    mockTx.scheduled_classes.findMany.mockResolvedValue([
+      { series_id: SERIES_ID },
+      { series_id: SERIES_B_ID },
+      { series_id: SERIES_ID },
+    ]);
     mockTx.scheduled_classes.updateMany.mockResolvedValue({ count: 4 });
 
     const result = await deactivateAllFutureClasses({ branch_id: BRANCH_A });
@@ -493,6 +498,38 @@ describe("deactivateAllFutureClasses behavior", () => {
     // "Quitar todo lo futuro" targets recurring series only — one-time
     // classes must remain untouched (is_active stays unused there).
     expect(mockTx.one_time_classes.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("also deactivates the class_series groups whose weekday rows it deactivated", async () => {
+    mockTx.scheduled_classes.findMany.mockResolvedValue([
+      { series_id: SERIES_ID },
+      { series_id: SERIES_ID },
+      { series_id: SERIES_B_ID },
+    ]);
+    mockTx.scheduled_classes.updateMany.mockResolvedValue({ count: 3 });
+    mockTx.class_series.updateMany.mockResolvedValue({ count: 2 });
+
+    const result = await deactivateAllFutureClasses({ branch_id: BRANCH_A });
+
+    expect(result).toEqual({ success: true, data: { deactivated: 3 } });
+    expect(mockTx.class_series.updateMany).toHaveBeenCalledWith({
+      where: {
+        id: { in: [SERIES_ID, SERIES_B_ID] },
+        branch_id: BRANCH_A,
+        is_active: true,
+      },
+      data: { is_active: false },
+    });
+  });
+
+  it("skips the group deactivation when there were no active weekday rows", async () => {
+    mockTx.scheduled_classes.findMany.mockResolvedValue([]);
+    mockTx.scheduled_classes.updateMany.mockResolvedValue({ count: 0 });
+
+    const result = await deactivateAllFutureClasses({ branch_id: BRANCH_A });
+
+    expect(result).toEqual({ success: true, data: { deactivated: 0 } });
+    expect(mockTx.class_series.updateMany).not.toHaveBeenCalled();
   });
 
   it("short-circuits without any DB access when the branch guard fails", async () => {
