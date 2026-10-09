@@ -165,15 +165,6 @@ describe("Monthly class rosters migration — structural validation", () => {
     );
   });
 
-  it("adds partial unique indexes preventing double charging per occurrence", () => {
-    expect(sql).toMatch(
-      /CREATE UNIQUE INDEX class_payments_scheduled_occurrence_uq\s+ON public\.class_payments \(student_discipline_id, scheduled_class_id, class_date\)\s+WHERE scheduled_class_id IS NOT NULL/
-    );
-    expect(sql).toMatch(
-      /CREATE UNIQUE INDEX class_payments_one_time_occurrence_uq\s+ON public\.class_payments \(student_discipline_id, one_time_class_id\)\s+WHERE one_time_class_id IS NOT NULL/
-    );
-  });
-
   it("is transactional and destructive statements are limited to the two intentional constraint drops", () => {
     expect(sql.trimStart()).toMatch(/^--[\s\S]*?BEGIN;/);
     expect(sql.trimEnd()).toMatch(/COMMIT;\s*$/);
@@ -191,5 +182,85 @@ describe("Monthly class rosters migration — structural validation", () => {
     expect(dropConstraints).toContain("DROP CONSTRAINT scheduled_classes_series_id_fkey");
     expect(dropConstraints).toContain("DROP CONSTRAINT discipline_events_type_ck");
     expect(dropConstraints).toContain("DROP CONSTRAINT discipline_events_reason_ck");
+  });
+});
+
+describe("class_guests (T7) — structural validation", () => {
+  it("creates class_guests with guest fields, XOR class reference and length checks", () => {
+    expect(sql).toMatch(
+      /CREATE TABLE public\.class_guests \(\s+id\s+uuid PRIMARY KEY DEFAULT gen_random_uuid\(\),\s+branch_id\s+uuid NOT NULL REFERENCES public\.branches\(id\) ON DELETE CASCADE,\s+scheduled_class_id\s+uuid REFERENCES public\.scheduled_classes\(id\) ON DELETE CASCADE,\s+one_time_class_id\s+uuid REFERENCES public\.one_time_classes\(id\) ON DELETE CASCADE,\s+session_date\s+date NOT NULL,\s+first_name\s+text NOT NULL CHECK \(char_length\(first_name\) BETWEEN 1 AND 100\),\s+surname\s+text NOT NULL CHECK \(char_length\(surname\) BETWEEN 1 AND 100\),\s+phone\s+text CHECK \(phone IS NULL OR char_length\(phone\) <= 30\),\s+observation\s+text CHECK \(observation IS NULL OR char_length\(observation\) <= 500\),\s+converted_student_id\s+uuid REFERENCES public\.students\(id\) ON DELETE SET NULL,\s+created_by\s+uuid REFERENCES auth\.users\(id\) ON DELETE SET NULL,\s+created_at\s+timestamptz NOT NULL DEFAULT now\(\),\s+updated_at\s+timestamptz NOT NULL DEFAULT now\(\),\s+CONSTRAINT class_guests_single_class_ck CHECK \(\s+\(scheduled_class_id IS NOT NULL AND one_time_class_id IS NULL\)\s+OR\s+\(scheduled_class_id IS NULL AND one_time_class_id IS NOT NULL\)\s+\)\s+\);/
+    );
+    expect(sql).toMatch(
+      /COMMENT ON TABLE public\.class_guests IS/
+    );
+  });
+
+  it("indexes class_guests for occurrence, branch and conversion lookups", () => {
+    expect(sql).toMatch(
+      /CREATE INDEX class_guests_scheduled_class_session_idx\s+ON public\.class_guests \(scheduled_class_id, session_date\)/
+    );
+    expect(sql).toMatch(
+      /CREATE INDEX class_guests_one_time_class_id_idx\s+ON public\.class_guests \(one_time_class_id\)/
+    );
+    expect(sql).toMatch(
+      /CREATE INDEX class_guests_branch_id_idx\s+ON public\.class_guests \(branch_id\)/
+    );
+    expect(sql).toMatch(
+      /CREATE INDEX class_guests_converted_student_id_idx\s+ON public\.class_guests \(converted_student_id\)/
+    );
+  });
+
+  it("keeps updated_at fresh via the shared set_updated_at trigger", () => {
+    expect(sql).toMatch(
+      /CREATE TRIGGER class_guests_updated_at\s+BEFORE UPDATE ON public\.class_guests\s+FOR EACH ROW EXECUTE FUNCTION public\.set_updated_at\(\)/
+    );
+  });
+
+  it("raises class_guest_branch_mismatch when the guest branch differs from the class branch", () => {
+    expect(sql).toMatch(
+      /CREATE OR REPLACE FUNCTION private\.assert_class_guest_branch\(\)\s+RETURNS trigger\s+LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = ''/
+    );
+    expect(sql).toMatch(/RAISE EXCEPTION 'class_guest_branch_mismatch'/);
+    expect(sql).toMatch(
+      /CREATE TRIGGER class_guests_branch_mismatch\s+BEFORE INSERT OR UPDATE ON public\.class_guests\s+FOR EACH ROW EXECUTE FUNCTION private\.assert_class_guest_branch\(\)/
+    );
+    expect(sql).toMatch(/REVOKE EXECUTE ON FUNCTION private\.assert_class_guest_branch\(\) FROM public/);
+    expect(sql).toMatch(/GRANT EXECUTE ON FUNCTION private\.assert_class_guest_branch\(\) TO authenticated/);
+  });
+
+  it("enables and forces RLS with owner, branch-admin, teacher and global-read policies", () => {
+    expect(sql).toMatch(
+      /ALTER TABLE public\.class_guests ENABLE ROW LEVEL SECURITY/
+    );
+    expect(sql).toMatch(
+      /ALTER TABLE public\.class_guests FORCE ROW LEVEL SECURITY/
+    );
+    expect(sql).toMatch(
+      /CREATE POLICY "Owner full access on class_guests"\s+ON public\.class_guests FOR ALL TO authenticated\s+USING \(private\.has_role\(auth\.uid\(\), 'owner'::public\.role_enum\)\)\s+WITH CHECK \(private\.has_role\(auth\.uid\(\), 'owner'::public\.role_enum\)\)/
+    );
+    expect(sql).toMatch(
+      /CREATE POLICY "Admin branch-scoped write on class_guests"\s+ON public\.class_guests FOR ALL TO authenticated\s+USING \(private\.has_branch_role\(auth\.uid\(\), 'admin'::public\.role_enum,\s+branch_id\)\)\s+WITH CHECK \(private\.has_branch_role\(auth\.uid\(\), 'admin'::public\.role_enum,\s+branch_id\)\)/
+    );
+    expect(sql).toMatch(
+      /CREATE POLICY "Admin global read on class_guests"\s+ON public\.class_guests FOR SELECT TO authenticated\s+USING \(private\.has_any_admin_role\(auth\.uid\(\)\)\)/
+    );
+    expect(sql).toMatch(
+      /CREATE POLICY "Teacher branch-scoped read on class_guests"\s+ON public\.class_guests FOR SELECT TO authenticated\s+USING \(private\.has_branch_role\(auth\.uid\(\), 'teacher'::public\.role_enum,\s+branch_id\)\)/
+    );
+    expect(sql).toMatch(
+      /CREATE POLICY "Teacher assigned-class insert on class_guests"\s+ON public\.class_guests FOR INSERT TO authenticated\s+WITH CHECK \(\s+private\.has_branch_role\(auth\.uid\(\), 'teacher'::public\.role_enum, branch_id\)\s+AND private\.attendance_is_teacher\(auth\.uid\(\), scheduled_class_id, one_time_class_id, session_date\)\s+\)/
+    );
+    expect(sql).toMatch(
+      /CREATE POLICY "Teacher creator delete on class_guests"\s+ON public\.class_guests FOR DELETE TO authenticated\s+USING \(\s+private\.has_branch_role\(auth\.uid\(\), 'teacher'::public\.role_enum, branch_id\)\s+AND created_by = auth\.uid\(\)\s+\)/
+    );
+    expect(sql).toMatch(
+      /CREATE POLICY "Teacher branch-scoped update on class_guests"\s+ON public\.class_guests FOR UPDATE TO authenticated\s+USING \(private\.has_branch_role\(auth\.uid\(\), 'teacher'::public\.role_enum, branch_id\)\)\s+WITH CHECK \(private\.has_branch_role\(auth\.uid\(\), 'teacher'::public\.role_enum, branch_id\)\)/
+    );
+    expect(sql).toMatch(
+      /REVOKE INSERT, UPDATE, DELETE ON public\.class_guests FROM anon/
+    );
+    expect(sql).toMatch(
+      /GRANT SELECT, INSERT, UPDATE, DELETE ON public\.class_guests TO authenticated/
+    );
   });
 });

@@ -275,6 +275,13 @@ export type student_notes = Prisma.student_notesModel
  */
 export type one_time_class_students = Prisma.one_time_class_studentsModel
 /**
+ * Model class_guests
+ * This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+ * This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+ * This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+ */
+export type class_guests = Prisma.class_guestsModel
+/**
  * Model branch_level_requirements
  * This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
  */

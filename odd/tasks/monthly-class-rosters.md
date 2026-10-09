@@ -51,7 +51,7 @@ their roster.
 - [x] T5: Clone group to next month with roster and skipped-students report.
 - [x] T6: Attendance reads the assigned roster; teacher/admin add per-class
       students to a session with inline class payment.
-- [ ] T7: Guests: guest table, add guest in attendance, convert to student.
+- [x] T7: Guests: guest table, add guest in attendance, convert to student.
 - [x] T8: Billing mode: set at enrollment, per-class excluded from overdue.
 - [ ] T9: Admin UI: monthly group create dialog, roster editor, clone action.
 
@@ -133,3 +133,16 @@ their roster.
   GREEN. tsc clean; vitest 1027 passed / 1 skipped; eslint clean on changed
   files (1 pre-existing error in lib/domain/students/actions.test.ts:46,
   untouched).
+- T7 (delegated: gentle-ai-worker): class_guests table in unapplied
+  20260910000000 (XOR class reference, length CHECKs, branch-mismatch
+  trigger, RLS: owner, branch admin, admin global read, teacher read, teacher
+  insert only for sessions they teach). Parent fix: added teacher DELETE
+  (creator only) and teacher UPDATE (link to student) policies, which the
+  domain relies on. lib/domain/guests: add/list/remove/getForConversion/
+  linkGuestToStudent (idempotent, cross-branch rejected). Session
+  authorization extracted to lib/domain/attendance/session-authorization.ts;
+  getAttendanceForSession now returns { students, guests }. UI: guests
+  section in the attendance sheet with inline add, remove, and "Convertir en
+  alumno" (StudentFormDialog prefilled, controlled open, onCreated(id) ->
+  link). TDD RED -> GREEN. tsc clean; vitest 1054 passed / 1 skipped; eslint
+  clean.

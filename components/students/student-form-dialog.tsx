@@ -1,6 +1,6 @@
 "use client"
 
-import { useId, useState } from "react"
+import { useEffect, useId, useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { useRouter } from "next/navigation"
 import { AlertCircleIcon, LoaderCircleIcon, PencilIcon, PlusIcon } from "lucide-react"
@@ -66,13 +66,31 @@ interface StudentFormValues {
   billing_mode: "monthly" | "per_class"
 }
 
+/**
+ * Optional values used to prefill the create form (e.g. when converting a
+ * trial-class guest into a student). Only create mode applies them.
+ */
+export interface StudentFormPrefill {
+  first_name?: string
+  surname?: string
+  phone?: string
+  /** Discipline preselected in the enrollment checkbox list. */
+  discipline_id?: string
+}
+
 interface StudentFormDialogProps {
   branches: ActiveBranchOption[]
   disciplines?: DisciplineOption[]
   studentId?: string
   lockedBranchId?: string
   branchId?: string
-  onCreated?: () => void
+  /** Called after a student is created (create mode only). */
+  onCreated?: (studentId: string) => void
+  /** Optional prefill values applied when the create form opens. */
+  prefill?: StudentFormPrefill
+  /** Controlled open state; when provided the built-in trigger is hidden. */
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
 function getTodayString(): string {
@@ -117,9 +135,14 @@ export function StudentFormDialog({
   lockedBranchId,
   branchId: contextBranchId,
   onCreated,
+  prefill,
+  open: controlledOpen,
+  onOpenChange,
 }: StudentFormDialogProps) {
   const router = useRouter()
-  const [isOpen, setIsOpen] = useState(false)
+  const isControlled = controlledOpen !== undefined
+  const [internalOpen, setIsOpen] = useState(false)
+  const isOpen = isControlled ? (controlledOpen as boolean) : internalOpen
   const [isLoadingStudent, setIsLoadingStudent] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
   const branchFieldId = useId()
@@ -182,22 +205,52 @@ export function StudentFormDialog({
     }
   }
 
+  function buildCreateDefaults(): StudentFormValues {
+    return {
+      ...getDefaultValues(),
+      branch_id: lockedBranchId ?? "",
+      ...(prefill
+        ? {
+            first_name: prefill.first_name ?? "",
+            surname: prefill.surname ?? "",
+            phone: prefill.phone ?? "",
+            discipline_ids: prefill.discipline_id ? [prefill.discipline_id] : [],
+          }
+        : {}),
+    }
+  }
+
   function handleOpenChange(nextIsOpen: boolean) {
     if (isPending) {
       return
     }
 
-    setIsOpen(nextIsOpen)
+    if (isControlled) {
+      onOpenChange?.(nextIsOpen)
+    } else {
+      setIsOpen(nextIsOpen)
+    }
     setActionError(null)
-    form.reset({
-      ...getDefaultValues(),
-      branch_id: lockedBranchId ?? "",
-    })
+    form.reset(
+      nextIsOpen && !isEditing ? buildCreateDefaults() : {
+        ...getDefaultValues(),
+        branch_id: lockedBranchId ?? "",
+      }
+    )
 
     if (nextIsOpen && isEditing) {
       void loadStudent()
     }
   }
+
+  // Controlled open (e.g. opened from a guest conversion flow): the parent
+  // flips `open` programmatically, so the create form is prefilled here.
+  useEffect(() => {
+    if (isOpen && !isEditing && !isPending) {
+      form.reset(buildCreateDefaults())
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- prefill is applied on open only
+  }, [isOpen, isEditing])
 
   async function handleSubmit(values: StudentFormValues) {
     if (isLoadingStudent) {
@@ -248,7 +301,7 @@ export function StudentFormDialog({
           }
         }
         toast.success(TOAST_MESSAGES.STUDENT_CREATED)
-        onCreated?.()
+        onCreated?.(createResult.data.id)
       }
 
       form.reset(getDefaultValues())
@@ -263,12 +316,14 @@ export function StudentFormDialog({
 
   return (
     <Sheet open={isOpen} onOpenChange={handleOpenChange}>
-      <SheetTrigger
-        render={<Button variant={isEditing ? "outline" : "default"} size="sm" />}
-      >
-        {isEditing ? <PencilIcon data-icon="inline-start" /> : <PlusIcon data-icon="inline-start" />}
-        {isEditing ? COMMON_MESSAGES.EDIT : COMMON_MESSAGES.CREATE}
-      </SheetTrigger>
+      {!isControlled && (
+        <SheetTrigger
+          render={<Button variant={isEditing ? "outline" : "default"} size="sm" />}
+        >
+          {isEditing ? <PencilIcon data-icon="inline-start" /> : <PlusIcon data-icon="inline-start" />}
+          {isEditing ? COMMON_MESSAGES.EDIT : COMMON_MESSAGES.CREATE}
+        </SheetTrigger>
+      )}
       <SheetContent side="right" size="content" showCloseButton={!isPending}>
         <SheetHeader>
           <SheetTitle>{title}</SheetTitle>

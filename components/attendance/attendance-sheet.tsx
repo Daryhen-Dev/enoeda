@@ -14,7 +14,9 @@ import type {
   PerClassCandidateRow,
   SessionAttendanceEntry,
 } from "@/lib/domain/attendance/actions"
+import type { SessionGuestRow } from "@/lib/domain/guests/actions"
 import { registerClassPayment } from "@/lib/domain/payments/actions"
+import { GuestsSection } from "@/components/attendance/guests-section"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -33,6 +35,7 @@ interface AttendanceSheetProps {
   sessionDate: string
   branchId: string
   students: SessionAttendanceEntry[]
+  guests: SessionGuestRow[]
   onSuccess?: () => void
 }
 
@@ -75,6 +78,7 @@ export function AttendanceSheet({
   sessionDate,
   branchId,
   students,
+  guests,
   onSuccess,
 }: AttendanceSheetProps) {
   const router = useRouter()
@@ -279,37 +283,51 @@ export function AttendanceSheet({
 
   const editableEntries = entries.filter((entry) => entry.source !== "history")
 
+  const guestsSection = (
+    <GuestsSection
+      branchId={branchId}
+      scheduledClassId={scheduledClassId}
+      oneTimeClassId={oneTimeClassId}
+      sessionDate={sessionDate}
+      initialGuests={guests}
+    />
+  )
+
   if (entries.length === 0 && !showAddControl) {
     return (
-      <div className="flex flex-col gap-4">
-        <p className="py-4 text-center text-sm text-muted-foreground">
-          {ATTENDANCE_FORM_MESSAGES.EMPTY_ELIGIBLE}
-        </p>
-        <AddPerClassControl
-          {...{
-            showAddControl,
-            setShowAddControl,
-            search,
-            setSearch,
-            candidates,
-            classPrice,
-            selectedCandidate,
-            setSelectedCandidate,
-            registerPayment,
-            setRegisterPayment,
-            isSearching,
-            isAdding,
-            handleAddPerClassStudent,
-            resetAddControl,
-            error,
-          }}
-        />
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-4">
+          <p className="py-4 text-center text-sm text-muted-foreground">
+            {ATTENDANCE_FORM_MESSAGES.EMPTY_ELIGIBLE}
+          </p>
+          <AddPerClassControl
+            {...{
+              showAddControl,
+              setShowAddControl,
+              search,
+              setSearch,
+              candidates,
+              classPrice,
+              selectedCandidate,
+              setSelectedCandidate,
+              registerPayment,
+              setRegisterPayment,
+              isSearching,
+              isAdding,
+              handleAddPerClassStudent,
+              resetAddControl,
+              error,
+            }}
+          />
+        </div>
+        {guestsSection}
       </div>
     )
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+    <div className="flex flex-col gap-6">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       {error && (
         <p
           role="alert"
@@ -429,7 +447,10 @@ export function AttendanceSheet({
           {isSubmitting ? ATTENDANCE_FORM_MESSAGES.SAVING : ATTENDANCE_FORM_MESSAGES.SUBMIT}
         </Button>
       )}
-    </form>
+      </form>
+
+      {guestsSection}
+    </div>
   )
 }
 

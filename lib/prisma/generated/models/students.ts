@@ -254,6 +254,7 @@ export type studentsWhereInput = {
   student_notes?: Prisma.Student_notesListRelationFilter
   class_series_students?: Prisma.Class_series_studentsListRelationFilter
   one_time_class_students?: Prisma.One_time_class_studentsListRelationFilter
+  converted_class_guests?: Prisma.Class_guestsListRelationFilter
 }
 
 export type studentsOrderByWithRelationInput = {
@@ -278,6 +279,7 @@ export type studentsOrderByWithRelationInput = {
   student_notes?: Prisma.student_notesOrderByRelationAggregateInput
   class_series_students?: Prisma.class_series_studentsOrderByRelationAggregateInput
   one_time_class_students?: Prisma.one_time_class_studentsOrderByRelationAggregateInput
+  converted_class_guests?: Prisma.class_guestsOrderByRelationAggregateInput
 }
 
 export type studentsWhereUniqueInput = Prisma.AtLeast<{
@@ -305,6 +307,7 @@ export type studentsWhereUniqueInput = Prisma.AtLeast<{
   student_notes?: Prisma.Student_notesListRelationFilter
   class_series_students?: Prisma.Class_series_studentsListRelationFilter
   one_time_class_students?: Prisma.One_time_class_studentsListRelationFilter
+  converted_class_guests?: Prisma.Class_guestsListRelationFilter
 }, "id" | "auth_user_id" | "national_id">
 
 export type studentsOrderByWithAggregationInput = {
@@ -365,6 +368,7 @@ export type studentsCreateInput = {
   student_notes?: Prisma.student_notesCreateNestedManyWithoutStudentsInput
   class_series_students?: Prisma.class_series_studentsCreateNestedManyWithoutStudentsInput
   one_time_class_students?: Prisma.one_time_class_studentsCreateNestedManyWithoutStudentsInput
+  converted_class_guests?: Prisma.class_guestsCreateNestedManyWithoutConverted_studentInput
 }
 
 export type studentsUncheckedCreateInput = {
@@ -387,6 +391,7 @@ export type studentsUncheckedCreateInput = {
   student_notes?: Prisma.student_notesUncheckedCreateNestedManyWithoutStudentsInput
   class_series_students?: Prisma.class_series_studentsUncheckedCreateNestedManyWithoutStudentsInput
   one_time_class_students?: Prisma.one_time_class_studentsUncheckedCreateNestedManyWithoutStudentsInput
+  converted_class_guests?: Prisma.class_guestsUncheckedCreateNestedManyWithoutConverted_studentInput
 }
 
 export type studentsUpdateInput = {
@@ -409,6 +414,7 @@ export type studentsUpdateInput = {
   student_notes?: Prisma.student_notesUpdateManyWithoutStudentsNestedInput
   class_series_students?: Prisma.class_series_studentsUpdateManyWithoutStudentsNestedInput
   one_time_class_students?: Prisma.one_time_class_studentsUpdateManyWithoutStudentsNestedInput
+  converted_class_guests?: Prisma.class_guestsUpdateManyWithoutConverted_studentNestedInput
 }
 
 export type studentsUncheckedUpdateInput = {
@@ -431,6 +437,7 @@ export type studentsUncheckedUpdateInput = {
   student_notes?: Prisma.student_notesUncheckedUpdateManyWithoutStudentsNestedInput
   class_series_students?: Prisma.class_series_studentsUncheckedUpdateManyWithoutStudentsNestedInput
   one_time_class_students?: Prisma.one_time_class_studentsUncheckedUpdateManyWithoutStudentsNestedInput
+  converted_class_guests?: Prisma.class_guestsUncheckedUpdateManyWithoutConverted_studentNestedInput
 }
 
 export type studentsCreateManyInput = {
@@ -705,6 +712,22 @@ export type studentsUpdateOneRequiredWithoutOne_time_class_studentsNestedInput =
   update?: Prisma.XOR<Prisma.XOR<Prisma.studentsUpdateToOneWithWhereWithoutOne_time_class_studentsInput, Prisma.studentsUpdateWithoutOne_time_class_studentsInput>, Prisma.studentsUncheckedUpdateWithoutOne_time_class_studentsInput>
 }
 
+export type studentsCreateNestedOneWithoutConverted_class_guestsInput = {
+  create?: Prisma.XOR<Prisma.studentsCreateWithoutConverted_class_guestsInput, Prisma.studentsUncheckedCreateWithoutConverted_class_guestsInput>
+  connectOrCreate?: Prisma.studentsCreateOrConnectWithoutConverted_class_guestsInput
+  connect?: Prisma.studentsWhereUniqueInput
+}
+
+export type studentsUpdateOneWithoutConverted_class_guestsNestedInput = {
+  create?: Prisma.XOR<Prisma.studentsCreateWithoutConverted_class_guestsInput, Prisma.studentsUncheckedCreateWithoutConverted_class_guestsInput>
+  connectOrCreate?: Prisma.studentsCreateOrConnectWithoutConverted_class_guestsInput
+  upsert?: Prisma.studentsUpsertWithoutConverted_class_guestsInput
+  disconnect?: Prisma.studentsWhereInput | boolean
+  delete?: Prisma.studentsWhereInput | boolean
+  connect?: Prisma.studentsWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.studentsUpdateToOneWithWhereWithoutConverted_class_guestsInput, Prisma.studentsUpdateWithoutConverted_class_guestsInput>, Prisma.studentsUncheckedUpdateWithoutConverted_class_guestsInput>
+}
+
 export type studentsCreateWithoutAuth_userInput = {
   id?: string
   first_name: string
@@ -724,6 +747,7 @@ export type studentsCreateWithoutAuth_userInput = {
   student_notes?: Prisma.student_notesCreateNestedManyWithoutStudentsInput
   class_series_students?: Prisma.class_series_studentsCreateNestedManyWithoutStudentsInput
   one_time_class_students?: Prisma.one_time_class_studentsCreateNestedManyWithoutStudentsInput
+  converted_class_guests?: Prisma.class_guestsCreateNestedManyWithoutConverted_studentInput
 }
 
 export type studentsUncheckedCreateWithoutAuth_userInput = {
@@ -745,6 +769,7 @@ export type studentsUncheckedCreateWithoutAuth_userInput = {
   student_notes?: Prisma.student_notesUncheckedCreateNestedManyWithoutStudentsInput
   class_series_students?: Prisma.class_series_studentsUncheckedCreateNestedManyWithoutStudentsInput
   one_time_class_students?: Prisma.one_time_class_studentsUncheckedCreateNestedManyWithoutStudentsInput
+  converted_class_guests?: Prisma.class_guestsUncheckedCreateNestedManyWithoutConverted_studentInput
 }
 
 export type studentsCreateOrConnectWithoutAuth_userInput = {
@@ -782,6 +807,7 @@ export type studentsUpdateWithoutAuth_userInput = {
   student_notes?: Prisma.student_notesUpdateManyWithoutStudentsNestedInput
   class_series_students?: Prisma.class_series_studentsUpdateManyWithoutStudentsNestedInput
   one_time_class_students?: Prisma.one_time_class_studentsUpdateManyWithoutStudentsNestedInput
+  converted_class_guests?: Prisma.class_guestsUpdateManyWithoutConverted_studentNestedInput
 }
 
 export type studentsUncheckedUpdateWithoutAuth_userInput = {
@@ -803,6 +829,7 @@ export type studentsUncheckedUpdateWithoutAuth_userInput = {
   student_notes?: Prisma.student_notesUncheckedUpdateManyWithoutStudentsNestedInput
   class_series_students?: Prisma.class_series_studentsUncheckedUpdateManyWithoutStudentsNestedInput
   one_time_class_students?: Prisma.one_time_class_studentsUncheckedUpdateManyWithoutStudentsNestedInput
+  converted_class_guests?: Prisma.class_guestsUncheckedUpdateManyWithoutConverted_studentNestedInput
 }
 
 export type studentsCreateWithoutBranchesInput = {
@@ -824,6 +851,7 @@ export type studentsCreateWithoutBranchesInput = {
   student_notes?: Prisma.student_notesCreateNestedManyWithoutStudentsInput
   class_series_students?: Prisma.class_series_studentsCreateNestedManyWithoutStudentsInput
   one_time_class_students?: Prisma.one_time_class_studentsCreateNestedManyWithoutStudentsInput
+  converted_class_guests?: Prisma.class_guestsCreateNestedManyWithoutConverted_studentInput
 }
 
 export type studentsUncheckedCreateWithoutBranchesInput = {
@@ -845,6 +873,7 @@ export type studentsUncheckedCreateWithoutBranchesInput = {
   student_notes?: Prisma.student_notesUncheckedCreateNestedManyWithoutStudentsInput
   class_series_students?: Prisma.class_series_studentsUncheckedCreateNestedManyWithoutStudentsInput
   one_time_class_students?: Prisma.one_time_class_studentsUncheckedCreateNestedManyWithoutStudentsInput
+  converted_class_guests?: Prisma.class_guestsUncheckedCreateNestedManyWithoutConverted_studentInput
 }
 
 export type studentsCreateOrConnectWithoutBranchesInput = {
@@ -911,6 +940,7 @@ export type studentsCreateWithoutStudent_disciplinesInput = {
   student_notes?: Prisma.student_notesCreateNestedManyWithoutStudentsInput
   class_series_students?: Prisma.class_series_studentsCreateNestedManyWithoutStudentsInput
   one_time_class_students?: Prisma.one_time_class_studentsCreateNestedManyWithoutStudentsInput
+  converted_class_guests?: Prisma.class_guestsCreateNestedManyWithoutConverted_studentInput
 }
 
 export type studentsUncheckedCreateWithoutStudent_disciplinesInput = {
@@ -932,6 +962,7 @@ export type studentsUncheckedCreateWithoutStudent_disciplinesInput = {
   student_notes?: Prisma.student_notesUncheckedCreateNestedManyWithoutStudentsInput
   class_series_students?: Prisma.class_series_studentsUncheckedCreateNestedManyWithoutStudentsInput
   one_time_class_students?: Prisma.one_time_class_studentsUncheckedCreateNestedManyWithoutStudentsInput
+  converted_class_guests?: Prisma.class_guestsUncheckedCreateNestedManyWithoutConverted_studentInput
 }
 
 export type studentsCreateOrConnectWithoutStudent_disciplinesInput = {
@@ -969,6 +1000,7 @@ export type studentsUpdateWithoutStudent_disciplinesInput = {
   student_notes?: Prisma.student_notesUpdateManyWithoutStudentsNestedInput
   class_series_students?: Prisma.class_series_studentsUpdateManyWithoutStudentsNestedInput
   one_time_class_students?: Prisma.one_time_class_studentsUpdateManyWithoutStudentsNestedInput
+  converted_class_guests?: Prisma.class_guestsUpdateManyWithoutConverted_studentNestedInput
 }
 
 export type studentsUncheckedUpdateWithoutStudent_disciplinesInput = {
@@ -990,6 +1022,7 @@ export type studentsUncheckedUpdateWithoutStudent_disciplinesInput = {
   student_notes?: Prisma.student_notesUncheckedUpdateManyWithoutStudentsNestedInput
   class_series_students?: Prisma.class_series_studentsUncheckedUpdateManyWithoutStudentsNestedInput
   one_time_class_students?: Prisma.one_time_class_studentsUncheckedUpdateManyWithoutStudentsNestedInput
+  converted_class_guests?: Prisma.class_guestsUncheckedUpdateManyWithoutConverted_studentNestedInput
 }
 
 export type studentsCreateWithoutClass_series_studentsInput = {
@@ -1011,6 +1044,7 @@ export type studentsCreateWithoutClass_series_studentsInput = {
   student_progress?: Prisma.student_progressCreateNestedManyWithoutStudentsInput
   student_notes?: Prisma.student_notesCreateNestedManyWithoutStudentsInput
   one_time_class_students?: Prisma.one_time_class_studentsCreateNestedManyWithoutStudentsInput
+  converted_class_guests?: Prisma.class_guestsCreateNestedManyWithoutConverted_studentInput
 }
 
 export type studentsUncheckedCreateWithoutClass_series_studentsInput = {
@@ -1032,6 +1066,7 @@ export type studentsUncheckedCreateWithoutClass_series_studentsInput = {
   student_progress?: Prisma.student_progressUncheckedCreateNestedManyWithoutStudentsInput
   student_notes?: Prisma.student_notesUncheckedCreateNestedManyWithoutStudentsInput
   one_time_class_students?: Prisma.one_time_class_studentsUncheckedCreateNestedManyWithoutStudentsInput
+  converted_class_guests?: Prisma.class_guestsUncheckedCreateNestedManyWithoutConverted_studentInput
 }
 
 export type studentsCreateOrConnectWithoutClass_series_studentsInput = {
@@ -1069,6 +1104,7 @@ export type studentsUpdateWithoutClass_series_studentsInput = {
   student_progress?: Prisma.student_progressUpdateManyWithoutStudentsNestedInput
   student_notes?: Prisma.student_notesUpdateManyWithoutStudentsNestedInput
   one_time_class_students?: Prisma.one_time_class_studentsUpdateManyWithoutStudentsNestedInput
+  converted_class_guests?: Prisma.class_guestsUpdateManyWithoutConverted_studentNestedInput
 }
 
 export type studentsUncheckedUpdateWithoutClass_series_studentsInput = {
@@ -1090,6 +1126,7 @@ export type studentsUncheckedUpdateWithoutClass_series_studentsInput = {
   student_progress?: Prisma.student_progressUncheckedUpdateManyWithoutStudentsNestedInput
   student_notes?: Prisma.student_notesUncheckedUpdateManyWithoutStudentsNestedInput
   one_time_class_students?: Prisma.one_time_class_studentsUncheckedUpdateManyWithoutStudentsNestedInput
+  converted_class_guests?: Prisma.class_guestsUncheckedUpdateManyWithoutConverted_studentNestedInput
 }
 
 export type studentsCreateWithoutAttendanceInput = {
@@ -1111,6 +1148,7 @@ export type studentsCreateWithoutAttendanceInput = {
   student_notes?: Prisma.student_notesCreateNestedManyWithoutStudentsInput
   class_series_students?: Prisma.class_series_studentsCreateNestedManyWithoutStudentsInput
   one_time_class_students?: Prisma.one_time_class_studentsCreateNestedManyWithoutStudentsInput
+  converted_class_guests?: Prisma.class_guestsCreateNestedManyWithoutConverted_studentInput
 }
 
 export type studentsUncheckedCreateWithoutAttendanceInput = {
@@ -1132,6 +1170,7 @@ export type studentsUncheckedCreateWithoutAttendanceInput = {
   student_notes?: Prisma.student_notesUncheckedCreateNestedManyWithoutStudentsInput
   class_series_students?: Prisma.class_series_studentsUncheckedCreateNestedManyWithoutStudentsInput
   one_time_class_students?: Prisma.one_time_class_studentsUncheckedCreateNestedManyWithoutStudentsInput
+  converted_class_guests?: Prisma.class_guestsUncheckedCreateNestedManyWithoutConverted_studentInput
 }
 
 export type studentsCreateOrConnectWithoutAttendanceInput = {
@@ -1169,6 +1208,7 @@ export type studentsUpdateWithoutAttendanceInput = {
   student_notes?: Prisma.student_notesUpdateManyWithoutStudentsNestedInput
   class_series_students?: Prisma.class_series_studentsUpdateManyWithoutStudentsNestedInput
   one_time_class_students?: Prisma.one_time_class_studentsUpdateManyWithoutStudentsNestedInput
+  converted_class_guests?: Prisma.class_guestsUpdateManyWithoutConverted_studentNestedInput
 }
 
 export type studentsUncheckedUpdateWithoutAttendanceInput = {
@@ -1190,6 +1230,7 @@ export type studentsUncheckedUpdateWithoutAttendanceInput = {
   student_notes?: Prisma.student_notesUncheckedUpdateManyWithoutStudentsNestedInput
   class_series_students?: Prisma.class_series_studentsUncheckedUpdateManyWithoutStudentsNestedInput
   one_time_class_students?: Prisma.one_time_class_studentsUncheckedUpdateManyWithoutStudentsNestedInput
+  converted_class_guests?: Prisma.class_guestsUncheckedUpdateManyWithoutConverted_studentNestedInput
 }
 
 export type studentsCreateWithoutStudent_progressInput = {
@@ -1211,6 +1252,7 @@ export type studentsCreateWithoutStudent_progressInput = {
   student_notes?: Prisma.student_notesCreateNestedManyWithoutStudentsInput
   class_series_students?: Prisma.class_series_studentsCreateNestedManyWithoutStudentsInput
   one_time_class_students?: Prisma.one_time_class_studentsCreateNestedManyWithoutStudentsInput
+  converted_class_guests?: Prisma.class_guestsCreateNestedManyWithoutConverted_studentInput
 }
 
 export type studentsUncheckedCreateWithoutStudent_progressInput = {
@@ -1232,6 +1274,7 @@ export type studentsUncheckedCreateWithoutStudent_progressInput = {
   student_notes?: Prisma.student_notesUncheckedCreateNestedManyWithoutStudentsInput
   class_series_students?: Prisma.class_series_studentsUncheckedCreateNestedManyWithoutStudentsInput
   one_time_class_students?: Prisma.one_time_class_studentsUncheckedCreateNestedManyWithoutStudentsInput
+  converted_class_guests?: Prisma.class_guestsUncheckedCreateNestedManyWithoutConverted_studentInput
 }
 
 export type studentsCreateOrConnectWithoutStudent_progressInput = {
@@ -1269,6 +1312,7 @@ export type studentsUpdateWithoutStudent_progressInput = {
   student_notes?: Prisma.student_notesUpdateManyWithoutStudentsNestedInput
   class_series_students?: Prisma.class_series_studentsUpdateManyWithoutStudentsNestedInput
   one_time_class_students?: Prisma.one_time_class_studentsUpdateManyWithoutStudentsNestedInput
+  converted_class_guests?: Prisma.class_guestsUpdateManyWithoutConverted_studentNestedInput
 }
 
 export type studentsUncheckedUpdateWithoutStudent_progressInput = {
@@ -1290,6 +1334,7 @@ export type studentsUncheckedUpdateWithoutStudent_progressInput = {
   student_notes?: Prisma.student_notesUncheckedUpdateManyWithoutStudentsNestedInput
   class_series_students?: Prisma.class_series_studentsUncheckedUpdateManyWithoutStudentsNestedInput
   one_time_class_students?: Prisma.one_time_class_studentsUncheckedUpdateManyWithoutStudentsNestedInput
+  converted_class_guests?: Prisma.class_guestsUncheckedUpdateManyWithoutConverted_studentNestedInput
 }
 
 export type studentsCreateWithoutStudent_notesInput = {
@@ -1311,6 +1356,7 @@ export type studentsCreateWithoutStudent_notesInput = {
   student_progress?: Prisma.student_progressCreateNestedManyWithoutStudentsInput
   class_series_students?: Prisma.class_series_studentsCreateNestedManyWithoutStudentsInput
   one_time_class_students?: Prisma.one_time_class_studentsCreateNestedManyWithoutStudentsInput
+  converted_class_guests?: Prisma.class_guestsCreateNestedManyWithoutConverted_studentInput
 }
 
 export type studentsUncheckedCreateWithoutStudent_notesInput = {
@@ -1332,6 +1378,7 @@ export type studentsUncheckedCreateWithoutStudent_notesInput = {
   student_progress?: Prisma.student_progressUncheckedCreateNestedManyWithoutStudentsInput
   class_series_students?: Prisma.class_series_studentsUncheckedCreateNestedManyWithoutStudentsInput
   one_time_class_students?: Prisma.one_time_class_studentsUncheckedCreateNestedManyWithoutStudentsInput
+  converted_class_guests?: Prisma.class_guestsUncheckedCreateNestedManyWithoutConverted_studentInput
 }
 
 export type studentsCreateOrConnectWithoutStudent_notesInput = {
@@ -1369,6 +1416,7 @@ export type studentsUpdateWithoutStudent_notesInput = {
   student_progress?: Prisma.student_progressUpdateManyWithoutStudentsNestedInput
   class_series_students?: Prisma.class_series_studentsUpdateManyWithoutStudentsNestedInput
   one_time_class_students?: Prisma.one_time_class_studentsUpdateManyWithoutStudentsNestedInput
+  converted_class_guests?: Prisma.class_guestsUpdateManyWithoutConverted_studentNestedInput
 }
 
 export type studentsUncheckedUpdateWithoutStudent_notesInput = {
@@ -1390,6 +1438,7 @@ export type studentsUncheckedUpdateWithoutStudent_notesInput = {
   student_progress?: Prisma.student_progressUncheckedUpdateManyWithoutStudentsNestedInput
   class_series_students?: Prisma.class_series_studentsUncheckedUpdateManyWithoutStudentsNestedInput
   one_time_class_students?: Prisma.one_time_class_studentsUncheckedUpdateManyWithoutStudentsNestedInput
+  converted_class_guests?: Prisma.class_guestsUncheckedUpdateManyWithoutConverted_studentNestedInput
 }
 
 export type studentsCreateWithoutOne_time_class_studentsInput = {
@@ -1411,6 +1460,7 @@ export type studentsCreateWithoutOne_time_class_studentsInput = {
   student_progress?: Prisma.student_progressCreateNestedManyWithoutStudentsInput
   student_notes?: Prisma.student_notesCreateNestedManyWithoutStudentsInput
   class_series_students?: Prisma.class_series_studentsCreateNestedManyWithoutStudentsInput
+  converted_class_guests?: Prisma.class_guestsCreateNestedManyWithoutConverted_studentInput
 }
 
 export type studentsUncheckedCreateWithoutOne_time_class_studentsInput = {
@@ -1432,6 +1482,7 @@ export type studentsUncheckedCreateWithoutOne_time_class_studentsInput = {
   student_progress?: Prisma.student_progressUncheckedCreateNestedManyWithoutStudentsInput
   student_notes?: Prisma.student_notesUncheckedCreateNestedManyWithoutStudentsInput
   class_series_students?: Prisma.class_series_studentsUncheckedCreateNestedManyWithoutStudentsInput
+  converted_class_guests?: Prisma.class_guestsUncheckedCreateNestedManyWithoutConverted_studentInput
 }
 
 export type studentsCreateOrConnectWithoutOne_time_class_studentsInput = {
@@ -1469,6 +1520,7 @@ export type studentsUpdateWithoutOne_time_class_studentsInput = {
   student_progress?: Prisma.student_progressUpdateManyWithoutStudentsNestedInput
   student_notes?: Prisma.student_notesUpdateManyWithoutStudentsNestedInput
   class_series_students?: Prisma.class_series_studentsUpdateManyWithoutStudentsNestedInput
+  converted_class_guests?: Prisma.class_guestsUpdateManyWithoutConverted_studentNestedInput
 }
 
 export type studentsUncheckedUpdateWithoutOne_time_class_studentsInput = {
@@ -1490,6 +1542,111 @@ export type studentsUncheckedUpdateWithoutOne_time_class_studentsInput = {
   student_progress?: Prisma.student_progressUncheckedUpdateManyWithoutStudentsNestedInput
   student_notes?: Prisma.student_notesUncheckedUpdateManyWithoutStudentsNestedInput
   class_series_students?: Prisma.class_series_studentsUncheckedUpdateManyWithoutStudentsNestedInput
+  converted_class_guests?: Prisma.class_guestsUncheckedUpdateManyWithoutConverted_studentNestedInput
+}
+
+export type studentsCreateWithoutConverted_class_guestsInput = {
+  id?: string
+  first_name: string
+  surname: string
+  national_id: string
+  email: string
+  phone?: string | null
+  date_of_birth: Date | string
+  is_active?: boolean
+  activation_status?: string
+  created_at?: Date | string
+  updated_at?: Date | string
+  branches: Prisma.branchesCreateNestedOneWithoutStudentsInput
+  auth_user?: Prisma.usersCreateNestedOneWithoutStudent_profileInput
+  student_disciplines?: Prisma.student_disciplinesCreateNestedManyWithoutStudentsInput
+  attendance?: Prisma.attendanceCreateNestedManyWithoutStudentsInput
+  student_progress?: Prisma.student_progressCreateNestedManyWithoutStudentsInput
+  student_notes?: Prisma.student_notesCreateNestedManyWithoutStudentsInput
+  class_series_students?: Prisma.class_series_studentsCreateNestedManyWithoutStudentsInput
+  one_time_class_students?: Prisma.one_time_class_studentsCreateNestedManyWithoutStudentsInput
+}
+
+export type studentsUncheckedCreateWithoutConverted_class_guestsInput = {
+  id?: string
+  branch_id: string
+  auth_user_id?: string | null
+  first_name: string
+  surname: string
+  national_id: string
+  email: string
+  phone?: string | null
+  date_of_birth: Date | string
+  is_active?: boolean
+  activation_status?: string
+  created_at?: Date | string
+  updated_at?: Date | string
+  student_disciplines?: Prisma.student_disciplinesUncheckedCreateNestedManyWithoutStudentsInput
+  attendance?: Prisma.attendanceUncheckedCreateNestedManyWithoutStudentsInput
+  student_progress?: Prisma.student_progressUncheckedCreateNestedManyWithoutStudentsInput
+  student_notes?: Prisma.student_notesUncheckedCreateNestedManyWithoutStudentsInput
+  class_series_students?: Prisma.class_series_studentsUncheckedCreateNestedManyWithoutStudentsInput
+  one_time_class_students?: Prisma.one_time_class_studentsUncheckedCreateNestedManyWithoutStudentsInput
+}
+
+export type studentsCreateOrConnectWithoutConverted_class_guestsInput = {
+  where: Prisma.studentsWhereUniqueInput
+  create: Prisma.XOR<Prisma.studentsCreateWithoutConverted_class_guestsInput, Prisma.studentsUncheckedCreateWithoutConverted_class_guestsInput>
+}
+
+export type studentsUpsertWithoutConverted_class_guestsInput = {
+  update: Prisma.XOR<Prisma.studentsUpdateWithoutConverted_class_guestsInput, Prisma.studentsUncheckedUpdateWithoutConverted_class_guestsInput>
+  create: Prisma.XOR<Prisma.studentsCreateWithoutConverted_class_guestsInput, Prisma.studentsUncheckedCreateWithoutConverted_class_guestsInput>
+  where?: Prisma.studentsWhereInput
+}
+
+export type studentsUpdateToOneWithWhereWithoutConverted_class_guestsInput = {
+  where?: Prisma.studentsWhereInput
+  data: Prisma.XOR<Prisma.studentsUpdateWithoutConverted_class_guestsInput, Prisma.studentsUncheckedUpdateWithoutConverted_class_guestsInput>
+}
+
+export type studentsUpdateWithoutConverted_class_guestsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  first_name?: Prisma.StringFieldUpdateOperationsInput | string
+  surname?: Prisma.StringFieldUpdateOperationsInput | string
+  national_id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  date_of_birth?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_status?: Prisma.StringFieldUpdateOperationsInput | string
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  branches?: Prisma.branchesUpdateOneRequiredWithoutStudentsNestedInput
+  auth_user?: Prisma.usersUpdateOneWithoutStudent_profileNestedInput
+  student_disciplines?: Prisma.student_disciplinesUpdateManyWithoutStudentsNestedInput
+  attendance?: Prisma.attendanceUpdateManyWithoutStudentsNestedInput
+  student_progress?: Prisma.student_progressUpdateManyWithoutStudentsNestedInput
+  student_notes?: Prisma.student_notesUpdateManyWithoutStudentsNestedInput
+  class_series_students?: Prisma.class_series_studentsUpdateManyWithoutStudentsNestedInput
+  one_time_class_students?: Prisma.one_time_class_studentsUpdateManyWithoutStudentsNestedInput
+}
+
+export type studentsUncheckedUpdateWithoutConverted_class_guestsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  branch_id?: Prisma.StringFieldUpdateOperationsInput | string
+  auth_user_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  first_name?: Prisma.StringFieldUpdateOperationsInput | string
+  surname?: Prisma.StringFieldUpdateOperationsInput | string
+  national_id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  date_of_birth?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_status?: Prisma.StringFieldUpdateOperationsInput | string
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  student_disciplines?: Prisma.student_disciplinesUncheckedUpdateManyWithoutStudentsNestedInput
+  attendance?: Prisma.attendanceUncheckedUpdateManyWithoutStudentsNestedInput
+  student_progress?: Prisma.student_progressUncheckedUpdateManyWithoutStudentsNestedInput
+  student_notes?: Prisma.student_notesUncheckedUpdateManyWithoutStudentsNestedInput
+  class_series_students?: Prisma.class_series_studentsUncheckedUpdateManyWithoutStudentsNestedInput
+  one_time_class_students?: Prisma.one_time_class_studentsUncheckedUpdateManyWithoutStudentsNestedInput
 }
 
 export type studentsCreateManyBranchesInput = {
@@ -1526,6 +1683,7 @@ export type studentsUpdateWithoutBranchesInput = {
   student_notes?: Prisma.student_notesUpdateManyWithoutStudentsNestedInput
   class_series_students?: Prisma.class_series_studentsUpdateManyWithoutStudentsNestedInput
   one_time_class_students?: Prisma.one_time_class_studentsUpdateManyWithoutStudentsNestedInput
+  converted_class_guests?: Prisma.class_guestsUpdateManyWithoutConverted_studentNestedInput
 }
 
 export type studentsUncheckedUpdateWithoutBranchesInput = {
@@ -1547,6 +1705,7 @@ export type studentsUncheckedUpdateWithoutBranchesInput = {
   student_notes?: Prisma.student_notesUncheckedUpdateManyWithoutStudentsNestedInput
   class_series_students?: Prisma.class_series_studentsUncheckedUpdateManyWithoutStudentsNestedInput
   one_time_class_students?: Prisma.one_time_class_studentsUncheckedUpdateManyWithoutStudentsNestedInput
+  converted_class_guests?: Prisma.class_guestsUncheckedUpdateManyWithoutConverted_studentNestedInput
 }
 
 export type studentsUncheckedUpdateManyWithoutBranchesInput = {
@@ -1576,6 +1735,7 @@ export type StudentsCountOutputType = {
   student_notes: number
   class_series_students: number
   one_time_class_students: number
+  converted_class_guests: number
 }
 
 export type StudentsCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1585,6 +1745,7 @@ export type StudentsCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensio
   student_notes?: boolean | StudentsCountOutputTypeCountStudent_notesArgs
   class_series_students?: boolean | StudentsCountOutputTypeCountClass_series_studentsArgs
   one_time_class_students?: boolean | StudentsCountOutputTypeCountOne_time_class_studentsArgs
+  converted_class_guests?: boolean | StudentsCountOutputTypeCountConverted_class_guestsArgs
 }
 
 /**
@@ -1639,6 +1800,13 @@ export type StudentsCountOutputTypeCountOne_time_class_studentsArgs<ExtArgs exte
   where?: Prisma.one_time_class_studentsWhereInput
 }
 
+/**
+ * StudentsCountOutputType without action
+ */
+export type StudentsCountOutputTypeCountConverted_class_guestsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.class_guestsWhereInput
+}
+
 
 export type studentsSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1662,6 +1830,7 @@ export type studentsSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   student_notes?: boolean | Prisma.students$student_notesArgs<ExtArgs>
   class_series_students?: boolean | Prisma.students$class_series_studentsArgs<ExtArgs>
   one_time_class_students?: boolean | Prisma.students$one_time_class_studentsArgs<ExtArgs>
+  converted_class_guests?: boolean | Prisma.students$converted_class_guestsArgs<ExtArgs>
   _count?: boolean | Prisma.StudentsCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["students"]>
 
@@ -1727,6 +1896,7 @@ export type studentsInclude<ExtArgs extends runtime.Types.Extensions.InternalArg
   student_notes?: boolean | Prisma.students$student_notesArgs<ExtArgs>
   class_series_students?: boolean | Prisma.students$class_series_studentsArgs<ExtArgs>
   one_time_class_students?: boolean | Prisma.students$one_time_class_studentsArgs<ExtArgs>
+  converted_class_guests?: boolean | Prisma.students$converted_class_guestsArgs<ExtArgs>
   _count?: boolean | Prisma.StudentsCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type studentsIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1749,6 +1919,7 @@ export type $studentsPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     student_notes: Prisma.$student_notesPayload<ExtArgs>[]
     class_series_students: Prisma.$class_series_studentsPayload<ExtArgs>[]
     one_time_class_students: Prisma.$one_time_class_studentsPayload<ExtArgs>[]
+    converted_class_guests: Prisma.$class_guestsPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -2166,6 +2337,7 @@ export interface Prisma__studentsClient<T, Null = never, ExtArgs extends runtime
   student_notes<T extends Prisma.students$student_notesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.students$student_notesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$student_notesPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   class_series_students<T extends Prisma.students$class_series_studentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.students$class_series_studentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$class_series_studentsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   one_time_class_students<T extends Prisma.students$one_time_class_studentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.students$one_time_class_studentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$one_time_class_studentsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  converted_class_guests<T extends Prisma.students$converted_class_guestsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.students$converted_class_guestsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$class_guestsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2769,6 +2941,30 @@ export type students$one_time_class_studentsArgs<ExtArgs extends runtime.Types.E
   take?: number
   skip?: number
   distinct?: Prisma.One_time_class_studentsScalarFieldEnum | Prisma.One_time_class_studentsScalarFieldEnum[]
+}
+
+/**
+ * students.converted_class_guests
+ */
+export type students$converted_class_guestsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the class_guests
+   */
+  select?: Prisma.class_guestsSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the class_guests
+   */
+  omit?: Prisma.class_guestsOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.class_guestsInclude<ExtArgs> | null
+  where?: Prisma.class_guestsWhereInput
+  orderBy?: Prisma.class_guestsOrderByWithRelationInput | Prisma.class_guestsOrderByWithRelationInput[]
+  cursor?: Prisma.class_guestsWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.Class_guestsScalarFieldEnum | Prisma.Class_guestsScalarFieldEnum[]
 }
 
 /**

@@ -269,6 +269,7 @@ export type scheduled_classesWhereInput = {
   class_series?: Prisma.XOR<Prisma.Class_seriesScalarRelationFilter, Prisma.class_seriesWhereInput>
   class_sessions?: Prisma.Class_sessionsListRelationFilter
   attendance?: Prisma.AttendanceListRelationFilter
+  class_guests?: Prisma.Class_guestsListRelationFilter
 }
 
 export type scheduled_classesOrderByWithRelationInput = {
@@ -288,6 +289,7 @@ export type scheduled_classesOrderByWithRelationInput = {
   class_series?: Prisma.class_seriesOrderByWithRelationInput
   class_sessions?: Prisma.class_sessionsOrderByRelationAggregateInput
   attendance?: Prisma.attendanceOrderByRelationAggregateInput
+  class_guests?: Prisma.class_guestsOrderByRelationAggregateInput
 }
 
 export type scheduled_classesWhereUniqueInput = Prisma.AtLeast<{
@@ -310,6 +312,7 @@ export type scheduled_classesWhereUniqueInput = Prisma.AtLeast<{
   class_series?: Prisma.XOR<Prisma.Class_seriesScalarRelationFilter, Prisma.class_seriesWhereInput>
   class_sessions?: Prisma.Class_sessionsListRelationFilter
   attendance?: Prisma.AttendanceListRelationFilter
+  class_guests?: Prisma.Class_guestsListRelationFilter
 }, "id">
 
 export type scheduled_classesOrderByWithAggregationInput = {
@@ -362,6 +365,7 @@ export type scheduled_classesCreateInput = {
   class_series: Prisma.class_seriesCreateNestedOneWithoutScheduled_classesInput
   class_sessions?: Prisma.class_sessionsCreateNestedManyWithoutScheduled_classesInput
   attendance?: Prisma.attendanceCreateNestedManyWithoutScheduled_classesInput
+  class_guests?: Prisma.class_guestsCreateNestedManyWithoutScheduled_classesInput
 }
 
 export type scheduled_classesUncheckedCreateInput = {
@@ -378,6 +382,7 @@ export type scheduled_classesUncheckedCreateInput = {
   updated_at?: Date | string
   class_sessions?: Prisma.class_sessionsUncheckedCreateNestedManyWithoutScheduled_classesInput
   attendance?: Prisma.attendanceUncheckedCreateNestedManyWithoutScheduled_classesInput
+  class_guests?: Prisma.class_guestsUncheckedCreateNestedManyWithoutScheduled_classesInput
 }
 
 export type scheduled_classesUpdateInput = {
@@ -394,6 +399,7 @@ export type scheduled_classesUpdateInput = {
   class_series?: Prisma.class_seriesUpdateOneRequiredWithoutScheduled_classesNestedInput
   class_sessions?: Prisma.class_sessionsUpdateManyWithoutScheduled_classesNestedInput
   attendance?: Prisma.attendanceUpdateManyWithoutScheduled_classesNestedInput
+  class_guests?: Prisma.class_guestsUpdateManyWithoutScheduled_classesNestedInput
 }
 
 export type scheduled_classesUncheckedUpdateInput = {
@@ -410,6 +416,7 @@ export type scheduled_classesUncheckedUpdateInput = {
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   class_sessions?: Prisma.class_sessionsUncheckedUpdateManyWithoutScheduled_classesNestedInput
   attendance?: Prisma.attendanceUncheckedUpdateManyWithoutScheduled_classesNestedInput
+  class_guests?: Prisma.class_guestsUncheckedUpdateManyWithoutScheduled_classesNestedInput
 }
 
 export type scheduled_classesCreateManyInput = {
@@ -685,6 +692,22 @@ export type scheduled_classesUpdateOneWithoutAttendanceNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.scheduled_classesUpdateToOneWithWhereWithoutAttendanceInput, Prisma.scheduled_classesUpdateWithoutAttendanceInput>, Prisma.scheduled_classesUncheckedUpdateWithoutAttendanceInput>
 }
 
+export type scheduled_classesCreateNestedOneWithoutClass_guestsInput = {
+  create?: Prisma.XOR<Prisma.scheduled_classesCreateWithoutClass_guestsInput, Prisma.scheduled_classesUncheckedCreateWithoutClass_guestsInput>
+  connectOrCreate?: Prisma.scheduled_classesCreateOrConnectWithoutClass_guestsInput
+  connect?: Prisma.scheduled_classesWhereUniqueInput
+}
+
+export type scheduled_classesUpdateOneWithoutClass_guestsNestedInput = {
+  create?: Prisma.XOR<Prisma.scheduled_classesCreateWithoutClass_guestsInput, Prisma.scheduled_classesUncheckedCreateWithoutClass_guestsInput>
+  connectOrCreate?: Prisma.scheduled_classesCreateOrConnectWithoutClass_guestsInput
+  upsert?: Prisma.scheduled_classesUpsertWithoutClass_guestsInput
+  disconnect?: Prisma.scheduled_classesWhereInput | boolean
+  delete?: Prisma.scheduled_classesWhereInput | boolean
+  connect?: Prisma.scheduled_classesWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.scheduled_classesUpdateToOneWithWhereWithoutClass_guestsInput, Prisma.scheduled_classesUpdateWithoutClass_guestsInput>, Prisma.scheduled_classesUncheckedUpdateWithoutClass_guestsInput>
+}
+
 export type scheduled_classesCreateWithoutBranchesInput = {
   id?: string
   default_teacher_id?: string | null
@@ -698,6 +721,7 @@ export type scheduled_classesCreateWithoutBranchesInput = {
   class_series: Prisma.class_seriesCreateNestedOneWithoutScheduled_classesInput
   class_sessions?: Prisma.class_sessionsCreateNestedManyWithoutScheduled_classesInput
   attendance?: Prisma.attendanceCreateNestedManyWithoutScheduled_classesInput
+  class_guests?: Prisma.class_guestsCreateNestedManyWithoutScheduled_classesInput
 }
 
 export type scheduled_classesUncheckedCreateWithoutBranchesInput = {
@@ -713,6 +737,7 @@ export type scheduled_classesUncheckedCreateWithoutBranchesInput = {
   updated_at?: Date | string
   class_sessions?: Prisma.class_sessionsUncheckedCreateNestedManyWithoutScheduled_classesInput
   attendance?: Prisma.attendanceUncheckedCreateNestedManyWithoutScheduled_classesInput
+  class_guests?: Prisma.class_guestsUncheckedCreateNestedManyWithoutScheduled_classesInput
 }
 
 export type scheduled_classesCreateOrConnectWithoutBranchesInput = {
@@ -771,6 +796,7 @@ export type scheduled_classesCreateWithoutDisciplinesInput = {
   class_series: Prisma.class_seriesCreateNestedOneWithoutScheduled_classesInput
   class_sessions?: Prisma.class_sessionsCreateNestedManyWithoutScheduled_classesInput
   attendance?: Prisma.attendanceCreateNestedManyWithoutScheduled_classesInput
+  class_guests?: Prisma.class_guestsCreateNestedManyWithoutScheduled_classesInput
 }
 
 export type scheduled_classesUncheckedCreateWithoutDisciplinesInput = {
@@ -786,6 +812,7 @@ export type scheduled_classesUncheckedCreateWithoutDisciplinesInput = {
   updated_at?: Date | string
   class_sessions?: Prisma.class_sessionsUncheckedCreateNestedManyWithoutScheduled_classesInput
   attendance?: Prisma.attendanceUncheckedCreateNestedManyWithoutScheduled_classesInput
+  class_guests?: Prisma.class_guestsUncheckedCreateNestedManyWithoutScheduled_classesInput
 }
 
 export type scheduled_classesCreateOrConnectWithoutDisciplinesInput = {
@@ -827,6 +854,7 @@ export type scheduled_classesCreateWithoutClass_seriesInput = {
   disciplines: Prisma.disciplinesCreateNestedOneWithoutScheduled_classesInput
   class_sessions?: Prisma.class_sessionsCreateNestedManyWithoutScheduled_classesInput
   attendance?: Prisma.attendanceCreateNestedManyWithoutScheduled_classesInput
+  class_guests?: Prisma.class_guestsCreateNestedManyWithoutScheduled_classesInput
 }
 
 export type scheduled_classesUncheckedCreateWithoutClass_seriesInput = {
@@ -840,6 +868,7 @@ export type scheduled_classesUncheckedCreateWithoutClass_seriesInput = {
   updated_at?: Date | string
   class_sessions?: Prisma.class_sessionsUncheckedCreateNestedManyWithoutScheduled_classesInput
   attendance?: Prisma.attendanceUncheckedCreateNestedManyWithoutScheduled_classesInput
+  class_guests?: Prisma.class_guestsUncheckedCreateNestedManyWithoutScheduled_classesInput
 }
 
 export type scheduled_classesCreateOrConnectWithoutClass_seriesInput = {
@@ -881,6 +910,7 @@ export type scheduled_classesCreateWithoutClass_sessionsInput = {
   disciplines: Prisma.disciplinesCreateNestedOneWithoutScheduled_classesInput
   class_series: Prisma.class_seriesCreateNestedOneWithoutScheduled_classesInput
   attendance?: Prisma.attendanceCreateNestedManyWithoutScheduled_classesInput
+  class_guests?: Prisma.class_guestsCreateNestedManyWithoutScheduled_classesInput
 }
 
 export type scheduled_classesUncheckedCreateWithoutClass_sessionsInput = {
@@ -896,6 +926,7 @@ export type scheduled_classesUncheckedCreateWithoutClass_sessionsInput = {
   created_at?: Date | string
   updated_at?: Date | string
   attendance?: Prisma.attendanceUncheckedCreateNestedManyWithoutScheduled_classesInput
+  class_guests?: Prisma.class_guestsUncheckedCreateNestedManyWithoutScheduled_classesInput
 }
 
 export type scheduled_classesCreateOrConnectWithoutClass_sessionsInput = {
@@ -927,6 +958,7 @@ export type scheduled_classesUpdateWithoutClass_sessionsInput = {
   disciplines?: Prisma.disciplinesUpdateOneRequiredWithoutScheduled_classesNestedInput
   class_series?: Prisma.class_seriesUpdateOneRequiredWithoutScheduled_classesNestedInput
   attendance?: Prisma.attendanceUpdateManyWithoutScheduled_classesNestedInput
+  class_guests?: Prisma.class_guestsUpdateManyWithoutScheduled_classesNestedInput
 }
 
 export type scheduled_classesUncheckedUpdateWithoutClass_sessionsInput = {
@@ -942,6 +974,7 @@ export type scheduled_classesUncheckedUpdateWithoutClass_sessionsInput = {
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   attendance?: Prisma.attendanceUncheckedUpdateManyWithoutScheduled_classesNestedInput
+  class_guests?: Prisma.class_guestsUncheckedUpdateManyWithoutScheduled_classesNestedInput
 }
 
 export type scheduled_classesCreateWithoutAttendanceInput = {
@@ -957,6 +990,7 @@ export type scheduled_classesCreateWithoutAttendanceInput = {
   disciplines: Prisma.disciplinesCreateNestedOneWithoutScheduled_classesInput
   class_series: Prisma.class_seriesCreateNestedOneWithoutScheduled_classesInput
   class_sessions?: Prisma.class_sessionsCreateNestedManyWithoutScheduled_classesInput
+  class_guests?: Prisma.class_guestsCreateNestedManyWithoutScheduled_classesInput
 }
 
 export type scheduled_classesUncheckedCreateWithoutAttendanceInput = {
@@ -972,6 +1006,7 @@ export type scheduled_classesUncheckedCreateWithoutAttendanceInput = {
   created_at?: Date | string
   updated_at?: Date | string
   class_sessions?: Prisma.class_sessionsUncheckedCreateNestedManyWithoutScheduled_classesInput
+  class_guests?: Prisma.class_guestsUncheckedCreateNestedManyWithoutScheduled_classesInput
 }
 
 export type scheduled_classesCreateOrConnectWithoutAttendanceInput = {
@@ -1003,6 +1038,7 @@ export type scheduled_classesUpdateWithoutAttendanceInput = {
   disciplines?: Prisma.disciplinesUpdateOneRequiredWithoutScheduled_classesNestedInput
   class_series?: Prisma.class_seriesUpdateOneRequiredWithoutScheduled_classesNestedInput
   class_sessions?: Prisma.class_sessionsUpdateManyWithoutScheduled_classesNestedInput
+  class_guests?: Prisma.class_guestsUpdateManyWithoutScheduled_classesNestedInput
 }
 
 export type scheduled_classesUncheckedUpdateWithoutAttendanceInput = {
@@ -1018,6 +1054,87 @@ export type scheduled_classesUncheckedUpdateWithoutAttendanceInput = {
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   class_sessions?: Prisma.class_sessionsUncheckedUpdateManyWithoutScheduled_classesNestedInput
+  class_guests?: Prisma.class_guestsUncheckedUpdateManyWithoutScheduled_classesNestedInput
+}
+
+export type scheduled_classesCreateWithoutClass_guestsInput = {
+  id?: string
+  default_teacher_id?: string | null
+  day_of_week: number
+  start_time: Date | string
+  end_time?: Date | string | null
+  is_active?: boolean
+  created_at?: Date | string
+  updated_at?: Date | string
+  branches: Prisma.branchesCreateNestedOneWithoutScheduled_classesInput
+  disciplines: Prisma.disciplinesCreateNestedOneWithoutScheduled_classesInput
+  class_series: Prisma.class_seriesCreateNestedOneWithoutScheduled_classesInput
+  class_sessions?: Prisma.class_sessionsCreateNestedManyWithoutScheduled_classesInput
+  attendance?: Prisma.attendanceCreateNestedManyWithoutScheduled_classesInput
+}
+
+export type scheduled_classesUncheckedCreateWithoutClass_guestsInput = {
+  id?: string
+  branch_id: string
+  discipline_id: string
+  default_teacher_id?: string | null
+  day_of_week: number
+  start_time: Date | string
+  end_time?: Date | string | null
+  is_active?: boolean
+  series_id: string
+  created_at?: Date | string
+  updated_at?: Date | string
+  class_sessions?: Prisma.class_sessionsUncheckedCreateNestedManyWithoutScheduled_classesInput
+  attendance?: Prisma.attendanceUncheckedCreateNestedManyWithoutScheduled_classesInput
+}
+
+export type scheduled_classesCreateOrConnectWithoutClass_guestsInput = {
+  where: Prisma.scheduled_classesWhereUniqueInput
+  create: Prisma.XOR<Prisma.scheduled_classesCreateWithoutClass_guestsInput, Prisma.scheduled_classesUncheckedCreateWithoutClass_guestsInput>
+}
+
+export type scheduled_classesUpsertWithoutClass_guestsInput = {
+  update: Prisma.XOR<Prisma.scheduled_classesUpdateWithoutClass_guestsInput, Prisma.scheduled_classesUncheckedUpdateWithoutClass_guestsInput>
+  create: Prisma.XOR<Prisma.scheduled_classesCreateWithoutClass_guestsInput, Prisma.scheduled_classesUncheckedCreateWithoutClass_guestsInput>
+  where?: Prisma.scheduled_classesWhereInput
+}
+
+export type scheduled_classesUpdateToOneWithWhereWithoutClass_guestsInput = {
+  where?: Prisma.scheduled_classesWhereInput
+  data: Prisma.XOR<Prisma.scheduled_classesUpdateWithoutClass_guestsInput, Prisma.scheduled_classesUncheckedUpdateWithoutClass_guestsInput>
+}
+
+export type scheduled_classesUpdateWithoutClass_guestsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  default_teacher_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  day_of_week?: Prisma.IntFieldUpdateOperationsInput | number
+  start_time?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  end_time?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  branches?: Prisma.branchesUpdateOneRequiredWithoutScheduled_classesNestedInput
+  disciplines?: Prisma.disciplinesUpdateOneRequiredWithoutScheduled_classesNestedInput
+  class_series?: Prisma.class_seriesUpdateOneRequiredWithoutScheduled_classesNestedInput
+  class_sessions?: Prisma.class_sessionsUpdateManyWithoutScheduled_classesNestedInput
+  attendance?: Prisma.attendanceUpdateManyWithoutScheduled_classesNestedInput
+}
+
+export type scheduled_classesUncheckedUpdateWithoutClass_guestsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  branch_id?: Prisma.StringFieldUpdateOperationsInput | string
+  discipline_id?: Prisma.StringFieldUpdateOperationsInput | string
+  default_teacher_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  day_of_week?: Prisma.IntFieldUpdateOperationsInput | number
+  start_time?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  end_time?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  series_id?: Prisma.StringFieldUpdateOperationsInput | string
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  class_sessions?: Prisma.class_sessionsUncheckedUpdateManyWithoutScheduled_classesNestedInput
+  attendance?: Prisma.attendanceUncheckedUpdateManyWithoutScheduled_classesNestedInput
 }
 
 export type scheduled_classesCreateManyBranchesInput = {
@@ -1046,6 +1163,7 @@ export type scheduled_classesUpdateWithoutBranchesInput = {
   class_series?: Prisma.class_seriesUpdateOneRequiredWithoutScheduled_classesNestedInput
   class_sessions?: Prisma.class_sessionsUpdateManyWithoutScheduled_classesNestedInput
   attendance?: Prisma.attendanceUpdateManyWithoutScheduled_classesNestedInput
+  class_guests?: Prisma.class_guestsUpdateManyWithoutScheduled_classesNestedInput
 }
 
 export type scheduled_classesUncheckedUpdateWithoutBranchesInput = {
@@ -1061,6 +1179,7 @@ export type scheduled_classesUncheckedUpdateWithoutBranchesInput = {
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   class_sessions?: Prisma.class_sessionsUncheckedUpdateManyWithoutScheduled_classesNestedInput
   attendance?: Prisma.attendanceUncheckedUpdateManyWithoutScheduled_classesNestedInput
+  class_guests?: Prisma.class_guestsUncheckedUpdateManyWithoutScheduled_classesNestedInput
 }
 
 export type scheduled_classesUncheckedUpdateManyWithoutBranchesInput = {
@@ -1102,6 +1221,7 @@ export type scheduled_classesUpdateWithoutDisciplinesInput = {
   class_series?: Prisma.class_seriesUpdateOneRequiredWithoutScheduled_classesNestedInput
   class_sessions?: Prisma.class_sessionsUpdateManyWithoutScheduled_classesNestedInput
   attendance?: Prisma.attendanceUpdateManyWithoutScheduled_classesNestedInput
+  class_guests?: Prisma.class_guestsUpdateManyWithoutScheduled_classesNestedInput
 }
 
 export type scheduled_classesUncheckedUpdateWithoutDisciplinesInput = {
@@ -1117,6 +1237,7 @@ export type scheduled_classesUncheckedUpdateWithoutDisciplinesInput = {
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   class_sessions?: Prisma.class_sessionsUncheckedUpdateManyWithoutScheduled_classesNestedInput
   attendance?: Prisma.attendanceUncheckedUpdateManyWithoutScheduled_classesNestedInput
+  class_guests?: Prisma.class_guestsUncheckedUpdateManyWithoutScheduled_classesNestedInput
 }
 
 export type scheduled_classesUncheckedUpdateManyWithoutDisciplinesInput = {
@@ -1156,6 +1277,7 @@ export type scheduled_classesUpdateWithoutClass_seriesInput = {
   disciplines?: Prisma.disciplinesUpdateOneRequiredWithoutScheduled_classesNestedInput
   class_sessions?: Prisma.class_sessionsUpdateManyWithoutScheduled_classesNestedInput
   attendance?: Prisma.attendanceUpdateManyWithoutScheduled_classesNestedInput
+  class_guests?: Prisma.class_guestsUpdateManyWithoutScheduled_classesNestedInput
 }
 
 export type scheduled_classesUncheckedUpdateWithoutClass_seriesInput = {
@@ -1169,6 +1291,7 @@ export type scheduled_classesUncheckedUpdateWithoutClass_seriesInput = {
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   class_sessions?: Prisma.class_sessionsUncheckedUpdateManyWithoutScheduled_classesNestedInput
   attendance?: Prisma.attendanceUncheckedUpdateManyWithoutScheduled_classesNestedInput
+  class_guests?: Prisma.class_guestsUncheckedUpdateManyWithoutScheduled_classesNestedInput
 }
 
 export type scheduled_classesUncheckedUpdateManyWithoutClass_seriesInput = {
@@ -1190,11 +1313,13 @@ export type scheduled_classesUncheckedUpdateManyWithoutClass_seriesInput = {
 export type Scheduled_classesCountOutputType = {
   class_sessions: number
   attendance: number
+  class_guests: number
 }
 
 export type Scheduled_classesCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   class_sessions?: boolean | Scheduled_classesCountOutputTypeCountClass_sessionsArgs
   attendance?: boolean | Scheduled_classesCountOutputTypeCountAttendanceArgs
+  class_guests?: boolean | Scheduled_classesCountOutputTypeCountClass_guestsArgs
 }
 
 /**
@@ -1221,6 +1346,13 @@ export type Scheduled_classesCountOutputTypeCountAttendanceArgs<ExtArgs extends 
   where?: Prisma.attendanceWhereInput
 }
 
+/**
+ * Scheduled_classesCountOutputType without action
+ */
+export type Scheduled_classesCountOutputTypeCountClass_guestsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.class_guestsWhereInput
+}
+
 
 export type scheduled_classesSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1239,6 +1371,7 @@ export type scheduled_classesSelect<ExtArgs extends runtime.Types.Extensions.Int
   class_series?: boolean | Prisma.class_seriesDefaultArgs<ExtArgs>
   class_sessions?: boolean | Prisma.scheduled_classes$class_sessionsArgs<ExtArgs>
   attendance?: boolean | Prisma.scheduled_classes$attendanceArgs<ExtArgs>
+  class_guests?: boolean | Prisma.scheduled_classes$class_guestsArgs<ExtArgs>
   _count?: boolean | Prisma.Scheduled_classesCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["scheduled_classes"]>
 
@@ -1297,6 +1430,7 @@ export type scheduled_classesInclude<ExtArgs extends runtime.Types.Extensions.In
   class_series?: boolean | Prisma.class_seriesDefaultArgs<ExtArgs>
   class_sessions?: boolean | Prisma.scheduled_classes$class_sessionsArgs<ExtArgs>
   attendance?: boolean | Prisma.scheduled_classes$attendanceArgs<ExtArgs>
+  class_guests?: boolean | Prisma.scheduled_classes$class_guestsArgs<ExtArgs>
   _count?: boolean | Prisma.Scheduled_classesCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type scheduled_classesIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1318,6 +1452,7 @@ export type $scheduled_classesPayload<ExtArgs extends runtime.Types.Extensions.I
     class_series: Prisma.$class_seriesPayload<ExtArgs>
     class_sessions: Prisma.$class_sessionsPayload<ExtArgs>[]
     attendance: Prisma.$attendancePayload<ExtArgs>[]
+    class_guests: Prisma.$class_guestsPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1730,6 +1865,7 @@ export interface Prisma__scheduled_classesClient<T, Null = never, ExtArgs extend
   class_series<T extends Prisma.class_seriesDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.class_seriesDefaultArgs<ExtArgs>>): Prisma.Prisma__class_seriesClient<runtime.Types.Result.GetResult<Prisma.$class_seriesPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   class_sessions<T extends Prisma.scheduled_classes$class_sessionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.scheduled_classes$class_sessionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$class_sessionsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   attendance<T extends Prisma.scheduled_classes$attendanceArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.scheduled_classes$attendanceArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$attendancePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  class_guests<T extends Prisma.scheduled_classes$class_guestsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.scheduled_classes$class_guestsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$class_guestsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2216,6 +2352,30 @@ export type scheduled_classes$attendanceArgs<ExtArgs extends runtime.Types.Exten
   take?: number
   skip?: number
   distinct?: Prisma.AttendanceScalarFieldEnum | Prisma.AttendanceScalarFieldEnum[]
+}
+
+/**
+ * scheduled_classes.class_guests
+ */
+export type scheduled_classes$class_guestsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the class_guests
+   */
+  select?: Prisma.class_guestsSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the class_guests
+   */
+  omit?: Prisma.class_guestsOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.class_guestsInclude<ExtArgs> | null
+  where?: Prisma.class_guestsWhereInput
+  orderBy?: Prisma.class_guestsOrderByWithRelationInput | Prisma.class_guestsOrderByWithRelationInput[]
+  cursor?: Prisma.class_guestsWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.Class_guestsScalarFieldEnum | Prisma.Class_guestsScalarFieldEnum[]
 }
 
 /**

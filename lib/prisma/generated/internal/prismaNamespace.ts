@@ -424,6 +424,7 @@ export const ModelName = {
   student_progress: 'student_progress',
   student_notes: 'student_notes',
   one_time_class_students: 'one_time_class_students',
+  class_guests: 'class_guests',
   branch_level_requirements: 'branch_level_requirements',
   payments: 'payments',
   class_payments: 'class_payments'
@@ -442,7 +443,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "audit_log_entries" | "custom_oauth_providers" | "flow_state" | "identities" | "instances" | "mfa_amr_claims" | "mfa_challenges" | "mfa_factors" | "oauth_authorizations" | "oauth_client_states" | "oauth_clients" | "oauth_consents" | "one_time_tokens" | "refresh_tokens" | "saml_providers" | "saml_relay_states" | "schema_migrations" | "sessions" | "sso_domains" | "sso_providers" | "users" | "webauthn_challenges" | "webauthn_credentials" | "user_roles" | "branches" | "user_profiles" | "students" | "disciplines" | "student_disciplines" | "discipline_events" | "scheduled_classes" | "class_series" | "class_series_students" | "one_time_classes" | "class_sessions" | "attendance" | "discipline_levels" | "student_progress" | "student_notes" | "one_time_class_students" | "branch_level_requirements" | "payments" | "class_payments"
+    modelProps: "audit_log_entries" | "custom_oauth_providers" | "flow_state" | "identities" | "instances" | "mfa_amr_claims" | "mfa_challenges" | "mfa_factors" | "oauth_authorizations" | "oauth_client_states" | "oauth_clients" | "oauth_consents" | "one_time_tokens" | "refresh_tokens" | "saml_providers" | "saml_relay_states" | "schema_migrations" | "sessions" | "sso_domains" | "sso_providers" | "users" | "webauthn_challenges" | "webauthn_credentials" | "user_roles" | "branches" | "user_profiles" | "students" | "disciplines" | "student_disciplines" | "discipline_events" | "scheduled_classes" | "class_series" | "class_series_students" | "one_time_classes" | "class_sessions" | "attendance" | "discipline_levels" | "student_progress" | "student_notes" | "one_time_class_students" | "class_guests" | "branch_level_requirements" | "payments" | "class_payments"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -3406,6 +3407,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    class_guests: {
+      payload: Prisma.$class_guestsPayload<ExtArgs>
+      fields: Prisma.class_guestsFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.class_guestsFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$class_guestsPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.class_guestsFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$class_guestsPayload>
+        }
+        findFirst: {
+          args: Prisma.class_guestsFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$class_guestsPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.class_guestsFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$class_guestsPayload>
+        }
+        findMany: {
+          args: Prisma.class_guestsFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$class_guestsPayload>[]
+        }
+        create: {
+          args: Prisma.class_guestsCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$class_guestsPayload>
+        }
+        createMany: {
+          args: Prisma.class_guestsCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.class_guestsCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$class_guestsPayload>[]
+        }
+        delete: {
+          args: Prisma.class_guestsDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$class_guestsPayload>
+        }
+        update: {
+          args: Prisma.class_guestsUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$class_guestsPayload>
+        }
+        deleteMany: {
+          args: Prisma.class_guestsDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.class_guestsUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.class_guestsUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$class_guestsPayload>[]
+        }
+        upsert: {
+          args: Prisma.class_guestsUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$class_guestsPayload>
+        }
+        aggregate: {
+          args: Prisma.Class_guestsAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateClass_guests>
+        }
+        groupBy: {
+          args: Prisma.class_guestsGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Class_guestsGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.class_guestsCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Class_guestsCountAggregateOutputType> | number
+        }
+      }
+    }
     branch_level_requirements: {
       payload: Prisma.$branch_level_requirementsPayload<ExtArgs>
       fields: Prisma.branch_level_requirementsFieldRefs
@@ -4295,6 +4370,25 @@ export const One_time_class_studentsScalarFieldEnum = {
 export type One_time_class_studentsScalarFieldEnum = (typeof One_time_class_studentsScalarFieldEnum)[keyof typeof One_time_class_studentsScalarFieldEnum]
 
 
+export const Class_guestsScalarFieldEnum = {
+  id: 'id',
+  branch_id: 'branch_id',
+  scheduled_class_id: 'scheduled_class_id',
+  one_time_class_id: 'one_time_class_id',
+  session_date: 'session_date',
+  first_name: 'first_name',
+  surname: 'surname',
+  phone: 'phone',
+  observation: 'observation',
+  converted_student_id: 'converted_student_id',
+  created_by: 'created_by',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
+} as const
+
+export type Class_guestsScalarFieldEnum = (typeof Class_guestsScalarFieldEnum)[keyof typeof Class_guestsScalarFieldEnum]
+
+
 export const Branch_level_requirementsScalarFieldEnum = {
   id: 'id',
   branch_id: 'branch_id',
@@ -4785,6 +4879,7 @@ export type GlobalOmitConfig = {
   student_progress?: Prisma.student_progressOmit
   student_notes?: Prisma.student_notesOmit
   one_time_class_students?: Prisma.one_time_class_studentsOmit
+  class_guests?: Prisma.class_guestsOmit
   branch_level_requirements?: Prisma.branch_level_requirementsOmit
   payments?: Prisma.paymentsOmit
   class_payments?: Prisma.class_paymentsOmit

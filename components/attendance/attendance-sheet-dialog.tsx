@@ -5,6 +5,7 @@ import { LoaderCircleIcon, ClipboardCheckIcon } from "lucide-react"
 
 import { getAttendanceForSession } from "@/lib/domain/attendance/actions"
 import type { SessionAttendanceEntry } from "@/lib/domain/attendance/actions"
+import type { SessionGuestRow } from "@/lib/domain/guests/actions"
 import { AttendanceSheet } from "@/components/attendance/attendance-sheet"
 import {
   Sheet,
@@ -49,6 +50,7 @@ export function AttendanceSheetDialog({
   const [isOpen, setIsOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [students, setStudents] = useState<SessionAttendanceEntry[]>([])
+  const [guests, setGuests] = useState<SessionGuestRow[]>([])
   const [loadError, setLoadError] = useState<string | null>(null)
 
   async function handleOpen(nextIsOpen: boolean) {
@@ -68,13 +70,16 @@ export function AttendanceSheetDialog({
         if (!result.success || !result.data) {
           setLoadError(result.error ?? ATTENDANCE_MESSAGES.LOAD_FAILURE)
           setStudents([])
+          setGuests([])
           return
         }
 
-        setStudents(result.data)
+        setStudents(result.data.students)
+        setGuests(result.data.guests)
       } catch {
         setLoadError(ATTENDANCE_MESSAGES.LOAD_FAILURE)
         setStudents([])
+        setGuests([])
       } finally {
         setIsLoading(false)
       }
@@ -119,6 +124,7 @@ export function AttendanceSheetDialog({
               sessionDate={sessionDate}
               branchId={branchId}
               students={students}
+              guests={guests}
               onSuccess={() => setIsOpen(false)}
             />
           )}

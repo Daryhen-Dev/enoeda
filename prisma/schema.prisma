@@ -460,6 +460,7 @@ model users {
   class_series_default_teacher             class_series[]         @relation("ClassSeriesDefaultTeacher")
   class_series_students_added_by           class_series_students[] @relation("ClassSeriesStudentsAddedBy")
   one_time_class_students_added_by         one_time_class_students[] @relation("OneTimeClassStudentsAddedBy")
+  class_guests_created_by                  class_guests[]            @relation("ClassGuestsCreatedBy")
 
   @@index([created_at(sort: Desc)], map: "idx_users_created_at_desc")
   @@index([email], map: "idx_users_email")
@@ -545,6 +546,7 @@ model branches {
   scheduled_classes   scheduled_classes[]
   one_time_classes    one_time_classes[]
   class_series        class_series[]
+  class_guests        class_guests[]
   branch_level_requirements branch_level_requirements[]
 
   @@schema("public")
@@ -587,6 +589,7 @@ model students {
   student_notes       student_notes[]
   class_series_students   class_series_students[]
   one_time_class_students one_time_class_students[]
+  converted_class_guests  class_guests[]          @relation("ClassGuestConvertedStudent")
 
   @@index([branch_id])
   @@index([email])
@@ -673,6 +676,7 @@ model scheduled_classes {
   class_series       class_series     @relation(fields: [series_id, branch_id, discipline_id], references: [id, branch_id, discipline_id], onDelete: Cascade, onUpdate: NoAction)
   class_sessions     class_sessions[]
   attendance         attendance[]
+  class_guests       class_guests[]
 
   @@index([branch_id])
   @@index([discipline_id])
@@ -745,6 +749,7 @@ model one_time_classes {
   disciplines   disciplines  @relation(fields: [discipline_id], references: [id], onUpdate: NoAction)
   attendance    attendance[]
   one_time_class_students one_time_class_students[]
+  class_guests            class_guests[]
   class_payments          class_payments[]
 
   @@index([branch_id])
@@ -875,6 +880,39 @@ model one_time_class_students {
 
   @@unique([one_time_class_id, student_id], map: "one_time_class_students_class_student_uq")
   @@index([student_id])
+  @@schema("public")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model class_guests {
+  id                   String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  branch_id            String             @db.Uuid
+  scheduled_class_id   String?            @db.Uuid
+  one_time_class_id    String?            @db.Uuid
+  session_date         DateTime           @db.Date
+  first_name           String
+  surname              String
+  phone                String?
+  observation          String?
+  converted_student_id String?            @db.Uuid
+  created_by           String?            @db.Uuid
+  created_at           DateTime           @default(now()) @db.Timestamptz(6)
+  updated_at           DateTime           @default(now()) @db.Timestamptz(6)
+  branches             branches           @relation(fields: [branch_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  scheduled_classes    scheduled_classes? @relation(fields: [scheduled_class_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  one_time_classes     one_time_classes?  @relation(fields: [one_time_class_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  converted_student    students?          @relation("ClassGuestConvertedStudent", fields: [converted_student_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  created_by_user      users?             @relation("ClassGuestsCreatedBy", fields: [created_by], references: [id], onDelete: SetNull, onUpdate: NoAction)
+
+  // Exactly one of scheduled_class_id / one_time_class_id is enforced in the
+  // DB via class_guests_single_class_ck; the branch must match the class's
+  // branch (trigger class_guests_branch_mismatch).
+  @@index([scheduled_class_id, session_date])
+  @@index([one_time_class_id])
+  @@index([branch_id])
+  @@index([converted_student_id])
   @@schema("public")
 }
 

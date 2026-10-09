@@ -1058,6 +1058,55 @@ export const ATTENDANCE_TOAST = {
   SAVED: "Asistencia registrada correctamente.",
 } as const
 
+/** Trial-class guests (T7): server-action error copy. */
+export const GUEST_MESSAGES = {
+  INVALID_BRANCH_ID: "El identificador de la sucursal no es válido.",
+  INVALID_CLASS_ID: "El identificador de la clase no es válido.",
+  INVALID_DATE: "La fecha de la sesión no es válida.",
+  INVALID_GUEST_ID: "El identificador del invitado no es válido.",
+  INVALID_STUDENT_ID: "El identificador del estudiante no es válido.",
+  FIRST_NAME_REQUIRED: "El nombre del invitado es obligatorio.",
+  FIRST_NAME_MAX: "El nombre no puede superar 100 caracteres.",
+  SURNAME_REQUIRED: "El apellido del invitado es obligatorio.",
+  SURNAME_MAX: "El apellido no puede superar 100 caracteres.",
+  PHONE_MAX: "El teléfono no puede superar 30 caracteres.",
+  OBSERVATION_MAX: "La observación no puede superar 500 caracteres.",
+  NOT_FOUND: "El invitado no existe o no pertenece a esta sucursal.",
+  INVALID_SESSION: "La sesión no es válida o no corresponde al día indicado.",
+  ALREADY_LINKED: "El invitado ya fue convertido en otro estudiante.",
+  STUDENT_BRANCH_MISMATCH: "El estudiante no pertenece a esta sucursal.",
+  REMOVE_WINDOW_EXCEEDED:
+    "Solo el profesor que agregó al invitado puede quitarlo, dentro de los 30 días posteriores a la sesión.",
+  ADD_SUCCESS: "Invitado agregado correctamente.",
+  ADD_FAILURE: "No se pudo agregar el invitado.",
+  REMOVE_SUCCESS: "Invitado quitado correctamente.",
+  REMOVE_FAILURE: "No se pudo quitar el invitado.",
+  LINK_SUCCESS: "Invitado convertido en estudiante correctamente.",
+  LINK_FAILURE: "No se pudo vincular el invitado con el estudiante.",
+  LOAD_CONVERSION_FAILURE: "No se pudieron cargar los datos del invitado.",
+} as const
+
+/** Trial-class guests (T7): attendance-sheet UI copy. */
+export const GUEST_FORM_MESSAGES = {
+  SECTION_TITLE: "Invitados (clase de prueba)",
+  SECTION_DESCRIPTION:
+    "Personas nuevas que asisten a una clase de prueba. No son estudiantes hasta convertirlas.",
+  ADD_BUTTON: "Agregar invitado",
+  FIRST_NAME_LABEL: "Nombre",
+  SURNAME_LABEL: "Apellido",
+  PHONE_LABEL: "Teléfono (opcional)",
+  OBSERVATION_LABEL: "Observación (opcional)",
+  ADD_ACTION: "Agregar",
+  ADDING: "Agregando…",
+  EMPTY: "Sin invitados en esta sesión.",
+  CONVERTED_BADGE: "Convertido",
+  CONVERT_ACTION: "Convertir en alumno",
+  REMOVE_ACTION: "Quitar",
+  ARIA_GUEST_LIST: "Invitados de la sesión",
+  OBSERVATION_PREFIX: "Observación",
+  PHONE_PREFIX: "Teléfono",
+} as const
+
 export const PAYMENT_MESSAGES = {
   ENROLLMENT_NOT_FOUND: "Inscripción no encontrada.",
   CLASS_PRICE_NOT_SET: "El precio por clase no está configurado para esta disciplina.",

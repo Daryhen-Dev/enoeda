@@ -467,6 +467,7 @@ export type usersWhereInput = {
   class_series_default_teacher?: Prisma.Class_seriesListRelationFilter
   class_series_students_added_by?: Prisma.Class_series_studentsListRelationFilter
   one_time_class_students_added_by?: Prisma.One_time_class_studentsListRelationFilter
+  class_guests_created_by?: Prisma.Class_guestsListRelationFilter
 }
 
 export type usersOrderByWithRelationInput = {
@@ -521,6 +522,7 @@ export type usersOrderByWithRelationInput = {
   class_series_default_teacher?: Prisma.class_seriesOrderByRelationAggregateInput
   class_series_students_added_by?: Prisma.class_series_studentsOrderByRelationAggregateInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsOrderByRelationAggregateInput
+  class_guests_created_by?: Prisma.class_guestsOrderByRelationAggregateInput
 }
 
 export type usersWhereUniqueInput = Prisma.AtLeast<{
@@ -578,6 +580,7 @@ export type usersWhereUniqueInput = Prisma.AtLeast<{
   class_series_default_teacher?: Prisma.Class_seriesListRelationFilter
   class_series_students_added_by?: Prisma.Class_series_studentsListRelationFilter
   one_time_class_students_added_by?: Prisma.One_time_class_studentsListRelationFilter
+  class_guests_created_by?: Prisma.Class_guestsListRelationFilter
 }, "id" | "email" | "confirmation_token" | "recovery_token" | "email_change_token_new" | "phone" | "email_change_token_current" | "reauthentication_token">
 
 export type usersOrderByWithAggregationInput = {
@@ -716,6 +719,7 @@ export type usersCreateInput = {
   class_series_default_teacher?: Prisma.class_seriesCreateNestedManyWithoutDefault_teacherInput
   class_series_students_added_by?: Prisma.class_series_studentsCreateNestedManyWithoutAdded_by_userInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsCreateNestedManyWithoutAdded_by_userInput
+  class_guests_created_by?: Prisma.class_guestsCreateNestedManyWithoutCreated_by_userInput
 }
 
 export type usersUncheckedCreateInput = {
@@ -770,6 +774,7 @@ export type usersUncheckedCreateInput = {
   class_series_default_teacher?: Prisma.class_seriesUncheckedCreateNestedManyWithoutDefault_teacherInput
   class_series_students_added_by?: Prisma.class_series_studentsUncheckedCreateNestedManyWithoutAdded_by_userInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsUncheckedCreateNestedManyWithoutAdded_by_userInput
+  class_guests_created_by?: Prisma.class_guestsUncheckedCreateNestedManyWithoutCreated_by_userInput
 }
 
 export type usersUpdateInput = {
@@ -824,6 +829,7 @@ export type usersUpdateInput = {
   class_series_default_teacher?: Prisma.class_seriesUpdateManyWithoutDefault_teacherNestedInput
   class_series_students_added_by?: Prisma.class_series_studentsUpdateManyWithoutAdded_by_userNestedInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsUpdateManyWithoutAdded_by_userNestedInput
+  class_guests_created_by?: Prisma.class_guestsUpdateManyWithoutCreated_by_userNestedInput
 }
 
 export type usersUncheckedUpdateInput = {
@@ -878,6 +884,7 @@ export type usersUncheckedUpdateInput = {
   class_series_default_teacher?: Prisma.class_seriesUncheckedUpdateManyWithoutDefault_teacherNestedInput
   class_series_students_added_by?: Prisma.class_series_studentsUncheckedUpdateManyWithoutAdded_by_userNestedInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsUncheckedUpdateManyWithoutAdded_by_userNestedInput
+  class_guests_created_by?: Prisma.class_guestsUncheckedUpdateManyWithoutCreated_by_userNestedInput
 }
 
 export type usersCreateManyInput = {
@@ -1370,6 +1377,22 @@ export type usersUpdateOneWithoutOne_time_class_students_added_byNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.usersUpdateToOneWithWhereWithoutOne_time_class_students_added_byInput, Prisma.usersUpdateWithoutOne_time_class_students_added_byInput>, Prisma.usersUncheckedUpdateWithoutOne_time_class_students_added_byInput>
 }
 
+export type usersCreateNestedOneWithoutClass_guests_created_byInput = {
+  create?: Prisma.XOR<Prisma.usersCreateWithoutClass_guests_created_byInput, Prisma.usersUncheckedCreateWithoutClass_guests_created_byInput>
+  connectOrCreate?: Prisma.usersCreateOrConnectWithoutClass_guests_created_byInput
+  connect?: Prisma.usersWhereUniqueInput
+}
+
+export type usersUpdateOneWithoutClass_guests_created_byNestedInput = {
+  create?: Prisma.XOR<Prisma.usersCreateWithoutClass_guests_created_byInput, Prisma.usersUncheckedCreateWithoutClass_guests_created_byInput>
+  connectOrCreate?: Prisma.usersCreateOrConnectWithoutClass_guests_created_byInput
+  upsert?: Prisma.usersUpsertWithoutClass_guests_created_byInput
+  disconnect?: Prisma.usersWhereInput | boolean
+  delete?: Prisma.usersWhereInput | boolean
+  connect?: Prisma.usersWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.usersUpdateToOneWithWhereWithoutClass_guests_created_byInput, Prisma.usersUpdateWithoutClass_guests_created_byInput>, Prisma.usersUncheckedUpdateWithoutClass_guests_created_byInput>
+}
+
 export type usersCreateWithoutIdentitiesInput = {
   instance_id?: string | null
   id: string
@@ -1421,6 +1444,7 @@ export type usersCreateWithoutIdentitiesInput = {
   class_series_default_teacher?: Prisma.class_seriesCreateNestedManyWithoutDefault_teacherInput
   class_series_students_added_by?: Prisma.class_series_studentsCreateNestedManyWithoutAdded_by_userInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsCreateNestedManyWithoutAdded_by_userInput
+  class_guests_created_by?: Prisma.class_guestsCreateNestedManyWithoutCreated_by_userInput
 }
 
 export type usersUncheckedCreateWithoutIdentitiesInput = {
@@ -1474,6 +1498,7 @@ export type usersUncheckedCreateWithoutIdentitiesInput = {
   class_series_default_teacher?: Prisma.class_seriesUncheckedCreateNestedManyWithoutDefault_teacherInput
   class_series_students_added_by?: Prisma.class_series_studentsUncheckedCreateNestedManyWithoutAdded_by_userInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsUncheckedCreateNestedManyWithoutAdded_by_userInput
+  class_guests_created_by?: Prisma.class_guestsUncheckedCreateNestedManyWithoutCreated_by_userInput
 }
 
 export type usersCreateOrConnectWithoutIdentitiesInput = {
@@ -1543,6 +1568,7 @@ export type usersUpdateWithoutIdentitiesInput = {
   class_series_default_teacher?: Prisma.class_seriesUpdateManyWithoutDefault_teacherNestedInput
   class_series_students_added_by?: Prisma.class_series_studentsUpdateManyWithoutAdded_by_userNestedInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsUpdateManyWithoutAdded_by_userNestedInput
+  class_guests_created_by?: Prisma.class_guestsUpdateManyWithoutCreated_by_userNestedInput
 }
 
 export type usersUncheckedUpdateWithoutIdentitiesInput = {
@@ -1596,6 +1622,7 @@ export type usersUncheckedUpdateWithoutIdentitiesInput = {
   class_series_default_teacher?: Prisma.class_seriesUncheckedUpdateManyWithoutDefault_teacherNestedInput
   class_series_students_added_by?: Prisma.class_series_studentsUncheckedUpdateManyWithoutAdded_by_userNestedInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsUncheckedUpdateManyWithoutAdded_by_userNestedInput
+  class_guests_created_by?: Prisma.class_guestsUncheckedUpdateManyWithoutCreated_by_userNestedInput
 }
 
 export type usersCreateWithoutMfa_factorsInput = {
@@ -1649,6 +1676,7 @@ export type usersCreateWithoutMfa_factorsInput = {
   class_series_default_teacher?: Prisma.class_seriesCreateNestedManyWithoutDefault_teacherInput
   class_series_students_added_by?: Prisma.class_series_studentsCreateNestedManyWithoutAdded_by_userInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsCreateNestedManyWithoutAdded_by_userInput
+  class_guests_created_by?: Prisma.class_guestsCreateNestedManyWithoutCreated_by_userInput
 }
 
 export type usersUncheckedCreateWithoutMfa_factorsInput = {
@@ -1702,6 +1730,7 @@ export type usersUncheckedCreateWithoutMfa_factorsInput = {
   class_series_default_teacher?: Prisma.class_seriesUncheckedCreateNestedManyWithoutDefault_teacherInput
   class_series_students_added_by?: Prisma.class_series_studentsUncheckedCreateNestedManyWithoutAdded_by_userInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsUncheckedCreateNestedManyWithoutAdded_by_userInput
+  class_guests_created_by?: Prisma.class_guestsUncheckedCreateNestedManyWithoutCreated_by_userInput
 }
 
 export type usersCreateOrConnectWithoutMfa_factorsInput = {
@@ -1771,6 +1800,7 @@ export type usersUpdateWithoutMfa_factorsInput = {
   class_series_default_teacher?: Prisma.class_seriesUpdateManyWithoutDefault_teacherNestedInput
   class_series_students_added_by?: Prisma.class_series_studentsUpdateManyWithoutAdded_by_userNestedInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsUpdateManyWithoutAdded_by_userNestedInput
+  class_guests_created_by?: Prisma.class_guestsUpdateManyWithoutCreated_by_userNestedInput
 }
 
 export type usersUncheckedUpdateWithoutMfa_factorsInput = {
@@ -1824,6 +1854,7 @@ export type usersUncheckedUpdateWithoutMfa_factorsInput = {
   class_series_default_teacher?: Prisma.class_seriesUncheckedUpdateManyWithoutDefault_teacherNestedInput
   class_series_students_added_by?: Prisma.class_series_studentsUncheckedUpdateManyWithoutAdded_by_userNestedInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsUncheckedUpdateManyWithoutAdded_by_userNestedInput
+  class_guests_created_by?: Prisma.class_guestsUncheckedUpdateManyWithoutCreated_by_userNestedInput
 }
 
 export type usersCreateWithoutOauth_authorizationsInput = {
@@ -1877,6 +1908,7 @@ export type usersCreateWithoutOauth_authorizationsInput = {
   class_series_default_teacher?: Prisma.class_seriesCreateNestedManyWithoutDefault_teacherInput
   class_series_students_added_by?: Prisma.class_series_studentsCreateNestedManyWithoutAdded_by_userInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsCreateNestedManyWithoutAdded_by_userInput
+  class_guests_created_by?: Prisma.class_guestsCreateNestedManyWithoutCreated_by_userInput
 }
 
 export type usersUncheckedCreateWithoutOauth_authorizationsInput = {
@@ -1930,6 +1962,7 @@ export type usersUncheckedCreateWithoutOauth_authorizationsInput = {
   class_series_default_teacher?: Prisma.class_seriesUncheckedCreateNestedManyWithoutDefault_teacherInput
   class_series_students_added_by?: Prisma.class_series_studentsUncheckedCreateNestedManyWithoutAdded_by_userInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsUncheckedCreateNestedManyWithoutAdded_by_userInput
+  class_guests_created_by?: Prisma.class_guestsUncheckedCreateNestedManyWithoutCreated_by_userInput
 }
 
 export type usersCreateOrConnectWithoutOauth_authorizationsInput = {
@@ -1999,6 +2032,7 @@ export type usersUpdateWithoutOauth_authorizationsInput = {
   class_series_default_teacher?: Prisma.class_seriesUpdateManyWithoutDefault_teacherNestedInput
   class_series_students_added_by?: Prisma.class_series_studentsUpdateManyWithoutAdded_by_userNestedInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsUpdateManyWithoutAdded_by_userNestedInput
+  class_guests_created_by?: Prisma.class_guestsUpdateManyWithoutCreated_by_userNestedInput
 }
 
 export type usersUncheckedUpdateWithoutOauth_authorizationsInput = {
@@ -2052,6 +2086,7 @@ export type usersUncheckedUpdateWithoutOauth_authorizationsInput = {
   class_series_default_teacher?: Prisma.class_seriesUncheckedUpdateManyWithoutDefault_teacherNestedInput
   class_series_students_added_by?: Prisma.class_series_studentsUncheckedUpdateManyWithoutAdded_by_userNestedInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsUncheckedUpdateManyWithoutAdded_by_userNestedInput
+  class_guests_created_by?: Prisma.class_guestsUncheckedUpdateManyWithoutCreated_by_userNestedInput
 }
 
 export type usersCreateWithoutOauth_consentsInput = {
@@ -2105,6 +2140,7 @@ export type usersCreateWithoutOauth_consentsInput = {
   class_series_default_teacher?: Prisma.class_seriesCreateNestedManyWithoutDefault_teacherInput
   class_series_students_added_by?: Prisma.class_series_studentsCreateNestedManyWithoutAdded_by_userInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsCreateNestedManyWithoutAdded_by_userInput
+  class_guests_created_by?: Prisma.class_guestsCreateNestedManyWithoutCreated_by_userInput
 }
 
 export type usersUncheckedCreateWithoutOauth_consentsInput = {
@@ -2158,6 +2194,7 @@ export type usersUncheckedCreateWithoutOauth_consentsInput = {
   class_series_default_teacher?: Prisma.class_seriesUncheckedCreateNestedManyWithoutDefault_teacherInput
   class_series_students_added_by?: Prisma.class_series_studentsUncheckedCreateNestedManyWithoutAdded_by_userInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsUncheckedCreateNestedManyWithoutAdded_by_userInput
+  class_guests_created_by?: Prisma.class_guestsUncheckedCreateNestedManyWithoutCreated_by_userInput
 }
 
 export type usersCreateOrConnectWithoutOauth_consentsInput = {
@@ -2227,6 +2264,7 @@ export type usersUpdateWithoutOauth_consentsInput = {
   class_series_default_teacher?: Prisma.class_seriesUpdateManyWithoutDefault_teacherNestedInput
   class_series_students_added_by?: Prisma.class_series_studentsUpdateManyWithoutAdded_by_userNestedInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsUpdateManyWithoutAdded_by_userNestedInput
+  class_guests_created_by?: Prisma.class_guestsUpdateManyWithoutCreated_by_userNestedInput
 }
 
 export type usersUncheckedUpdateWithoutOauth_consentsInput = {
@@ -2280,6 +2318,7 @@ export type usersUncheckedUpdateWithoutOauth_consentsInput = {
   class_series_default_teacher?: Prisma.class_seriesUncheckedUpdateManyWithoutDefault_teacherNestedInput
   class_series_students_added_by?: Prisma.class_series_studentsUncheckedUpdateManyWithoutAdded_by_userNestedInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsUncheckedUpdateManyWithoutAdded_by_userNestedInput
+  class_guests_created_by?: Prisma.class_guestsUncheckedUpdateManyWithoutCreated_by_userNestedInput
 }
 
 export type usersCreateWithoutOne_time_tokensInput = {
@@ -2333,6 +2372,7 @@ export type usersCreateWithoutOne_time_tokensInput = {
   class_series_default_teacher?: Prisma.class_seriesCreateNestedManyWithoutDefault_teacherInput
   class_series_students_added_by?: Prisma.class_series_studentsCreateNestedManyWithoutAdded_by_userInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsCreateNestedManyWithoutAdded_by_userInput
+  class_guests_created_by?: Prisma.class_guestsCreateNestedManyWithoutCreated_by_userInput
 }
 
 export type usersUncheckedCreateWithoutOne_time_tokensInput = {
@@ -2386,6 +2426,7 @@ export type usersUncheckedCreateWithoutOne_time_tokensInput = {
   class_series_default_teacher?: Prisma.class_seriesUncheckedCreateNestedManyWithoutDefault_teacherInput
   class_series_students_added_by?: Prisma.class_series_studentsUncheckedCreateNestedManyWithoutAdded_by_userInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsUncheckedCreateNestedManyWithoutAdded_by_userInput
+  class_guests_created_by?: Prisma.class_guestsUncheckedCreateNestedManyWithoutCreated_by_userInput
 }
 
 export type usersCreateOrConnectWithoutOne_time_tokensInput = {
@@ -2455,6 +2496,7 @@ export type usersUpdateWithoutOne_time_tokensInput = {
   class_series_default_teacher?: Prisma.class_seriesUpdateManyWithoutDefault_teacherNestedInput
   class_series_students_added_by?: Prisma.class_series_studentsUpdateManyWithoutAdded_by_userNestedInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsUpdateManyWithoutAdded_by_userNestedInput
+  class_guests_created_by?: Prisma.class_guestsUpdateManyWithoutCreated_by_userNestedInput
 }
 
 export type usersUncheckedUpdateWithoutOne_time_tokensInput = {
@@ -2508,6 +2550,7 @@ export type usersUncheckedUpdateWithoutOne_time_tokensInput = {
   class_series_default_teacher?: Prisma.class_seriesUncheckedUpdateManyWithoutDefault_teacherNestedInput
   class_series_students_added_by?: Prisma.class_series_studentsUncheckedUpdateManyWithoutAdded_by_userNestedInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsUncheckedUpdateManyWithoutAdded_by_userNestedInput
+  class_guests_created_by?: Prisma.class_guestsUncheckedUpdateManyWithoutCreated_by_userNestedInput
 }
 
 export type usersCreateWithoutSessionsInput = {
@@ -2561,6 +2604,7 @@ export type usersCreateWithoutSessionsInput = {
   class_series_default_teacher?: Prisma.class_seriesCreateNestedManyWithoutDefault_teacherInput
   class_series_students_added_by?: Prisma.class_series_studentsCreateNestedManyWithoutAdded_by_userInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsCreateNestedManyWithoutAdded_by_userInput
+  class_guests_created_by?: Prisma.class_guestsCreateNestedManyWithoutCreated_by_userInput
 }
 
 export type usersUncheckedCreateWithoutSessionsInput = {
@@ -2614,6 +2658,7 @@ export type usersUncheckedCreateWithoutSessionsInput = {
   class_series_default_teacher?: Prisma.class_seriesUncheckedCreateNestedManyWithoutDefault_teacherInput
   class_series_students_added_by?: Prisma.class_series_studentsUncheckedCreateNestedManyWithoutAdded_by_userInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsUncheckedCreateNestedManyWithoutAdded_by_userInput
+  class_guests_created_by?: Prisma.class_guestsUncheckedCreateNestedManyWithoutCreated_by_userInput
 }
 
 export type usersCreateOrConnectWithoutSessionsInput = {
@@ -2683,6 +2728,7 @@ export type usersUpdateWithoutSessionsInput = {
   class_series_default_teacher?: Prisma.class_seriesUpdateManyWithoutDefault_teacherNestedInput
   class_series_students_added_by?: Prisma.class_series_studentsUpdateManyWithoutAdded_by_userNestedInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsUpdateManyWithoutAdded_by_userNestedInput
+  class_guests_created_by?: Prisma.class_guestsUpdateManyWithoutCreated_by_userNestedInput
 }
 
 export type usersUncheckedUpdateWithoutSessionsInput = {
@@ -2736,6 +2782,7 @@ export type usersUncheckedUpdateWithoutSessionsInput = {
   class_series_default_teacher?: Prisma.class_seriesUncheckedUpdateManyWithoutDefault_teacherNestedInput
   class_series_students_added_by?: Prisma.class_series_studentsUncheckedUpdateManyWithoutAdded_by_userNestedInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsUncheckedUpdateManyWithoutAdded_by_userNestedInput
+  class_guests_created_by?: Prisma.class_guestsUncheckedUpdateManyWithoutCreated_by_userNestedInput
 }
 
 export type usersCreateWithoutWebauthn_challengesInput = {
@@ -2789,6 +2836,7 @@ export type usersCreateWithoutWebauthn_challengesInput = {
   class_series_default_teacher?: Prisma.class_seriesCreateNestedManyWithoutDefault_teacherInput
   class_series_students_added_by?: Prisma.class_series_studentsCreateNestedManyWithoutAdded_by_userInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsCreateNestedManyWithoutAdded_by_userInput
+  class_guests_created_by?: Prisma.class_guestsCreateNestedManyWithoutCreated_by_userInput
 }
 
 export type usersUncheckedCreateWithoutWebauthn_challengesInput = {
@@ -2842,6 +2890,7 @@ export type usersUncheckedCreateWithoutWebauthn_challengesInput = {
   class_series_default_teacher?: Prisma.class_seriesUncheckedCreateNestedManyWithoutDefault_teacherInput
   class_series_students_added_by?: Prisma.class_series_studentsUncheckedCreateNestedManyWithoutAdded_by_userInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsUncheckedCreateNestedManyWithoutAdded_by_userInput
+  class_guests_created_by?: Prisma.class_guestsUncheckedCreateNestedManyWithoutCreated_by_userInput
 }
 
 export type usersCreateOrConnectWithoutWebauthn_challengesInput = {
@@ -2911,6 +2960,7 @@ export type usersUpdateWithoutWebauthn_challengesInput = {
   class_series_default_teacher?: Prisma.class_seriesUpdateManyWithoutDefault_teacherNestedInput
   class_series_students_added_by?: Prisma.class_series_studentsUpdateManyWithoutAdded_by_userNestedInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsUpdateManyWithoutAdded_by_userNestedInput
+  class_guests_created_by?: Prisma.class_guestsUpdateManyWithoutCreated_by_userNestedInput
 }
 
 export type usersUncheckedUpdateWithoutWebauthn_challengesInput = {
@@ -2964,6 +3014,7 @@ export type usersUncheckedUpdateWithoutWebauthn_challengesInput = {
   class_series_default_teacher?: Prisma.class_seriesUncheckedUpdateManyWithoutDefault_teacherNestedInput
   class_series_students_added_by?: Prisma.class_series_studentsUncheckedUpdateManyWithoutAdded_by_userNestedInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsUncheckedUpdateManyWithoutAdded_by_userNestedInput
+  class_guests_created_by?: Prisma.class_guestsUncheckedUpdateManyWithoutCreated_by_userNestedInput
 }
 
 export type usersCreateWithoutWebauthn_credentialsInput = {
@@ -3017,6 +3068,7 @@ export type usersCreateWithoutWebauthn_credentialsInput = {
   class_series_default_teacher?: Prisma.class_seriesCreateNestedManyWithoutDefault_teacherInput
   class_series_students_added_by?: Prisma.class_series_studentsCreateNestedManyWithoutAdded_by_userInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsCreateNestedManyWithoutAdded_by_userInput
+  class_guests_created_by?: Prisma.class_guestsCreateNestedManyWithoutCreated_by_userInput
 }
 
 export type usersUncheckedCreateWithoutWebauthn_credentialsInput = {
@@ -3070,6 +3122,7 @@ export type usersUncheckedCreateWithoutWebauthn_credentialsInput = {
   class_series_default_teacher?: Prisma.class_seriesUncheckedCreateNestedManyWithoutDefault_teacherInput
   class_series_students_added_by?: Prisma.class_series_studentsUncheckedCreateNestedManyWithoutAdded_by_userInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsUncheckedCreateNestedManyWithoutAdded_by_userInput
+  class_guests_created_by?: Prisma.class_guestsUncheckedCreateNestedManyWithoutCreated_by_userInput
 }
 
 export type usersCreateOrConnectWithoutWebauthn_credentialsInput = {
@@ -3139,6 +3192,7 @@ export type usersUpdateWithoutWebauthn_credentialsInput = {
   class_series_default_teacher?: Prisma.class_seriesUpdateManyWithoutDefault_teacherNestedInput
   class_series_students_added_by?: Prisma.class_series_studentsUpdateManyWithoutAdded_by_userNestedInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsUpdateManyWithoutAdded_by_userNestedInput
+  class_guests_created_by?: Prisma.class_guestsUpdateManyWithoutCreated_by_userNestedInput
 }
 
 export type usersUncheckedUpdateWithoutWebauthn_credentialsInput = {
@@ -3192,6 +3246,7 @@ export type usersUncheckedUpdateWithoutWebauthn_credentialsInput = {
   class_series_default_teacher?: Prisma.class_seriesUncheckedUpdateManyWithoutDefault_teacherNestedInput
   class_series_students_added_by?: Prisma.class_series_studentsUncheckedUpdateManyWithoutAdded_by_userNestedInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsUncheckedUpdateManyWithoutAdded_by_userNestedInput
+  class_guests_created_by?: Prisma.class_guestsUncheckedUpdateManyWithoutCreated_by_userNestedInput
 }
 
 export type usersCreateWithoutUser_roles_user_roles_assigned_byTousersInput = {
@@ -3245,6 +3300,7 @@ export type usersCreateWithoutUser_roles_user_roles_assigned_byTousersInput = {
   class_series_default_teacher?: Prisma.class_seriesCreateNestedManyWithoutDefault_teacherInput
   class_series_students_added_by?: Prisma.class_series_studentsCreateNestedManyWithoutAdded_by_userInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsCreateNestedManyWithoutAdded_by_userInput
+  class_guests_created_by?: Prisma.class_guestsCreateNestedManyWithoutCreated_by_userInput
 }
 
 export type usersUncheckedCreateWithoutUser_roles_user_roles_assigned_byTousersInput = {
@@ -3298,6 +3354,7 @@ export type usersUncheckedCreateWithoutUser_roles_user_roles_assigned_byTousersI
   class_series_default_teacher?: Prisma.class_seriesUncheckedCreateNestedManyWithoutDefault_teacherInput
   class_series_students_added_by?: Prisma.class_series_studentsUncheckedCreateNestedManyWithoutAdded_by_userInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsUncheckedCreateNestedManyWithoutAdded_by_userInput
+  class_guests_created_by?: Prisma.class_guestsUncheckedCreateNestedManyWithoutCreated_by_userInput
 }
 
 export type usersCreateOrConnectWithoutUser_roles_user_roles_assigned_byTousersInput = {
@@ -3356,6 +3413,7 @@ export type usersCreateWithoutUser_roles_user_roles_revoked_byTousersInput = {
   class_series_default_teacher?: Prisma.class_seriesCreateNestedManyWithoutDefault_teacherInput
   class_series_students_added_by?: Prisma.class_series_studentsCreateNestedManyWithoutAdded_by_userInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsCreateNestedManyWithoutAdded_by_userInput
+  class_guests_created_by?: Prisma.class_guestsCreateNestedManyWithoutCreated_by_userInput
 }
 
 export type usersUncheckedCreateWithoutUser_roles_user_roles_revoked_byTousersInput = {
@@ -3409,6 +3467,7 @@ export type usersUncheckedCreateWithoutUser_roles_user_roles_revoked_byTousersIn
   class_series_default_teacher?: Prisma.class_seriesUncheckedCreateNestedManyWithoutDefault_teacherInput
   class_series_students_added_by?: Prisma.class_series_studentsUncheckedCreateNestedManyWithoutAdded_by_userInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsUncheckedCreateNestedManyWithoutAdded_by_userInput
+  class_guests_created_by?: Prisma.class_guestsUncheckedCreateNestedManyWithoutCreated_by_userInput
 }
 
 export type usersCreateOrConnectWithoutUser_roles_user_roles_revoked_byTousersInput = {
@@ -3467,6 +3526,7 @@ export type usersCreateWithoutUser_roles_user_roles_user_idTousersInput = {
   class_series_default_teacher?: Prisma.class_seriesCreateNestedManyWithoutDefault_teacherInput
   class_series_students_added_by?: Prisma.class_series_studentsCreateNestedManyWithoutAdded_by_userInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsCreateNestedManyWithoutAdded_by_userInput
+  class_guests_created_by?: Prisma.class_guestsCreateNestedManyWithoutCreated_by_userInput
 }
 
 export type usersUncheckedCreateWithoutUser_roles_user_roles_user_idTousersInput = {
@@ -3520,6 +3580,7 @@ export type usersUncheckedCreateWithoutUser_roles_user_roles_user_idTousersInput
   class_series_default_teacher?: Prisma.class_seriesUncheckedCreateNestedManyWithoutDefault_teacherInput
   class_series_students_added_by?: Prisma.class_series_studentsUncheckedCreateNestedManyWithoutAdded_by_userInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsUncheckedCreateNestedManyWithoutAdded_by_userInput
+  class_guests_created_by?: Prisma.class_guestsUncheckedCreateNestedManyWithoutCreated_by_userInput
 }
 
 export type usersCreateOrConnectWithoutUser_roles_user_roles_user_idTousersInput = {
@@ -3589,6 +3650,7 @@ export type usersUpdateWithoutUser_roles_user_roles_assigned_byTousersInput = {
   class_series_default_teacher?: Prisma.class_seriesUpdateManyWithoutDefault_teacherNestedInput
   class_series_students_added_by?: Prisma.class_series_studentsUpdateManyWithoutAdded_by_userNestedInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsUpdateManyWithoutAdded_by_userNestedInput
+  class_guests_created_by?: Prisma.class_guestsUpdateManyWithoutCreated_by_userNestedInput
 }
 
 export type usersUncheckedUpdateWithoutUser_roles_user_roles_assigned_byTousersInput = {
@@ -3642,6 +3704,7 @@ export type usersUncheckedUpdateWithoutUser_roles_user_roles_assigned_byTousersI
   class_series_default_teacher?: Prisma.class_seriesUncheckedUpdateManyWithoutDefault_teacherNestedInput
   class_series_students_added_by?: Prisma.class_series_studentsUncheckedUpdateManyWithoutAdded_by_userNestedInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsUncheckedUpdateManyWithoutAdded_by_userNestedInput
+  class_guests_created_by?: Prisma.class_guestsUncheckedUpdateManyWithoutCreated_by_userNestedInput
 }
 
 export type usersUpsertWithoutUser_roles_user_roles_revoked_byTousersInput = {
@@ -3706,6 +3769,7 @@ export type usersUpdateWithoutUser_roles_user_roles_revoked_byTousersInput = {
   class_series_default_teacher?: Prisma.class_seriesUpdateManyWithoutDefault_teacherNestedInput
   class_series_students_added_by?: Prisma.class_series_studentsUpdateManyWithoutAdded_by_userNestedInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsUpdateManyWithoutAdded_by_userNestedInput
+  class_guests_created_by?: Prisma.class_guestsUpdateManyWithoutCreated_by_userNestedInput
 }
 
 export type usersUncheckedUpdateWithoutUser_roles_user_roles_revoked_byTousersInput = {
@@ -3759,6 +3823,7 @@ export type usersUncheckedUpdateWithoutUser_roles_user_roles_revoked_byTousersIn
   class_series_default_teacher?: Prisma.class_seriesUncheckedUpdateManyWithoutDefault_teacherNestedInput
   class_series_students_added_by?: Prisma.class_series_studentsUncheckedUpdateManyWithoutAdded_by_userNestedInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsUncheckedUpdateManyWithoutAdded_by_userNestedInput
+  class_guests_created_by?: Prisma.class_guestsUncheckedUpdateManyWithoutCreated_by_userNestedInput
 }
 
 export type usersUpsertWithoutUser_roles_user_roles_user_idTousersInput = {
@@ -3823,6 +3888,7 @@ export type usersUpdateWithoutUser_roles_user_roles_user_idTousersInput = {
   class_series_default_teacher?: Prisma.class_seriesUpdateManyWithoutDefault_teacherNestedInput
   class_series_students_added_by?: Prisma.class_series_studentsUpdateManyWithoutAdded_by_userNestedInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsUpdateManyWithoutAdded_by_userNestedInput
+  class_guests_created_by?: Prisma.class_guestsUpdateManyWithoutCreated_by_userNestedInput
 }
 
 export type usersUncheckedUpdateWithoutUser_roles_user_roles_user_idTousersInput = {
@@ -3876,6 +3942,7 @@ export type usersUncheckedUpdateWithoutUser_roles_user_roles_user_idTousersInput
   class_series_default_teacher?: Prisma.class_seriesUncheckedUpdateManyWithoutDefault_teacherNestedInput
   class_series_students_added_by?: Prisma.class_series_studentsUncheckedUpdateManyWithoutAdded_by_userNestedInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsUncheckedUpdateManyWithoutAdded_by_userNestedInput
+  class_guests_created_by?: Prisma.class_guestsUncheckedUpdateManyWithoutCreated_by_userNestedInput
 }
 
 export type usersCreateWithoutUser_profilesInput = {
@@ -3929,6 +3996,7 @@ export type usersCreateWithoutUser_profilesInput = {
   class_series_default_teacher?: Prisma.class_seriesCreateNestedManyWithoutDefault_teacherInput
   class_series_students_added_by?: Prisma.class_series_studentsCreateNestedManyWithoutAdded_by_userInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsCreateNestedManyWithoutAdded_by_userInput
+  class_guests_created_by?: Prisma.class_guestsCreateNestedManyWithoutCreated_by_userInput
 }
 
 export type usersUncheckedCreateWithoutUser_profilesInput = {
@@ -3982,6 +4050,7 @@ export type usersUncheckedCreateWithoutUser_profilesInput = {
   class_series_default_teacher?: Prisma.class_seriesUncheckedCreateNestedManyWithoutDefault_teacherInput
   class_series_students_added_by?: Prisma.class_series_studentsUncheckedCreateNestedManyWithoutAdded_by_userInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsUncheckedCreateNestedManyWithoutAdded_by_userInput
+  class_guests_created_by?: Prisma.class_guestsUncheckedCreateNestedManyWithoutCreated_by_userInput
 }
 
 export type usersCreateOrConnectWithoutUser_profilesInput = {
@@ -4051,6 +4120,7 @@ export type usersUpdateWithoutUser_profilesInput = {
   class_series_default_teacher?: Prisma.class_seriesUpdateManyWithoutDefault_teacherNestedInput
   class_series_students_added_by?: Prisma.class_series_studentsUpdateManyWithoutAdded_by_userNestedInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsUpdateManyWithoutAdded_by_userNestedInput
+  class_guests_created_by?: Prisma.class_guestsUpdateManyWithoutCreated_by_userNestedInput
 }
 
 export type usersUncheckedUpdateWithoutUser_profilesInput = {
@@ -4104,6 +4174,7 @@ export type usersUncheckedUpdateWithoutUser_profilesInput = {
   class_series_default_teacher?: Prisma.class_seriesUncheckedUpdateManyWithoutDefault_teacherNestedInput
   class_series_students_added_by?: Prisma.class_series_studentsUncheckedUpdateManyWithoutAdded_by_userNestedInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsUncheckedUpdateManyWithoutAdded_by_userNestedInput
+  class_guests_created_by?: Prisma.class_guestsUncheckedUpdateManyWithoutCreated_by_userNestedInput
 }
 
 export type usersCreateWithoutStudent_profileInput = {
@@ -4157,6 +4228,7 @@ export type usersCreateWithoutStudent_profileInput = {
   class_series_default_teacher?: Prisma.class_seriesCreateNestedManyWithoutDefault_teacherInput
   class_series_students_added_by?: Prisma.class_series_studentsCreateNestedManyWithoutAdded_by_userInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsCreateNestedManyWithoutAdded_by_userInput
+  class_guests_created_by?: Prisma.class_guestsCreateNestedManyWithoutCreated_by_userInput
 }
 
 export type usersUncheckedCreateWithoutStudent_profileInput = {
@@ -4210,6 +4282,7 @@ export type usersUncheckedCreateWithoutStudent_profileInput = {
   class_series_default_teacher?: Prisma.class_seriesUncheckedCreateNestedManyWithoutDefault_teacherInput
   class_series_students_added_by?: Prisma.class_series_studentsUncheckedCreateNestedManyWithoutAdded_by_userInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsUncheckedCreateNestedManyWithoutAdded_by_userInput
+  class_guests_created_by?: Prisma.class_guestsUncheckedCreateNestedManyWithoutCreated_by_userInput
 }
 
 export type usersCreateOrConnectWithoutStudent_profileInput = {
@@ -4279,6 +4352,7 @@ export type usersUpdateWithoutStudent_profileInput = {
   class_series_default_teacher?: Prisma.class_seriesUpdateManyWithoutDefault_teacherNestedInput
   class_series_students_added_by?: Prisma.class_series_studentsUpdateManyWithoutAdded_by_userNestedInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsUpdateManyWithoutAdded_by_userNestedInput
+  class_guests_created_by?: Prisma.class_guestsUpdateManyWithoutCreated_by_userNestedInput
 }
 
 export type usersUncheckedUpdateWithoutStudent_profileInput = {
@@ -4332,6 +4406,7 @@ export type usersUncheckedUpdateWithoutStudent_profileInput = {
   class_series_default_teacher?: Prisma.class_seriesUncheckedUpdateManyWithoutDefault_teacherNestedInput
   class_series_students_added_by?: Prisma.class_series_studentsUncheckedUpdateManyWithoutAdded_by_userNestedInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsUncheckedUpdateManyWithoutAdded_by_userNestedInput
+  class_guests_created_by?: Prisma.class_guestsUncheckedUpdateManyWithoutCreated_by_userNestedInput
 }
 
 export type usersCreateWithoutClass_series_default_teacherInput = {
@@ -4385,6 +4460,7 @@ export type usersCreateWithoutClass_series_default_teacherInput = {
   student_profile?: Prisma.studentsCreateNestedOneWithoutAuth_userInput
   class_series_students_added_by?: Prisma.class_series_studentsCreateNestedManyWithoutAdded_by_userInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsCreateNestedManyWithoutAdded_by_userInput
+  class_guests_created_by?: Prisma.class_guestsCreateNestedManyWithoutCreated_by_userInput
 }
 
 export type usersUncheckedCreateWithoutClass_series_default_teacherInput = {
@@ -4438,6 +4514,7 @@ export type usersUncheckedCreateWithoutClass_series_default_teacherInput = {
   student_profile?: Prisma.studentsUncheckedCreateNestedOneWithoutAuth_userInput
   class_series_students_added_by?: Prisma.class_series_studentsUncheckedCreateNestedManyWithoutAdded_by_userInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsUncheckedCreateNestedManyWithoutAdded_by_userInput
+  class_guests_created_by?: Prisma.class_guestsUncheckedCreateNestedManyWithoutCreated_by_userInput
 }
 
 export type usersCreateOrConnectWithoutClass_series_default_teacherInput = {
@@ -4507,6 +4584,7 @@ export type usersUpdateWithoutClass_series_default_teacherInput = {
   student_profile?: Prisma.studentsUpdateOneWithoutAuth_userNestedInput
   class_series_students_added_by?: Prisma.class_series_studentsUpdateManyWithoutAdded_by_userNestedInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsUpdateManyWithoutAdded_by_userNestedInput
+  class_guests_created_by?: Prisma.class_guestsUpdateManyWithoutCreated_by_userNestedInput
 }
 
 export type usersUncheckedUpdateWithoutClass_series_default_teacherInput = {
@@ -4560,6 +4638,7 @@ export type usersUncheckedUpdateWithoutClass_series_default_teacherInput = {
   student_profile?: Prisma.studentsUncheckedUpdateOneWithoutAuth_userNestedInput
   class_series_students_added_by?: Prisma.class_series_studentsUncheckedUpdateManyWithoutAdded_by_userNestedInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsUncheckedUpdateManyWithoutAdded_by_userNestedInput
+  class_guests_created_by?: Prisma.class_guestsUncheckedUpdateManyWithoutCreated_by_userNestedInput
 }
 
 export type usersCreateWithoutClass_series_students_added_byInput = {
@@ -4613,6 +4692,7 @@ export type usersCreateWithoutClass_series_students_added_byInput = {
   student_profile?: Prisma.studentsCreateNestedOneWithoutAuth_userInput
   class_series_default_teacher?: Prisma.class_seriesCreateNestedManyWithoutDefault_teacherInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsCreateNestedManyWithoutAdded_by_userInput
+  class_guests_created_by?: Prisma.class_guestsCreateNestedManyWithoutCreated_by_userInput
 }
 
 export type usersUncheckedCreateWithoutClass_series_students_added_byInput = {
@@ -4666,6 +4746,7 @@ export type usersUncheckedCreateWithoutClass_series_students_added_byInput = {
   student_profile?: Prisma.studentsUncheckedCreateNestedOneWithoutAuth_userInput
   class_series_default_teacher?: Prisma.class_seriesUncheckedCreateNestedManyWithoutDefault_teacherInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsUncheckedCreateNestedManyWithoutAdded_by_userInput
+  class_guests_created_by?: Prisma.class_guestsUncheckedCreateNestedManyWithoutCreated_by_userInput
 }
 
 export type usersCreateOrConnectWithoutClass_series_students_added_byInput = {
@@ -4735,6 +4816,7 @@ export type usersUpdateWithoutClass_series_students_added_byInput = {
   student_profile?: Prisma.studentsUpdateOneWithoutAuth_userNestedInput
   class_series_default_teacher?: Prisma.class_seriesUpdateManyWithoutDefault_teacherNestedInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsUpdateManyWithoutAdded_by_userNestedInput
+  class_guests_created_by?: Prisma.class_guestsUpdateManyWithoutCreated_by_userNestedInput
 }
 
 export type usersUncheckedUpdateWithoutClass_series_students_added_byInput = {
@@ -4788,6 +4870,7 @@ export type usersUncheckedUpdateWithoutClass_series_students_added_byInput = {
   student_profile?: Prisma.studentsUncheckedUpdateOneWithoutAuth_userNestedInput
   class_series_default_teacher?: Prisma.class_seriesUncheckedUpdateManyWithoutDefault_teacherNestedInput
   one_time_class_students_added_by?: Prisma.one_time_class_studentsUncheckedUpdateManyWithoutAdded_by_userNestedInput
+  class_guests_created_by?: Prisma.class_guestsUncheckedUpdateManyWithoutCreated_by_userNestedInput
 }
 
 export type usersCreateWithoutOne_time_class_students_added_byInput = {
@@ -4841,6 +4924,7 @@ export type usersCreateWithoutOne_time_class_students_added_byInput = {
   student_profile?: Prisma.studentsCreateNestedOneWithoutAuth_userInput
   class_series_default_teacher?: Prisma.class_seriesCreateNestedManyWithoutDefault_teacherInput
   class_series_students_added_by?: Prisma.class_series_studentsCreateNestedManyWithoutAdded_by_userInput
+  class_guests_created_by?: Prisma.class_guestsCreateNestedManyWithoutCreated_by_userInput
 }
 
 export type usersUncheckedCreateWithoutOne_time_class_students_added_byInput = {
@@ -4894,6 +4978,7 @@ export type usersUncheckedCreateWithoutOne_time_class_students_added_byInput = {
   student_profile?: Prisma.studentsUncheckedCreateNestedOneWithoutAuth_userInput
   class_series_default_teacher?: Prisma.class_seriesUncheckedCreateNestedManyWithoutDefault_teacherInput
   class_series_students_added_by?: Prisma.class_series_studentsUncheckedCreateNestedManyWithoutAdded_by_userInput
+  class_guests_created_by?: Prisma.class_guestsUncheckedCreateNestedManyWithoutCreated_by_userInput
 }
 
 export type usersCreateOrConnectWithoutOne_time_class_students_added_byInput = {
@@ -4963,6 +5048,7 @@ export type usersUpdateWithoutOne_time_class_students_added_byInput = {
   student_profile?: Prisma.studentsUpdateOneWithoutAuth_userNestedInput
   class_series_default_teacher?: Prisma.class_seriesUpdateManyWithoutDefault_teacherNestedInput
   class_series_students_added_by?: Prisma.class_series_studentsUpdateManyWithoutAdded_by_userNestedInput
+  class_guests_created_by?: Prisma.class_guestsUpdateManyWithoutCreated_by_userNestedInput
 }
 
 export type usersUncheckedUpdateWithoutOne_time_class_students_added_byInput = {
@@ -5016,6 +5102,239 @@ export type usersUncheckedUpdateWithoutOne_time_class_students_added_byInput = {
   student_profile?: Prisma.studentsUncheckedUpdateOneWithoutAuth_userNestedInput
   class_series_default_teacher?: Prisma.class_seriesUncheckedUpdateManyWithoutDefault_teacherNestedInput
   class_series_students_added_by?: Prisma.class_series_studentsUncheckedUpdateManyWithoutAdded_by_userNestedInput
+  class_guests_created_by?: Prisma.class_guestsUncheckedUpdateManyWithoutCreated_by_userNestedInput
+}
+
+export type usersCreateWithoutClass_guests_created_byInput = {
+  instance_id?: string | null
+  id: string
+  aud?: string | null
+  role?: string | null
+  email?: string | null
+  encrypted_password?: string | null
+  email_confirmed_at?: Date | string | null
+  invited_at?: Date | string | null
+  confirmation_token?: string | null
+  confirmation_sent_at?: Date | string | null
+  recovery_token?: string | null
+  recovery_sent_at?: Date | string | null
+  email_change_token_new?: string | null
+  email_change?: string | null
+  email_change_sent_at?: Date | string | null
+  last_sign_in_at?: Date | string | null
+  raw_app_meta_data?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  raw_user_meta_data?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  is_super_admin?: boolean | null
+  created_at?: Date | string | null
+  updated_at?: Date | string | null
+  phone?: string | null
+  phone_confirmed_at?: Date | string | null
+  phone_change?: string | null
+  phone_change_token?: string | null
+  phone_change_sent_at?: Date | string | null
+  confirmed_at?: Date | string | null
+  email_change_token_current?: string | null
+  email_change_confirm_status?: number | null
+  banned_until?: Date | string | null
+  reauthentication_token?: string | null
+  reauthentication_sent_at?: Date | string | null
+  is_sso_user?: boolean
+  deleted_at?: Date | string | null
+  is_anonymous?: boolean
+  identities?: Prisma.identitiesCreateNestedManyWithoutUsersInput
+  mfa_factors?: Prisma.mfa_factorsCreateNestedManyWithoutUsersInput
+  oauth_authorizations?: Prisma.oauth_authorizationsCreateNestedManyWithoutUsersInput
+  oauth_consents?: Prisma.oauth_consentsCreateNestedManyWithoutUsersInput
+  one_time_tokens?: Prisma.one_time_tokensCreateNestedManyWithoutUsersInput
+  sessions?: Prisma.sessionsCreateNestedManyWithoutUsersInput
+  webauthn_challenges?: Prisma.webauthn_challengesCreateNestedManyWithoutUsersInput
+  webauthn_credentials?: Prisma.webauthn_credentialsCreateNestedManyWithoutUsersInput
+  user_roles_user_roles_assigned_byTousers?: Prisma.user_rolesCreateNestedManyWithoutUsers_user_roles_assigned_byTousersInput
+  user_roles_user_roles_revoked_byTousers?: Prisma.user_rolesCreateNestedManyWithoutUsers_user_roles_revoked_byTousersInput
+  user_roles_user_roles_user_idTousers?: Prisma.user_rolesCreateNestedManyWithoutUsers_user_roles_user_idTousersInput
+  user_profiles?: Prisma.user_profilesCreateNestedOneWithoutUsersInput
+  student_profile?: Prisma.studentsCreateNestedOneWithoutAuth_userInput
+  class_series_default_teacher?: Prisma.class_seriesCreateNestedManyWithoutDefault_teacherInput
+  class_series_students_added_by?: Prisma.class_series_studentsCreateNestedManyWithoutAdded_by_userInput
+  one_time_class_students_added_by?: Prisma.one_time_class_studentsCreateNestedManyWithoutAdded_by_userInput
+}
+
+export type usersUncheckedCreateWithoutClass_guests_created_byInput = {
+  instance_id?: string | null
+  id: string
+  aud?: string | null
+  role?: string | null
+  email?: string | null
+  encrypted_password?: string | null
+  email_confirmed_at?: Date | string | null
+  invited_at?: Date | string | null
+  confirmation_token?: string | null
+  confirmation_sent_at?: Date | string | null
+  recovery_token?: string | null
+  recovery_sent_at?: Date | string | null
+  email_change_token_new?: string | null
+  email_change?: string | null
+  email_change_sent_at?: Date | string | null
+  last_sign_in_at?: Date | string | null
+  raw_app_meta_data?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  raw_user_meta_data?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  is_super_admin?: boolean | null
+  created_at?: Date | string | null
+  updated_at?: Date | string | null
+  phone?: string | null
+  phone_confirmed_at?: Date | string | null
+  phone_change?: string | null
+  phone_change_token?: string | null
+  phone_change_sent_at?: Date | string | null
+  confirmed_at?: Date | string | null
+  email_change_token_current?: string | null
+  email_change_confirm_status?: number | null
+  banned_until?: Date | string | null
+  reauthentication_token?: string | null
+  reauthentication_sent_at?: Date | string | null
+  is_sso_user?: boolean
+  deleted_at?: Date | string | null
+  is_anonymous?: boolean
+  identities?: Prisma.identitiesUncheckedCreateNestedManyWithoutUsersInput
+  mfa_factors?: Prisma.mfa_factorsUncheckedCreateNestedManyWithoutUsersInput
+  oauth_authorizations?: Prisma.oauth_authorizationsUncheckedCreateNestedManyWithoutUsersInput
+  oauth_consents?: Prisma.oauth_consentsUncheckedCreateNestedManyWithoutUsersInput
+  one_time_tokens?: Prisma.one_time_tokensUncheckedCreateNestedManyWithoutUsersInput
+  sessions?: Prisma.sessionsUncheckedCreateNestedManyWithoutUsersInput
+  webauthn_challenges?: Prisma.webauthn_challengesUncheckedCreateNestedManyWithoutUsersInput
+  webauthn_credentials?: Prisma.webauthn_credentialsUncheckedCreateNestedManyWithoutUsersInput
+  user_roles_user_roles_assigned_byTousers?: Prisma.user_rolesUncheckedCreateNestedManyWithoutUsers_user_roles_assigned_byTousersInput
+  user_roles_user_roles_revoked_byTousers?: Prisma.user_rolesUncheckedCreateNestedManyWithoutUsers_user_roles_revoked_byTousersInput
+  user_roles_user_roles_user_idTousers?: Prisma.user_rolesUncheckedCreateNestedManyWithoutUsers_user_roles_user_idTousersInput
+  user_profiles?: Prisma.user_profilesUncheckedCreateNestedOneWithoutUsersInput
+  student_profile?: Prisma.studentsUncheckedCreateNestedOneWithoutAuth_userInput
+  class_series_default_teacher?: Prisma.class_seriesUncheckedCreateNestedManyWithoutDefault_teacherInput
+  class_series_students_added_by?: Prisma.class_series_studentsUncheckedCreateNestedManyWithoutAdded_by_userInput
+  one_time_class_students_added_by?: Prisma.one_time_class_studentsUncheckedCreateNestedManyWithoutAdded_by_userInput
+}
+
+export type usersCreateOrConnectWithoutClass_guests_created_byInput = {
+  where: Prisma.usersWhereUniqueInput
+  create: Prisma.XOR<Prisma.usersCreateWithoutClass_guests_created_byInput, Prisma.usersUncheckedCreateWithoutClass_guests_created_byInput>
+}
+
+export type usersUpsertWithoutClass_guests_created_byInput = {
+  update: Prisma.XOR<Prisma.usersUpdateWithoutClass_guests_created_byInput, Prisma.usersUncheckedUpdateWithoutClass_guests_created_byInput>
+  create: Prisma.XOR<Prisma.usersCreateWithoutClass_guests_created_byInput, Prisma.usersUncheckedCreateWithoutClass_guests_created_byInput>
+  where?: Prisma.usersWhereInput
+}
+
+export type usersUpdateToOneWithWhereWithoutClass_guests_created_byInput = {
+  where?: Prisma.usersWhereInput
+  data: Prisma.XOR<Prisma.usersUpdateWithoutClass_guests_created_byInput, Prisma.usersUncheckedUpdateWithoutClass_guests_created_byInput>
+}
+
+export type usersUpdateWithoutClass_guests_created_byInput = {
+  instance_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  aud?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  encrypted_password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email_confirmed_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  invited_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  confirmation_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  confirmation_sent_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  recovery_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recovery_sent_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  email_change_token_new?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email_change?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email_change_sent_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  last_sign_in_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  raw_app_meta_data?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  raw_user_meta_data?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  is_super_admin?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone_confirmed_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  phone_change?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone_change_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone_change_sent_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  confirmed_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  email_change_token_current?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email_change_confirm_status?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  banned_until?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  reauthentication_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reauthentication_sent_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  is_sso_user?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  deleted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  is_anonymous?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  identities?: Prisma.identitiesUpdateManyWithoutUsersNestedInput
+  mfa_factors?: Prisma.mfa_factorsUpdateManyWithoutUsersNestedInput
+  oauth_authorizations?: Prisma.oauth_authorizationsUpdateManyWithoutUsersNestedInput
+  oauth_consents?: Prisma.oauth_consentsUpdateManyWithoutUsersNestedInput
+  one_time_tokens?: Prisma.one_time_tokensUpdateManyWithoutUsersNestedInput
+  sessions?: Prisma.sessionsUpdateManyWithoutUsersNestedInput
+  webauthn_challenges?: Prisma.webauthn_challengesUpdateManyWithoutUsersNestedInput
+  webauthn_credentials?: Prisma.webauthn_credentialsUpdateManyWithoutUsersNestedInput
+  user_roles_user_roles_assigned_byTousers?: Prisma.user_rolesUpdateManyWithoutUsers_user_roles_assigned_byTousersNestedInput
+  user_roles_user_roles_revoked_byTousers?: Prisma.user_rolesUpdateManyWithoutUsers_user_roles_revoked_byTousersNestedInput
+  user_roles_user_roles_user_idTousers?: Prisma.user_rolesUpdateManyWithoutUsers_user_roles_user_idTousersNestedInput
+  user_profiles?: Prisma.user_profilesUpdateOneWithoutUsersNestedInput
+  student_profile?: Prisma.studentsUpdateOneWithoutAuth_userNestedInput
+  class_series_default_teacher?: Prisma.class_seriesUpdateManyWithoutDefault_teacherNestedInput
+  class_series_students_added_by?: Prisma.class_series_studentsUpdateManyWithoutAdded_by_userNestedInput
+  one_time_class_students_added_by?: Prisma.one_time_class_studentsUpdateManyWithoutAdded_by_userNestedInput
+}
+
+export type usersUncheckedUpdateWithoutClass_guests_created_byInput = {
+  instance_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  aud?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  encrypted_password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email_confirmed_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  invited_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  confirmation_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  confirmation_sent_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  recovery_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recovery_sent_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  email_change_token_new?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email_change?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email_change_sent_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  last_sign_in_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  raw_app_meta_data?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  raw_user_meta_data?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  is_super_admin?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone_confirmed_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  phone_change?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone_change_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone_change_sent_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  confirmed_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  email_change_token_current?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email_change_confirm_status?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  banned_until?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  reauthentication_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reauthentication_sent_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  is_sso_user?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  deleted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  is_anonymous?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  identities?: Prisma.identitiesUncheckedUpdateManyWithoutUsersNestedInput
+  mfa_factors?: Prisma.mfa_factorsUncheckedUpdateManyWithoutUsersNestedInput
+  oauth_authorizations?: Prisma.oauth_authorizationsUncheckedUpdateManyWithoutUsersNestedInput
+  oauth_consents?: Prisma.oauth_consentsUncheckedUpdateManyWithoutUsersNestedInput
+  one_time_tokens?: Prisma.one_time_tokensUncheckedUpdateManyWithoutUsersNestedInput
+  sessions?: Prisma.sessionsUncheckedUpdateManyWithoutUsersNestedInput
+  webauthn_challenges?: Prisma.webauthn_challengesUncheckedUpdateManyWithoutUsersNestedInput
+  webauthn_credentials?: Prisma.webauthn_credentialsUncheckedUpdateManyWithoutUsersNestedInput
+  user_roles_user_roles_assigned_byTousers?: Prisma.user_rolesUncheckedUpdateManyWithoutUsers_user_roles_assigned_byTousersNestedInput
+  user_roles_user_roles_revoked_byTousers?: Prisma.user_rolesUncheckedUpdateManyWithoutUsers_user_roles_revoked_byTousersNestedInput
+  user_roles_user_roles_user_idTousers?: Prisma.user_rolesUncheckedUpdateManyWithoutUsers_user_roles_user_idTousersNestedInput
+  user_profiles?: Prisma.user_profilesUncheckedUpdateOneWithoutUsersNestedInput
+  student_profile?: Prisma.studentsUncheckedUpdateOneWithoutAuth_userNestedInput
+  class_series_default_teacher?: Prisma.class_seriesUncheckedUpdateManyWithoutDefault_teacherNestedInput
+  class_series_students_added_by?: Prisma.class_series_studentsUncheckedUpdateManyWithoutAdded_by_userNestedInput
+  one_time_class_students_added_by?: Prisma.one_time_class_studentsUncheckedUpdateManyWithoutAdded_by_userNestedInput
 }
 
 
@@ -5038,6 +5357,7 @@ export type UsersCountOutputType = {
   class_series_default_teacher: number
   class_series_students_added_by: number
   one_time_class_students_added_by: number
+  class_guests_created_by: number
 }
 
 export type UsersCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -5055,6 +5375,7 @@ export type UsersCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.
   class_series_default_teacher?: boolean | UsersCountOutputTypeCountClass_series_default_teacherArgs
   class_series_students_added_by?: boolean | UsersCountOutputTypeCountClass_series_students_added_byArgs
   one_time_class_students_added_by?: boolean | UsersCountOutputTypeCountOne_time_class_students_added_byArgs
+  class_guests_created_by?: boolean | UsersCountOutputTypeCountClass_guests_created_byArgs
 }
 
 /**
@@ -5165,6 +5486,13 @@ export type UsersCountOutputTypeCountOne_time_class_students_added_byArgs<ExtArg
   where?: Prisma.one_time_class_studentsWhereInput
 }
 
+/**
+ * UsersCountOutputType without action
+ */
+export type UsersCountOutputTypeCountClass_guests_created_byArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.class_guestsWhereInput
+}
+
 
 export type usersSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   instance_id?: boolean
@@ -5218,6 +5546,7 @@ export type usersSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   class_series_default_teacher?: boolean | Prisma.users$class_series_default_teacherArgs<ExtArgs>
   class_series_students_added_by?: boolean | Prisma.users$class_series_students_added_byArgs<ExtArgs>
   one_time_class_students_added_by?: boolean | Prisma.users$one_time_class_students_added_byArgs<ExtArgs>
+  class_guests_created_by?: boolean | Prisma.users$class_guests_created_byArgs<ExtArgs>
   _count?: boolean | Prisma.UsersCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["users"]>
 
@@ -5353,6 +5682,7 @@ export type usersInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   class_series_default_teacher?: boolean | Prisma.users$class_series_default_teacherArgs<ExtArgs>
   class_series_students_added_by?: boolean | Prisma.users$class_series_students_added_byArgs<ExtArgs>
   one_time_class_students_added_by?: boolean | Prisma.users$one_time_class_students_added_byArgs<ExtArgs>
+  class_guests_created_by?: boolean | Prisma.users$class_guests_created_byArgs<ExtArgs>
   _count?: boolean | Prisma.UsersCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type usersIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -5377,6 +5707,7 @@ export type $usersPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     class_series_default_teacher: Prisma.$class_seriesPayload<ExtArgs>[]
     class_series_students_added_by: Prisma.$class_series_studentsPayload<ExtArgs>[]
     one_time_class_students_added_by: Prisma.$one_time_class_studentsPayload<ExtArgs>[]
+    class_guests_created_by: Prisma.$class_guestsPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     instance_id: string | null
@@ -5824,6 +6155,7 @@ export interface Prisma__usersClient<T, Null = never, ExtArgs extends runtime.Ty
   class_series_default_teacher<T extends Prisma.users$class_series_default_teacherArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.users$class_series_default_teacherArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$class_seriesPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   class_series_students_added_by<T extends Prisma.users$class_series_students_added_byArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.users$class_series_students_added_byArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$class_series_studentsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   one_time_class_students_added_by<T extends Prisma.users$one_time_class_students_added_byArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.users$one_time_class_students_added_byArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$one_time_class_studentsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  class_guests_created_by<T extends Prisma.users$class_guests_created_byArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.users$class_guests_created_byArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$class_guestsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -6652,6 +6984,30 @@ export type users$one_time_class_students_added_byArgs<ExtArgs extends runtime.T
   take?: number
   skip?: number
   distinct?: Prisma.One_time_class_studentsScalarFieldEnum | Prisma.One_time_class_studentsScalarFieldEnum[]
+}
+
+/**
+ * users.class_guests_created_by
+ */
+export type users$class_guests_created_byArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the class_guests
+   */
+  select?: Prisma.class_guestsSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the class_guests
+   */
+  omit?: Prisma.class_guestsOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.class_guestsInclude<ExtArgs> | null
+  where?: Prisma.class_guestsWhereInput
+  orderBy?: Prisma.class_guestsOrderByWithRelationInput | Prisma.class_guestsOrderByWithRelationInput[]
+  cursor?: Prisma.class_guestsWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.Class_guestsScalarFieldEnum | Prisma.Class_guestsScalarFieldEnum[]
 }
 
 /**

@@ -139,6 +139,9 @@ function makeMockTx() {
       findMany: vi.fn(),
       create: vi.fn(),
     },
+    class_guests: {
+      findMany: vi.fn().mockResolvedValue([]),
+    },
     disciplines: {
       findUnique: vi.fn(),
     },
@@ -272,7 +275,7 @@ describe("getAttendanceForSession — roster ∪ per-class ∪ history compositi
     );
 
     expect(result.success).toBe(true);
-    const rows = result.data!;
+    const rows = result.data!.students;
     expect(rows.map((r) => `${r.source}:${r.surname}`)).toEqual([
       "roster:Alvarez",
       "roster:Zapata",
@@ -335,8 +338,8 @@ describe("getAttendanceForSession — roster ∪ per-class ∪ history compositi
     );
 
     expect(result.success).toBe(true);
-    expect(result.data).toHaveLength(1);
-    expect(result.data![0]).toMatchObject({
+    expect(result.data!.students).toHaveLength(1);
+    expect(result.data!.students[0]).toMatchObject({
       student_id: S_ROSTER_1,
       source: "roster",
       attended: null,

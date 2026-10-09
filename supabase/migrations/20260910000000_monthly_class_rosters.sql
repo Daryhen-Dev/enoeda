@@ -332,4 +332,125 @@ CREATE UNIQUE INDEX class_payments_one_time_occurrence_uq
   ON public.class_payments (student_discipline_id, one_time_class_id)
   WHERE one_time_class_id IS NOT NULL;
 
+-- =============================================================================
+-- 7. class_guests: trial-class guests (T7)
+--    A guest is a NEW person (not in the system) who attends a trial class.
+--    Guests are bound to one class occurrence (scheduled_class_id XOR
+--    one_time_class_id) and can later be converted into a student
+--    (converted_student_id). No national id / email / birth date.
+-- =============================================================================
+
+CREATE TABLE public.class_guests (
+  id                   uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  branch_id            uuid NOT NULL REFERENCES public.branches(id) ON DELETE CASCADE,
+  scheduled_class_id   uuid REFERENCES public.scheduled_classes(id) ON DELETE CASCADE,
+  one_time_class_id    uuid REFERENCES public.one_time_classes(id) ON DELETE CASCADE,
+  session_date         date NOT NULL,
+  first_name           text NOT NULL CHECK (char_length(first_name) BETWEEN 1 AND 100),
+  surname              text NOT NULL CHECK (char_length(surname) BETWEEN 1 AND 100),
+  phone                text CHECK (phone IS NULL OR char_length(phone) <= 30),
+  observation          text CHECK (observation IS NULL OR char_length(observation) <= 500),
+  converted_student_id uuid REFERENCES public.students(id) ON DELETE SET NULL,
+  created_by           uuid REFERENCES auth.users(id) ON DELETE SET NULL,
+  created_at           timestamptz NOT NULL DEFAULT now(),
+  updated_at           timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT class_guests_single_class_ck CHECK (
+    (scheduled_class_id IS NOT NULL AND one_time_class_id IS NULL)
+    OR
+    (scheduled_class_id IS NULL AND one_time_class_id IS NOT NULL)
+  )
+);
+
+CREATE INDEX class_guests_scheduled_class_session_idx
+  ON public.class_guests (scheduled_class_id, session_date);
+CREATE INDEX class_guests_one_time_class_id_idx
+  ON public.class_guests (one_time_class_id);
+CREATE INDEX class_guests_branch_id_idx
+  ON public.class_guests (branch_id);
+CREATE INDEX class_guests_converted_student_id_idx
+  ON public.class_guests (converted_student_id);
+
+CREATE TRIGGER class_guests_updated_at
+  BEFORE UPDATE ON public.class_guests
+  FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+
+-- A guest must belong to the same branch as its class occurrence.
+CREATE OR REPLACE FUNCTION private.assert_class_guest_branch()
+RETURNS trigger
+LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = '' AS $$
+DECLARE v_class_branch_id uuid;
+BEGIN
+  SELECT branch_id INTO v_class_branch_id
+  FROM public.scheduled_classes WHERE id = NEW.scheduled_class_id;
+  IF v_class_branch_id IS NULL THEN
+    SELECT branch_id INTO v_class_branch_id
+    FROM public.one_time_classes WHERE id = NEW.one_time_class_id;
+  END IF;
+  IF v_class_branch_id IS NULL OR v_class_branch_id <> NEW.branch_id THEN
+    RAISE EXCEPTION 'class_guest_branch_mismatch';
+  END IF;
+  RETURN NEW;
+END;$$;
+REVOKE EXECUTE ON FUNCTION private.assert_class_guest_branch() FROM public;
+GRANT EXECUTE ON FUNCTION private.assert_class_guest_branch() TO authenticated;
+
+CREATE TRIGGER class_guests_branch_mismatch
+  BEFORE INSERT OR UPDATE ON public.class_guests
+  FOR EACH ROW EXECUTE FUNCTION private.assert_class_guest_branch();
+
+ALTER TABLE public.class_guests ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.class_guests FORCE ROW LEVEL SECURITY;
+
+CREATE POLICY "Owner full access on class_guests"
+  ON public.class_guests FOR ALL TO authenticated
+  USING (private.has_role(auth.uid(), 'owner'::public.role_enum))
+  WITH CHECK (private.has_role(auth.uid(), 'owner'::public.role_enum));
+
+CREATE POLICY "Admin branch-scoped write on class_guests"
+  ON public.class_guests FOR ALL TO authenticated
+  USING (private.has_branch_role(auth.uid(), 'admin'::public.role_enum,
+    branch_id))
+  WITH CHECK (private.has_branch_role(auth.uid(), 'admin'::public.role_enum,
+    branch_id));
+
+CREATE POLICY "Admin global read on class_guests"
+  ON public.class_guests FOR SELECT TO authenticated
+  USING (private.has_any_admin_role(auth.uid()));
+
+CREATE POLICY "Teacher branch-scoped read on class_guests"
+  ON public.class_guests FOR SELECT TO authenticated
+  USING (private.has_branch_role(auth.uid(), 'teacher'::public.role_enum,
+    branch_id));
+
+-- Teachers may add a guest only to a class occurrence they actually teach
+-- (reuses the shared attendance helper covering both class kinds).
+CREATE POLICY "Teacher assigned-class insert on class_guests"
+  ON public.class_guests FOR INSERT TO authenticated
+  WITH CHECK (
+    private.has_branch_role(auth.uid(), 'teacher'::public.role_enum, branch_id)
+    AND private.attendance_is_teacher(auth.uid(), scheduled_class_id, one_time_class_id, session_date)
+  );
+
+-- The teacher who added a guest may remove it (the capture window is
+-- enforced at application level, like attendance capture).
+CREATE POLICY "Teacher creator delete on class_guests"
+  ON public.class_guests FOR DELETE TO authenticated
+  USING (
+    private.has_branch_role(auth.uid(), 'teacher'::public.role_enum, branch_id)
+    AND created_by = auth.uid()
+  );
+
+-- Teachers of the branch may link a guest to the student created from it
+-- ("Convertir en alumno"); the branch trigger keeps branch_id consistent.
+CREATE POLICY "Teacher branch-scoped update on class_guests"
+  ON public.class_guests FOR UPDATE TO authenticated
+  USING (private.has_branch_role(auth.uid(), 'teacher'::public.role_enum, branch_id))
+  WITH CHECK (private.has_branch_role(auth.uid(), 'teacher'::public.role_enum, branch_id));
+
+REVOKE INSERT, UPDATE, DELETE ON public.class_guests FROM anon;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.class_guests TO authenticated;
+
+COMMENT ON TABLE public.class_guests IS
+  'Trial-class guests: new people added to a class occurrence before becoming students';
+
 COMMIT;

@@ -2,7 +2,6 @@
 
 import {
   withAuthenticatedUser,
-  type AuthenticatedContext,
 } from "@/lib/auth/server-context";
 import type { TransactionClient } from "@/lib/prisma/client";
 import {
@@ -26,6 +25,12 @@ import {
   type AddPerClassStudentToSessionInput,
   type ListPerClassCandidatesInput,
 } from "./schema";
+import {
+  authorizeAttendanceSession,
+  ATTENDANCE_SESSION_AUTHORIZATION,
+  jsToIsoDayOfWeek,
+} from "./session-authorization";
+import type { SessionGuestRow } from "@/lib/domain/guests/actions";
 
 export interface ActionResult<T = unknown> {
   success: boolean;
@@ -63,123 +68,15 @@ export interface PresentStudent {
 }
 
 /**
- * Convert JS Date.getDay() (0=Sun) to ISO day_of_week (0=Mon..6=Sun).
- * Matches the convention used in lib/domain/classes/actions.ts.
+ * getAttendanceForSession return shape: the student attendance entries plus
+ * the session's trial-class guests (T7) in a SEPARATE `guests` array.
+ * Guests are not students — they have no attendance record, enrollment or
+ * billing mode — so they are kept out of the SessionAttendanceEntry list and
+ * the UI renders and converts them independently.
  */
-function jsToIsoDayOfWeek(jsDay: number): number {
-  return (jsDay + 6) % 7;
-}
-
-const ATTENDANCE_SESSION_AUTHORIZATION = {
-  AUTHORIZED: "authorized",
-  DENIED: "denied",
-  INVALID: "invalid",
-} as const;
-
-interface AuthorizedAttendanceSession {
-  status: typeof ATTENDANCE_SESSION_AUTHORIZATION.AUTHORIZED;
-  branchId: string;
-  disciplineId: string;
-  sessionDate: Date;
-  /** Recurring classes only: the owning monthly group (roster source). */
-  seriesId: string | null;
-}
-
-interface DeniedAttendanceSession {
-  status: typeof ATTENDANCE_SESSION_AUTHORIZATION.DENIED;
-}
-
-interface InvalidAttendanceSession {
-  status: typeof ATTENDANCE_SESSION_AUTHORIZATION.INVALID;
-}
-
-type AttendanceSessionAuthorization =
-  | AuthorizedAttendanceSession
-  | DeniedAttendanceSession
-  | InvalidAttendanceSession;
-
-interface AttendanceSessionInput {
-  scheduled_class_id?: string;
-  one_time_class_id?: string;
-  session_date?: string;
-}
-
-async function authorizeAttendanceSession(
-  tx: TransactionClient,
-  ctx: AuthenticatedContext,
-  input: AttendanceSessionInput,
-  branchId: string
-): Promise<AttendanceSessionAuthorization> {
-  const isActiveBranchAdmin = ctx.assignments.some(
-    (assignment) =>
-      assignment.role === "admin" && assignment.branchId === branchId
-  );
-
-  if (input.scheduled_class_id) {
-    const sessionDate = parseDateOnly(input.session_date!);
-    const scheduledClass = await tx.scheduled_classes.findUnique({
-      where: { id: input.scheduled_class_id },
-      select: {
-        branch_id: true,
-        discipline_id: true,
-        day_of_week: true,
-        series_id: true,
-      },
-    });
-
-    if (
-      !scheduledClass ||
-      scheduledClass.branch_id !== branchId ||
-      scheduledClass.day_of_week !== jsToIsoDayOfWeek(sessionDate.getDay())
-    ) {
-      return { status: ATTENDANCE_SESSION_AUTHORIZATION.INVALID };
-    }
-
-    if (!isActiveBranchAdmin) {
-      const [effectiveTeacher] = await tx.$queryRaw<
-        { teacher_id: string | null }[]
-      >`SELECT private.resolve_effective_teacher(
-          ${input.scheduled_class_id}::uuid,
-          ${sessionDate}::date
-        ) AS teacher_id`;
-
-      if (effectiveTeacher?.teacher_id !== ctx.userId) {
-        return { status: ATTENDANCE_SESSION_AUTHORIZATION.DENIED };
-      }
-    }
-
-    return {
-      status: ATTENDANCE_SESSION_AUTHORIZATION.AUTHORIZED,
-      branchId: scheduledClass.branch_id,
-      disciplineId: scheduledClass.discipline_id,
-      sessionDate,
-      seriesId: scheduledClass.series_id,
-    };
-  }
-
-  const oneTimeClass = await tx.one_time_classes.findUnique({
-    where: { id: input.one_time_class_id! },
-    select: { branch_id: true, discipline_id: true, class_date: true, teacher_id: true },
-  });
-
-  if (!oneTimeClass || oneTimeClass.branch_id !== branchId) {
-    return { status: ATTENDANCE_SESSION_AUTHORIZATION.INVALID };
-  }
-
-  if (!isActiveBranchAdmin && oneTimeClass.teacher_id !== ctx.userId) {
-    return { status: ATTENDANCE_SESSION_AUTHORIZATION.DENIED };
-  }
-
-  const sessionDate = new Date(oneTimeClass.class_date);
-  sessionDate.setHours(0, 0, 0, 0);
-
-  return {
-    status: ATTENDANCE_SESSION_AUTHORIZATION.AUTHORIZED,
-    branchId: oneTimeClass.branch_id,
-    disciplineId: oneTimeClass.discipline_id,
-    sessionDate,
-    seriesId: null,
-  };
+export interface SessionAttendanceResult {
+  students: SessionAttendanceEntry[];
+  guests: SessionGuestRow[];
 }
 
 /**
@@ -456,15 +353,17 @@ export async function takeAttendance(
 }
 
 /**
- * getAttendanceForSession — Returns the session's attendance list (T6):
- * the assigned roster (source "roster"), per-class students added to the
- * occurrence (source "per_class"), and any other attendance rows kept as
- * history (source "history", e.g. students later removed from the roster).
- * Ordered roster → per_class → history, each by surname, first_name.
+ * getAttendanceForSession — Returns the session's attendance list (T6) plus
+ * its trial-class guests (T7): students composed of the assigned roster
+ * (source "roster"), per-class students added to the occurrence (source
+ * "per_class") and any other attendance rows kept as history (source
+ * "history", e.g. students later removed from the roster), each group
+ * ordered by surname, first_name; guests in a SEPARATE `guests` array
+ * (see SessionAttendanceResult).
  */
 export async function getAttendanceForSession(
   input: AttendanceForSessionInput
-): Promise<ActionResult<SessionAttendanceEntry[]>> {
+): Promise<ActionResult<SessionAttendanceResult>> {
   const parsed = attendanceForSessionSchema.safeParse(input);
   if (!parsed.success) {
     return { success: false, error: parsed.error.issues[0].message };
@@ -624,11 +523,42 @@ export async function getAttendanceForSession(
     perClassEntries.sort(byStudentName);
     historyEntries.sort(byStudentName);
 
-    return [...rosterEntries, ...perClassEntries, ...historyEntries];
+    // 5. Trial-class guests of the occurrence (T7), separate from students
+    const guestRows = await tx.class_guests.findMany({
+      where: occurrenceAttendanceWhere(
+        scheduled_class_id ?? null,
+        one_time_class_id ?? null,
+        sessionDate
+      ),
+      select: {
+        id: true,
+        first_name: true,
+        surname: true,
+        phone: true,
+        observation: true,
+        converted_student_id: true,
+        created_by: true,
+      },
+      orderBy: [{ surname: "asc" }, { first_name: "asc" }],
+    });
+    const guests: SessionGuestRow[] = guestRows.map((row) => ({
+      guest_id: row.id,
+      first_name: row.first_name,
+      surname: row.surname,
+      phone: row.phone,
+      observation: row.observation,
+      converted_student_id: row.converted_student_id,
+      created_by: row.created_by,
+    }));
+
+    return {
+      students: [...rosterEntries, ...perClassEntries, ...historyEntries],
+      guests,
+    };
   });
 
   if (!result.success) return result;
-  if (!Array.isArray(result.data)) {
+  if (!result.data || !("students" in result.data)) {
     if (result.data?.status === ATTENDANCE_SESSION_AUTHORIZATION.DENIED) {
       return { success: false, error: COMMON_MESSAGES.INSUFFICIENT_PERMISSIONS };
     }
