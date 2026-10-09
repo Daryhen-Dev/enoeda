@@ -36,7 +36,7 @@ Branch: feat/teacher-substitution, stacked on feat/class-schedules-wording.
       clearSessionSubstitution; drop target "recurring".
 - [x] T3: UI: group teacher change in the schedule list, one-time teacher
       change (calendar + schedule list), "Quitar sustitución".
-- [ ] T4: Apply migration to Supabase (user-authorized pattern), verify.
+- [x] T4: Apply migration to Supabase (user-authorized pattern), verify.
 
 ## Evidence
 - T1+T2 (delegated: gentle-ai-worker): migration 20260911000000 with
@@ -62,3 +62,15 @@ Branch: feat/teacher-substitution, stacked on feat/class-schedules-wording.
   Base UI Select option clicks are not exercised in jsdom, payload mapping
   covered via preselection). Parent re-ran the 3 UI test files twice: 22/22.
   tsc clean; vitest 1140 passed / 1 skipped; eslint clean; pnpm build OK.
+- T4: migration 20260911000000 APPLIED to Supabase dboqqtfsywhjqhbpxdbm
+  (user-authorized) via `pg` + DATABASE_URL, committed file as one
+  transaction. Precheck: function absent. Post-check: SECURITY DEFINER,
+  search_path="", args (p_series_id uuid, p_teacher_id uuid), EXECUTE for
+  authenticated (+ postgres owner). Live probe as a non-owner branch admin
+  (rolled back): RPC returned updatedClassCount 1; past occurrence resolves
+  to the previous teacher, future occurrence to the new one. The probe's
+  "non-teacher" candidate also held a teacher role in the branch, so its
+  acceptance was correct (probe defect, not a function defect); rejection
+  of a non-teacher is covered by the structural test only. After rollback
+  0 attribution periods; the 1 class_series row present is a real group
+  created by the user at 16:16, not probe data.
