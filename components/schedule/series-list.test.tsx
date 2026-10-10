@@ -8,8 +8,18 @@ import {
   CLONE_MESSAGES,
   ROSTER_EDITOR_MESSAGES,
   ROSTER_MESSAGES,
+  SCHEDULE_ONE_TIME_MESSAGES,
   SCHEDULE_SERIES_MESSAGES,
 } from "@/lib/localization/es-ec";
+
+import { SeriesList } from "./series-list";
+import type { ClassSeriesView, OneTimeClassView } from "@/lib/domain/classes/actions";
+
+const BRANCH_ID = "bbbbbbbb-1111-2222-8333-444444444444";
+const SERIES_ID = "99999999-8888-7777-8666-555555555555";
+const NEW_SERIES_ID = "99999999-8888-7777-8666-555555555556";
+const ONE_TIME_ID = "77777777-8888-7777-8333-444444444444";
+const SKIPPED_STUDENT_ID = "22222222-3333-4444-8555-666666666661";
 
 if (typeof globalThis.PointerEvent === "undefined") {
   (
@@ -17,17 +27,13 @@ if (typeof globalThis.PointerEvent === "undefined") {
   ).PointerEvent = MouseEvent;
 }
 
-const BRANCH_ID = "bbbbbbbb-1111-2222-8333-444444444444";
-const SERIES_ID = "99999999-8888-7777-8666-555555555555";
-const NEW_SERIES_ID = "99999999-8888-7777-8666-555555555556";
-const SKIPPED_STUDENT_ID = "22222222-3333-4444-8555-666666666661";
-
 const mocks = vi.hoisted(() => ({
   cloneClassGroupToNextMonth: vi.fn(),
   deactivateAllFutureClasses: vi.fn(),
   deactivateScheduledClassSeries: vi.fn(),
   renameClassSeries: vi.fn(),
   createMonthlyClassGroup: vi.fn(),
+  createOneTimeClass: vi.fn(),
   listClassRoster: vi.fn(),
   listRosterCandidates: vi.fn(),
   addStudentsToRoster: vi.fn(),
@@ -43,6 +49,12 @@ vi.mock("@/lib/domain/classes/actions", () => ({
   deactivateScheduledClassSeries: mocks.deactivateScheduledClassSeries,
   renameClassSeries: mocks.renameClassSeries,
   createMonthlyClassGroup: mocks.createMonthlyClassGroup,
+  createOneTimeClass: mocks.createOneTimeClass,
+}));
+vi.mock("@/components/classes/one-time-class-create-dialog", () => ({
+  OneTimeClassCreateDialog: () => (
+    <button data-testid="one-time-class-create-dialog">Crear clase única</button>
+  ),
 }));
 vi.mock("@/lib/domain/rosters/actions", () => ({
   listClassRoster: mocks.listClassRoster,
@@ -57,8 +69,6 @@ vi.mock("sonner", () => ({
   toast: { success: mocks.toastSuccess, error: mocks.toastError },
 }));
 
-import { SeriesList } from "./series-list";
-import type { ClassSeriesView } from "@/lib/domain/classes/actions";
 
 /** Same "current month in America/Guayaquil" computation as the component. */
 function currentMonth(): string {
@@ -112,7 +122,41 @@ function buildSeries(overrides: Partial<ClassSeriesView> = {}): ClassSeriesView 
   };
 }
 
-function renderList(series: ClassSeriesView[]): { unmount(): void } {
+function buildOneTimeClass(
+  overrides: Partial<OneTimeClassView> = {}
+): OneTimeClassView {
+  return {
+    one_time_class_id: ONE_TIME_ID,
+    class_date: "2026-11-05",
+    start_time: "09:30",
+    discipline_id: "cccccccc-1111-2222-8333-444444444444",
+    discipline_name: "Karate",
+    teacher_id: null,
+    teacher_name: null,
+    roster_student_count: 4,
+    ...overrides,
+  };
+}
+
+/** Same es-EC date label as the component, e.g. "5 de noviembre de 2026". */
+function oneTimeDateLabel(classDate: string): string {
+  const [year, month, day] = classDate.split("-").map(Number);
+  const rawLabel = new Intl.DateTimeFormat("es-EC", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(Date.UTC(year, month - 1, day)));
+  return rawLabel.charAt(0).toUpperCase() + rawLabel.slice(1);
+}
+
+function renderList(
+  series: ClassSeriesView[],
+  options: {
+    defaultTeacherId?: string | null;
+    oneTimeClasses?: OneTimeClassView[];
+  } = {}
+): { unmount(): void } {
   const container = document.createElement("div");
   document.body.append(container);
   const root = createRoot(container);
@@ -124,6 +168,8 @@ function renderList(series: ClassSeriesView[]): { unmount(): void } {
         series={series}
         disciplines={[{ id: "cccccccc-1111-2222-8333-444444444444", name: "Karate" }]}
         teachers={[]}
+        defaultTeacherId={options.defaultTeacherId ?? null}
+        oneTimeClasses={options.oneTimeClasses ?? []}
       />
     );
   });
@@ -357,5 +403,95 @@ describe("SeriesList roster + clone actions", () => {
       SCHEDULE_SERIES_MESSAGES.CLONE_ACTION
     );
     expect(cloneButton?.disabled).toBe(false);
+  });
+});
+
+describe("SeriesList one-time classes section", () => {
+  let rendered: { unmount(): void } | undefined;
+
+  beforeEach(() => {
+    (
+      globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }
+    ).IS_REACT_ACT_ENVIRONMENT = true;
+    vi.clearAllMocks();
+    mocks.listClassRoster.mockResolvedValue({
+      success: true,
+      data: { students: [] },
+    });
+    mocks.listRosterCandidates.mockResolvedValue({
+      success: true,
+      data: { students: [] },
+    });
+  });
+
+  afterEach(() => {
+    rendered?.unmount();
+    rendered = undefined;
+    vi.restoreAllMocks();
+  });
+
+  it("renders both the monthly-group and the one-time class create dialogs in the header", async () => {
+    rendered = renderList([buildSeries()]);
+    await flush();
+
+    expect(document.querySelector('[data-testid="one-time-class-create-dialog"]')).not.toBeNull();
+    expect(document.body.textContent).toContain("Crear clase única");
+    expect(document.body.textContent).toContain("Crear grupo mensual de clases");
+  });
+
+  it("renders the upcoming one-time classes section with date, time, discipline, teacher and roster count", async () => {
+    rendered = renderList([buildSeries()], {
+      oneTimeClasses: [
+        buildOneTimeClass({
+          teacher_id: "dddddddd-1111-2222-8333-444444444444",
+          teacher_name: "María Pérez",
+        }),
+      ],
+    });
+    await flush();
+
+    expect(document.body.textContent).toContain(
+      SCHEDULE_ONE_TIME_MESSAGES.SECTION_TITLE
+    );
+    expect(document.body.textContent).toContain(oneTimeDateLabel("2026-11-05"));
+    expect(document.body.textContent).toContain("09:30");
+    expect(document.body.textContent).toContain("Karate");
+    expect(document.body.textContent).toContain("María Pérez");
+    expect(document.body.textContent).toContain(
+      `${SCHEDULE_ONE_TIME_MESSAGES.ROSTER_COUNT_LABEL} (4)`
+    );
+  });
+
+  it("opens the roster editor for a one-time class from its Alumnos button", async () => {
+    rendered = renderList([], {
+      oneTimeClasses: [buildOneTimeClass()],
+    });
+    await flush();
+
+    const rosterButton = document.querySelector<HTMLButtonElement>(
+      `button[aria-label="${SCHEDULE_ONE_TIME_MESSAGES.ROSTER_BUTTON_ARIA_LABEL(
+        oneTimeDateLabel("2026-11-05"),
+        4
+      )}"]`
+    );
+    await clickButton(rosterButton);
+
+    expect(mocks.listClassRoster).toHaveBeenCalledWith({
+      branch_id: BRANCH_ID,
+      kind: "one_time",
+      one_time_class_id: ONE_TIME_ID,
+    });
+    expect(document.body.textContent).toContain(
+      ROSTER_EDITOR_MESSAGES.ONE_TIME_TITLE
+    );
+  });
+
+  it("shows the empty-state copy when there are no upcoming one-time classes", async () => {
+    rendered = renderList([buildSeries()]);
+    await flush();
+
+    expect(document.body.textContent).toContain(
+      SCHEDULE_ONE_TIME_MESSAGES.EMPTY_STATE
+    );
   });
 });

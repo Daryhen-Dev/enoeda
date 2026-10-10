@@ -156,7 +156,7 @@ describe("RemoveRecurringClassDialog", () => {
     );
   });
 
-  it("renders three scope radios with series as default and concurrencias wording", () => {
+  it("renders three scope radios with series as default and class-schedules wording", () => {
     rendered = renderDialog();
 
     const content = openDialog();
@@ -165,10 +165,10 @@ describe("RemoveRecurringClassDialog", () => {
     expect(queryScopeRadio(content, "single")).toBeDefined();
     expect(queryScopeRadio(content, "all")).toBeDefined();
     expect(queryScopeRadio(content, "series")?.checked).toBe(true);
-    // Round-4 copy: the recurring series is called "concurrencia".
-    expect(content.textContent).toContain("¿Quitar la concurrencia?");
-    expect(content.textContent).toContain("Toda la concurrencia (toda la semana)");
-    expect(content.textContent).toContain("Todas las concurrencias de la sucursal");
+    // The recurring series is presented as a "horario" (class schedule).
+    expect(content.textContent).toContain("¿Quitar el horario?");
+    expect(content.textContent).toContain("Todo el horario (toda la semana)");
+    expect(content.textContent).toContain("Todos los horarios de la sucursal");
     expect(content.textContent).toContain(
       REMOVE_RECURRING_CLASS_MESSAGES.SCOPE_ALL_HINT
     );

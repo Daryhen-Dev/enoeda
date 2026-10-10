@@ -58,16 +58,19 @@ import {
   renameClassSeries,
   type ClassSeriesView,
   type CloneClassGroupResult,
+  type OneTimeClassView,
 } from "@/lib/domain/classes/actions"
 import {
   RosterEditorSheet,
   ROSTER_SKIP_REASON_LABELS,
 } from "@/components/rosters/roster-editor-sheet"
-import { ScheduledClassCreateDialog } from "@/components/classes/scheduled-class-create-dialog"
+import { ScheduledClassCreateDialog } from "@/components/classes/scheduled-class-create-dialog";
+import { OneTimeClassCreateDialog } from "@/components/classes/one-time-class-create-dialog";
 import {
   CLASS_MESSAGES,
   CLONE_MESSAGES,
   COMMON_MESSAGES,
+  SCHEDULE_ONE_TIME_MESSAGES,
   SCHEDULE_SERIES_MESSAGES,
   WEEKDAY_LABELS,
 } from "@/lib/localization/es-ec"
@@ -77,6 +80,10 @@ interface SeriesListProps {
   series: ClassSeriesView[]
   disciplines: Array<{ id: string; name: string }>
   teachers: Array<{ id: string; name: string }>
+  /** Branch default teacher, preselected by the one-time class dialog. */
+  defaultTeacherId: string | null
+  /** Upcoming active one-time classes of the branch (date >= today). */
+  oneTimeClasses: OneTimeClassView[]
 }
 
 const SERIES_NAME_MAX_LENGTH = 80
@@ -101,6 +108,18 @@ function getNextMonth(periodMonth: string): string {
   return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`
 }
 
+/** "YYYY-MM-DD" → es-EC display label, e.g. "5 de noviembre de 2026". */
+function formatOneTimeDate(classDate: string): string {
+  const [year, month, day] = classDate.split("-").map(Number)
+  const rawLabel = new Intl.DateTimeFormat("es-EC", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(Date.UTC(year, month - 1, day)))
+  return rawLabel.charAt(0).toUpperCase() + rawLabel.slice(1)
+}
+
 /** Current "YYYY-MM" in America/Guayaquil (the branch's time zone). */
 function getCurrentMonth(): string {
   const parts = new Intl.DateTimeFormat("en-CA", {
@@ -118,13 +137,21 @@ function formatDays(daysOfWeek: number[]): string {
 }
 
 /**
- * Concurrencias section — admin list of the branch's monthly class groups
+ * Class-schedules section — admin list of the branch's monthly class groups
  * (class_series) with a month filter, rename, per-group removal and the
  * destructive "remove ALL future" action. Removal is soft
  * (is_active=false on the group and its weekday rows); history is never
- * deleted.
+ * deleted. Below the monthly groups it lists the branch's upcoming
+ * one-time classes with their roster editor.
  */
-export function SeriesList({ branchId, series, disciplines, teachers }: SeriesListProps) {
+export function SeriesList({
+  branchId,
+  series,
+  disciplines,
+  teachers,
+  defaultTeacherId,
+  oneTimeClasses,
+}: SeriesListProps) {
   // Default filter: the CURRENT month in America/Guayaquil; "Todos" lifts it.
   const [monthFilter, setMonthFilter] = useState(() => getCurrentMonth())
   const monthOptions = useMemo(
@@ -140,11 +167,19 @@ export function SeriesList({ branchId, series, disciplines, teachers }: SeriesLi
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-lg font-semibold">{SCHEDULE_SERIES_MESSAGES.PAGE_TITLE}</h2>
-        <ScheduledClassCreateDialog
-          branchId={branchId}
-          disciplines={disciplines}
-          teachers={teachers}
-        />
+        <div className="flex flex-wrap gap-2">
+          <OneTimeClassCreateDialog
+            branchId={branchId}
+            disciplines={disciplines}
+            teachers={teachers}
+            defaultTeacherId={defaultTeacherId}
+          />
+          <ScheduledClassCreateDialog
+            branchId={branchId}
+            disciplines={disciplines}
+            teachers={teachers}
+          />
+        </div>
       </div>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <Field>
@@ -242,7 +277,113 @@ export function SeriesList({ branchId, series, disciplines, teachers }: SeriesLi
           </TableBody>
         </Table>
       )}
+      <OneTimeClassesSection branchId={branchId} oneTimeClasses={oneTimeClasses} />
     </div>
+  )
+}
+
+/**
+ * "Clases únicas" section — upcoming (date >= today in America/Guayaquil)
+ * active one-time classes of the branch, each with an "Alumnos" button
+ * opening the roster editor for that class.
+ */
+function OneTimeClassesSection({
+  branchId,
+  oneTimeClasses,
+}: {
+  branchId: string
+  oneTimeClasses: OneTimeClassView[]
+}) {
+  return (
+    <section
+      aria-labelledby="one-time-classes-heading"
+      className="flex flex-col gap-2"
+    >
+      <h3 id="one-time-classes-heading" className="text-base font-semibold">
+        {SCHEDULE_ONE_TIME_MESSAGES.SECTION_TITLE}
+      </h3>
+      <p className="text-sm text-muted-foreground">
+        {SCHEDULE_ONE_TIME_MESSAGES.SECTION_DESCRIPTION}
+      </p>
+      {oneTimeClasses.length === 0 ? (
+        <Empty>
+          <EmptyHeader>
+            <EmptyTitle>{SCHEDULE_ONE_TIME_MESSAGES.EMPTY_STATE}</EmptyTitle>
+          </EmptyHeader>
+        </Empty>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>{SCHEDULE_ONE_TIME_MESSAGES.DATE_LABEL}</TableHead>
+              <TableHead>{SCHEDULE_ONE_TIME_MESSAGES.TIME_LABEL}</TableHead>
+              <TableHead>{SCHEDULE_ONE_TIME_MESSAGES.DISCIPLINE_LABEL}</TableHead>
+              <TableHead>{SCHEDULE_ONE_TIME_MESSAGES.TEACHER_LABEL}</TableHead>
+              <TableHead>{SCHEDULE_ONE_TIME_MESSAGES.ROSTER_COUNT_LABEL}</TableHead>
+              <TableHead>{SCHEDULE_SERIES_MESSAGES.ACTIONS_LABEL}</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {oneTimeClasses.map((item) => (
+              <TableRow key={item.one_time_class_id}>
+                <TableCell className="font-medium">
+                  {formatOneTimeDate(item.class_date)}
+                </TableCell>
+                <TableCell>{item.start_time}</TableCell>
+                <TableCell>{item.discipline_name}</TableCell>
+                <TableCell>
+                  {item.teacher_name ?? SCHEDULE_ONE_TIME_MESSAGES.NO_TEACHER}
+                </TableCell>
+                <TableCell>{item.roster_student_count}</TableCell>
+                <TableCell>
+                  <OneTimeRosterAction branchId={branchId} item={item} />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
+    </section>
+  )
+}
+
+/**
+ * Opens the roster editor for one one-time class. Admin-only UI: this
+ * section renders behind the page's canManage gate and every action
+ * re-asserts authorization server-side.
+ */
+function OneTimeRosterAction({
+  branchId,
+  item,
+}: {
+  branchId: string
+  item: OneTimeClassView
+}) {
+  const [open, setOpen] = useState(false)
+
+  const dateLabel = formatOneTimeDate(item.class_date)
+
+  return (
+    <>
+      <Button
+        variant="outline"
+        size="xs"
+        aria-label={SCHEDULE_ONE_TIME_MESSAGES.ROSTER_BUTTON_ARIA_LABEL(
+          dateLabel,
+          item.roster_student_count
+        )}
+        onClick={() => setOpen(true)}
+      >
+        <UsersIcon aria-hidden="true" data-icon="inline-start" />
+        {`${SCHEDULE_ONE_TIME_MESSAGES.ROSTER_COUNT_LABEL} (${item.roster_student_count})`}
+      </Button>
+      <RosterEditorSheet
+        branchId={branchId}
+        target={{ kind: "one_time", one_time_class_id: item.one_time_class_id }}
+        open={open}
+        onOpenChange={setOpen}
+      />
+    </>
   )
 }
 

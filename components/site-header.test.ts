@@ -62,7 +62,7 @@ describe("SiteHeader per-route page titles", () => {
     expect(getPageTitle("/dashboard/students")).toBe("Estudiantes");
     expect(getPageTitle("/dashboard/staff")).toBe("Personal");
     expect(getPageTitle("/dashboard/calendar")).toBe("Calendario");
-    expect(getPageTitle("/dashboard/schedule")).toBe("Concurrencias");
+    expect(getPageTitle("/dashboard/schedule")).toBe("Horarios de clases");
     expect(getPageTitle("/dashboard/belts")).toBe("Cinturones");
     expect(getPageTitle("/dashboard/payments")).toBe("Pagos");
     expect(getPageTitle("/dashboard/profile")).toBe("Mi perfil");

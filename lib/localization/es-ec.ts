@@ -159,7 +159,7 @@ export const DASHBOARD_SHELL_MESSAGES = {
   STAFF: "Personal",
   MANAGEMENT: "Administración",
   CALENDAR: "Calendario",
-  CONCURRENCIAS: "Concurrencias",
+  CLASS_SCHEDULES: "Horarios de clases",
   BELTS: "Cinturones",
   PAYMENTS: "Pagos",
   PAYMENT_SETTINGS: "Configuración de pagos",
@@ -646,7 +646,7 @@ export const CLASS_MESSAGES = {
   SERIES_NAME_MAX:
     "El nombre del grupo no puede superar 80 caracteres.",
   SERIES_TARGET_REQUIRED:
-    "Indique la clase o la concurrencia a quitar (no ambas).",
+    "Indique la clase o el horario a quitar, no los dos.",
 } as const
 
 export const ROSTER_MESSAGES = {
@@ -744,37 +744,37 @@ export const SUSPENSION_MESSAGES = {
 
 export const REMOVE_RECURRING_CLASS_MESSAGES = {
   ACTION: "Quitar clase",
-  DIALOG_TITLE: "¿Quitar la concurrencia?",
+  DIALOG_TITLE: "¿Quitar el horario?",
   DIALOG_DESCRIPTION:
     "Las clases dejarán de aparecer en el calendario a partir de hoy según el alcance seleccionado. Las clases pasadas permanecerán visibles en el calendario con su historial de asistencia. Esta acción no se puede deshacer desde la aplicación.",
   SCOPE_GROUP_LABEL: "Alcance de la eliminación",
-  SCOPE_SERIES_LABEL: "Toda la concurrencia (toda la semana)",
+  SCOPE_SERIES_LABEL: "Todo el horario (toda la semana)",
   SCOPE_SERIES_HINT: (disciplineName: string, startTime: string) =>
     `Toda la semana para ${disciplineName} a las ${startTime}.`,
   SCOPE_SINGLE_LABEL: "Solo esta clase semanal",
   SCOPE_SINGLE_HINT:
     "Únicamente la clase de este día de la semana; las de los demás días en este horario siguen activas.",
-  SCOPE_ALL_LABEL: "Todas las concurrencias de la sucursal",
+  SCOPE_ALL_LABEL: "Todos los horarios de la sucursal",
   SCOPE_ALL_HINT:
-    "Todas las concurrencias desde hoy; las clases únicas no se ven afectadas.",
+    "Todos los horarios desde hoy; las clases únicas no se ven afectadas.",
   CONFIRM_ACTION: "Quitar clase",
   SUCCESS: "Clase recurrente quitada correctamente.",
-  SUCCESS_SERIES: "Concurrencia quitada correctamente.",
-  SUCCESS_ALL: "Todas las concurrencias futuras fueron quitadas correctamente.",
+  SUCCESS_SERIES: "Horario quitado correctamente.",
+  SUCCESS_ALL: "Todos los horarios futuros fueron quitados correctamente.",
   ARIA_LABEL: (disciplineName: string, startTime: string) =>
-    `Quitar la concurrencia de ${disciplineName}, a las ${startTime}`,
+    `Quitar el horario de ${disciplineName}, a las ${startTime}`,
 } as const
 
 export const SCHEDULE_SERIES_MESSAGES = {
-  PAGE_TITLE: "Concurrencias",
+  PAGE_TITLE: "Horarios de clases",
   PAGE_DESCRIPTION:
-    "Administre las concurrencias (clases recurrentes) de la sucursal: renómbrelas, quítelas o cree nuevas.",
+    "Administre los horarios de clases de la sucursal: grupos mensuales y clases únicas. Cree, renombre, clone o quite horarios.",
   NO_BRANCH_CONTEXT:
     "No tiene una sucursal activa asignada. Contacte al administrador.",
   LOAD_FAILURE:
-    "No se pudieron cargar las concurrencias. Inténtelo nuevamente.",
+    "No se pudieron cargar los horarios. Inténtelo nuevamente.",
   EMPTY_STATE:
-    "No hay concurrencias registradas para esta sucursal.",
+    "No hay horarios registrados para esta sucursal.",
   NAME_LABEL: "Nombre",
   DISCIPLINE_LABEL: "Disciplina",
   MONTH_LABEL: "Mes",
@@ -790,26 +790,26 @@ export const SCHEDULE_SERIES_MESSAGES = {
   ALL_INACTIVE_LABEL: "Sin clases activas",
   NO_TEACHER: "Sin profesor asignado",
   ALL_INACTIVE_HINT:
-    "Todas las clases de esta concurrencia fueron quitadas; el historial se conserva.",
+    "Todas las clases de este horario fueron quitadas; el historial se conserva.",
   RENAME_ACTION: "Renombrar",
-  RENAME_TITLE: "Renombrar concurrencia",
+  RENAME_TITLE: "Renombrar horario",
   RENAME_DESCRIPTION:
-    "El nombre identifica la concurrencia en esta sección; no cambia el horario ni la disciplina.",
+    "El nombre identifica el horario en esta sección; no cambia los días, la hora ni la disciplina.",
   RENAME_SAVE: "Guardar",
-  RENAME_SUCCESS: "Concurrencia renombrada correctamente.",
-  REMOVE_SERIES_ACTION: "Quitar serie",
-  REMOVE_SERIES_TITLE: "¿Quitar la serie?",
+  RENAME_SUCCESS: "Horario renombrado correctamente.",
+  REMOVE_SERIES_ACTION: "Quitar horario",
+  REMOVE_SERIES_TITLE: "¿Quitar el horario?",
   REMOVE_SERIES_DESCRIPTION:
-    "Todas las clases activas de esta concurrencia dejarán de aparecer a partir de hoy. Las clases pasadas permanecerán visibles con su historial. Esta acción no se puede deshacer desde la aplicación.",
-  REMOVE_SERIES_CONFIRM: "Quitar serie",
-  REMOVE_SERIES_SUCCESS: "Serie quitada correctamente.",
+    "Todas las clases activas de este horario dejarán de aparecer a partir de hoy. Las clases pasadas permanecerán visibles con su historial. Esta acción no se puede deshacer desde la aplicación.",
+  REMOVE_SERIES_CONFIRM: "Quitar horario",
+  REMOVE_SERIES_SUCCESS: "Horario quitado correctamente.",
   REMOVE_ALL_ACTION: "Quitar TODO lo futuro",
   REMOVE_ALL_TITLE: "¿Quitar TODO lo futuro?",
   REMOVE_ALL_DESCRIPTION:
-    "Se quitarán TODAS las concurrencias de la sucursal a partir de hoy. Las clases únicas no se ven afectadas. Las clases pasadas permanecerán visibles con su historial. Esta acción no se puede deshacer desde la aplicación.",
+    "Se quitarán TODOS los horarios de la sucursal a partir de hoy. Las clases únicas no se ven afectadas. Las clases pasadas permanecerán visibles con su historial. Esta acción no se puede deshacer desde la aplicación.",
   REMOVE_ALL_CONFIRM: "Sí, quitar todo lo futuro",
   REMOVE_ALL_SUCCESS:
-    "Todas las concurrencias futuras fueron quitadas correctamente.",
+    "Todos los horarios futuros fueron quitados correctamente.",
   ROSTER_ACTION: "Alumnos",
   ROSTER_BUTTON_ARIA_LABEL: (name: string, count: number) =>
     `Alumnos del grupo ${name} (${count})`,
@@ -825,6 +825,21 @@ export const SCHEDULE_SERIES_MESSAGES = {
     "Estos alumnos no se copiaron al nuevo grupo porque no cumplen los requisitos actuales: alumno activo con inscripción mensual activa en la disciplina. Puede ajustar la lista del nuevo grupo a continuación.",
   SKIPPED_CLOSE: "Cerrar",
   EDIT_NEW_GROUP_ACTION: "Editar alumnos del nuevo grupo",
+} as const
+
+export const SCHEDULE_ONE_TIME_MESSAGES = {
+  SECTION_TITLE: "Clases únicas",
+  SECTION_DESCRIPTION:
+    "Clases únicas próximas de la sucursal, ordenadas por fecha y hora.",
+  EMPTY_STATE: "No hay clases únicas próximas registradas para esta sucursal.",
+  DATE_LABEL: "Fecha",
+  TIME_LABEL: "Hora",
+  DISCIPLINE_LABEL: "Disciplina",
+  TEACHER_LABEL: "Profesor",
+  NO_TEACHER: "Sin profesor asignado",
+  ROSTER_COUNT_LABEL: "Alumnos",
+  ROSTER_BUTTON_ARIA_LABEL: (date: string, count: number) =>
+    `Alumnos de la clase única del ${date} (${count})`,
 } as const
 
 /**

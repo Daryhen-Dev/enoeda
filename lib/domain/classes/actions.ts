@@ -12,6 +12,7 @@ import {
   dateOnlyToUtcDate,
   formatDatabaseDateOnly,
   formatDateOnly,
+  getCurrentDateOnly,
   parseDateOnly,
 } from "@/lib/date";
 import {
@@ -32,6 +33,7 @@ import {
   getSessionsForRangeSchema,
   getSuspensionReportSchema,
   listClassSeriesSchema,
+  listUpcomingOneTimeClassesSchema,
   reinstateSessionSchema,
   renameClassSeriesSchema,
   suspendSessionSchema,
@@ -324,7 +326,7 @@ export async function deactivateScheduledClass(
  *
  * The caller passes EITHER any one row of the series (scheduled_class_id —
  * the calendar dialog) OR the series identity itself (series_id — the
- * concurrencias section); the schema rejects passing both or neither.
+ * class-schedules section); the schema rejects passing both or neither.
  * When scheduled_class_id is given, its series_id is resolved inside the
  * transaction. When series_id is given, the catalog row is verified to
  * belong to the caller's branch. Either way the target is absent →
@@ -422,7 +424,7 @@ export async function deactivateScheduledClassSeries(
 
 /**
  * Deactivate ALL future classes of a branch in one step: every active
- * recurring template (scheduled_classes — the "concurrencias").
+ * recurring template (scheduled_classes — the "class schedules").
  * One-time classes are deliberately NOT touched: "quitar todo lo futuro"
  * targets recurring series only, and one_time_classes.is_active stays
  * unused for now.
@@ -762,7 +764,7 @@ export async function cloneClassGroupToNextMonth(
 
 /**
  * One row per monthly class group (class_series) of a branch, for the
- * concurrencias admin section. Each group carries its discipline, period
+ * class-schedules admin section. Each group carries its discipline, period
  * month ("YYYY-MM"), active state, default teacher and roster student
  * count; the weekday slots and active row count come from its
  * scheduled_classes rows. has_clone reports whether the group was
@@ -956,7 +958,138 @@ export async function listClassSeries(
 }
 
 /**
- * Rename a concurrencia (class_series row) within the caller's branch.
+ * Upcoming (date >= today in America/Guayaquil) active one-time classes of
+ * a branch, for the "Clases únicas" section of the class-schedules screen.
+ * Ordered by date then start time. Roster student counts come from
+ * one_time_class_students; teacher names resolve through user_profiles via
+ * the admin client (same pattern as listClassSeries).
+ * Owner/Admin-branch via RLS; branch guard as listClassSeries.
+ */
+export interface OneTimeClassView {
+  one_time_class_id: string;
+  /** Class date as "YYYY-MM-DD". */
+  class_date: string;
+  /** Start time as "HH:MM". */
+  start_time: string;
+  discipline_id: string;
+  discipline_name: string;
+  teacher_id: string | null;
+  teacher_name: string | null;
+  roster_student_count: number;
+}
+
+export async function listUpcomingOneTimeClasses(
+  input: unknown
+): Promise<ActionResult<OneTimeClassView[]>> {
+  const parsed = listUpcomingOneTimeClassesSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message };
+  }
+
+  const { branch_id } = parsed.data;
+
+  try {
+    const result = await withAuthenticatedUser(async (tx, ctx) => {
+      // Branch assignment assertion — fail-closed
+      const branchCheck = assertActiveBranchAssignment(ctx, branch_id);
+      if (!branchCheck.ok) {
+        return { __branchError: branchCheck.error } as const;
+      }
+
+      // "Today" in the branch's time zone (America/Guayaquil) so the
+      // upcoming filter matches the branch's calendar day.
+      const todayStr = getCurrentDateOnly("America/Guayaquil");
+
+      const rows = await tx.one_time_classes.findMany({
+        where: {
+          branch_id,
+          is_active: true,
+          class_date: { gte: dateOnlyToUtcDate(todayStr) },
+        },
+        include: {
+          disciplines: { select: { id: true, name: true } },
+        },
+        orderBy: [{ class_date: "asc" }, { start_time: "asc" }],
+      });
+
+      // Roster student count per class (0 when the class has no roster).
+      const rosterCounts = new Map<string, number>();
+      if (rows.length > 0) {
+        const rosterGroups = await tx.one_time_class_students.groupBy({
+          by: ["one_time_class_id"],
+          where: { one_time_class_id: { in: rows.map((row) => row.id) } },
+          _count: { _all: true },
+        });
+        for (const group of rosterGroups) {
+          rosterCounts.set(group.one_time_class_id, group._count._all);
+        }
+      }
+
+      const views: OneTimeClassView[] = [];
+      const teacherIds = new Set<string>();
+      for (const row of rows) {
+        if (row.teacher_id) {
+          teacherIds.add(row.teacher_id);
+        }
+        views.push({
+          one_time_class_id: row.id,
+          class_date: formatDatabaseDateOnly(row.class_date),
+          start_time: formatTime(row.start_time),
+          discipline_id: row.disciplines.id,
+          discipline_name: row.disciplines.name,
+          teacher_id: row.teacher_id ?? null,
+          teacher_name: null,
+          roster_student_count: rosterCounts.get(row.id) ?? 0,
+        });
+      }
+
+      const teacherNameById = new Map<string, string>();
+      if (teacherIds.size > 0) {
+        const admin = createAdminClient();
+        const { data: profiles, error: profilesError } = await admin
+          .from("user_profiles")
+          .select("user_id, first_name, surname")
+          .in("user_id", [...teacherIds]);
+        if (profilesError) {
+          throw new Error(COMMON_MESSAGES.UNEXPECTED_ERROR);
+        }
+        for (const profile of profiles ?? []) {
+          const displayName = [profile.first_name, profile.surname]
+            .filter((name): name is string => Boolean(name))
+            .join(" ");
+          if (displayName) {
+            teacherNameById.set(profile.user_id, displayName);
+          }
+        }
+      }
+      for (const view of views) {
+        view.teacher_name = view.teacher_id
+          ? teacherNameById.get(view.teacher_id) ?? null
+          : null;
+      }
+
+      return views;
+    }, {
+      mapTransactionError: (error) =>
+        error instanceof Error &&
+        (error.message === CLASS_MESSAGES.BRANCH_CONTEXT_REQUIRED ||
+          error.message.includes("permisos"))
+          ? error.message
+          : undefined,
+    });
+
+    if (!result.success) return result;
+    if (result.data && "__branchError" in result.data) {
+      return { success: false, error: (result.data as { __branchError: string }).__branchError };
+    }
+    return { success: true, data: result.data as OneTimeClassView[] };
+  } catch {
+    return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
+  }
+}
+
+/**
+ * Rename a class schedule (class_series row) within the caller's branch.
  * Soft operation only (no deletes): the row is updated in place.
  * NOT_FOUND when no catalog row matches id + branch.
  * Owner/Admin-branch via RLS.

@@ -63,7 +63,7 @@ const RESTORE_ACTION_CLASSES = `${ACTION_BUTTON_BASE} border-emerald-300 bg-whit
 
 /**
  * Group month label for recurring sessions, e.g. "octubre de 2026" —
- * same es-EC formatting as the concurrencias list (duplicated here to
+ * same es-EC formatting as the class-schedules list (duplicated here to
  * keep the calendar block dependency-free).
  */
 function formatGroupMonth(periodMonth: string): string {

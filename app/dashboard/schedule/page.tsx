@@ -6,9 +6,9 @@ import { SeriesList } from "@/components/schedule/series-list";
 import { APP_ROLES } from "@/lib/auth/authorize";
 import { resolveBranchContext } from "@/lib/auth/branch-context";
 import { getAuthenticatedContext } from "@/lib/auth/identity-resolver";
-import { listClassSeries } from "@/lib/domain/classes/actions";
+import { listClassSeries, listUpcomingOneTimeClasses } from "@/lib/domain/classes/actions";
 import { listDisciplines } from "@/lib/domain/disciplines/actions";
-import { listBranchTeacherOptions } from "@/lib/domain/roles/actions";
+import { getBranchDefaultTeacher, listBranchTeacherOptions } from "@/lib/domain/roles/actions";
 import { SCHEDULE_SERIES_MESSAGES } from "@/lib/localization/es-ec";
 
 interface SchedulePageProps {
@@ -16,7 +16,7 @@ interface SchedulePageProps {
 }
 
 /**
- * Concurrencias section — admin-scoped recurring-series management.
+ * Class-schedules section — admin-scoped recurring-series management.
  * Gating: teacher-only users are redirected to the calendar (same as the
  * staff page); the management UI renders only for callers with an active
  * admin assignment on the resolved branch (branchResult.canManage), and
@@ -84,13 +84,16 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
     );
   }
 
-  const [seriesResult, disciplinesResult, teachersResult] = await Promise.all([
+  const [seriesResult, disciplinesResult, teachersResult, oneTimeClassesResult, defaultTeacherId] = await Promise.all([
     listClassSeries({ branch_id: branchId }),
     listDisciplines(),
     listBranchTeacherOptions({ branchId }),
+    listUpcomingOneTimeClasses({ branch_id: branchId }),
+    getBranchDefaultTeacher(branchId),
   ]);
 
   const series = seriesResult.success ? seriesResult.data ?? [] : [];
+  const oneTimeClasses = oneTimeClassesResult.success ? oneTimeClassesResult.data ?? [] : [];
   const disciplines = disciplinesResult.success ? disciplinesResult.data ?? [] : [];
   const teachers = teachersResult.success ? teachersResult.data ?? [] : [];
 
@@ -130,6 +133,8 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
             id: teacher.id,
             name: teacher.name,
           }))}
+          defaultTeacherId={defaultTeacherId}
+          oneTimeClasses={oneTimeClasses}
         />
       )}
     </div>
