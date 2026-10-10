@@ -5,7 +5,7 @@ import type { FormEvent } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
-import { PencilIcon, TriangleAlertIcon, UsersIcon } from "lucide-react"
+import { PencilIcon, TriangleAlertIcon, UserPenIcon, UsersIcon } from "lucide-react"
 
 import {
   AlertDialog,
@@ -56,10 +56,12 @@ import {
   deactivateAllFutureClasses,
   deactivateScheduledClassSeries,
   renameClassSeries,
+  setClassSeriesTeacher,
   type ClassSeriesView,
   type CloneClassGroupResult,
   type OneTimeClassView,
 } from "@/lib/domain/classes/actions"
+import { OneTimeTeacherDialog } from "@/components/classes/one-time-teacher-dialog"
 import {
   RosterEditorSheet,
   ROSTER_SKIP_REASON_LABELS,
@@ -72,6 +74,7 @@ import {
   COMMON_MESSAGES,
   SCHEDULE_ONE_TIME_MESSAGES,
   SCHEDULE_SERIES_MESSAGES,
+  TEACHER_ASSIGN_MESSAGES,
   WEEKDAY_LABELS,
 } from "@/lib/localization/es-ec"
 
@@ -89,6 +92,9 @@ interface SeriesListProps {
 const SERIES_NAME_MAX_LENGTH = 80
 
 const ALL_MONTHS_VALUE = "__all__"
+
+/** Select sentinel for the "Sin profesor" option (teacher_id = null). */
+const NO_TEACHER_VALUE = "__none__"
 
 /** "YYYY-MM" → es-EC display label, e.g. "Septiembre de 2026". */
 function formatMonth(periodMonth: string): string {
@@ -259,6 +265,7 @@ export function SeriesList({
                 <TableCell>
                   <div className="flex flex-wrap gap-1">
                     <SeriesRosterAction branchId={branchId} series={item} />
+                    <GroupTeacherAction branchId={branchId} series={item} teachers={teachers} />
                     <CloneSeriesAction branchId={branchId} series={item} />
                     <RenameSeriesAction
                       branchId={branchId}
@@ -277,7 +284,11 @@ export function SeriesList({
           </TableBody>
         </Table>
       )}
-      <OneTimeClassesSection branchId={branchId} oneTimeClasses={oneTimeClasses} />
+      <OneTimeClassesSection
+        branchId={branchId}
+        oneTimeClasses={oneTimeClasses}
+        teachers={teachers}
+      />
     </div>
   )
 }
@@ -290,9 +301,11 @@ export function SeriesList({
 function OneTimeClassesSection({
   branchId,
   oneTimeClasses,
+  teachers,
 }: {
   branchId: string
   oneTimeClasses: OneTimeClassView[]
+  teachers: Array<{ id: string; name: string }>
 }) {
   return (
     <section
@@ -336,7 +349,10 @@ function OneTimeClassesSection({
                 </TableCell>
                 <TableCell>{item.roster_student_count}</TableCell>
                 <TableCell>
-                  <OneTimeRosterAction branchId={branchId} item={item} />
+                  <div className="flex flex-wrap gap-1">
+                    <OneTimeRosterAction branchId={branchId} item={item} />
+                    <OneTimeTeacherAction branchId={branchId} item={item} teachers={teachers} />
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
@@ -384,6 +400,178 @@ function OneTimeRosterAction({
         onOpenChange={setOpen}
       />
     </>
+  )
+}
+
+/**
+ * "Cambiar profesor" action for one one-time class row — wraps the
+ * reusable one-time teacher dialog with the row's outline-button look.
+ */
+function OneTimeTeacherAction({
+  branchId,
+  item,
+  teachers,
+}: {
+  branchId: string
+  item: OneTimeClassView
+  teachers: Array<{ id: string; name: string }>
+}) {
+  const dateLabel = formatOneTimeDate(item.class_date)
+
+  return (
+    <OneTimeTeacherDialog
+      branchId={branchId}
+      oneTimeClassId={item.one_time_class_id}
+      teachers={teachers}
+      currentTeacherId={item.teacher_id}
+      triggerRender={<Button variant="outline" size="xs" />}
+      triggerAriaLabel={TEACHER_ASSIGN_MESSAGES.ONE_TIME_TRIGGER_ARIA_LABEL(dateLabel)}
+      trigger={
+        <>
+          <UserPenIcon aria-hidden="true" data-icon="inline-start" />
+          {TEACHER_ASSIGN_MESSAGES.ONE_TIME_ACTION}
+        </>
+      }
+    />
+  )
+}
+
+/**
+ * "Cambiar profesor" action for a WHOLE monthly group: opens a dialog
+ * preselecting the group's current teacher (or "Sin profesor") and calls
+ * setClassSeriesTeacher. The change applies from now on: past classes
+ * keep the previous teacher and explicit day substitutions stay in place
+ * (enforced server-side by the set_class_series_teacher RPC). Disabled
+ * for inactive groups. Admin-only UI: this section renders behind the
+ * page's canManage gate and the action re-asserts authorization
+ * server-side.
+ */
+function GroupTeacherAction({
+  branchId,
+  series,
+  teachers,
+}: {
+  branchId: string
+  series: ClassSeriesView
+  teachers: Array<{ id: string; name: string }>
+}) {
+  const router = useRouter()
+  const [open, setOpen] = useState(false)
+  const [teacherId, setTeacherId] = useState(
+    series.default_teacher_id ?? NO_TEACHER_VALUE
+  )
+  const [error, setError] = useState<string | null>(null)
+  const [isPending, startTransition] = useTransition()
+
+  const disabled = !series.is_active || series.is_all_inactive
+
+  function handleOpenChange(nextOpen: boolean) {
+    if (isPending) return
+    setOpen(nextOpen)
+    if (nextOpen) {
+      setTeacherId(series.default_teacher_id ?? NO_TEACHER_VALUE)
+    }
+    setError(null)
+  }
+
+  function handleConfirm() {
+    setError(null)
+    startTransition(async () => {
+      const result = await setClassSeriesTeacher({
+        branch_id: branchId,
+        series_id: series.series_id,
+        teacher_id: teacherId === NO_TEACHER_VALUE ? null : teacherId,
+      })
+      if (result.success && result.data) {
+        setOpen(false)
+        toast.success(
+          TEACHER_ASSIGN_MESSAGES.SERIES_UPDATED(result.data.updated_class_count)
+        )
+        router.refresh()
+      } else {
+        setError(result.error ?? COMMON_MESSAGES.UNEXPECTED_ERROR)
+      }
+    })
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <Button
+        variant="outline"
+        size="xs"
+        aria-label={TEACHER_ASSIGN_MESSAGES.GROUP_TRIGGER_ARIA_LABEL(series.name)}
+        disabled={disabled}
+        onClick={() => handleOpenChange(true)}
+      >
+        <UserPenIcon aria-hidden="true" data-icon="inline-start" />
+        {TEACHER_ASSIGN_MESSAGES.GROUP_ACTION}
+      </Button>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{TEACHER_ASSIGN_MESSAGES.GROUP_TITLE}</DialogTitle>
+          <DialogDescription>
+            {TEACHER_ASSIGN_MESSAGES.GROUP_DESCRIPTION}
+          </DialogDescription>
+        </DialogHeader>
+        <Field data-invalid={error ? true : undefined}>
+          <FieldLabel htmlFor={`group-teacher-${series.series_id}`}>
+            {TEACHER_ASSIGN_MESSAGES.TEACHER_LABEL}
+          </FieldLabel>
+          <Select
+            value={teacherId}
+            onValueChange={(value) => {
+              if (value) setTeacherId(value)
+            }}
+            items={[
+              {
+                value: NO_TEACHER_VALUE,
+                label: TEACHER_ASSIGN_MESSAGES.NO_TEACHER_OPTION,
+              },
+              ...teachers.map((t) => ({ value: t.id, label: t.name })),
+            ]}
+          >
+            <SelectTrigger
+              id={`group-teacher-${series.series_id}`}
+              className="w-full"
+            >
+              <SelectValue
+                placeholder={TEACHER_ASSIGN_MESSAGES.TEACHER_PLACEHOLDER}
+              />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={NO_TEACHER_VALUE}>
+                {TEACHER_ASSIGN_MESSAGES.NO_TEACHER_OPTION}
+              </SelectItem>
+              {teachers.map((t) => (
+                <SelectItem key={t.id} value={t.id}>
+                  {t.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {error && (
+            <p role="alert" className="text-sm text-destructive">
+              {error}
+            </p>
+          )}
+        </Field>
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={isPending}
+            onClick={() => handleOpenChange(false)}
+          >
+            {COMMON_MESSAGES.CANCEL}
+          </Button>
+          <Button type="button" disabled={isPending} onClick={handleConfirm}>
+            {isPending
+              ? COMMON_MESSAGES.LOADING
+              : TEACHER_ASSIGN_MESSAGES.GROUP_CONFIRM}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 

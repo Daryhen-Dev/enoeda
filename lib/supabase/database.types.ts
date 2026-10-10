@@ -247,6 +247,13 @@ export type Database = {
         };
         Returns: undefined;
       };
+      set_class_series_teacher: {
+        Args: {
+          p_series_id: string;
+          p_teacher_id: string | null;
+        };
+        Returns: Json;
+      };
       update_own_student_phone: {
         Args: {
           p_phone: string | null;

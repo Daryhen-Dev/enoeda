@@ -2,11 +2,23 @@
 
 import { useState, useTransition, type KeyboardEvent, type MouseEvent } from "react";
 import { useRouter } from "next/navigation";
-import { AlertTriangleIcon, CirclePauseIcon, UserIcon } from "lucide-react";
+import { AlertTriangleIcon, CirclePauseIcon, EraserIcon, UserIcon, UserPenIcon } from "lucide-react";
 import { toast } from "sonner";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { AttendanceSheetDialog } from "@/components/attendance/attendance-sheet-dialog";
 import { SessionInfoSheetDialog } from "@/components/attendance/session-info-sheet-dialog";
+import { OneTimeTeacherDialog } from "@/components/classes/one-time-teacher-dialog";
 import { RemoveRecurringClassDialog } from "@/components/classes/remove-recurring-class-dialog";
 import { SessionSuspendDialog } from "@/components/classes/session-suspend-dialog";
 import { TeacherAssignDialog } from "@/components/classes/teacher-assign-dialog";
@@ -15,13 +27,18 @@ import {
   type RosterEditorTarget,
 } from "@/components/rosters/roster-editor-sheet";
 import { Button } from "@/components/ui/button";
-import { reinstateSession, type SessionView } from "@/lib/domain/classes/actions";
+import {
+  clearSessionSubstitution,
+  reinstateSession,
+  type SessionView,
+} from "@/lib/domain/classes/actions";
 import {
   CALENDAR_MESSAGES,
   COMMON_MESSAGES,
   ONE_TIME_CLASS_MESSAGES,
   ROSTER_EDITOR_MESSAGES,
   SUSPENSION_MESSAGES,
+  TEACHER_ASSIGN_MESSAGES,
   TEACHER_CONFLICT_MESSAGES,
 } from "@/lib/localization/es-ec";
 
@@ -74,6 +91,98 @@ function formatGroupMonth(periodMonth: string): string {
     timeZone: "UTC",
   }).format(new Date(Date.UTC(year, month - 1, 1)));
   return rawLabel.charAt(0).toUpperCase() + rawLabel.slice(1);
+}
+
+/**
+ * Undoes a day substitution ("Quitar sustitución"): confirms and clears
+ * the session's assigned_teacher_id override, so the occurrence goes back
+ * to the group's default teacher. Rendered only for recurring sessions
+ * with an active substitution. Admin-only UI: the block renders behind
+ * the calendar's canManage gate and the action re-asserts authorization
+ * server-side.
+ */
+function ClearSubstitutionAction({
+  scheduledClassId,
+  sessionDate,
+  branchId,
+  triggerClassName,
+}: {
+  scheduledClassId: string;
+  sessionDate: string;
+  branchId: string;
+  triggerClassName?: string;
+}) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
+
+  function handleConfirm() {
+    startTransition(async () => {
+      const result = await clearSessionSubstitution({
+        branch_id: branchId,
+        scheduled_class_id: scheduledClassId,
+        session_date: sessionDate,
+      });
+
+      if (result.success) {
+        setOpen(false);
+        toast.success(
+          result.data?.cleared
+            ? TEACHER_ASSIGN_MESSAGES.SUBSTITUTION_CLEARED
+            : TEACHER_ASSIGN_MESSAGES.SUBSTITUTION_NONE
+        );
+        router.refresh();
+      } else {
+        toast.error(result.error ?? COMMON_MESSAGES.UNEXPECTED_ERROR);
+      }
+    });
+  }
+
+  return (
+    <AlertDialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (isPending) return;
+        setOpen(nextOpen);
+      }}
+    >
+      <AlertDialogTrigger
+        render={
+          <Button
+            variant="outline"
+            size="sm"
+            aria-label={TEACHER_ASSIGN_MESSAGES.CLEAR_SUBSTITUTION_TRIGGER_ARIA_LABEL(
+              sessionDate
+            )}
+            className={triggerClassName}
+          />
+        }
+      >
+        <EraserIcon aria-hidden="true" data-icon="inline-start" />
+        {TEACHER_ASSIGN_MESSAGES.CLEAR_SUBSTITUTION_ACTION}
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>
+            {TEACHER_ASSIGN_MESSAGES.CLEAR_SUBSTITUTION_TITLE}
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            {TEACHER_ASSIGN_MESSAGES.CLEAR_SUBSTITUTION_DESCRIPTION}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={isPending}>
+            {COMMON_MESSAGES.CANCEL}
+          </AlertDialogCancel>
+          <AlertDialogAction disabled={isPending} onClick={handleConfirm}>
+            {isPending
+              ? COMMON_MESSAGES.LOADING
+              : TEACHER_ASSIGN_MESSAGES.CLEAR_SUBSTITUTION_CONFIRM}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
 }
 
 function isInteractiveTarget(target: EventTarget | null): boolean {
@@ -349,6 +458,23 @@ export function SessionBlock({
                   {ROSTER_EDITOR_MESSAGES.ROSTER_ONE_TIME_ACTION}
                 </Button>
               )}
+              {canManage && branchId && (
+                <OneTimeTeacherDialog
+                  oneTimeClassId={session.scheduled_class_id}
+                  branchId={branchId}
+                  teachers={teachers}
+                  currentTeacherId={session.teacher_id}
+                  triggerClassName={NEUTRAL_ACTION_CLASSES}
+                  trigger={
+                    <>
+                      <UserPenIcon data-icon="inline-start" />
+                      {hasNoTeacher
+                        ? TEACHER_CONFLICT_MESSAGES.ASSIGN_ACTION
+                        : TEACHER_CONFLICT_MESSAGES.CHANGE_ACTION}
+                    </>
+                  }
+                />
+              )}
             </>
           ) : (
             <>
@@ -412,6 +538,14 @@ export function SessionBlock({
                     }
                     triggerClassName={NEUTRAL_ACTION_CLASSES}
                   />
+                  {isSubstitute && (
+                    <ClearSubstitutionAction
+                      scheduledClassId={session.scheduled_class_id}
+                      sessionDate={session.session_date}
+                      branchId={branchId}
+                      triggerClassName={RESTORE_ACTION_CLASSES}
+                    />
+                  )}
                   <RemoveRecurringClassDialog
                     scheduledClassId={session.scheduled_class_id}
                     branchId={branchId}

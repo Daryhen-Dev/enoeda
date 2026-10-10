@@ -48,7 +48,10 @@ import {
   listUpcomingOneTimeClasses,
   renameClassSeries,
 } from "./actions";
-import { CLASS_MESSAGES } from "@/lib/localization/es-ec";
+import {
+  CLASS_MESSAGES,
+  TEACHER_ASSIGN_MESSAGES,
+} from "@/lib/localization/es-ec";
 
 const BRANCH_A = "aaaaaaaa-1111-2222-8333-444444444444";
 const DISCIPLINE_A = "cccccccc-1111-2222-8333-444444444444";
@@ -88,6 +91,9 @@ const mockTx = {
   },
   disciplines: {
     findUnique: vi.fn(),
+  },
+  user_roles: {
+    findFirst: vi.fn(),
   },
 };
 
@@ -265,19 +271,21 @@ describe("Schema branch_id enforcement (fail-closed)", () => {
   });
 
   describe("assignTeacherSchema", () => {
-    it("rejects when branch_id is absent", () => {
+    it("rejects the removed recurring target", () => {
       const result = assignTeacherSchema.safeParse({
         target_type: "recurring",
         scheduled_class_id: CLASS_ID,
         teacher_id: "22222222-3333-4444-8555-666666666666",
+        branch_id: BRANCH_A,
       });
       expect(result.success).toBe(false);
     });
 
-    it("accepts valid branch_id without a force flag", () => {
+    it("accepts a session payload with branch_id", () => {
       const result = assignTeacherSchema.safeParse({
-        target_type: "recurring",
+        target_type: "session",
         scheduled_class_id: CLASS_ID,
+        session_date: "2026-09-07",
         teacher_id: "22222222-3333-4444-8555-666666666666",
         branch_id: BRANCH_A,
       });
@@ -692,7 +700,7 @@ describe("createMonthlyClassGroup behavior", () => {
   });
 });
 
-describe("assignTeacher behavior (no conflict path)", () => {
+describe("assignTeacher behavior (session-only)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockAssertBranch.mockReturnValue({ ok: true });
@@ -700,11 +708,11 @@ describe("assignTeacher behavior (no conflict path)", () => {
     mockTx.scheduled_classes.findUnique.mockResolvedValue({
       branch_id: BRANCH_A,
     });
-    mockTx.scheduled_classes.update.mockResolvedValue({ id: CLASS_ID });
     mockTx.class_sessions.upsert.mockResolvedValue({ id: CLASS_ID });
+    mockTx.user_roles.findFirst.mockResolvedValue({ user_id: TEACHER_A });
   });
 
-  it("assigns a recurring teacher directly and never returns conflict data", async () => {
+  it("rejects the removed recurring target via the schema (no writes)", async () => {
     const result = await assignTeacher({
       target_type: "recurring",
       scheduled_class_id: CLASS_ID,
@@ -712,18 +720,34 @@ describe("assignTeacher behavior (no conflict path)", () => {
       branch_id: BRANCH_A,
     });
 
-    expect(result.success).toBe(true);
-    expect(result.data).toEqual({
-      teacher_assigned: true,
-      message: expect.any(String),
+    expect(result.success).toBe(false);
+    expect(mockTx.scheduled_classes.update).not.toHaveBeenCalled();
+    expect(mockTx.class_sessions.upsert).not.toHaveBeenCalled();
+  });
+
+  it("validates the teacher holds an active teacher role in the branch", async () => {
+    mockTx.user_roles.findFirst.mockResolvedValue(null);
+
+    const result = await assignTeacher({
+      target_type: "session",
+      scheduled_class_id: CLASS_ID,
+      session_date: "2026-09-07",
+      teacher_id: TEACHER_A,
+      branch_id: BRANCH_A,
     });
-    const data = result.data as Record<string, unknown> | undefined;
-    expect(data).not.toHaveProperty("conflict");
-    expect(data).not.toHaveProperty("conflicting_assignments");
-    expect(data).not.toHaveProperty("requires_confirmation");
-    expect(mockTx.scheduled_classes.update).toHaveBeenCalledWith({
-      where: { id: CLASS_ID },
-      data: { default_teacher_id: TEACHER_A },
+
+    expect(result).toEqual({
+      success: false,
+      error: TEACHER_ASSIGN_MESSAGES.INVALID_TEACHER,
+    });
+    expect(mockTx.user_roles.findFirst).toHaveBeenCalledWith({
+      where: {
+        user_id: TEACHER_A,
+        role: "teacher",
+        branch_id: BRANCH_A,
+        revoked_at: null,
+      },
+      select: { user_id: true },
     });
     expect(mockTx.class_sessions.upsert).not.toHaveBeenCalled();
   });
@@ -738,6 +762,14 @@ describe("assignTeacher behavior (no conflict path)", () => {
     });
 
     expect(result.success).toBe(true);
+    expect(result.data).toEqual({
+      teacher_assigned: true,
+      message: expect.any(String),
+    });
+    const data = result.data as Record<string, unknown> | undefined;
+    expect(data).not.toHaveProperty("conflict");
+    expect(data).not.toHaveProperty("conflicting_assignments");
+    expect(data).not.toHaveProperty("requires_confirmation");
     expect(mockTx.class_sessions.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
         where: {

@@ -10,6 +10,7 @@ import {
   ROSTER_MESSAGES,
   SCHEDULE_ONE_TIME_MESSAGES,
   SCHEDULE_SERIES_MESSAGES,
+  TEACHER_ASSIGN_MESSAGES,
 } from "@/lib/localization/es-ec";
 
 import { SeriesList } from "./series-list";
@@ -32,6 +33,8 @@ const mocks = vi.hoisted(() => ({
   deactivateAllFutureClasses: vi.fn(),
   deactivateScheduledClassSeries: vi.fn(),
   renameClassSeries: vi.fn(),
+  setClassSeriesTeacher: vi.fn(),
+  setOneTimeClassTeacher: vi.fn(),
   createMonthlyClassGroup: vi.fn(),
   createOneTimeClass: vi.fn(),
   listClassRoster: vi.fn(),
@@ -48,12 +51,25 @@ vi.mock("@/lib/domain/classes/actions", () => ({
   deactivateAllFutureClasses: mocks.deactivateAllFutureClasses,
   deactivateScheduledClassSeries: mocks.deactivateScheduledClassSeries,
   renameClassSeries: mocks.renameClassSeries,
+  setClassSeriesTeacher: mocks.setClassSeriesTeacher,
+  setOneTimeClassTeacher: mocks.setOneTimeClassTeacher,
   createMonthlyClassGroup: mocks.createMonthlyClassGroup,
   createOneTimeClass: mocks.createOneTimeClass,
 }));
 vi.mock("@/components/classes/one-time-class-create-dialog", () => ({
   OneTimeClassCreateDialog: () => (
     <button data-testid="one-time-class-create-dialog">Crear clase única</button>
+  ),
+}));
+vi.mock("@/components/classes/one-time-teacher-dialog", () => ({
+  OneTimeTeacherDialog: ({
+    triggerAriaLabel,
+  }: {
+    triggerAriaLabel?: string;
+  }) => (
+    <button type="button" data-testid="one-time-teacher-stub" aria-label={triggerAriaLabel}>
+      Cambiar profesor
+    </button>
   ),
 }));
 vi.mock("@/lib/domain/rosters/actions", () => ({
@@ -155,6 +171,7 @@ function renderList(
   options: {
     defaultTeacherId?: string | null;
     oneTimeClasses?: OneTimeClassView[];
+    teachers?: Array<{ id: string; name: string }>;
   } = {}
 ): { unmount(): void } {
   const container = document.createElement("div");
@@ -167,7 +184,7 @@ function renderList(
         branchId={BRANCH_ID}
         series={series}
         disciplines={[{ id: "cccccccc-1111-2222-8333-444444444444", name: "Karate" }]}
-        teachers={[]}
+        teachers={options.teachers ?? []}
         defaultTeacherId={options.defaultTeacherId ?? null}
         oneTimeClasses={options.oneTimeClasses ?? []}
       />
@@ -492,6 +509,169 @@ describe("SeriesList one-time classes section", () => {
 
     expect(document.body.textContent).toContain(
       SCHEDULE_ONE_TIME_MESSAGES.EMPTY_STATE
+    );
+  });
+});
+
+describe("SeriesList teacher actions", () => {
+  const TEACHER_A = "dddddddd-1111-2222-8333-444444444441";
+  const TEACHERS = [
+    { id: TEACHER_A, name: "María Pérez" },
+    { id: "dddddddd-1111-2222-8333-444444444442", name: "Juan Loor" },
+  ];
+
+  let rendered: { unmount(): void } | undefined;
+
+  beforeEach(() => {
+    (
+      globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }
+    ).IS_REACT_ACT_ENVIRONMENT = true;
+    vi.clearAllMocks();
+    mocks.listClassRoster.mockResolvedValue({
+      success: true,
+      data: { students: [] },
+    });
+    mocks.listRosterCandidates.mockResolvedValue({
+      success: true,
+      data: { students: [] },
+    });
+    mocks.setClassSeriesTeacher.mockResolvedValue({
+      success: true,
+      data: { updated_class_count: 3 },
+    });
+  });
+
+  afterEach(() => {
+    rendered?.unmount();
+    rendered = undefined;
+    vi.restoreAllMocks();
+  });
+
+  function queryGroupTeacherButton(name: string): HTMLButtonElement | null {
+    return document.querySelector<HTMLButtonElement>(
+      `button[aria-label="${TEACHER_ASSIGN_MESSAGES.GROUP_TRIGGER_ARIA_LABEL(name)}"]`
+    );
+  }
+
+  function queryDialogConfirm(content: HTMLElement) {
+    return [...content.querySelectorAll<HTMLButtonElement>("button")].find(
+      (button) =>
+        button.textContent?.includes(TEACHER_ASSIGN_MESSAGES.GROUP_CONFIRM)
+    );
+  }
+
+  it("opens the group teacher dialog with the from-now explanation and submits a null teacher for a group without one", async () => {
+    rendered = renderList([buildSeries()], { teachers: TEACHERS });
+    await flush();
+
+    const button = queryGroupTeacherButton("Karate infantil");
+    expect(button).not.toBeNull();
+    // Sync open: empty async flushes around Base UI dialog state stall jsdom.
+    act(() => {
+      button?.click();
+    });
+
+    const content = document.querySelector<HTMLElement>(
+      '[data-slot="dialog-content"]'
+    );
+    expect(content).not.toBeNull();
+    expect(content?.textContent).toContain(
+      TEACHER_ASSIGN_MESSAGES.GROUP_TITLE
+    );
+    // The change applies from now on: past classes keep their teacher.
+    expect(content?.textContent).toContain(
+      TEACHER_ASSIGN_MESSAGES.GROUP_DESCRIPTION
+    );
+    const selectTrigger = content?.querySelector<HTMLElement>(
+      '[data-slot="select-trigger"]'
+    );
+    expect(
+      selectTrigger?.textContent
+    ).toContain(TEACHER_ASSIGN_MESSAGES.NO_TEACHER_OPTION);
+
+    const confirmButton = queryDialogConfirm(content!);
+    expect(confirmButton).toBeDefined();
+    act(() => {
+      confirmButton?.click();
+    });
+    // Single flush to settle the mocked action promise.
+    await act(async () => {});
+
+    expect(mocks.setClassSeriesTeacher).toHaveBeenCalledWith({
+      branch_id: BRANCH_ID,
+      series_id: SERIES_ID,
+      teacher_id: null,
+    });
+    expect(mocks.toastSuccess).toHaveBeenCalledWith(
+      TEACHER_ASSIGN_MESSAGES.SERIES_UPDATED(3)
+    );
+    expect(mocks.refresh).toHaveBeenCalled();
+    expect(
+      document.querySelector('[data-slot="dialog-content"]')
+    ).toBeNull();
+  });
+
+  it("preselects the group's current teacher and submits it unchanged", async () => {
+    rendered = renderList(
+      [
+        buildSeries({
+          default_teacher_id: TEACHER_A,
+          teacher_name: "María Pérez",
+        }),
+      ],
+      { teachers: TEACHERS }
+    );
+    await flush();
+
+    act(() => {
+      queryGroupTeacherButton("Karate infantil")?.click();
+    });
+
+    const content = document.querySelector<HTMLElement>(
+      '[data-slot="dialog-content"]'
+    )!;
+    const selectTrigger = content.querySelector<HTMLElement>(
+      '[data-slot="select-trigger"]'
+    );
+    expect(selectTrigger?.textContent).toContain("María Pérez");
+
+    const confirmButton = queryDialogConfirm(content);
+    act(() => {
+      confirmButton?.click();
+    });
+    // Single flush to settle the mocked action promise.
+    await act(async () => {});
+
+    expect(mocks.setClassSeriesTeacher).toHaveBeenCalledWith({
+      branch_id: BRANCH_ID,
+      series_id: SERIES_ID,
+      teacher_id: TEACHER_A,
+    });
+  });
+
+  it("disables the group teacher action for inactive groups and renders the one-time teacher action per row", async () => {
+    rendered = renderList(
+      [
+        buildSeries({ is_active: false, is_all_inactive: true, active_row_count: 0, days_of_week: [] }),
+      ],
+      {
+        teachers: TEACHERS,
+        oneTimeClasses: [buildOneTimeClass()],
+      }
+    );
+    await flush();
+
+    const inactiveButton = queryGroupTeacherButton("Karate infantil");
+    expect(inactiveButton?.disabled).toBe(true);
+
+    const oneTimeAction = document.querySelector<HTMLButtonElement>(
+      '[data-testid="one-time-teacher-stub"]'
+    );
+    expect(oneTimeAction).not.toBeNull();
+    expect(oneTimeAction?.getAttribute("aria-label")).toBe(
+      TEACHER_ASSIGN_MESSAGES.ONE_TIME_TRIGGER_ARIA_LABEL(
+        oneTimeDateLabel("2026-11-05")
+      )
     );
   });
 });

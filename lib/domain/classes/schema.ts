@@ -109,6 +109,39 @@ export const cloneClassGroupSchema = z.object({
 
 export type CloneClassGroupInput = z.infer<typeof cloneClassGroupSchema>;
 
+/** Group-wide teacher change (set_class_series_teacher RPC). */
+export const setClassSeriesTeacherSchema = z.object({
+  branch_id: z.uuid(),
+  series_id: z.uuid(),
+  teacher_id: z.uuid().nullable(),
+});
+
+export type SetClassSeriesTeacherInput = z.infer<
+  typeof setClassSeriesTeacherSchema
+>;
+
+/** One-time class teacher change (any date; past corrections allowed). */
+export const setOneTimeClassTeacherSchema = z.object({
+  branch_id: z.uuid(),
+  one_time_class_id: z.uuid(),
+  teacher_id: z.uuid().nullable(),
+});
+
+export type SetOneTimeClassTeacherInput = z.infer<
+  typeof setOneTimeClassTeacherSchema
+>;
+
+/** Day-substitution clear (class_sessions.assigned_teacher_id → NULL). */
+export const clearSessionSubstitutionSchema = z.object({
+  branch_id: z.uuid(),
+  scheduled_class_id: z.uuid(),
+  session_date: z.string().date(),
+});
+
+export type ClearSessionSubstitutionInput = z.infer<
+  typeof clearSessionSubstitutionSchema
+>;
+
 export const getSessionsForRangeSchema = z.object({
   branch_id: z.uuid(),
   start_date: z.string().date(),
@@ -139,9 +172,11 @@ export const reinstateSessionSchema = z.object({
   branch_id: z.uuid(),
 });
 
+// Session-only: the unsafe, unused "recurring" target was removed — group-wide
+// changes go through setClassSeriesTeacher (cutoff-based, attribution-aware).
 export const assignTeacherSchema = z
   .object({
-    target_type: z.enum(["recurring", "session"]),
+    target_type: z.enum(["session"]),
     scheduled_class_id: z.uuid(),
     session_date: z.string().date().optional(),
     teacher_id: z.uuid(),
