@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ATTENDANCE_MESSAGES } from "@/lib/localization/es-ec";
+import { ATTENDANCE_MESSAGES, ROSTER_MESSAGES } from "@/lib/localization/es-ec";
 
 /**
  * Attendance validation schemas (Zod 4).
@@ -85,6 +85,78 @@ export const attendanceForSessionSchema = z
     path: ["session_date"],
   });
 
+export type AttendanceForSessionInput = z.infer<typeof attendanceForSessionSchema>;
+
+/** Case-insensitive search shared by the per-class candidate pickers. */
+const perClassSearchSchema = z
+  .string()
+  .trim()
+  .max(100, { error: ROSTER_MESSAGES.SEARCH_MAX_LENGTH })
+  .optional();
+
+/**
+ * Per-class candidates for a session: active per-class students of the
+ * discipline in the branch not yet present in the occurrence. Same session
+ * target shape as the attendance entry points (either kind, XOR enforced).
+ */
+export const listPerClassCandidatesSchema = z
+  .object({
+    branch_id: z.uuid({ error: ATTENDANCE_MESSAGES.INVALID_CLASS_ID }),
+    scheduled_class_id: z.uuid({ error: ATTENDANCE_MESSAGES.INVALID_CLASS_ID }).optional(),
+    one_time_class_id: z.uuid({ error: ATTENDANCE_MESSAGES.INVALID_CLASS_ID }).optional(),
+    session_date: z
+      .string()
+      .regex(DATE_PATTERN, { error: ATTENDANCE_MESSAGES.INVALID_DATE })
+      .refine(isValidCalendarDate, { error: ATTENDANCE_MESSAGES.INVALID_DATE })
+      .optional(),
+    search: perClassSearchSchema,
+  })
+  .refine(
+    (d) => Boolean(d.scheduled_class_id) !== Boolean(d.one_time_class_id),
+    { error: ATTENDANCE_MESSAGES.INVALID_CLASS_ID, path: ["scheduled_class_id"] }
+  )
+  .refine((d) => !d.scheduled_class_id || Boolean(d.session_date), {
+    error: ATTENDANCE_MESSAGES.INVALID_DATE,
+    path: ["session_date"],
+  });
+
+export type ListPerClassCandidatesInput = z.infer<typeof listPerClassCandidatesSchema>;
+
+/**
+ * Adds a per-class student to a session: creates their attendance (attended
+ * true) and, by default, registers the class payment inline. The payment can
+ * be skipped only via register_payment: false (explicit opt-out).
+ */
+export const addPerClassStudentToSessionSchema = z
+  .object({
+    branch_id: z.uuid({ error: ATTENDANCE_MESSAGES.INVALID_CLASS_ID }),
+    scheduled_class_id: z.uuid({ error: ATTENDANCE_MESSAGES.INVALID_CLASS_ID }).optional(),
+    one_time_class_id: z.uuid({ error: ATTENDANCE_MESSAGES.INVALID_CLASS_ID }).optional(),
+    session_date: z
+      .string()
+      .regex(DATE_PATTERN, { error: ATTENDANCE_MESSAGES.INVALID_DATE })
+      .refine(isValidCalendarDate, { error: ATTENDANCE_MESSAGES.INVALID_DATE })
+      .optional(),
+    student_id: z.uuid({ error: ATTENDANCE_MESSAGES.INVALID_STUDENT_ID }),
+    register_payment: z.boolean().optional(),
+    observation: z
+      .string()
+      .max(500, { error: ATTENDANCE_MESSAGES.OBSERVATION_MAX })
+      .nullish(),
+  })
+  .refine(
+    (d) => Boolean(d.scheduled_class_id) !== Boolean(d.one_time_class_id),
+    { error: ATTENDANCE_MESSAGES.INVALID_CLASS_ID, path: ["scheduled_class_id"] }
+  )
+  .refine((d) => !d.scheduled_class_id || Boolean(d.session_date), {
+    error: ATTENDANCE_MESSAGES.INVALID_DATE,
+    path: ["session_date"],
+  });
+
+export type AddPerClassStudentToSessionInput = z.infer<
+  typeof addPerClassStudentToSessionSchema
+>;
+
 export const attendanceStatsSchema = z
   .object({
     student_id: z.uuid({ error: ATTENDANCE_MESSAGES.INVALID_STUDENT_ID }),
@@ -104,7 +176,6 @@ export const attendanceStatsSchema = z
   .strict();
 
 export type TakeAttendanceInput = z.infer<typeof takeAttendanceSchema>;
-export type AttendanceForSessionInput = z.infer<typeof attendanceForSessionSchema>;
 export type AttendanceStatsInput = z.infer<typeof attendanceStatsSchema>;
 
 /** D2: Correction window — max days after session_date to modify existing attendance */

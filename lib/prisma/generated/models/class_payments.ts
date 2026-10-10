@@ -40,6 +40,7 @@ export type Class_paymentsMinAggregateOutputType = {
   amount: runtime.Decimal | null
   class_date: Date | null
   scheduled_class_id: string | null
+  one_time_class_id: string | null
   recorded_by: string | null
   created_at: Date | null
 }
@@ -50,6 +51,7 @@ export type Class_paymentsMaxAggregateOutputType = {
   amount: runtime.Decimal | null
   class_date: Date | null
   scheduled_class_id: string | null
+  one_time_class_id: string | null
   recorded_by: string | null
   created_at: Date | null
 }
@@ -60,6 +62,7 @@ export type Class_paymentsCountAggregateOutputType = {
   amount: number
   class_date: number
   scheduled_class_id: number
+  one_time_class_id: number
   recorded_by: number
   created_at: number
   _all: number
@@ -80,6 +83,7 @@ export type Class_paymentsMinAggregateInputType = {
   amount?: true
   class_date?: true
   scheduled_class_id?: true
+  one_time_class_id?: true
   recorded_by?: true
   created_at?: true
 }
@@ -90,6 +94,7 @@ export type Class_paymentsMaxAggregateInputType = {
   amount?: true
   class_date?: true
   scheduled_class_id?: true
+  one_time_class_id?: true
   recorded_by?: true
   created_at?: true
 }
@@ -100,6 +105,7 @@ export type Class_paymentsCountAggregateInputType = {
   amount?: true
   class_date?: true
   scheduled_class_id?: true
+  one_time_class_id?: true
   recorded_by?: true
   created_at?: true
   _all?: true
@@ -197,6 +203,7 @@ export type Class_paymentsGroupByOutputType = {
   amount: runtime.Decimal
   class_date: Date
   scheduled_class_id: string | null
+  one_time_class_id: string | null
   recorded_by: string
   created_at: Date
   _count: Class_paymentsCountAggregateOutputType | null
@@ -230,9 +237,11 @@ export type class_paymentsWhereInput = {
   amount?: Prisma.DecimalFilter<"class_payments"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   class_date?: Prisma.DateTimeFilter<"class_payments"> | Date | string
   scheduled_class_id?: Prisma.UuidNullableFilter<"class_payments"> | string | null
+  one_time_class_id?: Prisma.UuidNullableFilter<"class_payments"> | string | null
   recorded_by?: Prisma.UuidFilter<"class_payments"> | string
   created_at?: Prisma.DateTimeFilter<"class_payments"> | Date | string
   student_disciplines?: Prisma.XOR<Prisma.Student_disciplinesScalarRelationFilter, Prisma.student_disciplinesWhereInput>
+  one_time_classes?: Prisma.XOR<Prisma.One_time_classesNullableScalarRelationFilter, Prisma.one_time_classesWhereInput> | null
 }
 
 export type class_paymentsOrderByWithRelationInput = {
@@ -241,13 +250,17 @@ export type class_paymentsOrderByWithRelationInput = {
   amount?: Prisma.SortOrder
   class_date?: Prisma.SortOrder
   scheduled_class_id?: Prisma.SortOrderInput | Prisma.SortOrder
+  one_time_class_id?: Prisma.SortOrderInput | Prisma.SortOrder
   recorded_by?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   student_disciplines?: Prisma.student_disciplinesOrderByWithRelationInput
+  one_time_classes?: Prisma.one_time_classesOrderByWithRelationInput
 }
 
 export type class_paymentsWhereUniqueInput = Prisma.AtLeast<{
   id?: string
+  student_discipline_id_scheduled_class_id_class_date?: Prisma.class_paymentsStudent_discipline_idScheduled_class_idClass_dateCompoundUniqueInput
+  student_discipline_id_one_time_class_id?: Prisma.class_paymentsStudent_discipline_idOne_time_class_idCompoundUniqueInput
   AND?: Prisma.class_paymentsWhereInput | Prisma.class_paymentsWhereInput[]
   OR?: Prisma.class_paymentsWhereInput[]
   NOT?: Prisma.class_paymentsWhereInput | Prisma.class_paymentsWhereInput[]
@@ -255,10 +268,12 @@ export type class_paymentsWhereUniqueInput = Prisma.AtLeast<{
   amount?: Prisma.DecimalFilter<"class_payments"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   class_date?: Prisma.DateTimeFilter<"class_payments"> | Date | string
   scheduled_class_id?: Prisma.UuidNullableFilter<"class_payments"> | string | null
+  one_time_class_id?: Prisma.UuidNullableFilter<"class_payments"> | string | null
   recorded_by?: Prisma.UuidFilter<"class_payments"> | string
   created_at?: Prisma.DateTimeFilter<"class_payments"> | Date | string
   student_disciplines?: Prisma.XOR<Prisma.Student_disciplinesScalarRelationFilter, Prisma.student_disciplinesWhereInput>
-}, "id">
+  one_time_classes?: Prisma.XOR<Prisma.One_time_classesNullableScalarRelationFilter, Prisma.one_time_classesWhereInput> | null
+}, "id" | "student_discipline_id_scheduled_class_id_class_date" | "student_discipline_id_one_time_class_id">
 
 export type class_paymentsOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -266,6 +281,7 @@ export type class_paymentsOrderByWithAggregationInput = {
   amount?: Prisma.SortOrder
   class_date?: Prisma.SortOrder
   scheduled_class_id?: Prisma.SortOrderInput | Prisma.SortOrder
+  one_time_class_id?: Prisma.SortOrderInput | Prisma.SortOrder
   recorded_by?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   _count?: Prisma.class_paymentsCountOrderByAggregateInput
@@ -284,6 +300,7 @@ export type class_paymentsScalarWhereWithAggregatesInput = {
   amount?: Prisma.DecimalWithAggregatesFilter<"class_payments"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   class_date?: Prisma.DateTimeWithAggregatesFilter<"class_payments"> | Date | string
   scheduled_class_id?: Prisma.UuidNullableWithAggregatesFilter<"class_payments"> | string | null
+  one_time_class_id?: Prisma.UuidNullableWithAggregatesFilter<"class_payments"> | string | null
   recorded_by?: Prisma.UuidWithAggregatesFilter<"class_payments"> | string
   created_at?: Prisma.DateTimeWithAggregatesFilter<"class_payments"> | Date | string
 }
@@ -296,6 +313,7 @@ export type class_paymentsCreateInput = {
   recorded_by: string
   created_at?: Date | string
   student_disciplines: Prisma.student_disciplinesCreateNestedOneWithoutClass_paymentsInput
+  one_time_classes?: Prisma.one_time_classesCreateNestedOneWithoutClass_paymentsInput
 }
 
 export type class_paymentsUncheckedCreateInput = {
@@ -304,6 +322,7 @@ export type class_paymentsUncheckedCreateInput = {
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
   class_date?: Date | string
   scheduled_class_id?: string | null
+  one_time_class_id?: string | null
   recorded_by: string
   created_at?: Date | string
 }
@@ -316,6 +335,7 @@ export type class_paymentsUpdateInput = {
   recorded_by?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   student_disciplines?: Prisma.student_disciplinesUpdateOneRequiredWithoutClass_paymentsNestedInput
+  one_time_classes?: Prisma.one_time_classesUpdateOneWithoutClass_paymentsNestedInput
 }
 
 export type class_paymentsUncheckedUpdateInput = {
@@ -324,6 +344,7 @@ export type class_paymentsUncheckedUpdateInput = {
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   class_date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   scheduled_class_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  one_time_class_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   recorded_by?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -334,6 +355,7 @@ export type class_paymentsCreateManyInput = {
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
   class_date?: Date | string
   scheduled_class_id?: string | null
+  one_time_class_id?: string | null
   recorded_by: string
   created_at?: Date | string
 }
@@ -353,6 +375,7 @@ export type class_paymentsUncheckedUpdateManyInput = {
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   class_date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   scheduled_class_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  one_time_class_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   recorded_by?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -367,12 +390,24 @@ export type class_paymentsOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
+export type class_paymentsStudent_discipline_idScheduled_class_idClass_dateCompoundUniqueInput = {
+  student_discipline_id: string
+  scheduled_class_id: string
+  class_date: Date | string
+}
+
+export type class_paymentsStudent_discipline_idOne_time_class_idCompoundUniqueInput = {
+  student_discipline_id: string
+  one_time_class_id: string
+}
+
 export type class_paymentsCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   student_discipline_id?: Prisma.SortOrder
   amount?: Prisma.SortOrder
   class_date?: Prisma.SortOrder
   scheduled_class_id?: Prisma.SortOrder
+  one_time_class_id?: Prisma.SortOrder
   recorded_by?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
 }
@@ -387,6 +422,7 @@ export type class_paymentsMaxOrderByAggregateInput = {
   amount?: Prisma.SortOrder
   class_date?: Prisma.SortOrder
   scheduled_class_id?: Prisma.SortOrder
+  one_time_class_id?: Prisma.SortOrder
   recorded_by?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
 }
@@ -397,6 +433,7 @@ export type class_paymentsMinOrderByAggregateInput = {
   amount?: Prisma.SortOrder
   class_date?: Prisma.SortOrder
   scheduled_class_id?: Prisma.SortOrder
+  one_time_class_id?: Prisma.SortOrder
   recorded_by?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
 }
@@ -447,6 +484,48 @@ export type class_paymentsUncheckedUpdateManyWithoutStudent_disciplinesNestedInp
   deleteMany?: Prisma.class_paymentsScalarWhereInput | Prisma.class_paymentsScalarWhereInput[]
 }
 
+export type class_paymentsCreateNestedManyWithoutOne_time_classesInput = {
+  create?: Prisma.XOR<Prisma.class_paymentsCreateWithoutOne_time_classesInput, Prisma.class_paymentsUncheckedCreateWithoutOne_time_classesInput> | Prisma.class_paymentsCreateWithoutOne_time_classesInput[] | Prisma.class_paymentsUncheckedCreateWithoutOne_time_classesInput[]
+  connectOrCreate?: Prisma.class_paymentsCreateOrConnectWithoutOne_time_classesInput | Prisma.class_paymentsCreateOrConnectWithoutOne_time_classesInput[]
+  createMany?: Prisma.class_paymentsCreateManyOne_time_classesInputEnvelope
+  connect?: Prisma.class_paymentsWhereUniqueInput | Prisma.class_paymentsWhereUniqueInput[]
+}
+
+export type class_paymentsUncheckedCreateNestedManyWithoutOne_time_classesInput = {
+  create?: Prisma.XOR<Prisma.class_paymentsCreateWithoutOne_time_classesInput, Prisma.class_paymentsUncheckedCreateWithoutOne_time_classesInput> | Prisma.class_paymentsCreateWithoutOne_time_classesInput[] | Prisma.class_paymentsUncheckedCreateWithoutOne_time_classesInput[]
+  connectOrCreate?: Prisma.class_paymentsCreateOrConnectWithoutOne_time_classesInput | Prisma.class_paymentsCreateOrConnectWithoutOne_time_classesInput[]
+  createMany?: Prisma.class_paymentsCreateManyOne_time_classesInputEnvelope
+  connect?: Prisma.class_paymentsWhereUniqueInput | Prisma.class_paymentsWhereUniqueInput[]
+}
+
+export type class_paymentsUpdateManyWithoutOne_time_classesNestedInput = {
+  create?: Prisma.XOR<Prisma.class_paymentsCreateWithoutOne_time_classesInput, Prisma.class_paymentsUncheckedCreateWithoutOne_time_classesInput> | Prisma.class_paymentsCreateWithoutOne_time_classesInput[] | Prisma.class_paymentsUncheckedCreateWithoutOne_time_classesInput[]
+  connectOrCreate?: Prisma.class_paymentsCreateOrConnectWithoutOne_time_classesInput | Prisma.class_paymentsCreateOrConnectWithoutOne_time_classesInput[]
+  upsert?: Prisma.class_paymentsUpsertWithWhereUniqueWithoutOne_time_classesInput | Prisma.class_paymentsUpsertWithWhereUniqueWithoutOne_time_classesInput[]
+  createMany?: Prisma.class_paymentsCreateManyOne_time_classesInputEnvelope
+  set?: Prisma.class_paymentsWhereUniqueInput | Prisma.class_paymentsWhereUniqueInput[]
+  disconnect?: Prisma.class_paymentsWhereUniqueInput | Prisma.class_paymentsWhereUniqueInput[]
+  delete?: Prisma.class_paymentsWhereUniqueInput | Prisma.class_paymentsWhereUniqueInput[]
+  connect?: Prisma.class_paymentsWhereUniqueInput | Prisma.class_paymentsWhereUniqueInput[]
+  update?: Prisma.class_paymentsUpdateWithWhereUniqueWithoutOne_time_classesInput | Prisma.class_paymentsUpdateWithWhereUniqueWithoutOne_time_classesInput[]
+  updateMany?: Prisma.class_paymentsUpdateManyWithWhereWithoutOne_time_classesInput | Prisma.class_paymentsUpdateManyWithWhereWithoutOne_time_classesInput[]
+  deleteMany?: Prisma.class_paymentsScalarWhereInput | Prisma.class_paymentsScalarWhereInput[]
+}
+
+export type class_paymentsUncheckedUpdateManyWithoutOne_time_classesNestedInput = {
+  create?: Prisma.XOR<Prisma.class_paymentsCreateWithoutOne_time_classesInput, Prisma.class_paymentsUncheckedCreateWithoutOne_time_classesInput> | Prisma.class_paymentsCreateWithoutOne_time_classesInput[] | Prisma.class_paymentsUncheckedCreateWithoutOne_time_classesInput[]
+  connectOrCreate?: Prisma.class_paymentsCreateOrConnectWithoutOne_time_classesInput | Prisma.class_paymentsCreateOrConnectWithoutOne_time_classesInput[]
+  upsert?: Prisma.class_paymentsUpsertWithWhereUniqueWithoutOne_time_classesInput | Prisma.class_paymentsUpsertWithWhereUniqueWithoutOne_time_classesInput[]
+  createMany?: Prisma.class_paymentsCreateManyOne_time_classesInputEnvelope
+  set?: Prisma.class_paymentsWhereUniqueInput | Prisma.class_paymentsWhereUniqueInput[]
+  disconnect?: Prisma.class_paymentsWhereUniqueInput | Prisma.class_paymentsWhereUniqueInput[]
+  delete?: Prisma.class_paymentsWhereUniqueInput | Prisma.class_paymentsWhereUniqueInput[]
+  connect?: Prisma.class_paymentsWhereUniqueInput | Prisma.class_paymentsWhereUniqueInput[]
+  update?: Prisma.class_paymentsUpdateWithWhereUniqueWithoutOne_time_classesInput | Prisma.class_paymentsUpdateWithWhereUniqueWithoutOne_time_classesInput[]
+  updateMany?: Prisma.class_paymentsUpdateManyWithWhereWithoutOne_time_classesInput | Prisma.class_paymentsUpdateManyWithWhereWithoutOne_time_classesInput[]
+  deleteMany?: Prisma.class_paymentsScalarWhereInput | Prisma.class_paymentsScalarWhereInput[]
+}
+
 export type class_paymentsCreateWithoutStudent_disciplinesInput = {
   id?: string
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -454,6 +533,7 @@ export type class_paymentsCreateWithoutStudent_disciplinesInput = {
   scheduled_class_id?: string | null
   recorded_by: string
   created_at?: Date | string
+  one_time_classes?: Prisma.one_time_classesCreateNestedOneWithoutClass_paymentsInput
 }
 
 export type class_paymentsUncheckedCreateWithoutStudent_disciplinesInput = {
@@ -461,6 +541,7 @@ export type class_paymentsUncheckedCreateWithoutStudent_disciplinesInput = {
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
   class_date?: Date | string
   scheduled_class_id?: string | null
+  one_time_class_id?: string | null
   recorded_by: string
   created_at?: Date | string
 }
@@ -500,8 +581,55 @@ export type class_paymentsScalarWhereInput = {
   amount?: Prisma.DecimalFilter<"class_payments"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   class_date?: Prisma.DateTimeFilter<"class_payments"> | Date | string
   scheduled_class_id?: Prisma.UuidNullableFilter<"class_payments"> | string | null
+  one_time_class_id?: Prisma.UuidNullableFilter<"class_payments"> | string | null
   recorded_by?: Prisma.UuidFilter<"class_payments"> | string
   created_at?: Prisma.DateTimeFilter<"class_payments"> | Date | string
+}
+
+export type class_paymentsCreateWithoutOne_time_classesInput = {
+  id?: string
+  amount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  class_date?: Date | string
+  scheduled_class_id?: string | null
+  recorded_by: string
+  created_at?: Date | string
+  student_disciplines: Prisma.student_disciplinesCreateNestedOneWithoutClass_paymentsInput
+}
+
+export type class_paymentsUncheckedCreateWithoutOne_time_classesInput = {
+  id?: string
+  student_discipline_id: string
+  amount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  class_date?: Date | string
+  scheduled_class_id?: string | null
+  recorded_by: string
+  created_at?: Date | string
+}
+
+export type class_paymentsCreateOrConnectWithoutOne_time_classesInput = {
+  where: Prisma.class_paymentsWhereUniqueInput
+  create: Prisma.XOR<Prisma.class_paymentsCreateWithoutOne_time_classesInput, Prisma.class_paymentsUncheckedCreateWithoutOne_time_classesInput>
+}
+
+export type class_paymentsCreateManyOne_time_classesInputEnvelope = {
+  data: Prisma.class_paymentsCreateManyOne_time_classesInput | Prisma.class_paymentsCreateManyOne_time_classesInput[]
+  skipDuplicates?: boolean
+}
+
+export type class_paymentsUpsertWithWhereUniqueWithoutOne_time_classesInput = {
+  where: Prisma.class_paymentsWhereUniqueInput
+  update: Prisma.XOR<Prisma.class_paymentsUpdateWithoutOne_time_classesInput, Prisma.class_paymentsUncheckedUpdateWithoutOne_time_classesInput>
+  create: Prisma.XOR<Prisma.class_paymentsCreateWithoutOne_time_classesInput, Prisma.class_paymentsUncheckedCreateWithoutOne_time_classesInput>
+}
+
+export type class_paymentsUpdateWithWhereUniqueWithoutOne_time_classesInput = {
+  where: Prisma.class_paymentsWhereUniqueInput
+  data: Prisma.XOR<Prisma.class_paymentsUpdateWithoutOne_time_classesInput, Prisma.class_paymentsUncheckedUpdateWithoutOne_time_classesInput>
+}
+
+export type class_paymentsUpdateManyWithWhereWithoutOne_time_classesInput = {
+  where: Prisma.class_paymentsScalarWhereInput
+  data: Prisma.XOR<Prisma.class_paymentsUpdateManyMutationInput, Prisma.class_paymentsUncheckedUpdateManyWithoutOne_time_classesInput>
 }
 
 export type class_paymentsCreateManyStudent_disciplinesInput = {
@@ -509,6 +637,7 @@ export type class_paymentsCreateManyStudent_disciplinesInput = {
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
   class_date?: Date | string
   scheduled_class_id?: string | null
+  one_time_class_id?: string | null
   recorded_by: string
   created_at?: Date | string
 }
@@ -520,6 +649,7 @@ export type class_paymentsUpdateWithoutStudent_disciplinesInput = {
   scheduled_class_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   recorded_by?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  one_time_classes?: Prisma.one_time_classesUpdateOneWithoutClass_paymentsNestedInput
 }
 
 export type class_paymentsUncheckedUpdateWithoutStudent_disciplinesInput = {
@@ -527,12 +657,54 @@ export type class_paymentsUncheckedUpdateWithoutStudent_disciplinesInput = {
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   class_date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   scheduled_class_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  one_time_class_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   recorded_by?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type class_paymentsUncheckedUpdateManyWithoutStudent_disciplinesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  class_date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  scheduled_class_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  one_time_class_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recorded_by?: Prisma.StringFieldUpdateOperationsInput | string
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type class_paymentsCreateManyOne_time_classesInput = {
+  id?: string
+  student_discipline_id: string
+  amount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  class_date?: Date | string
+  scheduled_class_id?: string | null
+  recorded_by: string
+  created_at?: Date | string
+}
+
+export type class_paymentsUpdateWithoutOne_time_classesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  class_date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  scheduled_class_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recorded_by?: Prisma.StringFieldUpdateOperationsInput | string
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  student_disciplines?: Prisma.student_disciplinesUpdateOneRequiredWithoutClass_paymentsNestedInput
+}
+
+export type class_paymentsUncheckedUpdateWithoutOne_time_classesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  student_discipline_id?: Prisma.StringFieldUpdateOperationsInput | string
+  amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  class_date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  scheduled_class_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recorded_by?: Prisma.StringFieldUpdateOperationsInput | string
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type class_paymentsUncheckedUpdateManyWithoutOne_time_classesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  student_discipline_id?: Prisma.StringFieldUpdateOperationsInput | string
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   class_date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   scheduled_class_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -548,9 +720,11 @@ export type class_paymentsSelect<ExtArgs extends runtime.Types.Extensions.Intern
   amount?: boolean
   class_date?: boolean
   scheduled_class_id?: boolean
+  one_time_class_id?: boolean
   recorded_by?: boolean
   created_at?: boolean
   student_disciplines?: boolean | Prisma.student_disciplinesDefaultArgs<ExtArgs>
+  one_time_classes?: boolean | Prisma.class_payments$one_time_classesArgs<ExtArgs>
 }, ExtArgs["result"]["class_payments"]>
 
 export type class_paymentsSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -559,9 +733,11 @@ export type class_paymentsSelectCreateManyAndReturn<ExtArgs extends runtime.Type
   amount?: boolean
   class_date?: boolean
   scheduled_class_id?: boolean
+  one_time_class_id?: boolean
   recorded_by?: boolean
   created_at?: boolean
   student_disciplines?: boolean | Prisma.student_disciplinesDefaultArgs<ExtArgs>
+  one_time_classes?: boolean | Prisma.class_payments$one_time_classesArgs<ExtArgs>
 }, ExtArgs["result"]["class_payments"]>
 
 export type class_paymentsSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -570,9 +746,11 @@ export type class_paymentsSelectUpdateManyAndReturn<ExtArgs extends runtime.Type
   amount?: boolean
   class_date?: boolean
   scheduled_class_id?: boolean
+  one_time_class_id?: boolean
   recorded_by?: boolean
   created_at?: boolean
   student_disciplines?: boolean | Prisma.student_disciplinesDefaultArgs<ExtArgs>
+  one_time_classes?: boolean | Prisma.class_payments$one_time_classesArgs<ExtArgs>
 }, ExtArgs["result"]["class_payments"]>
 
 export type class_paymentsSelectScalar = {
@@ -581,25 +759,30 @@ export type class_paymentsSelectScalar = {
   amount?: boolean
   class_date?: boolean
   scheduled_class_id?: boolean
+  one_time_class_id?: boolean
   recorded_by?: boolean
   created_at?: boolean
 }
 
-export type class_paymentsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "student_discipline_id" | "amount" | "class_date" | "scheduled_class_id" | "recorded_by" | "created_at", ExtArgs["result"]["class_payments"]>
+export type class_paymentsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "student_discipline_id" | "amount" | "class_date" | "scheduled_class_id" | "one_time_class_id" | "recorded_by" | "created_at", ExtArgs["result"]["class_payments"]>
 export type class_paymentsInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   student_disciplines?: boolean | Prisma.student_disciplinesDefaultArgs<ExtArgs>
+  one_time_classes?: boolean | Prisma.class_payments$one_time_classesArgs<ExtArgs>
 }
 export type class_paymentsIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   student_disciplines?: boolean | Prisma.student_disciplinesDefaultArgs<ExtArgs>
+  one_time_classes?: boolean | Prisma.class_payments$one_time_classesArgs<ExtArgs>
 }
 export type class_paymentsIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   student_disciplines?: boolean | Prisma.student_disciplinesDefaultArgs<ExtArgs>
+  one_time_classes?: boolean | Prisma.class_payments$one_time_classesArgs<ExtArgs>
 }
 
 export type $class_paymentsPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "class_payments"
   objects: {
     student_disciplines: Prisma.$student_disciplinesPayload<ExtArgs>
+    one_time_classes: Prisma.$one_time_classesPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -607,6 +790,7 @@ export type $class_paymentsPayload<ExtArgs extends runtime.Types.Extensions.Inte
     amount: runtime.Decimal
     class_date: Date
     scheduled_class_id: string | null
+    one_time_class_id: string | null
     recorded_by: string
     created_at: Date
   }, ExtArgs["result"]["class_payments"]>
@@ -1004,6 +1188,7 @@ readonly fields: class_paymentsFieldRefs;
 export interface Prisma__class_paymentsClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   student_disciplines<T extends Prisma.student_disciplinesDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.student_disciplinesDefaultArgs<ExtArgs>>): Prisma.Prisma__student_disciplinesClient<runtime.Types.Result.GetResult<Prisma.$student_disciplinesPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  one_time_classes<T extends Prisma.class_payments$one_time_classesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.class_payments$one_time_classesArgs<ExtArgs>>): Prisma.Prisma__one_time_classesClient<runtime.Types.Result.GetResult<Prisma.$one_time_classesPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1038,6 +1223,7 @@ export interface class_paymentsFieldRefs {
   readonly amount: Prisma.FieldRef<"class_payments", 'Decimal'>
   readonly class_date: Prisma.FieldRef<"class_payments", 'DateTime'>
   readonly scheduled_class_id: Prisma.FieldRef<"class_payments", 'String'>
+  readonly one_time_class_id: Prisma.FieldRef<"class_payments", 'String'>
   readonly recorded_by: Prisma.FieldRef<"class_payments", 'String'>
   readonly created_at: Prisma.FieldRef<"class_payments", 'DateTime'>
 }
@@ -1438,6 +1624,25 @@ export type class_paymentsDeleteManyArgs<ExtArgs extends runtime.Types.Extension
    * Limit how many class_payments to delete.
    */
   limit?: number
+}
+
+/**
+ * class_payments.one_time_classes
+ */
+export type class_payments$one_time_classesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the one_time_classes
+   */
+  select?: Prisma.one_time_classesSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the one_time_classes
+   */
+  omit?: Prisma.one_time_classesOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.one_time_classesInclude<ExtArgs> | null
+  where?: Prisma.one_time_classesWhereInput
 }
 
 /**

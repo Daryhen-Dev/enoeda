@@ -32,6 +32,7 @@ export type Student_disciplinesMinAggregateOutputType = {
   is_active: boolean | null
   suspended_at: Date | null
   next_due_date: Date | null
+  billing_mode: string | null
   created_at: Date | null
   updated_at: Date | null
 }
@@ -44,6 +45,7 @@ export type Student_disciplinesMaxAggregateOutputType = {
   is_active: boolean | null
   suspended_at: Date | null
   next_due_date: Date | null
+  billing_mode: string | null
   created_at: Date | null
   updated_at: Date | null
 }
@@ -56,6 +58,7 @@ export type Student_disciplinesCountAggregateOutputType = {
   is_active: number
   suspended_at: number
   next_due_date: number
+  billing_mode: number
   created_at: number
   updated_at: number
   _all: number
@@ -70,6 +73,7 @@ export type Student_disciplinesMinAggregateInputType = {
   is_active?: true
   suspended_at?: true
   next_due_date?: true
+  billing_mode?: true
   created_at?: true
   updated_at?: true
 }
@@ -82,6 +86,7 @@ export type Student_disciplinesMaxAggregateInputType = {
   is_active?: true
   suspended_at?: true
   next_due_date?: true
+  billing_mode?: true
   created_at?: true
   updated_at?: true
 }
@@ -94,6 +99,7 @@ export type Student_disciplinesCountAggregateInputType = {
   is_active?: true
   suspended_at?: true
   next_due_date?: true
+  billing_mode?: true
   created_at?: true
   updated_at?: true
   _all?: true
@@ -179,6 +185,7 @@ export type Student_disciplinesGroupByOutputType = {
   is_active: boolean
   suspended_at: Date | null
   next_due_date: Date | null
+  billing_mode: string
   created_at: Date
   updated_at: Date
   _count: Student_disciplinesCountAggregateOutputType | null
@@ -212,6 +219,7 @@ export type student_disciplinesWhereInput = {
   is_active?: Prisma.BoolFilter<"student_disciplines"> | boolean
   suspended_at?: Prisma.DateTimeNullableFilter<"student_disciplines"> | Date | string | null
   next_due_date?: Prisma.DateTimeNullableFilter<"student_disciplines"> | Date | string | null
+  billing_mode?: Prisma.StringFilter<"student_disciplines"> | string
   created_at?: Prisma.DateTimeFilter<"student_disciplines"> | Date | string
   updated_at?: Prisma.DateTimeFilter<"student_disciplines"> | Date | string
   students?: Prisma.XOR<Prisma.StudentsScalarRelationFilter, Prisma.studentsWhereInput>
@@ -229,6 +237,7 @@ export type student_disciplinesOrderByWithRelationInput = {
   is_active?: Prisma.SortOrder
   suspended_at?: Prisma.SortOrderInput | Prisma.SortOrder
   next_due_date?: Prisma.SortOrderInput | Prisma.SortOrder
+  billing_mode?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
   students?: Prisma.studentsOrderByWithRelationInput
@@ -250,6 +259,7 @@ export type student_disciplinesWhereUniqueInput = Prisma.AtLeast<{
   is_active?: Prisma.BoolFilter<"student_disciplines"> | boolean
   suspended_at?: Prisma.DateTimeNullableFilter<"student_disciplines"> | Date | string | null
   next_due_date?: Prisma.DateTimeNullableFilter<"student_disciplines"> | Date | string | null
+  billing_mode?: Prisma.StringFilter<"student_disciplines"> | string
   created_at?: Prisma.DateTimeFilter<"student_disciplines"> | Date | string
   updated_at?: Prisma.DateTimeFilter<"student_disciplines"> | Date | string
   students?: Prisma.XOR<Prisma.StudentsScalarRelationFilter, Prisma.studentsWhereInput>
@@ -267,6 +277,7 @@ export type student_disciplinesOrderByWithAggregationInput = {
   is_active?: Prisma.SortOrder
   suspended_at?: Prisma.SortOrderInput | Prisma.SortOrder
   next_due_date?: Prisma.SortOrderInput | Prisma.SortOrder
+  billing_mode?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
   _count?: Prisma.student_disciplinesCountOrderByAggregateInput
@@ -285,6 +296,7 @@ export type student_disciplinesScalarWhereWithAggregatesInput = {
   is_active?: Prisma.BoolWithAggregatesFilter<"student_disciplines"> | boolean
   suspended_at?: Prisma.DateTimeNullableWithAggregatesFilter<"student_disciplines"> | Date | string | null
   next_due_date?: Prisma.DateTimeNullableWithAggregatesFilter<"student_disciplines"> | Date | string | null
+  billing_mode?: Prisma.StringWithAggregatesFilter<"student_disciplines"> | string
   created_at?: Prisma.DateTimeWithAggregatesFilter<"student_disciplines"> | Date | string
   updated_at?: Prisma.DateTimeWithAggregatesFilter<"student_disciplines"> | Date | string
 }
@@ -295,6 +307,7 @@ export type student_disciplinesCreateInput = {
   is_active?: boolean
   suspended_at?: Date | string | null
   next_due_date?: Date | string | null
+  billing_mode?: string
   created_at?: Date | string
   updated_at?: Date | string
   students: Prisma.studentsCreateNestedOneWithoutStudent_disciplinesInput
@@ -312,6 +325,7 @@ export type student_disciplinesUncheckedCreateInput = {
   is_active?: boolean
   suspended_at?: Date | string | null
   next_due_date?: Date | string | null
+  billing_mode?: string
   created_at?: Date | string
   updated_at?: Date | string
   discipline_events?: Prisma.discipline_eventsUncheckedCreateNestedManyWithoutStudent_disciplinesInput
@@ -325,6 +339,7 @@ export type student_disciplinesUpdateInput = {
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   suspended_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   next_due_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  billing_mode?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   students?: Prisma.studentsUpdateOneRequiredWithoutStudent_disciplinesNestedInput
@@ -342,6 +357,7 @@ export type student_disciplinesUncheckedUpdateInput = {
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   suspended_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   next_due_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  billing_mode?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   discipline_events?: Prisma.discipline_eventsUncheckedUpdateManyWithoutStudent_disciplinesNestedInput
@@ -357,6 +373,7 @@ export type student_disciplinesCreateManyInput = {
   is_active?: boolean
   suspended_at?: Date | string | null
   next_due_date?: Date | string | null
+  billing_mode?: string
   created_at?: Date | string
   updated_at?: Date | string
 }
@@ -367,6 +384,7 @@ export type student_disciplinesUpdateManyMutationInput = {
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   suspended_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   next_due_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  billing_mode?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -379,6 +397,7 @@ export type student_disciplinesUncheckedUpdateManyInput = {
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   suspended_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   next_due_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  billing_mode?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -406,6 +425,7 @@ export type student_disciplinesCountOrderByAggregateInput = {
   is_active?: Prisma.SortOrder
   suspended_at?: Prisma.SortOrder
   next_due_date?: Prisma.SortOrder
+  billing_mode?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
 }
@@ -418,6 +438,7 @@ export type student_disciplinesMaxOrderByAggregateInput = {
   is_active?: Prisma.SortOrder
   suspended_at?: Prisma.SortOrder
   next_due_date?: Prisma.SortOrder
+  billing_mode?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
 }
@@ -430,6 +451,7 @@ export type student_disciplinesMinOrderByAggregateInput = {
   is_active?: Prisma.SortOrder
   suspended_at?: Prisma.SortOrder
   next_due_date?: Prisma.SortOrder
+  billing_mode?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
 }
@@ -571,6 +593,7 @@ export type student_disciplinesCreateWithoutStudentsInput = {
   is_active?: boolean
   suspended_at?: Date | string | null
   next_due_date?: Date | string | null
+  billing_mode?: string
   created_at?: Date | string
   updated_at?: Date | string
   disciplines: Prisma.disciplinesCreateNestedOneWithoutStudent_disciplinesInput
@@ -586,6 +609,7 @@ export type student_disciplinesUncheckedCreateWithoutStudentsInput = {
   is_active?: boolean
   suspended_at?: Date | string | null
   next_due_date?: Date | string | null
+  billing_mode?: string
   created_at?: Date | string
   updated_at?: Date | string
   discipline_events?: Prisma.discipline_eventsUncheckedCreateNestedManyWithoutStudent_disciplinesInput
@@ -630,6 +654,7 @@ export type student_disciplinesScalarWhereInput = {
   is_active?: Prisma.BoolFilter<"student_disciplines"> | boolean
   suspended_at?: Prisma.DateTimeNullableFilter<"student_disciplines"> | Date | string | null
   next_due_date?: Prisma.DateTimeNullableFilter<"student_disciplines"> | Date | string | null
+  billing_mode?: Prisma.StringFilter<"student_disciplines"> | string
   created_at?: Prisma.DateTimeFilter<"student_disciplines"> | Date | string
   updated_at?: Prisma.DateTimeFilter<"student_disciplines"> | Date | string
 }
@@ -640,6 +665,7 @@ export type student_disciplinesCreateWithoutDisciplinesInput = {
   is_active?: boolean
   suspended_at?: Date | string | null
   next_due_date?: Date | string | null
+  billing_mode?: string
   created_at?: Date | string
   updated_at?: Date | string
   students: Prisma.studentsCreateNestedOneWithoutStudent_disciplinesInput
@@ -655,6 +681,7 @@ export type student_disciplinesUncheckedCreateWithoutDisciplinesInput = {
   is_active?: boolean
   suspended_at?: Date | string | null
   next_due_date?: Date | string | null
+  billing_mode?: string
   created_at?: Date | string
   updated_at?: Date | string
   discipline_events?: Prisma.discipline_eventsUncheckedCreateNestedManyWithoutStudent_disciplinesInput
@@ -694,6 +721,7 @@ export type student_disciplinesCreateWithoutDiscipline_eventsInput = {
   is_active?: boolean
   suspended_at?: Date | string | null
   next_due_date?: Date | string | null
+  billing_mode?: string
   created_at?: Date | string
   updated_at?: Date | string
   students: Prisma.studentsCreateNestedOneWithoutStudent_disciplinesInput
@@ -710,6 +738,7 @@ export type student_disciplinesUncheckedCreateWithoutDiscipline_eventsInput = {
   is_active?: boolean
   suspended_at?: Date | string | null
   next_due_date?: Date | string | null
+  billing_mode?: string
   created_at?: Date | string
   updated_at?: Date | string
   payments?: Prisma.paymentsUncheckedCreateNestedManyWithoutStudent_disciplinesInput
@@ -738,6 +767,7 @@ export type student_disciplinesUpdateWithoutDiscipline_eventsInput = {
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   suspended_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   next_due_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  billing_mode?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   students?: Prisma.studentsUpdateOneRequiredWithoutStudent_disciplinesNestedInput
@@ -754,6 +784,7 @@ export type student_disciplinesUncheckedUpdateWithoutDiscipline_eventsInput = {
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   suspended_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   next_due_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  billing_mode?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   payments?: Prisma.paymentsUncheckedUpdateManyWithoutStudent_disciplinesNestedInput
@@ -766,6 +797,7 @@ export type student_disciplinesCreateWithoutPaymentsInput = {
   is_active?: boolean
   suspended_at?: Date | string | null
   next_due_date?: Date | string | null
+  billing_mode?: string
   created_at?: Date | string
   updated_at?: Date | string
   students: Prisma.studentsCreateNestedOneWithoutStudent_disciplinesInput
@@ -782,6 +814,7 @@ export type student_disciplinesUncheckedCreateWithoutPaymentsInput = {
   is_active?: boolean
   suspended_at?: Date | string | null
   next_due_date?: Date | string | null
+  billing_mode?: string
   created_at?: Date | string
   updated_at?: Date | string
   discipline_events?: Prisma.discipline_eventsUncheckedCreateNestedManyWithoutStudent_disciplinesInput
@@ -810,6 +843,7 @@ export type student_disciplinesUpdateWithoutPaymentsInput = {
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   suspended_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   next_due_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  billing_mode?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   students?: Prisma.studentsUpdateOneRequiredWithoutStudent_disciplinesNestedInput
@@ -826,6 +860,7 @@ export type student_disciplinesUncheckedUpdateWithoutPaymentsInput = {
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   suspended_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   next_due_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  billing_mode?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   discipline_events?: Prisma.discipline_eventsUncheckedUpdateManyWithoutStudent_disciplinesNestedInput
@@ -838,6 +873,7 @@ export type student_disciplinesCreateWithoutClass_paymentsInput = {
   is_active?: boolean
   suspended_at?: Date | string | null
   next_due_date?: Date | string | null
+  billing_mode?: string
   created_at?: Date | string
   updated_at?: Date | string
   students: Prisma.studentsCreateNestedOneWithoutStudent_disciplinesInput
@@ -854,6 +890,7 @@ export type student_disciplinesUncheckedCreateWithoutClass_paymentsInput = {
   is_active?: boolean
   suspended_at?: Date | string | null
   next_due_date?: Date | string | null
+  billing_mode?: string
   created_at?: Date | string
   updated_at?: Date | string
   discipline_events?: Prisma.discipline_eventsUncheckedCreateNestedManyWithoutStudent_disciplinesInput
@@ -882,6 +919,7 @@ export type student_disciplinesUpdateWithoutClass_paymentsInput = {
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   suspended_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   next_due_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  billing_mode?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   students?: Prisma.studentsUpdateOneRequiredWithoutStudent_disciplinesNestedInput
@@ -898,6 +936,7 @@ export type student_disciplinesUncheckedUpdateWithoutClass_paymentsInput = {
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   suspended_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   next_due_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  billing_mode?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   discipline_events?: Prisma.discipline_eventsUncheckedUpdateManyWithoutStudent_disciplinesNestedInput
@@ -911,6 +950,7 @@ export type student_disciplinesCreateManyStudentsInput = {
   is_active?: boolean
   suspended_at?: Date | string | null
   next_due_date?: Date | string | null
+  billing_mode?: string
   created_at?: Date | string
   updated_at?: Date | string
 }
@@ -921,6 +961,7 @@ export type student_disciplinesUpdateWithoutStudentsInput = {
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   suspended_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   next_due_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  billing_mode?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   disciplines?: Prisma.disciplinesUpdateOneRequiredWithoutStudent_disciplinesNestedInput
@@ -936,6 +977,7 @@ export type student_disciplinesUncheckedUpdateWithoutStudentsInput = {
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   suspended_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   next_due_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  billing_mode?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   discipline_events?: Prisma.discipline_eventsUncheckedUpdateManyWithoutStudent_disciplinesNestedInput
@@ -950,6 +992,7 @@ export type student_disciplinesUncheckedUpdateManyWithoutStudentsInput = {
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   suspended_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   next_due_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  billing_mode?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -961,6 +1004,7 @@ export type student_disciplinesCreateManyDisciplinesInput = {
   is_active?: boolean
   suspended_at?: Date | string | null
   next_due_date?: Date | string | null
+  billing_mode?: string
   created_at?: Date | string
   updated_at?: Date | string
 }
@@ -971,6 +1015,7 @@ export type student_disciplinesUpdateWithoutDisciplinesInput = {
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   suspended_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   next_due_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  billing_mode?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   students?: Prisma.studentsUpdateOneRequiredWithoutStudent_disciplinesNestedInput
@@ -986,6 +1031,7 @@ export type student_disciplinesUncheckedUpdateWithoutDisciplinesInput = {
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   suspended_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   next_due_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  billing_mode?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   discipline_events?: Prisma.discipline_eventsUncheckedUpdateManyWithoutStudent_disciplinesNestedInput
@@ -1000,6 +1046,7 @@ export type student_disciplinesUncheckedUpdateManyWithoutDisciplinesInput = {
   is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   suspended_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   next_due_date?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  billing_mode?: Prisma.StringFieldUpdateOperationsInput | string
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1061,6 +1108,7 @@ export type student_disciplinesSelect<ExtArgs extends runtime.Types.Extensions.I
   is_active?: boolean
   suspended_at?: boolean
   next_due_date?: boolean
+  billing_mode?: boolean
   created_at?: boolean
   updated_at?: boolean
   students?: boolean | Prisma.studentsDefaultArgs<ExtArgs>
@@ -1079,6 +1127,7 @@ export type student_disciplinesSelectCreateManyAndReturn<ExtArgs extends runtime
   is_active?: boolean
   suspended_at?: boolean
   next_due_date?: boolean
+  billing_mode?: boolean
   created_at?: boolean
   updated_at?: boolean
   students?: boolean | Prisma.studentsDefaultArgs<ExtArgs>
@@ -1093,6 +1142,7 @@ export type student_disciplinesSelectUpdateManyAndReturn<ExtArgs extends runtime
   is_active?: boolean
   suspended_at?: boolean
   next_due_date?: boolean
+  billing_mode?: boolean
   created_at?: boolean
   updated_at?: boolean
   students?: boolean | Prisma.studentsDefaultArgs<ExtArgs>
@@ -1107,11 +1157,12 @@ export type student_disciplinesSelectScalar = {
   is_active?: boolean
   suspended_at?: boolean
   next_due_date?: boolean
+  billing_mode?: boolean
   created_at?: boolean
   updated_at?: boolean
 }
 
-export type student_disciplinesOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "student_id" | "discipline_id" | "enrolled_at" | "is_active" | "suspended_at" | "next_due_date" | "created_at" | "updated_at", ExtArgs["result"]["student_disciplines"]>
+export type student_disciplinesOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "student_id" | "discipline_id" | "enrolled_at" | "is_active" | "suspended_at" | "next_due_date" | "billing_mode" | "created_at" | "updated_at", ExtArgs["result"]["student_disciplines"]>
 export type student_disciplinesInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   students?: boolean | Prisma.studentsDefaultArgs<ExtArgs>
   disciplines?: boolean | Prisma.disciplinesDefaultArgs<ExtArgs>
@@ -1146,6 +1197,7 @@ export type $student_disciplinesPayload<ExtArgs extends runtime.Types.Extensions
     is_active: boolean
     suspended_at: Date | null
     next_due_date: Date | null
+    billing_mode: string
     created_at: Date
     updated_at: Date
   }, ExtArgs["result"]["student_disciplines"]>
@@ -1583,6 +1635,7 @@ export interface student_disciplinesFieldRefs {
   readonly is_active: Prisma.FieldRef<"student_disciplines", 'Boolean'>
   readonly suspended_at: Prisma.FieldRef<"student_disciplines", 'DateTime'>
   readonly next_due_date: Prisma.FieldRef<"student_disciplines", 'DateTime'>
+  readonly billing_mode: Prisma.FieldRef<"student_disciplines", 'String'>
   readonly created_at: Prisma.FieldRef<"student_disciplines", 'DateTime'>
   readonly updated_at: Prisma.FieldRef<"student_disciplines", 'DateTime'>
 }

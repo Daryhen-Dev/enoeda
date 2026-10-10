@@ -25,6 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { createOneTimeClass } from "@/lib/domain/classes/actions";
+import { RosterEditorSheet } from "@/components/rosters/roster-editor-sheet";
 import {
   CLASS_MESSAGES,
   COMMON_MESSAGES,
@@ -55,6 +56,9 @@ export function OneTimeClassCreateDialog({
   const [teacherId, setTeacherId] = useState(NO_TEACHER_VALUE);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  /** Set right after a successful create — switches the sheet to a success state with the roster follow-up. */
+  const [createdClassId, setCreatedClassId] = useState<string | null>(null);
+  const [rosterOpen, setRosterOpen] = useState(false);
 
   function getInitialTeacherId() {
     return defaultTeacherId && teachers.some((teacher) => teacher.id === defaultTeacherId)
@@ -68,6 +72,7 @@ export function OneTimeClassCreateDialog({
     setStartTime("09:00");
     setTeacherId(getInitialTeacherId());
     setError(null);
+    setCreatedClassId(null);
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -80,9 +85,9 @@ export function OneTimeClassCreateDialog({
         class_date: classDate,
         start_time: startTime,
       });
-      if (result.success) {
-        setOpen(false);
+      if (result.success && result.data) {
         resetForm();
+        setCreatedClassId(result.data.id);
         toast.success(ONE_TIME_CLASS_MESSAGES.CREATED);
         router.refresh();
       } else {
@@ -92,13 +97,14 @@ export function OneTimeClassCreateDialog({
   }
 
   return (
-    <Sheet
-      open={open}
-      onOpenChange={(nextOpen) => {
-        setOpen(nextOpen);
-        resetForm();
-      }}
-    >
+    <>
+      <Sheet
+        open={open}
+        onOpenChange={(nextOpen) => {
+          setOpen(nextOpen);
+          resetForm();
+        }}
+      >
       <SheetTrigger render={<Button variant="outline" size="default" />}>
         <CalendarPlusIcon data-icon="inline-start" />
         {ONE_TIME_CLASS_MESSAGES.CREATE_TITLE}
@@ -111,6 +117,25 @@ export function OneTimeClassCreateDialog({
           </SheetDescription>
         </SheetHeader>
 
+        {createdClassId ? (
+          <div className="flex flex-1 flex-col gap-4 px-4">
+            <p className="text-sm">{ONE_TIME_CLASS_MESSAGES.CREATED}</p>
+            <p className="text-sm text-muted-foreground">
+              {ONE_TIME_CLASS_MESSAGES.CREATED_DESCRIPTION}
+            </p>
+            <Button
+              onClick={() => {
+                setOpen(false);
+                setRosterOpen(true);
+              }}
+            >
+              {CLASS_MESSAGES.ASSIGN_STUDENTS_ACTION}
+            </Button>
+            <Button variant="outline" onClick={() => setOpen(false)}>
+              {COMMON_MESSAGES.CANCEL}
+            </Button>
+          </div>
+        ) : (
         <form
           onSubmit={handleSubmit}
           className="flex flex-1 flex-col gap-4 overflow-y-auto px-4"
@@ -203,7 +228,20 @@ export function OneTimeClassCreateDialog({
             {isPending ? COMMON_MESSAGES.LOADING : COMMON_MESSAGES.CREATE}
           </Button>
         </form>
+        )}
       </SheetContent>
-    </Sheet>
+      </Sheet>
+      {createdClassId && (
+        <RosterEditorSheet
+          branchId={branchId}
+          target={{ kind: "one_time", one_time_class_id: createdClassId }}
+          open={rosterOpen}
+          onOpenChange={(nextOpen) => {
+            setRosterOpen(nextOpen);
+            if (!nextOpen) setCreatedClassId(null);
+          }}
+        />
+      )}
+    </>
   );
 }

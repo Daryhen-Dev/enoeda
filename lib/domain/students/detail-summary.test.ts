@@ -45,6 +45,7 @@ function enrollment(
     enrolled_at: utcDate(2024, 6, 1),
     is_active: isActive,
     suspended_at: isActive ? null : utcDate(2025, 1, 1),
+    billing_mode: "monthly",
   };
 }
 

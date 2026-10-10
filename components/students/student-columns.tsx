@@ -34,22 +34,25 @@ interface StudentColumnsOptions {
 function getNearestDueDiscipline(
   disciplines: ActiveStudentDiscipline[]
 ): ActiveStudentDiscipline | undefined {
-  return disciplines.reduce<ActiveStudentDiscipline | undefined>(
-    (nearestDiscipline, discipline) => {
-      if (discipline.next_due_date === null) return nearestDiscipline
+  // Per-class enrollments have no due date; only monthly ones can be overdue.
+  return disciplines
+    .filter((discipline) => discipline.billing_mode === "monthly")
+    .reduce<ActiveStudentDiscipline | undefined>(
+      (nearestDiscipline, discipline) => {
+        if (discipline.next_due_date === null) return nearestDiscipline
 
-      if (
-        nearestDiscipline === undefined ||
-        nearestDiscipline.next_due_date === null ||
-        discipline.next_due_date < nearestDiscipline.next_due_date
-      ) {
-        return discipline
-      }
+        if (
+          nearestDiscipline === undefined ||
+          nearestDiscipline.next_due_date === null ||
+          discipline.next_due_date < nearestDiscipline.next_due_date
+        ) {
+          return discipline
+        }
 
-      return nearestDiscipline
-    },
-    undefined,
-  )
+        return nearestDiscipline
+      },
+      undefined,
+    )
 }
 
 function getDueDateStatus(dueDate: string, today: string): string {
@@ -111,7 +114,7 @@ export function getStudentColumns({
                         )}
                         className="flex flex-wrap gap-2"
                       >
-                        {canManage && (
+                        {canManage && discipline.billing_mode === "monthly" && (
                           <RegisterMonthlyPaymentDialog
                             studentDisciplineId={discipline.id}
                             branchId={branchId}
@@ -203,14 +206,25 @@ export function getStudentColumns({
             id: "monthly-due-date",
             header: STUDENT_DIRECTORY_MESSAGES.MONTHLY_DUE_DATE,
             cell: ({ row }: { row: { original: StudentListItem } }) => {
-              const nearestDiscipline = getNearestDueDiscipline(
-                row.original.active_disciplines,
-              )
+              const disciplines = row.original.active_disciplines
+              const nearestDiscipline = getNearestDueDiscipline(disciplines)
 
               if (
                 nearestDiscipline === undefined ||
                 nearestDiscipline.next_due_date === null
               ) {
+                // A student enrolled only per class never has a due date.
+                if (
+                  !disciplines.some(
+                    (discipline) => discipline.billing_mode === "monthly",
+                  ) &&
+                  disciplines.some(
+                    (discipline) => discipline.billing_mode === "per_class",
+                  )
+                ) {
+                  return STUDENT_DIRECTORY_MESSAGES.PER_CLASS_DUE_DATE
+                }
+
                 return STUDENT_DIRECTORY_MESSAGES.NO_PAYMENTS_REGISTERED
               }
 

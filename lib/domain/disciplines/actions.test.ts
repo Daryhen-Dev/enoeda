@@ -70,6 +70,18 @@ function buildMockTx(overrides: Record<string, unknown> = {}) {
     disciplines: {
       findMany: vi.fn().mockResolvedValue([]),
     },
+    class_series: {
+      findMany: vi.fn().mockResolvedValue([]),
+    },
+    one_time_classes: {
+      findMany: vi.fn().mockResolvedValue([]),
+    },
+    class_series_students: {
+      deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+    },
+    one_time_class_students: {
+      deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+    },
     ...overrides,
   };
 }
@@ -105,6 +117,12 @@ beforeEach(async () => {
   // Re-mock after resetModules
   vi.doMock("@/lib/auth/server-context", () => ({
     withAuthenticatedUser: (...args: unknown[]) => (mockWithAuth as (...a: unknown[]) => unknown)(...args),
+  }));
+
+  // Roster cleanup resolves the branch-local date via the payments queries
+  // module; pin it so suspendEnrollment stays deterministic.
+  vi.doMock("@/lib/domain/payments/queries", () => ({
+    getBranchLocalToday: vi.fn().mockResolvedValue("2026-10-15"),
   }));
 
   const mod = await import("./actions");

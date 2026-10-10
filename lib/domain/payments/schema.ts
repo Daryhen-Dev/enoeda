@@ -59,12 +59,18 @@ const monthlyPaymentFieldsSchema = z.object({
 export const registerMonthlyPaymentSchema = monthlyPaymentFieldsSchema.extend({ student_discipline_id: z.string().uuid() }).strict().superRefine(validateMonthlyPeriod);
 export type RegisterMonthlyPaymentInput = z.infer<typeof registerMonthlyPaymentSchema>;
 
-export const registerClassPaymentSchema = z.object({
-  student_discipline_id: z.string().uuid(),
-  class_date: z.string().date().optional(),
-  scheduled_class_id: z.string().uuid().optional(),
-  branch_id: z.string().uuid({ error: PAYMENT_BRANCH_MESSAGES.INVALID_BRANCH_ID }),
-});
+export const registerClassPaymentSchema = z
+  .object({
+    student_discipline_id: z.string().uuid(),
+    class_date: z.string().date().optional(),
+    scheduled_class_id: z.string().uuid().optional(),
+    one_time_class_id: z.string().uuid().optional(),
+    branch_id: z.string().uuid({ error: PAYMENT_BRANCH_MESSAGES.INVALID_BRANCH_ID }),
+  })
+  .refine(
+    (d) => !(d.scheduled_class_id && d.one_time_class_id),
+    { error: PAYMENT_MESSAGES.OCCURRENCE_EXCLUSIVE, path: ["scheduled_class_id"] }
+  );
 export type RegisterClassPaymentInput = z.infer<typeof registerClassPaymentSchema>;
 
 export const getStudentPaymentsSchema = z.object({

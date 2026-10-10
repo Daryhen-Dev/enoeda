@@ -117,6 +117,7 @@ function enrollmentRow(overrides: Record<string, unknown> = {}) {
     id: ENROLLMENT_1,
     is_active: true,
     next_due_date: null,
+    billing_mode: "monthly",
     students: {
       id: STUDENT_1,
       first_name: "Ana",
@@ -165,6 +166,20 @@ describe("getMonthlyPaymentValidation", () => {
     const result = await getMonthlyPaymentValidation({ branch_id: BRANCH_A });
 
     expect(assertFailure(result)).toBe(BRANCH_MESSAGES.INACTIVE_OR_NOT_FOUND);
+  });
+
+  it("only classifies monthly-billed enrollments", async () => {
+    const tx = setupWithAuth(ADMIN_CTX_A);
+    tx.student_disciplines.findMany = vi.fn().mockResolvedValue([]);
+
+    const result = await getMonthlyPaymentValidation({ branch_id: BRANCH_A });
+
+    expect(result.success).toBe(true);
+    expect(tx.student_disciplines.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ billing_mode: "monthly" }),
+      })
+    );
   });
 
   it("groups enrollments and sorts to_suspend/in_grace by days overdue desc", async () => {
@@ -371,6 +386,27 @@ describe("suspendOverdueEnrollments", () => {
 
     expect(assertFailure(result)).toBe(PAYMENT_VALIDATION_MESSAGES.SUSPEND_STALE_LIST);
     expect(tx.student_disciplines.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("suspends nothing when a selected enrollment is billed per class", async () => {
+    const tx = setupWithAuth(ADMIN_CTX_A);
+    tx.student_disciplines.findMany = vi.fn().mockResolvedValue([
+      enrollmentRow({ next_due_date: dateOnlyToUtcDate("2026-10-01") }),
+      enrollmentRow({
+        id: ENROLLMENT_2,
+        billing_mode: "per_class",
+        next_due_date: dateOnlyToUtcDate("2026-10-01"),
+      }),
+    ]);
+
+    const result = await suspendOverdueEnrollments({
+      branch_id: BRANCH_A,
+      student_discipline_ids: [ENROLLMENT_1, ENROLLMENT_2],
+    });
+
+    expect(assertFailure(result)).toBe(PAYMENT_VALIDATION_MESSAGES.SUSPEND_STALE_LIST);
+    expect(tx.student_disciplines.updateMany).not.toHaveBeenCalled();
+    expect(tx.discipline_events.createMany).not.toHaveBeenCalled();
   });
 
   it("suspends nothing when one enrollment is already suspended", async () => {

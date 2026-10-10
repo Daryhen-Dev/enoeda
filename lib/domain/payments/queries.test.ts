@@ -11,7 +11,6 @@ import {
   getMonthlyPaymentSummaryQuery,
   listOverdueStudents,
 } from "./queries";
-
 const BRANCH_ID = "aaaaaaaa-1111-2222-3333-444444444444";
 const DISCIPLINE_ID = "bbbbbbbb-1111-4222-a333-444444444444";
 
@@ -333,5 +332,45 @@ describe("getMonthlyPaymentSummaryQuery", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe("overdue queries exclude per_class enrollments", () => {
+  it("countOverdueStudents filters billing_mode = 'monthly'", async () => {
+    const mockFindMany = vi.fn().mockResolvedValue([]);
+    const mockTx = createTransaction({
+      branches: { findUnique: createBranchTimeZoneMock("America/Guayaquil") },
+      student_disciplines: { findMany: mockFindMany },
+    });
+
+    await countOverdueStudents(mockTx, BRANCH_ID);
+
+    expect(mockFindMany.mock.calls[0][0].where.billing_mode).toBe("monthly");
+  });
+
+  it("listOverdueStudents filters billing_mode = 'monthly'", async () => {
+    const mockFindMany = vi.fn().mockResolvedValue([]);
+    const mockTx = createTransaction({
+      branches: { findUnique: createBranchTimeZoneMock("America/Guayaquil") },
+      student_disciplines: { findMany: mockFindMany },
+    });
+
+    await listOverdueStudents(mockTx, BRANCH_ID);
+
+    expect(mockFindMany.mock.calls[0][0].where.billing_mode).toBe("monthly");
+  });
+
+  it("getMonthlyPaymentSummaryQuery counts overdue students among monthly enrollments only", async () => {
+    const overdueFindMany = vi.fn().mockResolvedValue([]);
+    const mockTx = createTransaction({
+      branches: { findUnique: createBranchTimeZoneMock("America/Guayaquil") },
+      payments: { findMany: vi.fn().mockResolvedValue([]) },
+      class_payments: { findMany: vi.fn().mockResolvedValue([]) },
+      student_disciplines: { findMany: overdueFindMany },
+    });
+
+    await getMonthlyPaymentSummaryQuery(mockTx, BRANCH_ID);
+
+    expect(overdueFindMany.mock.calls[0][0].where.billing_mode).toBe("monthly");
   });
 });

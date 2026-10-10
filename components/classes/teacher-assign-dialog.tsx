@@ -23,11 +23,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { ConflictingAssignment } from "@/lib/domain/classes/actions";
 import { assignTeacher } from "@/lib/domain/classes/actions";
-import { TeacherConflictDialog } from "@/components/classes/teacher-conflict-dialog";
 import {
   COMMON_MESSAGES,
+  TEACHER_ASSIGN_MESSAGES,
   TEACHER_CONFLICT_MESSAGES,
 } from "@/lib/localization/es-ec";
 
@@ -43,10 +42,8 @@ interface TeacherAssignDialogProps {
 
 /**
  * Assigns a teacher to a specific session date (session-level override,
- * not the recurring template). Conflict-aware: if the chosen teacher is
- * already assigned elsewhere at the same day/time, delegates to
- * `TeacherConflictDialog` for explicit confirmation before forcing the
- * reassignment.
+ * not the recurring template). There are no schedule restrictions any
+ * more: the assignment applies directly, with no conflict confirmation.
  */
 export function TeacherAssignDialog({
   scheduledClassId,
@@ -62,10 +59,6 @@ export function TeacherAssignDialog({
   const [teacherId, setTeacherId] = useState(currentTeacherId ?? "");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
-  const [conflictState, setConflictState] = useState<{
-    open: boolean;
-    conflicts: ConflictingAssignment[];
-  }>({ open: false, conflicts: [] });
 
   function handleSubmit() {
     if (!teacherId) return;
@@ -75,22 +68,13 @@ export function TeacherAssignDialog({
         scheduled_class_id: scheduledClassId,
         session_date: sessionDate,
         teacher_id: teacherId,
-        force: false,
         branch_id: branchId,
       });
 
-      if (result.success && result.data?.success) {
+      if (result.success && result.data?.teacher_assigned) {
         setOpen(false);
-        toast.success(TEACHER_CONFLICT_MESSAGES.ASSIGNED);
+        toast.success(TEACHER_ASSIGN_MESSAGES.ASSIGNED);
         router.refresh();
-        return;
-      }
-
-      if (result.success && result.data?.conflict) {
-        setConflictState({
-          open: true,
-          conflicts: result.data.conflicting_assignments ?? [],
-        });
         return;
       }
 
@@ -99,85 +83,71 @@ export function TeacherAssignDialog({
   }
 
   return (
-    <>
-      <Sheet
-        open={open}
-        onOpenChange={(nextOpen) => {
-          setOpen(nextOpen);
-          if (!nextOpen) {
-            setTeacherId(currentTeacherId ?? "");
-            setError(null);
-          }
-        }}
-      >
-        <SheetTrigger className={triggerClassName}>
-          <UserPlusIcon data-icon="inline-start" />
-          {triggerText ?? TEACHER_CONFLICT_MESSAGES.ASSIGN_ACTION}
-        </SheetTrigger>
-        <SheetContent side="right" size="content">
-          <SheetHeader>
-            <SheetTitle>{TEACHER_CONFLICT_MESSAGES.ASSIGN_TITLE}</SheetTitle>
-            <SheetDescription>
-              {TEACHER_CONFLICT_MESSAGES.ASSIGN_DESCRIPTION}
-            </SheetDescription>
-          </SheetHeader>
-
-          <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-4">
-            <FieldGroup>
-              <Field>
-                <FieldLabel htmlFor="session-teacher">
-                  {TEACHER_CONFLICT_MESSAGES.TEACHER_LABEL}
-                </FieldLabel>
-                <Select
-                  value={teacherId}
-                  onValueChange={(value) => {
-                    if (value) setTeacherId(value);
-                  }}
-                  items={teachers.map((t) => ({ value: t.id, label: t.name }))}
-                >
-                  <SelectTrigger id="session-teacher" className="w-full">
-                    <SelectValue
-                      placeholder={TEACHER_CONFLICT_MESSAGES.TEACHER_PLACEHOLDER}
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {teachers.map((t) => (
-                      <SelectItem key={t.id} value={t.id}>
-                        {t.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </Field>
-              {error && <FieldError>{error}</FieldError>}
-            </FieldGroup>
-          </div>
-
-          <SheetFooter>
-            <Button
-              type="button"
-              disabled={isPending || !teacherId}
-              onClick={handleSubmit}
-            >
-              {isPending ? COMMON_MESSAGES.LOADING : TEACHER_CONFLICT_MESSAGES.CONFIRM}
-            </Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
-
-      <TeacherConflictDialog
-        open={conflictState.open}
-        onOpenChange={(nextOpen) =>
-          setConflictState((prev) => ({ ...prev, open: nextOpen }))
+    <Sheet
+      open={open}
+      onOpenChange={(nextOpen) => {
+        setOpen(nextOpen);
+        if (!nextOpen) {
+          setTeacherId(currentTeacherId ?? "");
+          setError(null);
         }
-        conflicts={conflictState.conflicts}
-        targetType="session"
-        scheduledClassId={scheduledClassId}
-        sessionDate={sessionDate}
-        teacherId={teacherId}
-        branchId={branchId}
-        onAssigned={() => setOpen(false)}
-      />
-    </>
+      }}
+    >
+      <SheetTrigger className={triggerClassName}>
+        <UserPlusIcon data-icon="inline-start" />
+        {triggerText ?? TEACHER_CONFLICT_MESSAGES.ASSIGN_ACTION}
+      </SheetTrigger>
+      <SheetContent side="right" size="content">
+        <SheetHeader>
+          <SheetTitle>{TEACHER_ASSIGN_MESSAGES.ASSIGN_TITLE}</SheetTitle>
+          <SheetDescription>
+            {TEACHER_ASSIGN_MESSAGES.ASSIGN_DESCRIPTION}
+          </SheetDescription>
+        </SheetHeader>
+
+        <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-4">
+          <FieldGroup>
+            <Field>
+              <FieldLabel htmlFor="session-teacher">
+                {TEACHER_ASSIGN_MESSAGES.TEACHER_LABEL}
+              </FieldLabel>
+              <Select
+                value={teacherId}
+                onValueChange={(value) => {
+                  if (value) setTeacherId(value);
+                }}
+                items={teachers.map((t) => ({ value: t.id, label: t.name }))}
+              >
+                <SelectTrigger id="session-teacher" className="w-full">
+                  <SelectValue
+                    placeholder={TEACHER_ASSIGN_MESSAGES.TEACHER_PLACEHOLDER}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {teachers.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+            {error && <FieldError>{error}</FieldError>}
+          </FieldGroup>
+        </div>
+
+        <SheetFooter>
+          <Button
+            type="button"
+            disabled={isPending || !teacherId}
+            onClick={handleSubmit}
+          >
+            {isPending
+              ? COMMON_MESSAGES.LOADING
+              : TEACHER_ASSIGN_MESSAGES.CONFIRM}
+          </Button>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 }

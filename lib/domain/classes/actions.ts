@@ -7,20 +7,25 @@ import {
   BRANCH_READ_ACCESS,
 } from "@/lib/auth/branch-read-access";
 import { createAdminClient } from "@/lib/supabase/admin";
-import type { TransactionClient } from "@/lib/prisma/client";
 import { assertClassInContext } from "@/lib/domain/classes/branch-guard";
-import { formatDatabaseDateOnly, formatDateOnly, parseDateOnly } from "@/lib/date";
+import {
+  dateOnlyToUtcDate,
+  formatDatabaseDateOnly,
+  formatDateOnly,
+  parseDateOnly,
+} from "@/lib/date";
 import {
   CLASS_MESSAGES,
+  CLONE_MESSAGES,
   COMMON_MESSAGES,
-  TEACHER_CONFLICT_MESSAGES,
-  WEEKDAY_LABELS,
+  TEACHER_ASSIGN_MESSAGES,
 } from "@/lib/localization/es-ec";
+import { classifyRosterEligibility } from "@/lib/domain/rosters";
 import {
   assignTeacherSchema,
+  cloneClassGroupSchema,
+  createMonthlyClassGroupSchema,
   createOneTimeClassSchema,
-  createScheduledClassBatchSchema,
-  createScheduledClassSchema,
   deactivateAllFutureClassesSchema,
   deactivateScheduledClassSchema,
   deactivateScheduledClassSeriesSchema,
@@ -30,9 +35,7 @@ import {
   reinstateSessionSchema,
   renameClassSeriesSchema,
   suspendSessionSchema,
-  updateScheduledClassSchema,
 } from "./schema";
-import { ONE_TIME_CLASS_MESSAGES } from "@/lib/localization/es-ec";
 
 export interface ActionResult<T = unknown> {
   success: boolean;
@@ -67,31 +70,16 @@ export interface SessionView {
   is_substitute: boolean;
   /** true when this session comes from one_time_classes, not a recurring template. */
   is_one_time: boolean;
-}
-
-export interface ConflictingAssignment {
-  type: "recurring" | "session";
-  class_id: string;
-  class_name: string;
-  branch_name: string;
-  day_of_week: number;
-  start_time: string;
-  session_date?: string;
+  /** Monthly group (class_series) identity — recurring occurrences only. */
+  series_id?: string;
+  series_name?: string;
+  /** Group month as "YYYY-MM" — recurring occurrences only. */
+  period_month?: string;
 }
 
 export interface AssignTeacherResult {
-  success: boolean;
-  conflict?: boolean;
-  conflicting_assignments?: ConflictingAssignment[];
-  requires_confirmation?: boolean;
-  message?: string;
-  teacher_assigned?: boolean;
-  affected_classes?: Array<{
-    class_id: string;
-    class_name: string;
-    branch_name: string;
-    previous_teacher_removed: boolean;
-  }>;
+  teacher_assigned: boolean;
+  message: string;
 }
 
 export interface SuspensionReportRow {
@@ -135,251 +123,78 @@ function addOneHour(time: string): string {
   return `${String(h + 1).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
-function mapConstraintError(
-  error: unknown,
-  constraintName: string,
-  message: string
-): string | undefined {
-  return error instanceof Error && error.message.includes(constraintName)
-    ? message
-    : undefined;
-}
-
-// --- Internal: Teacher conflict detection (mandatory branch-scoped context) ---
-
-async function detectTeacherConflicts(
-  tx: TransactionClient,
-  teacherId: string,
-  isoDay: number,
-  startTime: string,
-  excludeClassId: string | undefined,
-  branchId: string
-): Promise<ConflictingAssignment[]> {
-  const conflicts: ConflictingAssignment[] = [];
-
-  // Parse the target time range
-  const [targetH, targetM] = startTime.split(":").map(Number);
-  const targetStart = targetH * 60 + targetM;
-  const targetEnd = targetStart + 60; // 1 hour
-
-  // Check recurring scheduled_classes (scoped to branch)
-  const recurringConflicts = await tx.scheduled_classes.findMany({
-    where: {
-      default_teacher_id: teacherId,
-      day_of_week: isoDay,
-      is_active: true,
-      ...(excludeClassId ? { id: { not: excludeClassId } } : {}),
-      branch_id: branchId,
-    },
-    include: {
-      branches: { select: { name: true } },
-      disciplines: { select: { name: true } },
-    },
-  });
-
-  for (const cls of recurringConflicts) {
-    const clsTime = formatTime(cls.start_time);
-    const [clsH, clsM] = clsTime.split(":").map(Number);
-    const clsStart = clsH * 60 + clsM;
-    const clsEnd = clsStart + 60;
-
-    // Check overlap: starts before other ends AND ends after other starts
-    if (targetStart < clsEnd && targetEnd > clsStart) {
-      conflicts.push({
-        type: "recurring",
-        class_id: cls.id,
-        class_name: cls.disciplines.name,
-        branch_name: cls.branches.name,
-        day_of_week: cls.day_of_week,
-        start_time: clsTime,
-      });
-    }
-  }
-
-  // Check session-level overrides (scoped to branch)
-  const sessionConflicts = await tx.class_sessions.findMany({
-    where: {
-      assigned_teacher_id: teacherId,
-      status: "scheduled",
-      scheduled_classes: {
-        day_of_week: isoDay,
-        is_active: true,
-        ...(excludeClassId ? { id: { not: excludeClassId } } : {}),
-        branch_id: branchId,
-      },
-    },
-    include: {
-      scheduled_classes: {
-        include: {
-          branches: { select: { name: true } },
-          disciplines: { select: { name: true } },
-        },
-      },
-    },
-  });
-
-  for (const session of sessionConflicts) {
-    const parentTime = formatTime(session.scheduled_classes.start_time);
-    const [pH, pM] = parentTime.split(":").map(Number);
-    const pStart = pH * 60 + pM;
-    const pEnd = pStart + 60;
-
-    if (targetStart < pEnd && targetEnd > pStart) {
-      conflicts.push({
-        type: "session",
-        class_id: session.scheduled_classes.id,
-        class_name: session.scheduled_classes.disciplines.name,
-        branch_name: session.scheduled_classes.branches.name,
-        day_of_week: session.scheduled_classes.day_of_week,
-        start_time: parentTime,
-        session_date: session.session_date.toISOString().split("T")[0],
-      });
-    }
-  }
-
-  return conflicts;
-}
-
 // --- Server Actions ---
 
 /**
- * Create a new recurring weekly class.
- * The class seeds its own 1-row series: a class_series catalog row is
- * created with an auto-generated name ("<discipline> — <day> <HH:MM>"),
- * and the scheduled_classes row points at it via series_id.
- * Owner/Admin-branch via RLS.
+ * Create a monthly class group: one class_series row (the group) plus one
+ * scheduled_classes row per selected weekday, all inside ONE transaction.
+ * period_month is stored as the first day of the given "YYYY-MM" month and
+ * every weekday row inherits the group's branch, discipline and default
+ * teacher (enforced again by the composite FK). All-or-nothing: any failure
+ * rolls back the group and all day rows. Owner/Admin-branch via RLS.
  */
-export async function createScheduledClass(
+export interface MonthlyClassGroupResult {
+  series_id: string;
+  class_ids: string[];
+}
+
+export async function createMonthlyClassGroup(
   input: unknown
-): Promise<ActionResult<{ id: string }>> {
-  const parsed = createScheduledClassSchema.safeParse(input);
+): Promise<ActionResult<MonthlyClassGroupResult>> {
+  const parsed = createMonthlyClassGroupSchema.safeParse(input);
   if (!parsed.success) {
     return { success: false, error: parsed.error.issues[0].message };
   }
 
-  try {
-    const result = await withAuthenticatedUser(
-      async (tx, ctx) => {
-        // Branch assignment assertion — fail-closed
-        const branchCheck = assertActiveBranchAssignment(ctx, parsed.data.branch_id);
-        if (!branchCheck.ok) {
-          throw new Error(branchCheck.error);
-        }
+  const {
+    branch_id,
+    discipline_id,
+    default_teacher_id,
+    series_name,
+    period_month,
+    days_of_week,
+    start_time,
+  } = parsed.data;
 
-        // Resolve the discipline for the auto-generated series name.
-        const discipline = await tx.disciplines.findUnique({
-          where: { id: parsed.data.discipline_id },
-          select: { name: true },
-        });
-        if (!discipline) {
-          throw new Error(CLASS_MESSAGES.NOT_FOUND);
-        }
-
-        const seriesId = crypto.randomUUID();
-        await tx.class_series.create({
-          data: {
-            id: seriesId,
-            branch_id: parsed.data.branch_id,
-            name: `${discipline.name} — ${WEEKDAY_LABELS[parsed.data.day_of_week]} ${parsed.data.start_time}`,
-          },
-          select: { id: true },
-        });
-
-        return tx.scheduled_classes.create({
-          data: {
-            branch_id: parsed.data.branch_id,
-            discipline_id: parsed.data.discipline_id,
-            default_teacher_id: parsed.data.default_teacher_id ?? null,
-            day_of_week: parsed.data.day_of_week,
-            start_time: new Date(`1970-01-01T${parsed.data.start_time}:00`),
-            series_id: seriesId,
-          },
-          select: { id: true },
-        });
-      },
-      {
-        mapTransactionError: (error) =>
-          mapConstraintError(
-            error,
-            "scheduled_classes_no_overlap",
-            CLASS_MESSAGES.OVERLAP
-          ) ??
-          (error instanceof Error &&
-          (error.message === CLASS_MESSAGES.BRANCH_CONTEXT_REQUIRED ||
-            error.message === CLASS_MESSAGES.NOT_FOUND ||
-            error.message.includes("permisos"))
-            ? error.message
-            : undefined),
-      }
-    );
-
-    if (!result.success) return result;
-    return { success: true, data: { id: result.data.id } };
-  } catch (error) {
-    if (error instanceof Error) {
-      if (error.message.includes("scheduled_classes_no_overlap")) {
-        return { success: false, error: CLASS_MESSAGES.OVERLAP };
-      }
-    }
-    return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
-  }
-}
-
-export interface CreateScheduledClassBatchResult {
-  created: Array<{ day_of_week: number; id: string }>;
-  failed: Array<{ day_of_week: number; error: string }>;
-}
-
-/**
- * Create the same recurring class (discipline, teacher, time) across
- * several weekdays in one submission. Lets the admin build a whole
- * week's schedule at once instead of repeating createScheduledClass per
- * day. Each day is attempted independently — a scheduling conflict
- * (overlap) on one day does NOT roll back the others; the caller sees
- * exactly which days succeeded and which failed, keeping full control
- * over the outcome. Owner/Admin-branch via RLS.
- */
-export async function createScheduledClassBatch(
-  input: unknown
-): Promise<ActionResult<CreateScheduledClassBatchResult>> {
-  const parsed = createScheduledClassBatchSchema.safeParse(input);
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0].message };
-  }
-
-  const { branch_id, discipline_id, default_teacher_id, days_of_week, start_time, series_name } =
-    parsed.data;
-
-  // Pre-validate branch assignment before any writes
-  const preCheckResult = await withAuthenticatedUser(async (_tx, ctx) => {
+  return withAuthenticatedUser(async (tx, ctx) => {
+    // Branch assignment assertion — fail-closed
     const branchCheck = assertActiveBranchAssignment(ctx, branch_id);
-    if (!branchCheck.ok) return { valid: false, error: branchCheck.error };
-    return { valid: true, error: null };
-  });
-  if (!preCheckResult.success) return preCheckResult;
-  if (!preCheckResult.data.valid) {
-    return { success: false, error: preCheckResult.data.error! };
-  }
+    if (!branchCheck.ok) {
+      throw new Error(branchCheck.error);
+    }
 
-  const created: CreateScheduledClassBatchResult["created"] = [];
-  const failed: CreateScheduledClassBatchResult["failed"] = [];
-
-  // One shared series identity for every row of the batch (including all
-  // per-day loop iterations), so removing the series no longer needs the
-  // discipline + start_time heuristic. The admin-provided name lands in
-  // the class_series catalog; when the catalog insert fails, no day rows
-  // are created.
-  const seriesId = crypto.randomUUID();
-  const seriesResult = await withAuthenticatedUser(async (tx) => {
+    const seriesId = crypto.randomUUID();
     await tx.class_series.create({
       data: {
         id: seriesId,
         branch_id,
         name: series_name,
+        discipline_id,
+        default_teacher_id: default_teacher_id ?? null,
+        // "YYYY-MM" → first day of that month (UTC midnight, like every
+        // Postgres `date` value handled through lib/date).
+        period_month: dateOnlyToUtcDate(`${period_month}-01`),
       },
       select: { id: true },
     });
-    return { series_id: seriesId };
+
+    const classIds: string[] = [];
+    for (const day_of_week of days_of_week) {
+      const row = await tx.scheduled_classes.create({
+        data: {
+          branch_id,
+          discipline_id,
+          default_teacher_id: default_teacher_id ?? null,
+          day_of_week,
+          start_time: new Date(`1970-01-01T${start_time}:00`),
+          series_id: seriesId,
+        },
+        select: { id: true },
+      });
+      classIds.push(row.id);
+    }
+
+    return { series_id: seriesId, class_ids: classIds };
   }, {
     mapTransactionError: (error) =>
       error instanceof Error &&
@@ -388,72 +203,16 @@ export async function createScheduledClassBatch(
         ? error.message
         : undefined,
   });
-  if (!seriesResult.success) {
-    return {
-      success: false,
-      error: seriesResult.error ?? COMMON_MESSAGES.UNEXPECTED_ERROR,
-    };
-  }
-
-  for (const day_of_week of days_of_week) {
-    try {
-      const result = await withAuthenticatedUser(
-        async (tx) => {
-          return tx.scheduled_classes.create({
-            data: {
-              branch_id,
-              discipline_id,
-              default_teacher_id: default_teacher_id ?? null,
-              day_of_week,
-              start_time: new Date(`1970-01-01T${start_time}:00`),
-              series_id: seriesId,
-            },
-            select: { id: true },
-          });
-        },
-        {
-          mapTransactionError: (error) =>
-            mapConstraintError(
-              error,
-              "scheduled_classes_no_overlap",
-              CLASS_MESSAGES.OVERLAP_ON_DAY(WEEKDAY_LABELS[day_of_week])
-            ),
-        }
-      );
-
-      if (!result.success) {
-        failed.push({ day_of_week, error: result.error });
-        continue;
-      }
-      created.push({ day_of_week, id: result.data.id });
-    } catch (error) {
-      const message =
-        error instanceof Error && error.message.includes("scheduled_classes_no_overlap")
-          ? CLASS_MESSAGES.OVERLAP_ON_DAY(WEEKDAY_LABELS[day_of_week])
-          : COMMON_MESSAGES.UNEXPECTED_ERROR;
-      failed.push({ day_of_week, error: message });
-    }
-  }
-
-  if (created.length === 0) {
-    return {
-      success: false,
-      error: failed[0]?.error ?? COMMON_MESSAGES.UNEXPECTED_ERROR,
-    };
-  }
-
-  return { success: true, data: { created, failed } };
 }
 
 /**
  * Create a single-occurrence class on a specific date, outside the
- * weekly recurring pattern (e.g. an extra class held once this month).
- * Rejects (never writes) when the date/time already has a class:
- * - a recurring scheduled_classes template covering that weekday+time, or
- * - another one_time_classes row on the same branch/date/time
- * (the second case is enforced by the DB EXCLUDE constraint; the first
- * is checked here since one_time_classes has no relationship to
- * scheduled_classes). Owner/Admin-branch via RLS.
+ * monthly groups (e.g. an extra class held once this month).
+ * There are no schedule restrictions any more: overlapping classes are
+ * allowed and no conflict pre-check runs. The only remaining overlap
+ * guard is the DB EXCLUDE constraint among one_time_classes rows of the
+ * same branch/date/time, mapped to a user-facing message below.
+ * Owner/Admin-branch via RLS.
  */
 export async function createOneTimeClass(
   input: unknown
@@ -474,37 +233,12 @@ export async function createOneTimeClass(
         throw new Error(branchCheck.error);
       }
 
-      // Reject up front if a recurring class already covers this
-      // weekday+time slot for the branch — never write in that case.
-      const classDate = new Date(class_date);
-      const isoDay = jsToIsoDayOfWeek(classDate.getDay());
-      const [targetH, targetM] = start_time.split(":").map(Number);
-      const targetStart = targetH * 60 + targetM;
-      const targetEnd = targetStart + 60;
-
-      const recurringOnSameDay = await tx.scheduled_classes.findMany({
-        where: { branch_id, day_of_week: isoDay, is_active: true },
-        select: { start_time: true },
-      });
-
-      const hasRecurringConflict = recurringOnSameDay.some((cls) => {
-        const clsTime = formatTime(cls.start_time);
-        const [clsH, clsM] = clsTime.split(":").map(Number);
-        const clsStart = clsH * 60 + clsM;
-        const clsEnd = clsStart + 60;
-        return targetStart < clsEnd && targetEnd > clsStart;
-      });
-
-      if (hasRecurringConflict) {
-        return { id: null, error: ONE_TIME_CLASS_MESSAGES.OVERLAP };
-      }
-
       const created = await tx.one_time_classes.create({
         data: {
           branch_id,
           discipline_id,
           teacher_id: teacher_id ?? null,
-          class_date: classDate,
+          class_date: new Date(class_date),
           start_time: new Date(`1970-01-01T${start_time}:00`),
         },
         select: { id: true },
@@ -514,16 +248,11 @@ export async function createOneTimeClass(
       },
       {
         mapTransactionError: (error) =>
-          mapConstraintError(
-            error,
-            "one_time_classes_no_overlap",
-            ONE_TIME_CLASS_MESSAGES.OVERLAP
-          ) ??
-          (error instanceof Error &&
+          error instanceof Error &&
           (error.message === CLASS_MESSAGES.BRANCH_CONTEXT_REQUIRED ||
             error.message.includes("permisos"))
             ? error.message
-            : undefined),
+            : undefined,
       }
     );
 
@@ -533,81 +262,7 @@ export async function createOneTimeClass(
     }
 
     return { success: true, data: { id: result.data.id } };
-  } catch (error) {
-    if (error instanceof Error && error.message.includes("one_time_classes_no_overlap")) {
-      return { success: false, error: ONE_TIME_CLASS_MESSAGES.OVERLAP };
-    }
-    return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
-  }
-}
-
-/**
- * Update an existing recurring class.
- * Owner/Admin-branch via RLS.
- */
-export async function updateScheduledClass(
-  input: unknown
-): Promise<ActionResult<{ id: string }>> {
-  const parsed = updateScheduledClassSchema.safeParse(input);
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0].message };
-  }
-
-  const { id, branch_id, ...fields } = parsed.data;
-
-  try {
-    const result = await withAuthenticatedUser(
-      async (tx, ctx) => {
-      // Branch assignment assertion — fail-closed
-      const branchCheck = assertActiveBranchAssignment(ctx, branch_id);
-      if (!branchCheck.ok) {
-        throw new Error(branchCheck.error);
-      }
-
-      // Branch context enforcement (fail-closed)
-      const guard = await assertClassInContext(tx, id, branch_id);
-      if (!guard.ok) {
-        throw new Error(guard.error);
-      }
-
-      const data: Record<string, unknown> = {};
-      // Reject branch_id change away from DB branch (no cross-branch move via edit)
-      if (fields.discipline_id !== undefined) data.discipline_id = fields.discipline_id;
-      if (fields.default_teacher_id !== undefined) data.default_teacher_id = fields.default_teacher_id;
-      if (fields.day_of_week !== undefined) data.day_of_week = fields.day_of_week;
-      if (fields.start_time !== undefined) {
-        data.start_time = new Date(`1970-01-01T${fields.start_time}:00`);
-      }
-
-      return tx.scheduled_classes.update({
-        where: { id },
-        data,
-        select: { id: true },
-      });
-      },
-      {
-        mapTransactionError: (error) =>
-          mapConstraintError(
-            error,
-            "scheduled_classes_no_overlap",
-            CLASS_MESSAGES.OVERLAP
-          ) ??
-          (error instanceof Error &&
-          (error.message === CLASS_MESSAGES.BRANCH_MISMATCH ||
-            error.message === CLASS_MESSAGES.NOT_FOUND)
-            ? error.message
-            : undefined),
-      }
-    );
-
-    if (!result.success) return result;
-    return { success: true, data: { id: result.data.id } };
-  } catch (error) {
-    if (error instanceof Error) {
-      if (error.message.includes("scheduled_classes_no_overlap")) {
-        return { success: false, error: CLASS_MESSAGES.OVERLAP };
-      }
-    }
+  } catch {
     return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
   }
 }
@@ -735,6 +390,18 @@ export async function deactivateScheduledClassSeries(
         data: { is_active: false },
       });
 
+      // Deactivate the monthly group itself, so the calendar stops
+      // rendering its occurrences from today onward and clone flows
+      // can skip inactive groups.
+      await tx.class_series.updateMany({
+        where: {
+          id: resolvedSeriesId,
+          branch_id,
+          is_active: true,
+        },
+        data: { is_active: false },
+      });
+
       return { deactivated: batch.count };
     }, {
       mapTransactionError: (error) =>
@@ -784,10 +451,30 @@ export async function deactivateAllFutureClasses(
         throw new Error(branchCheck.error);
       }
 
+      const activeRows = await tx.scheduled_classes.findMany({
+        where: { branch_id, is_active: true },
+        select: { series_id: true },
+      });
+
       const recurringUpdate = await tx.scheduled_classes.updateMany({
         where: { branch_id, is_active: true },
         data: { is_active: false },
       });
+
+      // T3 follow-up: deactivate the monthly groups (class_series) whose
+      // weekday rows were just deactivated, so clone flows and the series
+      // list see them as inactive groups too.
+      const seriesIds = [...new Set(activeRows.map((row) => row.series_id))];
+      if (seriesIds.length > 0) {
+        await tx.class_series.updateMany({
+          where: {
+            id: { in: seriesIds },
+            branch_id,
+            is_active: true,
+          },
+          data: { is_active: false },
+        });
+      }
 
       return { deactivated: recurringUpdate.count };
     }, {
@@ -807,10 +494,280 @@ export async function deactivateAllFutureClasses(
 }
 
 /**
- * One row per concurrencia (recurring series) of a branch, for the
- * concurrencias admin section. Rows are grouped by series_id: active rows
- * drive days_of_week and active_row_count; a series whose rows are ALL
- * inactive is still listed with is_all_inactive=true (history preserved).
+ * Clone a monthly class group (class_series) into the NEXT month with its
+ * weekday slots and roster — the "prepare next month" flow.
+ *
+ * In ONE transaction:
+ *   - The source group is loaded (branch-scoped: a foreign series is
+ *     indistinguishable from an absent one → NOT_FOUND) and must be active.
+ *   - The target month is the source period_month + 1 month (Dec → Jan of
+ *     the next year), stored as the first day of that month (UTC).
+ *   - A group can be cloned only ONCE: the pre-check against
+ *     cloned_from_series_id plus the mapped partial unique index
+ *     class_series_cloned_from_series_id_uq (race safety net) both yield
+ *     ALREADY_CLONED.
+ *   - Only ACTIVE scheduled_classes rows of the source are copied (day,
+ *     time, teacher); a group without active weekday rows is rejected with
+ *     NO_ACTIVE_SLOTS.
+ *   - The roster (class_series_students) is copied through the same
+ *     eligibility rules as manual roster edits (classifyRosterEligibility):
+ *     eligible students are inserted with added_by = caller, the rest are
+ *     reported as skipped with their first_name/surname and reason, so the
+ *     admin can fix the roster afterwards.
+ *
+ * Authorization: admin of the branch (owner passes through, teachers are
+ * rejected) — same fail-closed branch-assignment assertion as
+ * createMonthlyClassGroup plus an explicit admin-role check.
+ */
+export interface SkippedRosterStudent {
+  student_id: string;
+  first_name: string;
+  surname: string;
+  reason: "branch_mismatch" | "inactive" | "not_eligible";
+}
+
+export interface CloneClassGroupResult {
+  series_id: string;
+  /** Target group month as "YYYY-MM". */
+  period_month: string;
+  class_ids: string[];
+  copied_student_count: number;
+  skipped: SkippedRosterStudent[];
+}
+
+export async function cloneClassGroupToNextMonth(
+  input: unknown
+): Promise<ActionResult<CloneClassGroupResult>> {
+  const parsed = cloneClassGroupSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message };
+  }
+
+  const { branch_id, series_id } = parsed.data;
+
+  try {
+    const result = await withAuthenticatedUser(async (tx, ctx) => {
+      // Branch assignment assertion — fail-closed
+      const branchCheck = assertActiveBranchAssignment(ctx, branch_id);
+      if (!branchCheck.ok) {
+        throw new Error(branchCheck.error);
+      }
+
+      // Clone writes are admin-only: teachers of the branch are rejected
+      // even though they hold a valid branch assignment (owner passes).
+      const isAdmin = ctx.assignments.some(
+        (assignment) =>
+          assignment.role === "admin" && assignment.branchId === branch_id
+      );
+      if (!isAdmin && !ctx.roles.includes("owner")) {
+        throw new Error(CLONE_MESSAGES.UNAUTHORIZED);
+      }
+
+      // Load the source group (RLS scopes the lookup to the caller's
+      // branch: a foreign series is indistinguishable from an absent one).
+      const source = await tx.class_series.findFirst({
+        where: { id: series_id, branch_id },
+        select: {
+          id: true,
+          name: true,
+          discipline_id: true,
+          default_teacher_id: true,
+          period_month: true,
+          is_active: true,
+        },
+      });
+      if (!source) {
+        throw new Error(CLASS_MESSAGES.NOT_FOUND);
+      }
+      if (!source.is_active) {
+        throw new Error(CLONE_MESSAGES.SOURCE_INACTIVE);
+      }
+
+      // Clone-once pre-check (the partial unique index is the hard stop).
+      const existingClone = await tx.class_series.findFirst({
+        where: { cloned_from_series_id: series_id },
+        select: { id: true },
+      });
+      if (existingClone) {
+        throw new Error(CLONE_MESSAGES.ALREADY_CLONED);
+      }
+
+      // Only ACTIVE weekday rows are copied; nothing to copy → reject.
+      const activeRows = await tx.scheduled_classes.findMany({
+        where: { series_id, branch_id, is_active: true },
+        select: {
+          day_of_week: true,
+          start_time: true,
+          default_teacher_id: true,
+        },
+      });
+      if (activeRows.length === 0) {
+        throw new Error(CLONE_MESSAGES.NO_ACTIVE_SLOTS);
+      }
+
+      // Target month = source month + 1 (Dec → Jan of the next year),
+      // normalized to the first day of the month in UTC like every
+      // Postgres `date` value handled through lib/date.
+      const sourceMonth = source.period_month;
+      const targetMonth = new Date(
+        Date.UTC(sourceMonth.getUTCFullYear(), sourceMonth.getUTCMonth() + 1, 1)
+      );
+
+      const { id: newSeriesId } = await tx.class_series.create({
+        data: {
+          branch_id,
+          name: source.name,
+          discipline_id: source.discipline_id,
+          default_teacher_id: source.default_teacher_id,
+          period_month: targetMonth,
+          cloned_from_series_id: source.id,
+        },
+        select: { id: true },
+      });
+
+      const classIds: string[] = [];
+      for (const row of activeRows) {
+        const created = await tx.scheduled_classes.create({
+          data: {
+            branch_id,
+            discipline_id: source.discipline_id,
+            default_teacher_id: row.default_teacher_id,
+            day_of_week: row.day_of_week,
+            start_time: row.start_time,
+            series_id: newSeriesId,
+          },
+          select: { id: true },
+        });
+        classIds.push(created.id);
+      }
+
+      // Copy the roster with the same eligibility rules as manual roster
+      // edits: active student of the branch with an active monthly-billed
+      // enrollment in the group's discipline.
+      const rosterRows = await tx.class_series_students.findMany({
+        where: { series_id },
+        select: { student_id: true },
+      });
+      const studentIds = rosterRows.map((row) => row.student_id);
+      const students =
+        studentIds.length > 0
+          ? await tx.students.findMany({
+              where: { id: { in: studentIds } },
+              select: {
+                id: true,
+                branch_id: true,
+                is_active: true,
+                first_name: true,
+                surname: true,
+              },
+            })
+          : [];
+      const enrollments =
+        studentIds.length > 0
+          ? await tx.student_disciplines.findMany({
+              where: {
+                student_id: { in: studentIds },
+                discipline_id: source.discipline_id,
+              },
+              select: {
+                student_id: true,
+                is_active: true,
+                billing_mode: true,
+              },
+            })
+          : [];
+
+      const studentById = new Map(
+        students.map((student) => [student.id, student])
+      );
+      const enrollmentByStudentId = new Map(
+        enrollments.map((enrollment) => [enrollment.student_id, enrollment])
+      );
+
+      const eligibleStudentIds: string[] = [];
+      const skipped: SkippedRosterStudent[] = [];
+      for (const rosterRow of rosterRows) {
+        const student = studentById.get(rosterRow.student_id);
+        const status = classifyRosterEligibility(
+          student
+            ? {
+                student_id: student.id,
+                branch_id: student.branch_id,
+                is_active: student.is_active,
+              }
+            : null,
+          enrollmentByStudentId.get(rosterRow.student_id) ?? null,
+          branch_id
+        );
+        if (status === "eligible") {
+          eligibleStudentIds.push(rosterRow.student_id);
+        } else if (student) {
+          skipped.push({
+            student_id: rosterRow.student_id,
+            first_name: student.first_name,
+            surname: student.surname,
+            reason: status,
+          });
+        }
+      }
+
+      if (eligibleStudentIds.length > 0) {
+        await tx.class_series_students.createMany({
+          data: eligibleStudentIds.map((studentId) => ({
+            series_id: newSeriesId,
+            student_id: studentId,
+            added_by: ctx.userId,
+          })),
+        });
+      }
+
+      return {
+        series_id: newSeriesId,
+        period_month: formatDatabaseDateOnly(targetMonth).slice(0, 7),
+        class_ids: classIds,
+        copied_student_count: eligibleStudentIds.length,
+        skipped,
+      };
+    }, {
+      mapTransactionError: (error) => {
+        if (!(error instanceof Error)) return undefined;
+        // Race safety net: two admins cloning at once — the partial unique
+        // index class_series_cloned_from_series_id_uq fires and is mapped
+        // to the same message as the pre-check.
+        if (
+          error.message.includes("class_series_cloned_from_series_id_uq")
+        ) {
+          return CLONE_MESSAGES.ALREADY_CLONED;
+        }
+        return (
+          error.message === CLASS_MESSAGES.NOT_FOUND ||
+          error.message === CLONE_MESSAGES.SOURCE_INACTIVE ||
+          error.message === CLONE_MESSAGES.ALREADY_CLONED ||
+          error.message === CLONE_MESSAGES.NO_ACTIVE_SLOTS ||
+          error.message === CLONE_MESSAGES.UNAUTHORIZED ||
+          error.message === CLASS_MESSAGES.BRANCH_CONTEXT_REQUIRED ||
+          error.message.includes("permisos")
+        )
+          ? error.message
+          : undefined;
+      },
+    });
+
+    if (!result.success) return result;
+    return { success: true, data: result.data };
+  } catch {
+    return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
+  }
+}
+
+/**
+ * One row per monthly class group (class_series) of a branch, for the
+ * concurrencias admin section. Each group carries its discipline, period
+ * month ("YYYY-MM"), active state, default teacher and roster student
+ * count; the weekday slots and active row count come from its
+ * scheduled_classes rows. has_clone reports whether the group was
+ * already cloned to the next month (clone-once flow). An optional
+ * period_month filter ("YYYY-MM") scopes the listing to a single month.
  * The teacher name is resolved through user_profiles via the admin
  * client (same pattern as listBranchStaff).
  * Owner/Admin-branch via RLS.
@@ -820,12 +777,18 @@ export interface ClassSeriesView {
   name: string;
   discipline_id: string;
   discipline_name: string;
+  /** Group month as "YYYY-MM". */
+  period_month: string;
   days_of_week: number[];
   start_time: string;
   default_teacher_id: string | null;
   teacher_name: string | null;
   active_row_count: number;
+  is_active: boolean;
   is_all_inactive: boolean;
+  roster_student_count: number;
+  /** True when this group was already cloned to the next month. */
+  has_clone: boolean;
 }
 
 export async function listClassSeries(
@@ -836,7 +799,7 @@ export async function listClassSeries(
     return { success: false, error: parsed.error.issues[0].message };
   }
 
-  const { branch_id } = parsed.data;
+  const { branch_id, period_month } = parsed.data;
 
   try {
     const result = await withAuthenticatedUser(async (tx, ctx) => {
@@ -846,28 +809,66 @@ export async function listClassSeries(
         return { __branchError: branchCheck.error } as const;
       }
 
-      // The class_series catalog is the authoritative list of series.
+      // The class_series catalog is the authoritative list of groups.
       const seriesRows = await tx.class_series.findMany({
-        where: { branch_id },
-        select: { id: true, name: true },
+        where: {
+          branch_id,
+          ...(period_month
+            ? { period_month: dateOnlyToUtcDate(`${period_month}-01`) }
+            : {}),
+        },
+        include: {
+          disciplines: { select: { id: true, name: true } },
+        },
         orderBy: { name: "asc" },
       });
 
       const classRows = await tx.scheduled_classes.findMany({
-        where: { branch_id, series_id: { not: null } },
-        include: {
-          disciplines: { select: { id: true, name: true } },
+        where: { branch_id },
+        select: {
+          series_id: true,
+          is_active: true,
+          day_of_week: true,
+          start_time: true,
+          default_teacher_id: true,
         },
       });
 
       const rowsBySeriesId = new Map<string, typeof classRows>();
       for (const row of classRows) {
-        if (row.series_id === null) continue;
         const bucket = rowsBySeriesId.get(row.series_id);
         if (bucket) {
           bucket.push(row);
         } else {
           rowsBySeriesId.set(row.series_id, [row]);
+        }
+      }
+
+      // Roster student count per group (0 when the group has no roster).
+      const seriesIds = seriesRows.map((series) => series.id);
+      const rosterCounts = new Map<string, number>();
+      // Groups already cloned to the next month (clone-once flow).
+      const clonedSourceIds = new Set<string>();
+      if (seriesIds.length > 0) {
+        const rosterGroups = await tx.class_series_students.groupBy({
+          by: ["series_id"],
+          where: { series_id: { in: seriesIds } },
+          _count: { _all: true },
+        });
+        for (const group of rosterGroups) {
+          rosterCounts.set(group.series_id, group._count._all);
+        }
+        const cloneRows = await tx.class_series.findMany({
+          where: {
+            branch_id,
+            cloned_from_series_id: { in: seriesIds },
+          },
+          select: { cloned_from_series_id: true },
+        });
+        for (const row of cloneRows) {
+          if (row.cloned_from_series_id) {
+            clonedSourceIds.add(row.cloned_from_series_id);
+          }
         }
       }
 
@@ -877,23 +878,24 @@ export async function listClassSeries(
         const rows = rowsBySeriesId.get(series.id) ?? [];
         const firstRow = rows[0];
         // A catalog row without any class rows cannot happen today (the
-        // row is created together with its classes and nothing deletes);
+        // rows are created together with the group and cascade-delete);
         // skip defensively if it ever does.
         if (!firstRow) continue;
 
         const activeRows = rows.filter((row) => row.is_active);
-        const teacherId =
-          activeRows.find((row) => row.default_teacher_id !== null)
-            ?.default_teacher_id ?? firstRow.default_teacher_id;
+        const teacherId = series.default_teacher_id;
         if (teacherId) {
           teacherIds.add(teacherId);
         }
 
+        const periodMonth = formatDatabaseDateOnly(series.period_month).slice(0, 7);
+
         views.push({
           series_id: series.id,
           name: series.name,
-          discipline_id: firstRow.disciplines.id,
-          discipline_name: firstRow.disciplines.name,
+          discipline_id: series.disciplines.id,
+          discipline_name: series.disciplines.name,
+          period_month: periodMonth,
           days_of_week: [
             ...new Set(activeRows.map((row) => row.day_of_week)),
           ].sort((a, b) => a - b),
@@ -901,7 +903,10 @@ export async function listClassSeries(
           default_teacher_id: teacherId ?? null,
           teacher_name: null,
           active_row_count: activeRows.length,
+          is_active: series.is_active,
           is_all_inactive: activeRows.length === 0,
+          roster_student_count: rosterCounts.get(series.id) ?? 0,
+          has_clone: clonedSourceIds.has(series.id),
         });
       }
 
@@ -1045,8 +1050,10 @@ export async function getSessionsForRange(
       const start = parseDateOnly(start_date);
       const end = parseDateOnly(end_date);
       // Load active AND inactive templates: past occurrences of deactivated
-      // templates must stay visible (with attendance); occurrences from today
-      // onward of inactive templates are hidden below.
+      // templates and inactive groups must stay visible (with attendance);
+      // occurrences from today onward are hidden below. Occurrences only
+      // ever render inside their group's month (period_month .. its last
+      // day), because class_series is the monthly group.
       const classes = await tx.scheduled_classes.findMany({
         where: {
           branch_id,
@@ -1056,8 +1063,29 @@ export async function getSessionsForRange(
         },
         include: {
           disciplines: { select: { id: true, name: true, code: true } },
+          class_series: {
+            select: { id: true, name: true, period_month: true, is_active: true },
+          },
         },
       });
+
+      // Group month window per class: ["YYYY-MM-01", "YYYY-MM-<last>"].
+      const groupMonthByClassId = new Map<
+        string,
+        { monthStart: string; monthEnd: string; periodMonth: string; isActive: boolean }
+      >();
+      for (const cls of classes) {
+        const monthStart = formatDatabaseDateOnly(cls.class_series.period_month);
+        const [year, month] = monthStart.split("-").map(Number);
+        // Last day of the month: day 0 of the following UTC month.
+        const monthEnd = formatDatabaseDateOnly(new Date(Date.UTC(year, month, 0)));
+        groupMonthByClassId.set(cls.id, {
+          monthStart,
+          monthEnd,
+          periodMonth: monthStart.slice(0, 7),
+          isActive: cls.class_series.is_active,
+        });
+      }
 
       // Expand recurring virtual sessions by iterating dates.
       const sessions: SessionView[] = [];
@@ -1070,9 +1098,21 @@ export async function getSessionsForRange(
         const dateStr = formatDateOnly(d);
 
         for (const cls of classes) {
-          // Inactive templates only contribute PAST occurrences (strictly
-          // before today); active templates behave exactly as before.
-          if (cls.day_of_week === isoDay && (cls.is_active || dateStr < todayStr)) {
+          const group = groupMonthByClassId.get(cls.id);
+          if (!group) continue;
+          // Occurrences only exist inside the group's month.
+          const inGroupMonth =
+            dateStr >= group.monthStart && dateStr <= group.monthEnd;
+          // Inactive groups behave like inactive templates: they only
+          // contribute PAST occurrences (strictly before today); active
+          // templates behave exactly as before.
+          const renders =
+            (group.isActive && cls.is_active) || dateStr < todayStr;
+          if (
+            cls.day_of_week === isoDay &&
+            inGroupMonth &&
+            renders
+          ) {
             const timeStr = formatTime(cls.start_time);
             sessions.push({
               scheduled_class_id: cls.id,
@@ -1083,6 +1123,9 @@ export async function getSessionsForRange(
               start_time: timeStr,
               end_time: addOneHour(timeStr),
               teacher_id: cls.default_teacher_id,
+              series_id: cls.class_series.id,
+              series_name: cls.class_series.name,
+              period_month: group.periodMonth,
               ...(isGlobalAdminReadOnly
                 ? {}
                 : { can_view_attendance: true }),
@@ -1467,7 +1510,9 @@ export async function reinstateSession(
 }
 
 /**
- * Assign a teacher to a recurring class or specific session (conflict-aware).
+ * Assign a teacher to a recurring class or specific session.
+ * There are no schedule restrictions any more: no conflict detection
+ * runs and the assignment always applies directly.
  * Owner/Admin-branch via RLS.
  */
 export async function assignTeacher(
@@ -1478,7 +1523,7 @@ export async function assignTeacher(
     return { success: false, error: parsed.error.issues[0].message };
   }
 
-  const { target_type, scheduled_class_id, session_date, teacher_id, force, branch_id } =
+  const { target_type, scheduled_class_id, session_date, teacher_id, branch_id } =
     parsed.data;
 
   try {
@@ -1495,104 +1540,6 @@ export async function assignTeacher(
         throw new Error(guard.error);
       }
 
-      // Get the parent class to know day_of_week and start_time
-      const parentClass = await tx.scheduled_classes.findUnique({
-        where: { id: scheduled_class_id },
-        select: { day_of_week: true, start_time: true },
-      });
-
-      if (!parentClass) {
-        return {
-          success: false,
-          message: COMMON_MESSAGES.UNEXPECTED_ERROR,
-        } as AssignTeacherResult;
-      }
-
-      const startTimeStr = formatTime(parentClass.start_time);
-
-      // Detect conflicts scoped to same branch only (local-branch conflict)
-      const conflicts = await detectTeacherConflicts(
-        tx,
-        teacher_id,
-        parentClass.day_of_week,
-        startTimeStr,
-        scheduled_class_id,
-        branch_id
-      );
-
-      // No conflict → assign directly
-      if (conflicts.length === 0) {
-        if (target_type === "recurring") {
-          await tx.scheduled_classes.update({
-            where: { id: scheduled_class_id },
-            data: { default_teacher_id: teacher_id },
-          });
-        } else {
-          await tx.class_sessions.upsert({
-            where: {
-              scheduled_class_id_session_date: {
-                scheduled_class_id,
-                session_date: new Date(session_date!),
-              },
-            },
-            create: {
-              scheduled_class_id,
-              session_date: new Date(session_date!),
-              assigned_teacher_id: teacher_id,
-            },
-            update: {
-              assigned_teacher_id: teacher_id,
-            },
-          });
-        }
-
-        return {
-          success: true,
-          teacher_assigned: true,
-          message: TEACHER_CONFLICT_MESSAGES.ASSIGNED,
-        } as AssignTeacherResult;
-      }
-
-      // Conflict found, force=false → return warning
-      if (!force) {
-        return {
-          success: false,
-          conflict: true,
-          conflicting_assignments: conflicts,
-          requires_confirmation: true,
-          message: TEACHER_CONFLICT_MESSAGES.WARNING,
-        } as AssignTeacherResult;
-      }
-
-      // Conflict found, force=true → nullify SAME-BRANCH conflicts only
-      const affectedClasses: AssignTeacherResult["affected_classes"] = [];
-
-      for (const conflict of conflicts) {
-        if (conflict.type === "recurring") {
-          await tx.scheduled_classes.update({
-            where: { id: conflict.class_id },
-            data: { default_teacher_id: null },
-          });
-        } else {
-          await tx.class_sessions.updateMany({
-            where: {
-              scheduled_class_id: conflict.class_id,
-              assigned_teacher_id: teacher_id,
-              status: "scheduled",
-            },
-            data: { assigned_teacher_id: null },
-          });
-        }
-
-        affectedClasses.push({
-          class_id: conflict.class_id,
-          class_name: conflict.class_name,
-          branch_name: conflict.branch_name,
-          previous_teacher_removed: true,
-        });
-      }
-
-      // Assign to the new target
       if (target_type === "recurring") {
         await tx.scheduled_classes.update({
           where: { id: scheduled_class_id },
@@ -1618,10 +1565,8 @@ export async function assignTeacher(
       }
 
       return {
-        success: true,
         teacher_assigned: true,
-        affected_classes: affectedClasses,
-        message: TEACHER_CONFLICT_MESSAGES.ASSIGNED,
+        message: TEACHER_ASSIGN_MESSAGES.ASSIGNED,
       } as AssignTeacherResult;
     }, {
       mapTransactionError: (error) =>

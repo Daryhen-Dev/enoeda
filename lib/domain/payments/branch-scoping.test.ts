@@ -149,6 +149,7 @@ describe("registerMonthlyPayment — branch context and period contract", () => 
         student_disciplines: {
           findUnique: vi.fn().mockResolvedValue({
             id: ENROLLMENT_ID,
+            billing_mode: "monthly",
             students: { branch_id: BRANCH_ID },
           }),
         },
@@ -176,6 +177,7 @@ describe("registerMonthlyPayment — branch context and period contract", () => 
     const findUnique = vi.fn()
       .mockResolvedValueOnce({
         id: ENROLLMENT_ID,
+        billing_mode: "monthly",
         students: { branch_id: BRANCH_ID },
       })
       .mockResolvedValueOnce({ next_due_date: new Date(2025, 2, 5) });

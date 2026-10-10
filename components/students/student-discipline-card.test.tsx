@@ -13,17 +13,20 @@ import {
 const mocks = vi.hoisted(() => ({
   suspendEnrollment: vi.fn(),
   reactivateEnrollment: vi.fn(),
+  setEnrollmentBillingMode: vi.fn(),
   getPromotionReadiness: vi.fn(),
   promoteStudent: vi.fn(),
   reverseLatestPromotion: vi.fn(),
   refresh: vi.fn(),
   toastSuccess: vi.fn(),
+  toastInfo: vi.fn(),
   toastError: vi.fn(),
 }));
 
 vi.mock("@/lib/domain/disciplines/actions", () => ({
   suspendEnrollment: mocks.suspendEnrollment,
   reactivateEnrollment: mocks.reactivateEnrollment,
+  setEnrollmentBillingMode: mocks.setEnrollmentBillingMode,
 }));
 vi.mock("@/lib/domain/progress/actions", () => ({
   getPromotionReadiness: mocks.getPromotionReadiness,
@@ -38,7 +41,11 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: mocks.refresh }),
 }));
 vi.mock("sonner", () => ({
-  toast: { success: mocks.toastSuccess, error: mocks.toastError },
+  toast: {
+    success: mocks.toastSuccess,
+    info: mocks.toastInfo,
+    error: mocks.toastError,
+  },
 }));
 
 import { StudentDisciplineCard } from "./student-discipline-card";
@@ -56,6 +63,7 @@ const ACTIVE_ENROLLMENT = {
   enrolled_at: new Date("2024-06-01T00:00:00.000Z"),
   is_active: true,
   suspended_at: null,
+  billing_mode: "monthly" as const,
 };
 
 const LEVELS = [
@@ -216,5 +224,92 @@ describe("StudentDisciplineCard", () => {
     expect(rendered.container.textContent).toContain(
       ENROLLMENT_MESSAGES.REACTIVATE_ACTION
     );
+  });
+
+  it("shows the billing mode badge for the enrollment", () => {
+    rendered = renderCard();
+
+    expect(rendered.container.textContent).toContain(
+      ENROLLMENT_MESSAGES.BILLING_MODE_MONTHLY
+    );
+
+    rendered?.unmount();
+    rendered = renderCard({
+      enrollment: { ...ACTIVE_ENROLLMENT, billing_mode: "per_class" },
+    });
+
+    expect(rendered.container.textContent).toContain(
+      ENROLLMENT_MESSAGES.BILLING_MODE_PER_CLASS
+    );
+  });
+
+  it("hides the monthly payment action and shows the change-mode control for per_class enrollments", () => {
+    rendered = renderCard({
+      enrollment: { ...ACTIVE_ENROLLMENT, billing_mode: "per_class" },
+    });
+
+    expect(
+      queryButtonByAriaLabel(
+        rendered.container,
+        STUDENT_DETAIL_MESSAGES.MONTHLY_PAYMENT_ARIA(DISCIPLINE_NAME)
+      )
+    ).toBeNull();
+    expect(
+      queryButtonByAriaLabel(
+        rendered.container,
+        `${ENROLLMENT_MESSAGES.CHANGE_BILLING_MODE_ACTION}: ${DISCIPLINE_NAME}`
+      )
+    ).not.toBeNull();
+  });
+
+  it("confirms the switch to per_class and reports the removal through setEnrollmentBillingMode", async () => {
+    mocks.setEnrollmentBillingMode.mockResolvedValue({
+      success: true,
+      data: { billing_mode: "per_class", removed_roster_entries: 2 },
+    });
+
+    rendered = renderCard();
+
+    const changeTrigger = queryButtonByAriaLabel(
+      rendered.container,
+      `${ENROLLMENT_MESSAGES.CHANGE_BILLING_MODE_ACTION}: ${DISCIPLINE_NAME}`
+    );
+    expect(changeTrigger).not.toBeNull();
+
+    act(() => {
+      changeTrigger!.click();
+    });
+
+    const dialogContent = document.querySelector<HTMLElement>(
+      '[data-slot="alert-dialog-content"]'
+    );
+    expect(dialogContent).not.toBeNull();
+    const confirm = [...(dialogContent!.querySelectorAll<HTMLButtonElement>("button"))].find(
+      (button) =>
+        button.getAttribute("aria-label") ===
+        `${ENROLLMENT_MESSAGES.BILLING_MODE_CONFIRM}: ${DISCIPLINE_NAME}`
+    );
+    expect(confirm).toBeDefined();
+    expect(dialogContent!.textContent).toContain(
+      ENROLLMENT_MESSAGES.BILLING_MODE_TO_PER_CLASS_DESCRIPTION
+    );
+
+    await act(async () => {
+      confirm!.click();
+    });
+    await act(async () => {});
+
+    expect(mocks.setEnrollmentBillingMode).toHaveBeenCalledWith({
+      branch_id: BRANCH_ID,
+      student_discipline_id: ENROLLMENT_ID,
+      billing_mode: "per_class",
+    });
+    expect(mocks.toastSuccess).toHaveBeenCalledWith(
+      ENROLLMENT_MESSAGES.BILLING_MODE_CHANGED_TOAST
+    );
+    expect(mocks.toastInfo).toHaveBeenCalledWith(
+      ENROLLMENT_MESSAGES.BILLING_MODE_ROSTERS_REMOVED_TOAST(2)
+    );
+    expect(mocks.refresh).toHaveBeenCalled();
   });
 });

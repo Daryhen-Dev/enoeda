@@ -94,24 +94,22 @@ export async function getDisciplineLevelCatalog(
 
   try {
     const result = await withAuthenticatedUser(async (tx) => {
-      const [discipline, levels] = await Promise.all([
-        tx.disciplines.findUnique({
-          where: { id: parsed.data.discipline_id },
-          select: { initial_level_id: true },
-        }),
-        tx.discipline_levels.findMany({
-          where: { discipline_id: parsed.data.discipline_id },
-          select: {
-            id: true,
-            discipline_id: true,
-            name: true,
-            color: true,
-            sort_order: true,
-            required_attended_sessions: true,
-          },
-          orderBy: { sort_order: "asc" },
-        }),
-      ]);
+      const discipline = await tx.disciplines.findUnique({
+        where: { id: parsed.data.discipline_id },
+        select: { initial_level_id: true },
+      });
+      const levels = await tx.discipline_levels.findMany({
+        where: { discipline_id: parsed.data.discipline_id },
+        select: {
+          id: true,
+          discipline_id: true,
+          name: true,
+          color: true,
+          sort_order: true,
+          required_attended_sessions: true,
+        },
+        orderBy: { sort_order: "asc" },
+      });
 
       return { discipline, levels };
     });
@@ -226,16 +224,14 @@ export async function setInitialLevel(
         return { id: null, error: COMMON_MESSAGES.INSUFFICIENT_PERMISSIONS };
       }
 
-      const [discipline, level] = await Promise.all([
-        tx.disciplines.findUnique({
-          where: { id: parsed.data.discipline_id },
-          select: { id: true },
-        }),
-        tx.discipline_levels.findUnique({
-          where: { id: parsed.data.level_id },
-          select: { discipline_id: true },
-        }),
-      ]);
+      const discipline = await tx.disciplines.findUnique({
+        where: { id: parsed.data.discipline_id },
+        select: { id: true },
+      });
+      const level = await tx.discipline_levels.findUnique({
+        where: { id: parsed.data.level_id },
+        select: { discipline_id: true },
+      });
 
       if (!discipline) {
         return { id: null, error: DISCIPLINE_MESSAGES.NOT_FOUND };
@@ -329,36 +325,34 @@ export async function listBranchLevelRequirements(
         return { __error: denied, __disciplines: null } as const;
       }
 
-      const [disciplines, overrides] = await Promise.all([
-        tx.disciplines.findMany({
-          where: { is_active: true },
-          select: {
-            id: true,
-            name: true,
-            discipline_levels: {
-              select: {
-                id: true,
-                name: true,
-                color: true,
-                sort_order: true,
-                required_attended_sessions: true,
-                updated_at: true,
-              },
-              orderBy: { sort_order: "asc" },
+      const disciplines = await tx.disciplines.findMany({
+        where: { is_active: true },
+        select: {
+          id: true,
+          name: true,
+          discipline_levels: {
+            select: {
+              id: true,
+              name: true,
+              color: true,
+              sort_order: true,
+              required_attended_sessions: true,
+              updated_at: true,
             },
+            orderBy: { sort_order: "asc" },
           },
-          orderBy: { name: "asc" },
-        }),
-        tx.branch_level_requirements.findMany({
-          where: { branch_id: parsed.data.branch_id },
-          select: {
-            branch_id: true,
-            level_id: true,
-            required_attended_sessions: true,
-            updated_at: true,
-          },
-        }),
-      ]);
+        },
+        orderBy: { name: "asc" },
+      });
+      const overrides = await tx.branch_level_requirements.findMany({
+        where: { branch_id: parsed.data.branch_id },
+        select: {
+          branch_id: true,
+          level_id: true,
+          required_attended_sessions: true,
+          updated_at: true,
+        },
+      });
 
       const overridesByLevel = buildBranchRequirementMap(
         overrides,

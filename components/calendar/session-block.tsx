@@ -10,12 +10,17 @@ import { SessionInfoSheetDialog } from "@/components/attendance/session-info-she
 import { RemoveRecurringClassDialog } from "@/components/classes/remove-recurring-class-dialog";
 import { SessionSuspendDialog } from "@/components/classes/session-suspend-dialog";
 import { TeacherAssignDialog } from "@/components/classes/teacher-assign-dialog";
+import {
+  RosterEditorSheet,
+  type RosterEditorTarget,
+} from "@/components/rosters/roster-editor-sheet";
 import { Button } from "@/components/ui/button";
 import { reinstateSession, type SessionView } from "@/lib/domain/classes/actions";
 import {
   CALENDAR_MESSAGES,
   COMMON_MESSAGES,
   ONE_TIME_CLASS_MESSAGES,
+  ROSTER_EDITOR_MESSAGES,
   SUSPENSION_MESSAGES,
   TEACHER_CONFLICT_MESSAGES,
 } from "@/lib/localization/es-ec";
@@ -56,6 +61,21 @@ const NEUTRAL_ACTION_CLASSES = `${ACTION_BUTTON_BASE} border-slate-300 bg-white/
 const DANGER_ACTION_CLASSES = `${ACTION_BUTTON_BASE} border-red-300 bg-white/80 text-red-700 hover:bg-red-50 hover:text-red-800 focus-visible:ring-red-600/40 dark:border-red-300 dark:bg-white/80 dark:text-red-700 dark:hover:bg-red-50`;
 const RESTORE_ACTION_CLASSES = `${ACTION_BUTTON_BASE} border-emerald-300 bg-white/80 text-emerald-800 hover:bg-emerald-50 hover:text-emerald-900 focus-visible:ring-emerald-600/40 dark:border-emerald-300 dark:bg-white/80 dark:text-emerald-800 dark:hover:bg-emerald-50`;
 
+/**
+ * Group month label for recurring sessions, e.g. "octubre de 2026" —
+ * same es-EC formatting as the concurrencias list (duplicated here to
+ * keep the calendar block dependency-free).
+ */
+function formatGroupMonth(periodMonth: string): string {
+  const [year, month] = periodMonth.split("-").map(Number);
+  const rawLabel = new Intl.DateTimeFormat("es-EC", {
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(Date.UTC(year, month - 1, 1)));
+  return rawLabel.charAt(0).toUpperCase() + rawLabel.slice(1);
+}
+
 function isInteractiveTarget(target: EventTarget | null): boolean {
   if (!(target instanceof Element)) return false;
 
@@ -88,6 +108,7 @@ export function SessionBlock({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [isSessionInfoOpen, setIsSessionInfoOpen] = useState(false);
+  const [rosterTarget, setRosterTarget] = useState<RosterEditorTarget | null>(null);
   const colors = getDisciplineColors(session.discipline_code);
   const isSuspended = session.status === "suspended";
   const hasNoTeacher = !session.teacher_id;
@@ -106,6 +127,10 @@ export function SessionBlock({
     session.start_time,
     session.session_date
   );
+  const seriesRosterTarget: RosterEditorTarget | null =
+    !isOneTime && session.series_id
+      ? { kind: "series", series_id: session.series_id }
+      : null;
 
   function openSessionInfoIfAllowed(target: EventTarget | null) {
     if (!canViewAttendance || isInteractiveTarget(target)) return;
@@ -260,6 +285,14 @@ export function SessionBlock({
         </div>
         <div className="flex flex-col items-start gap-1">
           <span>{session.discipline_name}</span>
+          {!isOneTime && session.series_name && (
+            <span className="text-xs text-slate-700 dark:text-slate-700">
+              {session.series_name}
+              {session.period_month
+                ? ` · ${formatGroupMonth(session.period_month)}`
+                : ""}
+            </span>
+          )}
           {isSubstitute && (
             <span className="rounded bg-purple-200 px-1 text-xs">
               <UserIcon className="mr-0.5 inline size-3" />
@@ -291,15 +324,32 @@ export function SessionBlock({
         )}
         <div className="mt-1 flex flex-col items-stretch gap-2">
           {isOneTime ? (
-            canViewAttendance && (
-              <AttendanceSheetDialog
-                oneTimeClassId={session.scheduled_class_id}
-                sessionDate={session.session_date}
-                branchId={branchId ?? ""}
-                disabled={isSuspended || !branchId || !session.can_take_attendance}
-                triggerClassName={PRIMARY_ACTION_CLASSES}
-              />
-            )
+            <>
+              {canViewAttendance && (
+                <AttendanceSheetDialog
+                  oneTimeClassId={session.scheduled_class_id}
+                  sessionDate={session.session_date}
+                  branchId={branchId ?? ""}
+                  disabled={isSuspended || !branchId || !session.can_take_attendance}
+                  triggerClassName={PRIMARY_ACTION_CLASSES}
+                />
+              )}
+              {canManage && branchId && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={NEUTRAL_ACTION_CLASSES}
+                  onClick={() =>
+                    setRosterTarget({
+                      kind: "one_time",
+                      one_time_class_id: session.scheduled_class_id,
+                    })
+                  }
+                >
+                  {ROSTER_EDITOR_MESSAGES.ROSTER_ONE_TIME_ACTION}
+                </Button>
+              )}
+            </>
           ) : (
             <>
               {canViewAttendance && (
@@ -310,6 +360,16 @@ export function SessionBlock({
                   disabled={isSuspended || !branchId || !session.can_take_attendance}
                   triggerClassName={PRIMARY_ACTION_CLASSES}
                 />
+              )}
+              {canManage && branchId && seriesRosterTarget && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={NEUTRAL_ACTION_CLASSES}
+                  onClick={() => setRosterTarget(seriesRosterTarget)}
+                >
+                  {ROSTER_EDITOR_MESSAGES.ROSTER_SERIES_ACTION}
+                </Button>
               )}
               {canManage && branchId && (
                 <>
@@ -365,6 +425,16 @@ export function SessionBlock({
           )}
         </div>
       </div>
+      {rosterTarget && (
+        <RosterEditorSheet
+          branchId={branchId ?? ""}
+          target={rosterTarget}
+          open={rosterTarget !== null}
+          onOpenChange={(nextOpen) => {
+            if (!nextOpen) setRosterTarget(null);
+          }}
+        />
+      )}
       {canViewAttendance && hasSessionAttendance(session) && (
         <SessionInfoSheetDialog
           session={session}

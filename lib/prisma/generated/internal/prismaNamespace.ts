@@ -416,12 +416,15 @@ export const ModelName = {
   discipline_events: 'discipline_events',
   scheduled_classes: 'scheduled_classes',
   class_series: 'class_series',
+  class_series_students: 'class_series_students',
   one_time_classes: 'one_time_classes',
   class_sessions: 'class_sessions',
   attendance: 'attendance',
   discipline_levels: 'discipline_levels',
   student_progress: 'student_progress',
   student_notes: 'student_notes',
+  one_time_class_students: 'one_time_class_students',
+  class_guests: 'class_guests',
   branch_level_requirements: 'branch_level_requirements',
   payments: 'payments',
   class_payments: 'class_payments'
@@ -440,7 +443,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "audit_log_entries" | "custom_oauth_providers" | "flow_state" | "identities" | "instances" | "mfa_amr_claims" | "mfa_challenges" | "mfa_factors" | "oauth_authorizations" | "oauth_client_states" | "oauth_clients" | "oauth_consents" | "one_time_tokens" | "refresh_tokens" | "saml_providers" | "saml_relay_states" | "schema_migrations" | "sessions" | "sso_domains" | "sso_providers" | "users" | "webauthn_challenges" | "webauthn_credentials" | "user_roles" | "branches" | "user_profiles" | "students" | "disciplines" | "student_disciplines" | "discipline_events" | "scheduled_classes" | "class_series" | "one_time_classes" | "class_sessions" | "attendance" | "discipline_levels" | "student_progress" | "student_notes" | "branch_level_requirements" | "payments" | "class_payments"
+    modelProps: "audit_log_entries" | "custom_oauth_providers" | "flow_state" | "identities" | "instances" | "mfa_amr_claims" | "mfa_challenges" | "mfa_factors" | "oauth_authorizations" | "oauth_client_states" | "oauth_clients" | "oauth_consents" | "one_time_tokens" | "refresh_tokens" | "saml_providers" | "saml_relay_states" | "schema_migrations" | "sessions" | "sso_domains" | "sso_providers" | "users" | "webauthn_challenges" | "webauthn_credentials" | "user_roles" | "branches" | "user_profiles" | "students" | "disciplines" | "student_disciplines" | "discipline_events" | "scheduled_classes" | "class_series" | "class_series_students" | "one_time_classes" | "class_sessions" | "attendance" | "discipline_levels" | "student_progress" | "student_notes" | "one_time_class_students" | "class_guests" | "branch_level_requirements" | "payments" | "class_payments"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -2812,6 +2815,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    class_series_students: {
+      payload: Prisma.$class_series_studentsPayload<ExtArgs>
+      fields: Prisma.class_series_studentsFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.class_series_studentsFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$class_series_studentsPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.class_series_studentsFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$class_series_studentsPayload>
+        }
+        findFirst: {
+          args: Prisma.class_series_studentsFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$class_series_studentsPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.class_series_studentsFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$class_series_studentsPayload>
+        }
+        findMany: {
+          args: Prisma.class_series_studentsFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$class_series_studentsPayload>[]
+        }
+        create: {
+          args: Prisma.class_series_studentsCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$class_series_studentsPayload>
+        }
+        createMany: {
+          args: Prisma.class_series_studentsCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.class_series_studentsCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$class_series_studentsPayload>[]
+        }
+        delete: {
+          args: Prisma.class_series_studentsDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$class_series_studentsPayload>
+        }
+        update: {
+          args: Prisma.class_series_studentsUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$class_series_studentsPayload>
+        }
+        deleteMany: {
+          args: Prisma.class_series_studentsDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.class_series_studentsUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.class_series_studentsUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$class_series_studentsPayload>[]
+        }
+        upsert: {
+          args: Prisma.class_series_studentsUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$class_series_studentsPayload>
+        }
+        aggregate: {
+          args: Prisma.Class_series_studentsAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateClass_series_students>
+        }
+        groupBy: {
+          args: Prisma.class_series_studentsGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Class_series_studentsGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.class_series_studentsCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Class_series_studentsCountAggregateOutputType> | number
+        }
+      }
+    }
     one_time_classes: {
       payload: Prisma.$one_time_classesPayload<ExtArgs>
       fields: Prisma.one_time_classesFieldRefs
@@ -3253,6 +3330,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.student_notesCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.Student_notesCountAggregateOutputType> | number
+        }
+      }
+    }
+    one_time_class_students: {
+      payload: Prisma.$one_time_class_studentsPayload<ExtArgs>
+      fields: Prisma.one_time_class_studentsFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.one_time_class_studentsFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$one_time_class_studentsPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.one_time_class_studentsFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$one_time_class_studentsPayload>
+        }
+        findFirst: {
+          args: Prisma.one_time_class_studentsFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$one_time_class_studentsPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.one_time_class_studentsFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$one_time_class_studentsPayload>
+        }
+        findMany: {
+          args: Prisma.one_time_class_studentsFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$one_time_class_studentsPayload>[]
+        }
+        create: {
+          args: Prisma.one_time_class_studentsCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$one_time_class_studentsPayload>
+        }
+        createMany: {
+          args: Prisma.one_time_class_studentsCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.one_time_class_studentsCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$one_time_class_studentsPayload>[]
+        }
+        delete: {
+          args: Prisma.one_time_class_studentsDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$one_time_class_studentsPayload>
+        }
+        update: {
+          args: Prisma.one_time_class_studentsUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$one_time_class_studentsPayload>
+        }
+        deleteMany: {
+          args: Prisma.one_time_class_studentsDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.one_time_class_studentsUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.one_time_class_studentsUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$one_time_class_studentsPayload>[]
+        }
+        upsert: {
+          args: Prisma.one_time_class_studentsUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$one_time_class_studentsPayload>
+        }
+        aggregate: {
+          args: Prisma.One_time_class_studentsAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateOne_time_class_students>
+        }
+        groupBy: {
+          args: Prisma.one_time_class_studentsGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.One_time_class_studentsGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.one_time_class_studentsCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.One_time_class_studentsCountAggregateOutputType> | number
+        }
+      }
+    }
+    class_guests: {
+      payload: Prisma.$class_guestsPayload<ExtArgs>
+      fields: Prisma.class_guestsFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.class_guestsFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$class_guestsPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.class_guestsFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$class_guestsPayload>
+        }
+        findFirst: {
+          args: Prisma.class_guestsFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$class_guestsPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.class_guestsFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$class_guestsPayload>
+        }
+        findMany: {
+          args: Prisma.class_guestsFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$class_guestsPayload>[]
+        }
+        create: {
+          args: Prisma.class_guestsCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$class_guestsPayload>
+        }
+        createMany: {
+          args: Prisma.class_guestsCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.class_guestsCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$class_guestsPayload>[]
+        }
+        delete: {
+          args: Prisma.class_guestsDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$class_guestsPayload>
+        }
+        update: {
+          args: Prisma.class_guestsUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$class_guestsPayload>
+        }
+        deleteMany: {
+          args: Prisma.class_guestsDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.class_guestsUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.class_guestsUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$class_guestsPayload>[]
+        }
+        upsert: {
+          args: Prisma.class_guestsUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$class_guestsPayload>
+        }
+        aggregate: {
+          args: Prisma.Class_guestsAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateClass_guests>
+        }
+        groupBy: {
+          args: Prisma.class_guestsGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Class_guestsGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.class_guestsCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Class_guestsCountAggregateOutputType> | number
         }
       }
     }
@@ -3977,6 +4202,7 @@ export const Student_disciplinesScalarFieldEnum = {
   is_active: 'is_active',
   suspended_at: 'suspended_at',
   next_due_date: 'next_due_date',
+  billing_mode: 'billing_mode',
   created_at: 'created_at',
   updated_at: 'updated_at'
 } as const
@@ -4018,10 +4244,27 @@ export const Class_seriesScalarFieldEnum = {
   id: 'id',
   branch_id: 'branch_id',
   name: 'name',
-  created_at: 'created_at'
+  discipline_id: 'discipline_id',
+  default_teacher_id: 'default_teacher_id',
+  period_month: 'period_month',
+  cloned_from_series_id: 'cloned_from_series_id',
+  is_active: 'is_active',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
 } as const
 
 export type Class_seriesScalarFieldEnum = (typeof Class_seriesScalarFieldEnum)[keyof typeof Class_seriesScalarFieldEnum]
+
+
+export const Class_series_studentsScalarFieldEnum = {
+  id: 'id',
+  series_id: 'series_id',
+  student_id: 'student_id',
+  added_by: 'added_by',
+  created_at: 'created_at'
+} as const
+
+export type Class_series_studentsScalarFieldEnum = (typeof Class_series_studentsScalarFieldEnum)[keyof typeof Class_series_studentsScalarFieldEnum]
 
 
 export const One_time_classesScalarFieldEnum = {
@@ -4116,6 +4359,36 @@ export const Student_notesScalarFieldEnum = {
 export type Student_notesScalarFieldEnum = (typeof Student_notesScalarFieldEnum)[keyof typeof Student_notesScalarFieldEnum]
 
 
+export const One_time_class_studentsScalarFieldEnum = {
+  id: 'id',
+  one_time_class_id: 'one_time_class_id',
+  student_id: 'student_id',
+  added_by: 'added_by',
+  created_at: 'created_at'
+} as const
+
+export type One_time_class_studentsScalarFieldEnum = (typeof One_time_class_studentsScalarFieldEnum)[keyof typeof One_time_class_studentsScalarFieldEnum]
+
+
+export const Class_guestsScalarFieldEnum = {
+  id: 'id',
+  branch_id: 'branch_id',
+  scheduled_class_id: 'scheduled_class_id',
+  one_time_class_id: 'one_time_class_id',
+  session_date: 'session_date',
+  first_name: 'first_name',
+  surname: 'surname',
+  phone: 'phone',
+  observation: 'observation',
+  converted_student_id: 'converted_student_id',
+  created_by: 'created_by',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
+} as const
+
+export type Class_guestsScalarFieldEnum = (typeof Class_guestsScalarFieldEnum)[keyof typeof Class_guestsScalarFieldEnum]
+
+
 export const Branch_level_requirementsScalarFieldEnum = {
   id: 'id',
   branch_id: 'branch_id',
@@ -4151,6 +4424,7 @@ export const Class_paymentsScalarFieldEnum = {
   amount: 'amount',
   class_date: 'class_date',
   scheduled_class_id: 'scheduled_class_id',
+  one_time_class_id: 'one_time_class_id',
   recorded_by: 'recorded_by',
   created_at: 'created_at'
 } as const
@@ -4597,12 +4871,15 @@ export type GlobalOmitConfig = {
   discipline_events?: Prisma.discipline_eventsOmit
   scheduled_classes?: Prisma.scheduled_classesOmit
   class_series?: Prisma.class_seriesOmit
+  class_series_students?: Prisma.class_series_studentsOmit
   one_time_classes?: Prisma.one_time_classesOmit
   class_sessions?: Prisma.class_sessionsOmit
   attendance?: Prisma.attendanceOmit
   discipline_levels?: Prisma.discipline_levelsOmit
   student_progress?: Prisma.student_progressOmit
   student_notes?: Prisma.student_notesOmit
+  one_time_class_students?: Prisma.one_time_class_studentsOmit
+  class_guests?: Prisma.class_guestsOmit
   branch_level_requirements?: Prisma.branch_level_requirementsOmit
   payments?: Prisma.paymentsOmit
   class_payments?: Prisma.class_paymentsOmit

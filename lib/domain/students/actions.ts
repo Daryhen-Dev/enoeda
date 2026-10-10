@@ -58,6 +58,7 @@ export interface ActiveStudentDiscipline {
   id: string;
   discipline_name: string;
   next_due_date: string | null;
+  billing_mode: "monthly" | "per_class";
 }
 
 export interface StudentListItem {
@@ -145,6 +146,7 @@ export async function listStudents(
           select: {
             id: true,
             next_due_date: true,
+            billing_mode: true,
             disciplines: { select: { name: true } },
           },
         },
@@ -182,6 +184,10 @@ export async function listStudents(
           studentDiscipline.next_due_date === null
             ? null
             : formatDatabaseDateOnly(studentDiscipline.next_due_date),
+        billing_mode:
+          studentDiscipline.billing_mode === "per_class"
+            ? ("per_class" as const)
+            : ("monthly" as const),
       }))
       .sort((firstDiscipline, secondDiscipline) =>
         firstDiscipline.discipline_name.localeCompare(

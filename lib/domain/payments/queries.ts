@@ -124,6 +124,8 @@ async function countOverdueStudentsOn(
     where: {
       ...disciplineWhere,
       is_active: true,
+      // Per-class enrollments are never overdue (T8).
+      billing_mode: "monthly",
       next_due_date: { lt: today },
       students: { branch_id: branchId },
     },
@@ -152,6 +154,8 @@ export async function listOverdueStudents(
     where: {
       ...disciplineWhere,
       is_active: true,
+      // Per-class enrollments are never overdue (T8).
+      billing_mode: "monthly",
       next_due_date: { lt: today },
       students: { branch_id: branchId },
     },
@@ -190,54 +194,52 @@ export async function getMonthlyPaymentSummaryQuery(
   const dateRange = { gte: monthStart, lt: nextMonthStart };
   const enrollmentFilter = disciplineId ? { discipline_id: disciplineId } : {};
 
-  const [monthlyPayments, classPayments, overdueStudentCount] = await Promise.all([
-    tx.payments.findMany({
-      where: {
-        payment_date: dateRange,
-        student_disciplines: {
-          ...enrollmentFilter,
-          students: { branch_id: branchId },
+  const monthlyPayments = await tx.payments.findMany({
+    where: {
+      payment_date: dateRange,
+      student_disciplines: {
+        ...enrollmentFilter,
+        students: { branch_id: branchId },
+      },
+    },
+    select: {
+      amount: true,
+      payment_date: true,
+      student_disciplines: {
+        select: {
+          student_id: true,
+          students: { select: { first_name: true, surname: true } },
+          disciplines: { select: { name: true } },
         },
       },
-      select: {
-        amount: true,
-        payment_date: true,
-        student_disciplines: {
-          select: {
-            student_id: true,
-            students: { select: { first_name: true, surname: true } },
-            disciplines: { select: { name: true } },
-          },
+    },
+  });
+  const classPayments = await tx.class_payments.findMany({
+    where: {
+      class_date: dateRange,
+      student_disciplines: {
+        ...enrollmentFilter,
+        students: { branch_id: branchId },
+      },
+    },
+    select: {
+      amount: true,
+      class_date: true,
+      student_disciplines: {
+        select: {
+          student_id: true,
+          students: { select: { first_name: true, surname: true } },
+          disciplines: { select: { name: true } },
         },
       },
-    }),
-    tx.class_payments.findMany({
-      where: {
-        class_date: dateRange,
-        student_disciplines: {
-          ...enrollmentFilter,
-          students: { branch_id: branchId },
-        },
-      },
-      select: {
-        amount: true,
-        class_date: true,
-        student_disciplines: {
-          select: {
-            student_id: true,
-            students: { select: { first_name: true, surname: true } },
-            disciplines: { select: { name: true } },
-          },
-        },
-      },
-    }),
-    countOverdueStudentsOn(
-      tx,
-      branchId,
-      dateOnlyToUtcDate(today),
-      disciplineId
-    ),
-  ]);
+    },
+  });
+  const overdueStudentCount = await countOverdueStudentsOn(
+    tx,
+    branchId,
+    dateOnlyToUtcDate(today),
+    disciplineId
+  );
 
   const monthlyActivity: MonthlyPaymentActivity[] = monthlyPayments.map((payment) => ({
     student_id: payment.student_disciplines.student_id,

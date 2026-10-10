@@ -11,8 +11,11 @@ import {
   BRANCH_READ_ACCESS,
 } from "@/lib/auth/branch-read-access";
 import { formatDatabaseDateOnly, formatDateOnly, parseDateOnly } from "@/lib/date";
-import type { TransactionClient } from "@/lib/prisma/client";
 import { BRANCH_MESSAGES, COMMON_MESSAGES, PAYMENT_MESSAGES } from "@/lib/localization/es-ec";
+import {
+  createClassPaymentForOccurrence,
+  getBranchPaymentSettings,
+} from "./class-payment";
 import {
   configureDisciplineClassPriceSchema,
   registerMonthlyPaymentSchema,
@@ -75,11 +78,6 @@ export interface ClassPaymentRecord {
   created_at: Date;
 }
 
-interface BranchPaymentSettingsRow {
-  payment_due_day: number;
-  payment_edit_window_days: number;
-}
-
 interface PaymentResourceRow {
   id: string;
   created_at: Date;
@@ -93,18 +91,6 @@ function mapPaymentTransactionError(error: unknown): string | undefined {
     return PAYMENT_MESSAGES.PERIOD_OVERLAP;
   }
   return undefined;
-}
-
-async function getBranchPaymentSettings(
-  tx: TransactionClient,
-  branchId: string
-): Promise<BranchPaymentSettingsRow | null> {
-  const rows = await tx.$queryRaw<BranchPaymentSettingsRow[]>`
-    SELECT payment_due_day, payment_edit_window_days
-    FROM public.branches
-    WHERE id = ${branchId} AND is_active = true
-  `;
-  return rows[0] ?? null;
 }
 
 /**
@@ -169,13 +155,21 @@ export async function registerMonthlyPayment(
 
       const enrollment = await tx.student_disciplines.findUnique({
         where: { id: parsed.data.student_discipline_id },
-        select: { id: true, students: { select: { branch_id: true } } },
+        select: { id: true, billing_mode: true, students: { select: { branch_id: true } } },
       });
       if (!enrollment) {
         return { id: null, next_due_date: null, error: PAYMENT_MESSAGES.ENROLLMENT_NOT_FOUND };
       }
       if (enrollment.students.branch_id !== parsed.data.branch_id) {
         return { id: null, next_due_date: null, error: BRANCH_ASSERTION_MESSAGES.CROSS_BRANCH_DENIED };
+      }
+      // Per-class enrollments cannot receive monthly payments (T8).
+      if (enrollment.billing_mode !== "monthly") {
+        return {
+          id: null,
+          next_due_date: null,
+          error: PAYMENT_MESSAGES.MONTHLY_NOT_ALLOWED_FOR_PER_CLASS,
+        };
       }
 
       const settings = await getBranchPaymentSettings(tx, parsed.data.branch_id);
@@ -236,6 +230,9 @@ export async function registerMonthlyPayment(
 /**
  * Admin + Teacher registers a per-class payment.
  * Amount is auto-read from disciplines.class_price; rejects when NULL.
+ * Optionally binds the payment to a class occurrence (scheduled_class_id or
+ * one_time_class_id); the partial unique indexes from migration
+ * 20260910000000 prevent double charging the same occurrence.
  * Requires branch context; validates enrollment belongs to the caller's branch.
  */
 export async function registerClassPayment(
@@ -254,52 +251,23 @@ export async function registerClassPayment(
         return { id: null, amount: null, error: branchError };
       }
 
-      const enrollment = await tx.student_disciplines.findUnique({
-        where: { id: parsed.data.student_discipline_id },
-        select: {
-          id: true,
-          disciplines: { select: { class_price: true } },
-          students: { select: { branch_id: true } },
-        },
+      const created = await createClassPaymentForOccurrence({
+        tx,
+        student_discipline_id: parsed.data.student_discipline_id,
+        branch_id: parsed.data.branch_id,
+        recorded_by: ctx.userId,
+        class_date: parsed.data.class_date
+          ? parseDateOnly(parsed.data.class_date)
+          : undefined,
+        scheduled_class_id: parsed.data.scheduled_class_id ?? null,
+        one_time_class_id: parsed.data.one_time_class_id ?? null,
       });
 
-      if (!enrollment) {
-        return { id: null, amount: null, error: PAYMENT_MESSAGES.ENROLLMENT_NOT_FOUND };
+      if (!created.ok) {
+        return { id: null, amount: null, error: created.error };
       }
 
-      // Cross-branch guard
-      if (enrollment.students.branch_id !== parsed.data.branch_id) {
-        return { id: null, amount: null, error: BRANCH_ASSERTION_MESSAGES.CROSS_BRANCH_DENIED };
-      }
-
-      const classPrice = enrollment.disciplines.class_price;
-      if (classPrice === null || classPrice === undefined) {
-        return { id: null, amount: null, error: PAYMENT_MESSAGES.CLASS_PRICE_NOT_SET };
-      }
-
-      const settings = await getBranchPaymentSettings(tx, parsed.data.branch_id);
-      if (!settings) {
-        return { id: null, amount: null, error: BRANCH_MESSAGES.INACTIVE_OR_NOT_FOUND };
-      }
-
-      const classPayment = await tx.class_payments.create({
-        data: {
-          student_discipline_id: enrollment.id,
-          amount: classPrice,
-          class_date: parsed.data.class_date
-            ? parseDateOnly(parsed.data.class_date)
-            : undefined,
-          scheduled_class_id: parsed.data.scheduled_class_id ?? null,
-          recorded_by: ctx.userId,
-        },
-        select: { id: true, amount: true },
-      });
-
-      return {
-        id: classPayment.id,
-        amount: Number(classPayment.amount),
-        error: null,
-      };
+      return { id: created.id, amount: created.amount, error: null };
     });
 
     if (!result.success) return result;
@@ -346,40 +314,38 @@ export async function getStudentPayments(
         return { __branchError: BRANCH_ASSERTION_MESSAGES.CROSS_BRANCH_DENIED } as const;
       }
 
-      const [monthly, perClass] = await Promise.all([
-        tx.payments.findMany({
-          where: { student_disciplines: { student_id: parsed.data.student_id } },
-          select: {
-            id: true,
-            amount: true,
-            months_covered: true,
-            period_start: true,
-            period_end: true,
-            payment_date: true,
-            recorded_by: true,
-            note: true,
-            created_at: true,
-            student_disciplines: {
-              select: { disciplines: { select: { name: true } } },
-            },
+      const monthly = await tx.payments.findMany({
+        where: { student_disciplines: { student_id: parsed.data.student_id } },
+        select: {
+          id: true,
+          amount: true,
+          months_covered: true,
+          period_start: true,
+          period_end: true,
+          payment_date: true,
+          recorded_by: true,
+          note: true,
+          created_at: true,
+          student_disciplines: {
+            select: { disciplines: { select: { name: true } } },
           },
-          orderBy: { created_at: "desc" },
-        }),
-        tx.class_payments.findMany({
-          where: { student_disciplines: { student_id: parsed.data.student_id } },
-          select: {
-            id: true,
-            amount: true,
-            class_date: true,
-            recorded_by: true,
-            created_at: true,
-            student_disciplines: {
-              select: { disciplines: { select: { name: true } } },
-            },
+        },
+        orderBy: { created_at: "desc" },
+      });
+      const perClass = await tx.class_payments.findMany({
+        where: { student_disciplines: { student_id: parsed.data.student_id } },
+        select: {
+          id: true,
+          amount: true,
+          class_date: true,
+          recorded_by: true,
+          created_at: true,
+          student_disciplines: {
+            select: { disciplines: { select: { name: true } } },
           },
-          orderBy: { created_at: "desc" },
-        }),
-      ]);
+        },
+        orderBy: { created_at: "desc" },
+      });
 
       return {
         monthly: monthly.map((row) => ({
@@ -567,6 +533,18 @@ export async function correctMonthlyPayment(
     if (!payment) return { id: null, next_due_date: null, error: PAYMENT_MESSAGES.PAYMENT_NOT_FOUND };
     if (payment.student_disciplines.students.branch_id !== parsed.data.branch_id) {
       return { id: null, next_due_date: null, error: BRANCH_ASSERTION_MESSAGES.CROSS_BRANCH_DENIED };
+    }
+    // Per-class enrollments cannot receive monthly payments (T8).
+    const enrollmentMode = await tx.student_disciplines.findUnique({
+      where: { id: payment.student_discipline_id },
+      select: { billing_mode: true },
+    });
+    if (enrollmentMode?.billing_mode !== "monthly") {
+      return {
+        id: null,
+        next_due_date: null,
+        error: PAYMENT_MESSAGES.MONTHLY_NOT_ALLOWED_FOR_PER_CLASS,
+      };
     }
     const settings = await getBranchPaymentSettings(tx, parsed.data.branch_id);
     if (!settings) {

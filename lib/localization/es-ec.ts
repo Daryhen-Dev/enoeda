@@ -247,6 +247,7 @@ export const STUDENT_DIRECTORY_MESSAGES = {
   ADMINISTRATIVE_ACTIONS_LABEL: "Acciones administrativas",
   MONTHLY_DUE_DATE: "Vencimiento mensual",
   NO_PAYMENTS_REGISTERED: "Sin pagos registrados.",
+  PER_CLASS_DUE_DATE: "Por clase",
   DUE_IN_DAYS: (days: number) =>
     days === 1 ? "1 día restante" : `${days} días restantes`,
   DUE_TODAY: "Vence hoy",
@@ -620,11 +621,8 @@ export const CLASS_MESSAGES = {
     "La clase no pertenece a la sucursal activa. Seleccione la sucursal correcta.",
   NOT_FOUND:
     "La clase solicitada no existe o no tiene permisos para accederla.",
-  OVERLAP: "Ya existe una clase en ese horario para esta sucursal y día.",
-  OVERLAP_ON_DAY: (dayLabel: string) =>
-    `Ya existe una clase en ese horario el día ${dayLabel}.`,
   CREATE_DESCRIPTION:
-    "Agregue una clase recurrente al horario semanal. Puede seleccionar varios días para crearlas todas de una vez.",
+    "Cree un grupo mensual de clases: se generan todas las clases semanales del mes seleccionado en una sola operación.",
   DISCIPLINE_LABEL: "Disciplina",
   DISCIPLINE_PLACEHOLDER: "Seleccionar…",
   DAY_LABEL: "Día",
@@ -632,24 +630,91 @@ export const CLASS_MESSAGES = {
   START_TIME_LABEL: "Hora de inicio",
   TEACHER_LABEL: "Profesor",
   NO_TEACHER_OPTION: "Sin profesor asignado",
-  DAY_PREFIX: "Día",
   SESSION_DATE_REQUIRED: "La fecha de la sesión es obligatoria.",
-  CREATE_TITLE: "Crear clase recurrente",
-  CREATED: "Clase creada correctamente.",
-  CREATED_BATCH: (count: number) =>
-    count === 1
-      ? "Se creó 1 clase correctamente."
-      : `Se crearon ${count} clases correctamente.`,
-  PARTIAL_FAILURE_TITLE:
-    "Algunos días no se pudieron crear por conflicto de horario:",
+  CREATE_TITLE: "Crear grupo mensual de clases",
+  MONTH_LABEL: "Mes",
+  INVALID_PERIOD_MONTH: "El mes debe tener el formato AAAA-MM.",
+  DUPLICATE_DAYS: "Los días de la semana no pueden repetirse.",
+  MONTHLY_GROUP_CREATED: "Grupo mensual creado correctamente.",
+  MONTHLY_GROUP_CREATED_DESCRIPTION:
+    "El grupo mensual y sus clases semanales fueron creados. El grupo aún no tiene alumnos asignados.",
+  ASSIGN_STUDENTS_ACTION: "Asignar alumnos",
   DEACTIVATED: "Clase desactivada.",
-  SERIES_NAME_LABEL: "Nombre de la concurrencia",
+  SERIES_NAME_LABEL: "Nombre del grupo",
   SERIES_NAME_PLACEHOLDER: "Ej.: Karate infantil — Lunes y miércoles",
-  SERIES_NAME_REQUIRED: "El nombre de la concurrencia es obligatorio.",
+  SERIES_NAME_REQUIRED: "El nombre del grupo es obligatorio.",
   SERIES_NAME_MAX:
-    "El nombre de la concurrencia no puede superar 80 caracteres.",
+    "El nombre del grupo no puede superar 80 caracteres.",
   SERIES_TARGET_REQUIRED:
     "Indique la clase o la concurrencia a quitar (no ambas).",
+} as const
+
+export const ROSTER_MESSAGES = {
+  NOT_FOUND:
+    "La clase indicada no existe o no tiene permisos para accederla.",
+  UNAUTHORIZED:
+    "Solo los administradores de la sucursal pueden modificar la lista de estudiantes.",
+  TARGET_REQUIRED:
+    "Indique el grupo mensual o la clase única a la que pertenece la lista.",
+  STUDENT_IDS_REQUIRED: "Debe indicar al menos un estudiante.",
+  STUDENT_IDS_TOO_LONG: "Puede agregar hasta 100 estudiantes por vez.",
+  STUDENT_IDS_UNIQUE: "La lista de estudiantes contiene elementos duplicados.",
+  SEARCH_MAX_LENGTH: "La búsqueda debe tener como máximo 100 caracteres.",
+  SKIPPED_ALREADY_ASSIGNED: "El estudiante ya está en la lista de esta clase.",
+  SKIPPED_NOT_ELIGIBLE:
+    "El estudiante no tiene una inscripción mensual activa en esta disciplina.",
+  SKIPPED_INACTIVE: "El estudiante está inactivo.",
+  SKIPPED_BRANCH_MISMATCH: "El estudiante no pertenece a esta sucursal.",
+} as const
+
+export const ROSTER_EDITOR_MESSAGES = {
+  SERIES_TITLE: "Alumnos del grupo",
+  ONE_TIME_TITLE: "Alumnos de la clase única",
+  DESCRIPTION:
+    "Administre la lista de alumnos que pueden asistir a esta clase.",
+  ROSTER_HEADING: "Alumnos en la lista",
+  ROSTER_EMPTY_TITLE: "Aún no hay alumnos en la lista",
+  ROSTER_EMPTY_DESCRIPTION:
+    "Agregue alumnos desde la búsqueda de abajo: solo aparecen alumnos activos con inscripción mensual activa en esta disciplina.",
+  CANDIDATES_HEADING: "Agregar alumnos",
+  CANDIDATES_SEARCH_LABEL: "Buscar alumnos",
+  CANDIDATES_SEARCH_PLACEHOLDER: "Nombre, apellido o cédula…",
+  CANDIDATES_EMPTY:
+    "No hay alumnos elegibles para agregar. Solo aparecen alumnos activos con inscripción mensual activa en esta disciplina; los alumnos por clase se agregan desde la hoja de asistencia.",
+  ADD_SELECTED_ACTION: "Agregar seleccionados",
+  ADD_SUCCESS: (addedCount: number) =>
+    addedCount === 1
+      ? "1 alumno agregado a la lista."
+      : `${addedCount} alumnos agregados a la lista.`,
+  SKIPPED_SUMMARY_TITLE: "Alumnos no agregados:",
+  REMOVE_ACTION: "Quitar",
+  REMOVE_ARIA_LABEL: (name: string) => `Quitar a ${name} de la lista`,
+  REMOVE_CONFIRM_TITLE: "¿Quitar de la lista?",
+  REMOVE_CONFIRM_DESCRIPTION: (name: string) =>
+    `${name} dejará de estar asignado a esta clase. Su historial de asistencia se conserva.`,
+  REMOVE_CONFIRM_ACTION: "Quitar de la lista",
+  REMOVE_SUCCESS: "Alumno quitado de la lista correctamente.",
+  CANDIDATES_HEADING_ARIA: "Resultados de búsqueda de alumnos candidatos",
+  ROSTER_LIST_ARIA_LABEL: "Lista de alumnos asignados",
+  ROSTER_ONE_TIME_ACTION: "Alumnos",
+  ROSTER_SERIES_ACTION: "Alumnos del grupo",
+} as const
+
+export const CLONE_MESSAGES = {
+  SOURCE_INACTIVE:
+    "El grupo original está inactivo y no se puede clonar.",
+  ALREADY_CLONED:
+    "Este grupo ya fue clonado para el siguiente mes.",
+  NO_ACTIVE_SLOTS:
+    "El grupo original no tiene clases activas para copiar.",
+  UNAUTHORIZED:
+    "Solo los administradores de la sucursal pueden clonar grupos mensuales.",
+  SUCCESS_SUMMARY: (
+    month: string,
+    copiedCount: number,
+    skippedCount: number
+  ) =>
+    `Grupo clonado para ${month}: ${copiedCount} alumnos copiados, ${skippedCount} omitidos.`,
 } as const
 
 export const ONE_TIME_CLASS_MESSAGES = {
@@ -658,8 +723,9 @@ export const ONE_TIME_CLASS_MESSAGES = {
     "Agregue una clase para una sola fecha, fuera del horario semanal recurrente.",
   DATE_LABEL: "Fecha",
   CREATED: "Clase única creada correctamente.",
+  CREATED_DESCRIPTION:
+    "La clase única fue creada. Aún no tiene alumnos asignados.",
   ONE_TIME_BADGE: "Única",
-  OVERLAP: "Ya existe una clase en ese horario en esa fecha.",
 } as const
 
 export const SUSPENSION_MESSAGES = {
@@ -711,6 +777,9 @@ export const SCHEDULE_SERIES_MESSAGES = {
     "No hay concurrencias registradas para esta sucursal.",
   NAME_LABEL: "Nombre",
   DISCIPLINE_LABEL: "Disciplina",
+  MONTH_LABEL: "Mes",
+  MONTH_FILTER_LABEL: "Filtrar por mes",
+  MONTH_FILTER_ALL: "Todos",
   DAYS_LABEL: "Días",
   TIME_LABEL: "Hora",
   TEACHER_LABEL: "Profesor",
@@ -741,19 +810,42 @@ export const SCHEDULE_SERIES_MESSAGES = {
   REMOVE_ALL_CONFIRM: "Sí, quitar todo lo futuro",
   REMOVE_ALL_SUCCESS:
     "Todas las concurrencias futuras fueron quitadas correctamente.",
+  ROSTER_ACTION: "Alumnos",
+  ROSTER_BUTTON_ARIA_LABEL: (name: string, count: number) =>
+    `Alumnos del grupo ${name} (${count})`,
+  CLONE_ACTION: "Clonar al mes siguiente",
+  CLONE_TITLE: "¿Clonar al mes siguiente?",
+  CLONE_DESCRIPTION: (name: string, sourceMonth: string, targetMonth: string) =>
+    `Se creará el grupo «${name}» para ${targetMonth} a partir de ${sourceMonth}, copiando los días, horarios, profesor y alumnos elegibles.`,
+  CLONE_CONFIRM: "Clonar",
+  CLONE_SUCCESS:
+    "Grupo clonado al mes siguiente correctamente.",
+  SKIPPED_TITLE: "Alumnos omitidos al clonar",
+  SKIPPED_DESCRIPTION:
+    "Estos alumnos no se copiaron al nuevo grupo porque no cumplen los requisitos actuales: alumno activo con inscripción mensual activa en la disciplina. Puede ajustar la lista del nuevo grupo a continuación.",
+  SKIPPED_CLOSE: "Cerrar",
+  EDIT_NEW_GROUP_ACTION: "Editar alumnos del nuevo grupo",
 } as const
 
+/**
+ * Session-level teacher assignment copy. The former conflict-detection
+ * flow was removed (no schedule restrictions any more); only the action
+ * labels used by the calendar session block remain in
+ * TEACHER_CONFLICT_MESSAGES — the assignment sheet itself reads from
+ * TEACHER_ASSIGN_MESSAGES.
+ */
 export const TEACHER_CONFLICT_MESSAGES = {
-  WARNING: "Este profesor ya está asignado a otra clase el mismo día y horario. Si continúa, esa clase quedará sin profesor asignado.",
-  CONFIRM: "Confirmar y continuar",
-  AFFECTED_TITLE: "Clases que quedarán sin profesor",
-  ASSIGNED: "Profesor asignado correctamente.",
   ASSIGN_ACTION: "Asignar profesor",
   CHANGE_ACTION: "Cambiar profesor",
+} as const
+
+export const TEACHER_ASSIGN_MESSAGES = {
+  ASSIGNED: "Profesor asignado correctamente.",
   ASSIGN_TITLE: "Asignar profesor a la sesión",
   ASSIGN_DESCRIPTION: "Seleccione el profesor que dará esta clase en la fecha indicada.",
   TEACHER_LABEL: "Profesor",
   TEACHER_PLACEHOLDER: "Seleccionar…",
+  CONFIRM: "Asignar",
 } as const
 
 export const ENROLLMENT_MESSAGES = {
@@ -778,6 +870,23 @@ export const ENROLLMENT_MESSAGES = {
   ALREADY_SUSPENDED: "La inscripción ya está suspendida.",
   NOT_FOUND: "Inscripción no encontrada.",
   ALREADY_ENROLLED: "El estudiante ya está inscripto en esta disciplina.",
+  BILLING_MODE_LABEL: "Modalidad de pago",
+  BILLING_MODE_LABEL_INVALID: "La modalidad de pago debe ser mensual o por clase.",
+  BILLING_MODE_MONTHLY: "Mensual",
+  BILLING_MODE_PER_CLASS: "Por clase",
+  BILLING_MODE_UNAUTHORIZED:
+    "Solo los administradores de la sucursal pueden cambiar la modalidad de pago.",
+  CHANGE_BILLING_MODE_ACTION: "Cambiar modalidad",
+  BILLING_MODE_DIALOG_TITLE: "Cambiar modalidad de pago",
+  BILLING_MODE_TO_PER_CLASS_DESCRIPTION:
+    "El estudiante dejará de aparecer en las listas de clases actuales y futuras de esta disciplina y no podrá registrar pagos mensuales. Cobrará por clase asistida.",
+  BILLING_MODE_TO_MONTHLY_DESCRIPTION:
+    "El estudiante volverá a pagar mensualmente. El próximo vencimiento se fijará con el primer pago mensual.",
+  BILLING_MODE_CONFIRM: "Cambiar modalidad",
+  BILLING_MODE_CHANGED_TOAST: "Modalidad de pago actualizada.",
+  BILLING_MODE_ROSTERS_REMOVED_TOAST: (count: number) =>
+    `Se quitó al estudiante de ${count} ${count === 1 ? "lista de clase" : "listas de clase"}.`,
+  EVENT_BILLING_MODE_CHANGED: "Cambio de modalidad",
 } as const
 
 
@@ -794,6 +903,8 @@ export const ATTENDANCE_MESSAGES = {
   CORRECTION_WINDOW_EXCEEDED: "Solo se puede corregir la asistencia dentro de los 7 días posteriores a la sesión.",
   CAPTURE_WINDOW_EXCEEDED: "No se puede registrar asistencia para sesiones con más de 30 días de antigüedad.",
   LOAD_FAILURE: "No se pudo cargar la asistencia.",
+  STUDENT_NOT_PER_CLASS: "El estudiante no tiene una inscripción por clase activa en esta disciplina.",
+  STUDENT_ALREADY_ADDED: "El estudiante ya está registrado en esta sesión.",
 } as const
 
 export const LEVEL_MESSAGES = {
@@ -976,10 +1087,77 @@ export const ATTENDANCE_FORM_MESSAGES = {
   SUSPENDED_NOTE: "La sesión está suspendida. No se puede registrar asistencia.",
   TAKE_ATTENDANCE: "Tomar asistencia",
   STATS_LABEL: "Asistencia",
+  SOURCE_ROSTER: "Alumno del grupo",
+  SOURCE_PER_CLASS: "Por clase",
+  SOURCE_HISTORY: "Historial",
+  ADD_PER_CLASS_TITLE: "Agregar alumno por clase",
+  ADD_PER_CLASS_SEARCH_LABEL: "Buscar alumno por clase",
+  ADD_PER_CLASS_SEARCH_PLACEHOLDER: "Nombre, apellido o cédula…",
+  ADD_PER_CLASS_NO_RESULTS: "Sin candidatos disponibles.",
+  ADD_PER_CLASS_REGISTER_PAYMENT: (amount: string) =>
+    `Registrar pago de la clase (${amount})`,
+  ADD_PER_CLASS_CONFIRM: "Agregar a la sesión",
+  ADD_PER_CLASS_PRICE_UNSET:
+    "Esta disciplina no tiene precio por clase configurado.",
+  ADDING: "Agregando…",
+  ADD_FAILURE: "No se pudo agregar el estudiante a la sesión.",
+  CANDIDATES_SEARCH_LABEL: "Buscar por nombre, apellido o cédula",
+  ATTENDED_STATE_PRESENT: "Presente",
+  ATTENDED_STATE_ABSENT: "Ausente",
+  ATTENDED_STATE_UNMARKED: "Sin registrar",
 } as const
 
 export const ATTENDANCE_TOAST = {
   SAVED: "Asistencia registrada correctamente.",
+} as const
+
+/** Trial-class guests (T7): server-action error copy. */
+export const GUEST_MESSAGES = {
+  INVALID_BRANCH_ID: "El identificador de la sucursal no es válido.",
+  INVALID_CLASS_ID: "El identificador de la clase no es válido.",
+  INVALID_DATE: "La fecha de la sesión no es válida.",
+  INVALID_GUEST_ID: "El identificador del invitado no es válido.",
+  INVALID_STUDENT_ID: "El identificador del estudiante no es válido.",
+  FIRST_NAME_REQUIRED: "El nombre del invitado es obligatorio.",
+  FIRST_NAME_MAX: "El nombre no puede superar 100 caracteres.",
+  SURNAME_REQUIRED: "El apellido del invitado es obligatorio.",
+  SURNAME_MAX: "El apellido no puede superar 100 caracteres.",
+  PHONE_MAX: "El teléfono no puede superar 30 caracteres.",
+  OBSERVATION_MAX: "La observación no puede superar 500 caracteres.",
+  NOT_FOUND: "El invitado no existe o no pertenece a esta sucursal.",
+  INVALID_SESSION: "La sesión no es válida o no corresponde al día indicado.",
+  ALREADY_LINKED: "El invitado ya fue convertido en otro estudiante.",
+  STUDENT_BRANCH_MISMATCH: "El estudiante no pertenece a esta sucursal.",
+  REMOVE_WINDOW_EXCEEDED:
+    "Solo el profesor que agregó al invitado puede quitarlo, dentro de los 30 días posteriores a la sesión.",
+  ADD_SUCCESS: "Invitado agregado correctamente.",
+  ADD_FAILURE: "No se pudo agregar el invitado.",
+  REMOVE_SUCCESS: "Invitado quitado correctamente.",
+  REMOVE_FAILURE: "No se pudo quitar el invitado.",
+  LINK_SUCCESS: "Invitado convertido en estudiante correctamente.",
+  LINK_FAILURE: "No se pudo vincular el invitado con el estudiante.",
+  LOAD_CONVERSION_FAILURE: "No se pudieron cargar los datos del invitado.",
+} as const
+
+/** Trial-class guests (T7): attendance-sheet UI copy. */
+export const GUEST_FORM_MESSAGES = {
+  SECTION_TITLE: "Invitados (clase de prueba)",
+  SECTION_DESCRIPTION:
+    "Personas nuevas que asisten a una clase de prueba. No son estudiantes hasta convertirlas.",
+  ADD_BUTTON: "Agregar invitado",
+  FIRST_NAME_LABEL: "Nombre",
+  SURNAME_LABEL: "Apellido",
+  PHONE_LABEL: "Teléfono (opcional)",
+  OBSERVATION_LABEL: "Observación (opcional)",
+  ADD_ACTION: "Agregar",
+  ADDING: "Agregando…",
+  EMPTY: "Sin invitados en esta sesión.",
+  CONVERTED_BADGE: "Convertido",
+  CONVERT_ACTION: "Convertir en alumno",
+  REMOVE_ACTION: "Quitar",
+  ARIA_GUEST_LIST: "Invitados de la sesión",
+  OBSERVATION_PREFIX: "Observación",
+  PHONE_PREFIX: "Teléfono",
 } as const
 
 export const PAYMENT_MESSAGES = {
@@ -1041,6 +1219,10 @@ export const PAYMENT_MESSAGES = {
   SAVING: "Guardando…",
   REGISTER_ACTION: "Registrar",
   CHARGE_CLASS: "Cobrar clase",
+  ALREADY_PAID: "Este estudiante ya tiene un pago registrado para esta clase.",
+  OCCURRENCE_EXCLUSIVE: "Indique solo una clase: programada o única.",
+  MONTHLY_NOT_ALLOWED_FOR_PER_CLASS:
+    "No se pueden registrar pagos mensuales en una inscripción por clase.",
 } as const
 
 /** Monthly payment validation (admin bulk suspension) messages. */

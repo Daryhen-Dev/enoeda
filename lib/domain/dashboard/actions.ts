@@ -43,16 +43,17 @@ export async function getDashboardKpis(
         return { __branchError: branchError } as const;
       }
 
-      const [branch, activeStudentCount, inactiveStudentCount, overdueCount] =
-        await Promise.all([
-          tx.branches.findUnique({
-            where: { id: branchId },
-            select: { id: true, name: true },
-          }),
-          tx.students.count({ where: { is_active: true, branch_id: branchId } }),
-          tx.students.count({ where: { is_active: false, branch_id: branchId } }),
-          countOverdueStudents(tx, branchId),
-        ]);
+      const branch = await tx.branches.findUnique({
+        where: { id: branchId },
+        select: { id: true, name: true },
+      });
+      const activeStudentCount = await tx.students.count({
+        where: { is_active: true, branch_id: branchId },
+      });
+      const inactiveStudentCount = await tx.students.count({
+        where: { is_active: false, branch_id: branchId },
+      });
+      const overdueCount = await countOverdueStudents(tx, branchId);
 
       if (!branch) {
         return null;

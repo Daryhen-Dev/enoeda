@@ -176,6 +176,8 @@ export async function getMonthlyPaymentValidation(
       const enrollments: EnrollmentGroupRow[] = await tx.student_disciplines.findMany({
         where: {
           is_active: true,
+          // Per-class enrollments are never overdue (T8).
+          billing_mode: "monthly",
           students: {
             branch_id: parsed.data.branch_id,
             is_active: true,
@@ -316,6 +318,7 @@ export async function suspendOverdueEnrollments(
           id: true,
           is_active: true,
           next_due_date: true,
+          billing_mode: true,
           students: { select: { branch_id: true, is_active: true, activation_status: true } },
         },
       });
@@ -332,6 +335,8 @@ export async function suspendOverdueEnrollments(
       }
 
       const allSuspendable = enrollments.every((enrollment) => {
+        // Per-class enrollments are never overdue and never suspendable (T8).
+        if (enrollment.billing_mode !== "monthly") return false;
         if (!enrollment.is_active) return false;
         if (!enrollment.students.is_active) return false;
         if (enrollment.students.activation_status !== STUDENT_ACTIVATION_STATUS.ACTIVE) return false;

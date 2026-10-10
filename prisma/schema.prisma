@@ -457,6 +457,10 @@ model users {
   user_roles_user_roles_user_idTousers     user_roles[]           @relation("user_roles_user_idTousers")
   user_profiles                            user_profiles?
   student_profile                          students?              @relation("StudentAuthUser")
+  class_series_default_teacher             class_series[]         @relation("ClassSeriesDefaultTeacher")
+  class_series_students_added_by           class_series_students[] @relation("ClassSeriesStudentsAddedBy")
+  one_time_class_students_added_by         one_time_class_students[] @relation("OneTimeClassStudentsAddedBy")
+  class_guests_created_by                  class_guests[]            @relation("ClassGuestsCreatedBy")
 
   @@index([created_at(sort: Desc)], map: "idx_users_created_at_desc")
   @@index([email], map: "idx_users_email")
@@ -542,6 +546,7 @@ model branches {
   scheduled_classes   scheduled_classes[]
   one_time_classes    one_time_classes[]
   class_series        class_series[]
+  class_guests        class_guests[]
   branch_level_requirements branch_level_requirements[]
 
   @@schema("public")
@@ -582,6 +587,9 @@ model students {
   attendance          attendance[]
   student_progress    student_progress[]
   student_notes       student_notes[]
+  class_series_students   class_series_students[]
+  one_time_class_students one_time_class_students[]
+  converted_class_guests  class_guests[]          @relation("ClassGuestConvertedStudent")
 
   @@index([branch_id])
   @@index([email])
@@ -600,6 +608,7 @@ model disciplines {
   updated_at          DateTime              @default(now()) @db.Timestamptz(6)
   student_disciplines student_disciplines[]
   scheduled_classes   scheduled_classes[]
+  class_series        class_series[]
   discipline_levels   discipline_levels[]   @relation("DisciplineCatalogLevels")
   initial_level       discipline_levels?    @relation("DisciplineInitialLevel", fields: [initial_level_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   student_progress    student_progress[]
@@ -619,6 +628,7 @@ model student_disciplines {
   is_active         Boolean             @default(true)
   suspended_at      DateTime?           @db.Timestamptz(6)
   next_due_date     DateTime?           @db.Date
+  billing_mode      String              @default("monthly")
   created_at        DateTime            @default(now()) @db.Timestamptz(6)
   updated_at        DateTime            @default(now()) @db.Timestamptz(6)
   students          students            @relation(fields: [student_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
@@ -658,14 +668,15 @@ model scheduled_classes {
   start_time         DateTime         @db.Time(6)
   end_time           DateTime?        @db.Time(6)
   is_active          Boolean          @default(true)
-  series_id          String?          @db.Uuid
+  series_id          String           @db.Uuid
   created_at         DateTime         @default(now()) @db.Timestamptz(6)
   updated_at         DateTime         @default(now()) @db.Timestamptz(6)
   branches           branches         @relation(fields: [branch_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   disciplines        disciplines      @relation(fields: [discipline_id], references: [id], onUpdate: NoAction)
-  class_series       class_series?    @relation(fields: [series_id], references: [id], onUpdate: NoAction)
+  class_series       class_series     @relation(fields: [series_id, branch_id, discipline_id], references: [id, branch_id, discipline_id], onDelete: Cascade, onUpdate: NoAction)
   class_sessions     class_sessions[]
   attendance         attendance[]
+  class_guests       class_guests[]
 
   @@index([branch_id])
   @@index([discipline_id])
@@ -676,14 +687,47 @@ model scheduled_classes {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model class_series {
-  id                String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  branch_id         String             @db.Uuid
-  name              String
-  created_at        DateTime           @default(now()) @db.Timestamptz(6)
-  branches          branches           @relation(fields: [branch_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  scheduled_classes scheduled_classes[]
+  id                    String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  branch_id             String               @db.Uuid
+  name                  String
+  discipline_id         String               @db.Uuid
+  default_teacher_id    String?              @db.Uuid
+  period_month          DateTime             @db.Date
+  cloned_from_series_id String?              @db.Uuid
+  is_active             Boolean              @default(true)
+  created_at            DateTime             @default(now()) @db.Timestamptz(6)
+  updated_at            DateTime             @default(now()) @db.Timestamptz(6)
+  branches              branches             @relation(fields: [branch_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  disciplines           disciplines          @relation(fields: [discipline_id], references: [id], onUpdate: NoAction)
+  default_teacher       users?               @relation("ClassSeriesDefaultTeacher", fields: [default_teacher_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  cloned_from_series    class_series?        @relation("ClassSeriesCloneLineage", fields: [cloned_from_series_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  cloned_series         class_series[]       @relation("ClassSeriesCloneLineage")
+  scheduled_classes     scheduled_classes[]
+  class_series_students class_series_students[]
 
-  @@index([branch_id])
+  @@unique([id, branch_id, discipline_id], map: "class_series_id_branch_discipline_uq")
+  // Uniqueness is enforced in the DB via a PARTIAL unique index
+  // (class_series_cloned_from_series_id_uq) — a group is cloned into the
+  // next month only once.
+  @@unique([cloned_from_series_id], map: "class_series_cloned_from_series_id_uq", where: raw("(cloned_from_series_id IS NOT NULL)"))
+  @@index([branch_id, period_month])
+  @@index([discipline_id])
+  @@schema("public")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model class_series_students {
+  id            String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  series_id     String       @db.Uuid
+  student_id    String       @db.Uuid
+  added_by      String?      @db.Uuid
+  created_at    DateTime     @default(now()) @db.Timestamptz(6)
+  class_series  class_series @relation(fields: [series_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  students      students     @relation(fields: [student_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  added_by_user users?       @relation("ClassSeriesStudentsAddedBy", fields: [added_by], references: [id], onDelete: SetNull, onUpdate: NoAction)
+
+  @@unique([series_id, student_id], map: "class_series_students_series_student_uq")
+  @@index([student_id])
   @@schema("public")
 }
 
@@ -704,6 +748,9 @@ model one_time_classes {
   branches      branches     @relation(fields: [branch_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   disciplines   disciplines  @relation(fields: [discipline_id], references: [id], onUpdate: NoAction)
   attendance    attendance[]
+  one_time_class_students one_time_class_students[]
+  class_guests            class_guests[]
+  class_payments          class_payments[]
 
   @@index([branch_id])
   @@index([discipline_id])
@@ -821,6 +868,55 @@ model student_notes {
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model one_time_class_students {
+  id                String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  one_time_class_id String           @db.Uuid
+  student_id        String           @db.Uuid
+  added_by          String?          @db.Uuid
+  created_at        DateTime         @default(now()) @db.Timestamptz(6)
+  one_time_classes  one_time_classes @relation(fields: [one_time_class_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  students          students         @relation(fields: [student_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  added_by_user     users?           @relation("OneTimeClassStudentsAddedBy", fields: [added_by], references: [id], onDelete: SetNull, onUpdate: NoAction)
+
+  @@unique([one_time_class_id, student_id], map: "one_time_class_students_class_student_uq")
+  @@index([student_id])
+  @@schema("public")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model class_guests {
+  id                   String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  branch_id            String             @db.Uuid
+  scheduled_class_id   String?            @db.Uuid
+  one_time_class_id    String?            @db.Uuid
+  session_date         DateTime           @db.Date
+  first_name           String
+  surname              String
+  phone                String?
+  observation          String?
+  converted_student_id String?            @db.Uuid
+  created_by           String?            @db.Uuid
+  created_at           DateTime           @default(now()) @db.Timestamptz(6)
+  updated_at           DateTime           @default(now()) @db.Timestamptz(6)
+  branches             branches           @relation(fields: [branch_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  scheduled_classes    scheduled_classes? @relation(fields: [scheduled_class_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  one_time_classes     one_time_classes?  @relation(fields: [one_time_class_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  converted_student    students?          @relation("ClassGuestConvertedStudent", fields: [converted_student_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  created_by_user      users?             @relation("ClassGuestsCreatedBy", fields: [created_by], references: [id], onDelete: SetNull, onUpdate: NoAction)
+
+  // Exactly one of scheduled_class_id / one_time_class_id is enforced in the
+  // DB via class_guests_single_class_ck; the branch must match the class's
+  // branch (trigger class_guests_branch_mismatch).
+  @@index([scheduled_class_id, session_date])
+  @@index([one_time_class_id])
+  @@index([branch_id])
+  @@index([converted_student_id])
+  @@schema("public")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model branch_level_requirements {
   id                         String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   branch_id                  String            @db.Uuid
@@ -862,12 +958,19 @@ model class_payments {
   amount                Decimal             @db.Decimal(10, 2)
   class_date            DateTime            @default(dbgenerated("CURRENT_DATE")) @db.Date
   scheduled_class_id    String?             @db.Uuid
+  one_time_class_id     String?             @db.Uuid
   recorded_by           String              @db.Uuid
   created_at            DateTime            @default(now()) @db.Timestamptz(6)
   student_disciplines   student_disciplines @relation(fields: [student_discipline_id], references: [id], onUpdate: NoAction)
+  one_time_classes      one_time_classes?   @relation(fields: [one_time_class_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
 
   @@index([student_discipline_id])
   @@index([class_date])
+  @@index([one_time_class_id])
+  // Uniqueness is enforced in the DB via two PARTIAL unique indexes — a
+  // per-class student is charged at most once per class occurrence.
+  @@unique([student_discipline_id, scheduled_class_id, class_date], map: "class_payments_scheduled_occurrence_uq", where: raw("(scheduled_class_id IS NOT NULL)"))
+  @@unique([student_discipline_id, one_time_class_id], map: "class_payments_one_time_occurrence_uq", where: raw("(one_time_class_id IS NOT NULL)"))
   @@schema("public")
 }
 
