@@ -10,15 +10,18 @@ import {
 import { COMMON_MESSAGES, STUDENT_MESSAGES } from "@/lib/localization/es-ec";
 import {
   STUDENT_ACTIVATION_STATUS,
+  STUDENT_DUPLICATE_NAME_LIMIT,
   STUDENT_STATUS,
   studentActivationStatusSchema,
   studentCreateSchema,
+  studentDuplicateNameSchema,
   studentIdSchema,
   studentListSchema,
   studentReactivateSchema,
   studentUpdateSchema,
   type StudentActivationStatus,
   type StudentCreateInput,
+  type StudentDuplicateNameInput,
   type StudentListInput,
   type StudentReactivateInput,
   type StudentUpdateInput,
@@ -243,6 +246,108 @@ export async function listStudents(
         hasExtraItem && lastItem !== undefined ? lastItem.id : null,
     },
   };
+}
+
+export interface StudentDuplicateNameMatch {
+  id: string;
+  first_name: string;
+  surname: string;
+  national_id: string | null;
+  is_active: boolean;
+  activation_status: StudentActivationStatus;
+}
+
+/**
+ * Non-blocking duplicate-name warning for the create flow: students of the
+ * branch whose normalized first name AND surname match the input (trim,
+ * collapsed inner whitespace, case-insensitive via `mode: "insensitive"`).
+ * Includes inactive students — an inactive duplicate is still worth flagging.
+ * Authorization mirrors createStudent (branch context + teacher A6 check).
+ * Accent-insensitive matching is intentionally NOT implemented: Prisma
+ * `equals` cannot transliterate accents and Postgres `unaccent` would be a
+ * DB extension, so "Jose" does not match "José".
+ */
+export async function findStudentsWithSameName(
+  input: StudentDuplicateNameInput
+): Promise<ActionResult<{ matches: StudentDuplicateNameMatch[] }>> {
+  const parsed = studentDuplicateNameSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message };
+  }
+
+  const result = await withAuthenticatedUser(async (tx, ctx) => {
+    // Branch context assertion: caller must have active assignment for branch
+    const branchError = assertCallerBranchContext(ctx, parsed.data.branch_id);
+    if (branchError) {
+      return { __branchError: branchError } as const;
+    }
+
+    // A6: Teacher-only branch check (defense-in-depth), mirroring createStudent
+    const isTeacher = ctx.roles.includes("teacher");
+    const isAdminOrOwner = ctx.roles.some(
+      (r) => r === "admin" || r === "owner"
+    );
+    if (isTeacher && !isAdminOrOwner) {
+      const teacherBranchIds = ctx.assignments
+        .filter((a) => a.role === "teacher" && a.branchId)
+        .map((a) => a.branchId);
+      if (!teacherBranchIds.includes(parsed.data.branch_id)) {
+        return {
+          __branchError: COMMON_MESSAGES.INSUFFICIENT_PERMISSIONS,
+        } as const;
+      }
+    }
+
+    return tx.students.findMany({
+      where: {
+        branch_id: parsed.data.branch_id,
+        first_name: { equals: parsed.data.first_name, mode: "insensitive" },
+        surname: { equals: parsed.data.surname, mode: "insensitive" },
+      },
+      select: {
+        id: true,
+        first_name: true,
+        surname: true,
+        national_id: true,
+        is_active: true,
+        activation_status: true,
+      },
+      orderBy: [{ surname: "asc" }, { first_name: "asc" }, { id: "asc" }],
+      take: STUDENT_DUPLICATE_NAME_LIMIT,
+    });
+  });
+
+  if (!result.success) return result;
+
+  if ("__branchError" in result.data) {
+    return { success: false, error: result.data.__branchError };
+  }
+
+  const rows = result.data as Exclude<
+    typeof result.data,
+    { __branchError: string }
+  >;
+  const matches: StudentDuplicateNameMatch[] = [];
+
+  for (const student of rows) {
+    const activationStatus = studentActivationStatusSchema.safeParse(
+      student.activation_status
+    );
+    if (!activationStatus.success) {
+      return { success: false, error: OPERATION_FAILED_ERROR };
+    }
+
+    matches.push({
+      id: student.id,
+      first_name: student.first_name,
+      surname: student.surname,
+      national_id: student.national_id,
+      is_active: student.is_active,
+      activation_status: activationStatus.data,
+    });
+  }
+
+  return { success: true, data: { matches } };
 }
 
 export async function activateStudent(

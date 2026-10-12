@@ -166,6 +166,34 @@ export const studentReactivateSchema = z
   })
   .strict();
 
+/**
+ * Duplicate-name warning lookup (create flow): same first name AND surname
+ * within one branch. Names are normalized like the stored value (trim,
+ * collapse inner whitespace); case-insensitivity is delegated to Prisma
+ * `mode: "insensitive"`.
+ */
+export const STUDENT_DUPLICATE_NAME_LIMIT = 5;
+
+export const studentDuplicateNameSchema = z
+  .object({
+    branch_id: z.uuid({ error: STUDENT_MESSAGES.INVALID_BRANCH_ID }),
+    first_name: z
+      .string({ error: STUDENT_MESSAGES.FIRST_NAME_REQUIRED })
+      .trim()
+      .min(1, { error: STUDENT_MESSAGES.FIRST_NAME_REQUIRED })
+      .max(100, { error: STUDENT_MESSAGES.FIRST_NAME_MAX_LENGTH })
+      .transform((value) => value.replace(/\s+/g, " ")),
+    surname: z
+      .string({ error: STUDENT_MESSAGES.SURNAME_REQUIRED })
+      .trim()
+      .min(1, { error: STUDENT_MESSAGES.SURNAME_REQUIRED })
+      .max(100, { error: STUDENT_MESSAGES.SURNAME_MAX_LENGTH })
+      .transform((value) => value.replace(/\s+/g, " ")),
+  })
+  .strict();
+
+export type StudentDuplicateNameInput = z.infer<typeof studentDuplicateNameSchema>;
+
 export const studentUpdateSchema = z
   .object({
     id: studentIdSchema,

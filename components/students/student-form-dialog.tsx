@@ -1,15 +1,23 @@
 "use client"
 
-import { useEffect, useId, useState } from "react"
-import { Controller, useForm } from "react-hook-form"
+import { useEffect, useId, useRef, useState } from "react"
+import { Controller, useForm, useWatch } from "react-hook-form"
 import { useRouter } from "next/navigation"
-import { AlertCircleIcon, LoaderCircleIcon, PencilIcon, PlusIcon } from "lucide-react"
+import {
+  AlertCircleIcon,
+  LoaderCircleIcon,
+  PencilIcon,
+  PlusIcon,
+  TriangleAlertIcon,
+} from "lucide-react"
 import { toast } from "sonner"
 
 import {
   createStudent,
+  findStudentsWithSameName,
   getStudentById,
   updateStudent,
+  type StudentDuplicateNameMatch,
 } from "@/lib/domain/students/actions"
 import { enrollStudent } from "@/lib/domain/disciplines/actions"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -40,6 +48,7 @@ import {
   PRODUCT_TERMS,
   STUDENT_FORM_MESSAGES,
   STUDENT_MESSAGES,
+  STUDENT_MISSING_DATA_MESSAGES,
   TOAST_MESSAGES,
 } from "@/lib/localization/es-ec"
 
@@ -128,6 +137,9 @@ function hasActiveBranch(branches: ActiveBranchOption[], branchId: string): bool
   return branches.some((branch) => branch.id === branchId)
 }
 
+/** Debounce for the duplicate-name lookup, mirroring the roster/candidate searches. */
+export const STUDENT_DUPLICATE_NAME_DEBOUNCE_MS = 300
+
 export function StudentFormDialog({
   branches,
   disciplines = [],
@@ -163,6 +175,68 @@ export function StudentFormDialog({
   })
   const isEditing = studentId !== undefined
   const isPending = form.formState.isSubmitting || isLoadingStudent
+
+  // Duplicate-name warning (create mode only): debounced lookup of students
+  // with the same first name AND surname in the branch, reusing the seq-guard
+  // pattern of the roster/quick-entry searches; setState only ever runs inside
+  // timer/async callbacks, never synchronously in the effect body.
+  const [duplicateMatches, setDuplicateMatches] = useState<
+    StudentDuplicateNameMatch[]
+  >([])
+  const duplicateSeqRef = useRef(0)
+  const watchedFirstName = useWatch({ control: form.control, name: "first_name" })
+  const watchedSurname = useWatch({ control: form.control, name: "surname" })
+  const watchedBranchId = useWatch({ control: form.control, name: "branch_id" })
+
+  useEffect(() => {
+    if (isEditing) {
+      return
+    }
+
+    const firstName = watchedFirstName.trim()
+    const surname = watchedSurname.trim()
+    const branchId = lockedBranchId ?? watchedBranchId
+    const canLookup = Boolean(firstName && surname && branchId)
+
+    async function loadDuplicates() {
+      const seq = ++duplicateSeqRef.current
+      try {
+        const result = await findStudentsWithSameName({
+          branch_id: branchId,
+          first_name: firstName,
+          surname,
+        })
+        if (seq !== duplicateSeqRef.current) return
+        // Lookup errors fail silently: the warning stays hidden.
+        setDuplicateMatches(
+          result.success && result.data ? result.data.matches : []
+        )
+      } catch {
+        if (seq === duplicateSeqRef.current) {
+          setDuplicateMatches([])
+        }
+      }
+    }
+
+    const timer = setTimeout(
+      () => {
+        if (!canLookup) {
+          setDuplicateMatches([])
+          return
+        }
+        void loadDuplicates()
+      },
+      canLookup ? STUDENT_DUPLICATE_NAME_DEBOUNCE_MS : 0
+    )
+    return () => clearTimeout(timer)
+  }, [
+    isEditing,
+    watchedFirstName,
+    watchedSurname,
+    watchedBranchId,
+    lockedBranchId,
+  ])
+
   const title = isEditing
     ? STUDENT_FORM_MESSAGES.EDIT_TITLE
     : STUDENT_FORM_MESSAGES.CREATE_TITLE
@@ -458,6 +532,33 @@ export function StudentFormDialog({
                 />
                 <FieldError id={`${surnameId}-error`} errors={[errors.surname]} />
               </Field>
+
+              {/* Non-blocking duplicate-name warning: creating stays allowed. */}
+              {!isEditing && duplicateMatches.length > 0 && (
+                <Alert aria-live="polite" data-testid="duplicate-name-warning">
+                  <TriangleAlertIcon />
+                  <AlertDescription>
+                    <p>{STUDENT_FORM_MESSAGES.DUPLICATE_NAME_WARNING}</p>
+                    <ul className="mt-1 flex flex-col gap-1">
+                      {duplicateMatches.map((match) => (
+                        <li key={match.id}>
+                          <a
+                            href={`/dashboard/students/${match.id}?branch=${lockedBranchId ?? watchedBranchId}`}
+                            target="_blank"
+                            rel="noopener"
+                          >
+                            {match.first_name} {match.surname}
+                            {" — "}
+                            {match.national_id ?? STUDENT_MISSING_DATA_MESSAGES.NOT_PROVIDED}
+                            {!match.is_active &&
+                              ` (${STUDENT_FORM_MESSAGES.DUPLICATE_NAME_INACTIVE})`}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </AlertDescription>
+                </Alert>
+              )}
 
               <Field data-invalid={Boolean(errors.national_id)}>
                 <FieldLabel htmlFor={nationalId}>{STUDENT_FORM_MESSAGES.NATIONAL_ID_OPTIONAL_LABEL}</FieldLabel>

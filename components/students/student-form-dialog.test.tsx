@@ -9,6 +9,7 @@ import { STUDENT_FORM_MESSAGES, STUDENT_MISSING_DATA_MESSAGES } from "@/lib/loca
 const mocks = vi.hoisted(() => ({
   createStudent: vi.fn(),
   enrollStudent: vi.fn(),
+  findStudentsWithSameName: vi.fn(),
   getStudentById: vi.fn(),
   updateStudent: vi.fn(),
   refresh: vi.fn(),
@@ -17,6 +18,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@/lib/domain/students/actions", () => ({
   createStudent: mocks.createStudent,
+  findStudentsWithSameName: mocks.findStudentsWithSameName,
   getStudentById: mocks.getStudentById,
   updateStudent: mocks.updateStudent,
 }));
@@ -37,7 +39,7 @@ vi.mock("sonner", () => ({
   },
 }));
 
-import { StudentFormDialog } from "./student-form-dialog";
+import { StudentFormDialog, STUDENT_DUPLICATE_NAME_DEBOUNCE_MS } from "./student-form-dialog";
 import { StudentDetailHeader } from "./student-detail-header";
 
 const BRANCH_ID = "bbbbbbbb-1111-4222-a333-444444444444";
@@ -252,6 +254,200 @@ describe("StudentFormDialog — minimal creation", () => {
 });
 
 const STUDENT_FORM_OPTIONAL_SUFFIX = "(opcional)";
+
+const DUPLICATE_MATCH_ACTIVE = {
+  id: "dddddddd-1111-4222-a333-444444444444",
+  first_name: "Juan",
+  surname: "Pérez",
+  national_id: "1712345678",
+  is_active: true,
+  activation_status: "active",
+};
+
+const DUPLICATE_MATCH_INACTIVE = {
+  id: "eeeeeeee-1111-4222-a333-444444444444",
+  first_name: "Juan",
+  surname: "Pérez",
+  national_id: null,
+  is_active: false,
+  activation_status: "pending",
+};
+
+describe("StudentFormDialog — duplicate name warning", () => {
+  let rendered: Rendered | undefined;
+
+  beforeEach(() => {
+    (
+      globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }
+    ).IS_REACT_ACT_ENVIRONMENT = true;
+    vi.clearAllMocks();
+    vi.useFakeTimers();
+    mocks.findStudentsWithSameName.mockResolvedValue({
+      success: true,
+      data: { matches: [DUPLICATE_MATCH_ACTIVE, DUPLICATE_MATCH_INACTIVE] },
+    });
+  });
+
+  afterEach(() => {
+    rendered?.unmount();
+    rendered = undefined;
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
+
+  async function fillNameAndSurname(firstName: string, surname: string) {
+    act(() => {
+      setInputValue(getInputByLabel(STUDENT_FORM_MESSAGES.FIRST_NAME_LABEL)!, firstName);
+      setInputValue(getInputByLabel(STUDENT_FORM_MESSAGES.SURNAME_LABEL)!, surname);
+    });
+  }
+
+  async function flushDebounce() {
+    await act(async () => {
+      vi.advanceTimersByTime(STUDENT_DUPLICATE_NAME_DEBOUNCE_MS);
+    });
+    await act(async () => {});
+  }
+
+  it("shows the warning with linked matches after the debounce", async () => {
+    rendered = renderUi(
+      <StudentFormDialog branches={BRANCHES} lockedBranchId={BRANCH_ID} />
+    );
+
+    await openCreateDialog();
+    await fillNameAndSurname("Juan", "Pérez");
+
+    // Not yet: the lookup is debounced.
+    expect(mocks.findStudentsWithSameName).not.toHaveBeenCalled();
+    expect(document.body.textContent).not.toContain(
+      STUDENT_FORM_MESSAGES.DUPLICATE_NAME_WARNING
+    );
+
+    await flushDebounce();
+
+    expect(mocks.findStudentsWithSameName).toHaveBeenCalledTimes(1);
+    expect(mocks.findStudentsWithSameName).toHaveBeenCalledWith({
+      branch_id: BRANCH_ID,
+      first_name: "Juan",
+      surname: "Pérez",
+    });
+    expect(document.body.textContent).toContain(
+      STUDENT_FORM_MESSAGES.DUPLICATE_NAME_WARNING
+    );
+    // Each match links to its detail, opening in a new tab to keep unsaved data.
+    const links = [...document.querySelectorAll<HTMLAnchorElement>("a")];
+    const activeLink = links.find(
+      (link) => link.getAttribute("href") === `/dashboard/students/${DUPLICATE_MATCH_ACTIVE.id}?branch=${BRANCH_ID}`
+    );
+    expect(activeLink).toBeDefined();
+    expect(activeLink!.getAttribute("target")).toBe("_blank");
+    expect(activeLink!.getAttribute("rel")).toContain("noopener");
+    expect(activeLink!.textContent).toContain("1712345678");
+    const inactiveLink = links.find(
+      (link) => link.getAttribute("href") === `/dashboard/students/${DUPLICATE_MATCH_INACTIVE.id}?branch=${BRANCH_ID}`
+    );
+    expect(inactiveLink).toBeDefined();
+    expect(inactiveLink!.textContent).toContain(
+      STUDENT_MISSING_DATA_MESSAGES.NOT_PROVIDED
+    );
+    expect(inactiveLink!.textContent).toContain(
+      STUDENT_FORM_MESSAGES.DUPLICATE_NAME_INACTIVE
+    );
+    // Announced politely to screen readers.
+    const alert = document.querySelector("[data-slot='alert'][aria-live='polite']");
+    expect(alert).not.toBeNull();
+  });
+
+  it("does not look up when a name field is still empty", async () => {
+    rendered = renderUi(
+      <StudentFormDialog branches={BRANCHES} lockedBranchId={BRANCH_ID} />
+    );
+
+    await openCreateDialog();
+    await fillNameAndSurname("Juan", "");
+    await flushDebounce();
+
+    expect(mocks.findStudentsWithSameName).not.toHaveBeenCalled();
+    expect(document.body.textContent).not.toContain(
+      STUDENT_FORM_MESSAGES.DUPLICATE_NAME_WARNING
+    );
+  });
+
+  it("does not run the lookup or show the warning in edit mode", async () => {
+    mocks.getStudentById.mockResolvedValue({
+      success: true,
+      data: COMPLETE_STUDENT,
+    });
+    rendered = renderUi(
+      <StudentFormDialog
+        branches={BRANCHES}
+        studentId={STUDENT_ID}
+        branchId={BRANCH_ID}
+      />
+    );
+
+    const editTrigger = queryButtonByText(document, "Editar");
+    expect(editTrigger).toBeDefined();
+    act(() => {
+      editTrigger!.click();
+    });
+    await act(async () => {});
+
+    await fillNameAndSurname("Otro", "Nombre");
+    await flushDebounce();
+
+    expect(mocks.findStudentsWithSameName).not.toHaveBeenCalled();
+    expect(document.body.textContent).not.toContain(
+      STUDENT_FORM_MESSAGES.DUPLICATE_NAME_WARNING
+    );
+  });
+
+  it("shows no warning and does not block when the lookup fails", async () => {
+    mocks.findStudentsWithSameName.mockResolvedValue({
+      success: false,
+      error: "lookup failed",
+    });
+    rendered = renderUi(
+      <StudentFormDialog branches={BRANCHES} lockedBranchId={BRANCH_ID} />
+    );
+
+    await openCreateDialog();
+    await fillNameAndSurname("Juan", "Pérez");
+    await flushDebounce();
+
+    expect(mocks.findStudentsWithSameName).toHaveBeenCalled();
+    expect(document.body.textContent).not.toContain(
+      STUDENT_FORM_MESSAGES.DUPLICATE_NAME_WARNING
+    );
+  });
+
+  it("still submits successfully while the warning is visible", async () => {
+    rendered = renderUi(
+      <StudentFormDialog branches={BRANCHES} lockedBranchId={BRANCH_ID} />
+    );
+
+    const form = await openCreateDialog();
+    await fillNameAndSurname("Juan", "Pérez");
+    await flushDebounce();
+
+    expect(document.body.textContent).toContain(
+      STUDENT_FORM_MESSAGES.DUPLICATE_NAME_WARNING
+    );
+
+    const submitButton = [...document.querySelectorAll<HTMLButtonElement>("button")].find(
+      (button) => button.type === "submit"
+    );
+    expect(submitButton).toBeDefined();
+    expect(submitButton!.disabled).toBe(false);
+
+    await submit(form);
+
+    expect(mocks.createStudent).toHaveBeenCalledTimes(1);
+    expect(mocks.createStudent).toHaveBeenCalledWith(
+      expect.objectContaining({ first_name: "Juan", surname: "Pérez" })
+    );
+  });
+});
 
 describe("StudentDetailHeader — Datos incompletos badge", () => {
   let rendered: Rendered | undefined;

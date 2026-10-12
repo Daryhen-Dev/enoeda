@@ -310,6 +310,8 @@ export const STUDENT_FORM_MESSAGES = {
   PHONE_OPTIONAL_LABEL: "Teléfono (opcional)",
   OPTIONAL_FIELD_HINT: "Puede completarlo más tarde.",
   SAVING: "Guardando…",
+  DUPLICATE_NAME_WARNING: "Ya existe un estudiante con este nombre y apellido en esta sucursal.",
+  DUPLICATE_NAME_INACTIVE: "Inactivo",
 } as const
 
 export const STUDENT_LIFECYCLE_MESSAGES = {
