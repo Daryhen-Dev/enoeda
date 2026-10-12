@@ -11,11 +11,82 @@ import {
   PRODUCT_TERMS,
   PUBLIC_STUDENT_REGISTRATION_MESSAGES,
   STUDENT_ENROLLMENT_MESSAGES,
+  CONDUCT_MESSAGES,
+  formatCurrency,
   formatDate,
 } from "@/lib/localization/es-ec";
+import {
+  getOwnConductRecords,
+  CONDUCT_KINDS,
+  CONDUCT_STATUSES,
+} from "@/lib/domain/conduct";
+import type { ConductRecord, ConductSummary } from "@/lib/domain/conduct";
 
 function formatStudentDate(value: string): string {
   return formatDate(new Date(`${value}T00:00:00`));
+}
+
+const EMPTY_CONDUCT_SUMMARY: ConductSummary = {
+  pending_fines_count: 0,
+  pending_fines_total: 0,
+  warnings_count: 0,
+};
+
+function conductKindLabel(kind: string): string {
+  return kind === CONDUCT_KINDS.FINE
+    ? CONDUCT_MESSAGES.KIND_FINE
+    : CONDUCT_MESSAGES.KIND_WARNING;
+}
+
+function conductSummaryLines(summary: ConductSummary): string[] {
+  const lines: string[] = [];
+  if (summary.pending_fines_count > 0) {
+    lines.push(
+      CONDUCT_MESSAGES.SUMMARY_PENDING_FINES(
+        summary.pending_fines_count,
+        formatCurrency(summary.pending_fines_total)
+      )
+    );
+  }
+  if (summary.warnings_count > 0) {
+    lines.push(CONDUCT_MESSAGES.SUMMARY_WARNINGS(summary.warnings_count));
+  }
+  return lines;
+}
+
+function ConductRecordItem({ record }: { record: ConductRecord }) {
+  const isFine = record.kind === CONDUCT_KINDS.FINE;
+  const isPaidFine =
+    isFine &&
+    record.status === CONDUCT_STATUSES.PAID &&
+    record.paid_at !== null;
+
+  return (
+    <li className="rounded-md border p-3">
+      <p className="text-sm font-medium">{record.reason}</p>
+      <div className="flex flex-wrap gap-x-2 pt-1 text-xs text-muted-foreground">
+        <span>{conductKindLabel(record.kind)}</span>
+        <span aria-hidden="true">·</span>
+        <span>
+          {CONDUCT_MESSAGES.INCIDENT_DATE_LABEL}: {formatDate(record.incident_date)}
+        </span>
+        {isFine && record.amount !== null ? (
+          <>
+            <span aria-hidden="true">·</span>
+            <span>
+              {CONDUCT_MESSAGES.AMOUNT_LABEL}: {formatCurrency(record.amount)}
+            </span>
+            <span aria-hidden="true">·</span>
+            <span>
+              {isPaidFine
+                ? `${CONDUCT_MESSAGES.STATUS_PAID} (${CONDUCT_MESSAGES.PAID_AT_LABEL}: ${formatDate(record.paid_at!)})`
+                : CONDUCT_MESSAGES.STATUS_PENDING}
+            </span>
+          </>
+        ) : null}
+      </div>
+    </li>
+  );
 }
 
 export default async function StudentProfilePage() {
@@ -29,6 +100,12 @@ export default async function StudentProfilePage() {
   }
 
   const { student } = identity;
+
+  const conductResult = await getOwnConductRecords();
+  const conductData =
+    conductResult.success && conductResult.data
+      ? conductResult.data
+      : { records: [] as ConductRecord[], summary: EMPTY_CONDUCT_SUMMARY };
 
   return (
     <>
@@ -85,6 +162,33 @@ export default async function StudentProfilePage() {
       </section>
 
       <StudentPhoneForm isActive={student.isActive} phone={student.phone} />
+
+      <section
+        aria-label={CONDUCT_MESSAGES.PANEL_TITLE}
+        className="border-y py-5"
+      >
+        <div className="space-y-1">
+          <h2 className="text-lg font-semibold tracking-tight">
+            {CONDUCT_MESSAGES.PANEL_TITLE}
+          </h2>
+          {conductSummaryLines(conductData.summary).map((line) => (
+            <p key={line} className="text-sm text-muted-foreground">
+              {line}
+            </p>
+          ))}
+        </div>
+        {conductData.records.length === 0 ? (
+          <p className="pt-3 text-sm text-muted-foreground">
+            {CONDUCT_MESSAGES.EMPTY_STATE}
+          </p>
+        ) : (
+          <ul className="flex flex-col gap-3 pt-3">
+            {conductData.records.map((record) => (
+              <ConductRecordItem key={record.id} record={record} />
+            ))}
+          </ul>
+        )}
+      </section>
     </>
   );
 }

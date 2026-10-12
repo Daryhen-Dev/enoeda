@@ -587,6 +587,7 @@ model students {
   attendance          attendance[]
   student_progress    student_progress[]
   student_notes       student_notes[]
+  student_conduct_records student_conduct_records[]
   class_series_students   class_series_students[]
   one_time_class_students one_time_class_students[]
   converted_class_guests  class_guests[]          @relation("ClassGuestConvertedStudent")
@@ -864,6 +865,32 @@ model student_notes {
 
   @@index([student_id, discipline_id])
   @@index([student_id, is_completed])
+  @@schema("public")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model student_conduct_records {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  student_id    String   @db.Uuid
+  kind          String
+  reason        String
+  incident_date DateTime @default(dbgenerated("CURRENT_DATE")) @db.Date
+  amount        Decimal? @db.Decimal(10, 2)
+  status        String
+  paid_at       DateTime? @db.Timestamptz(6)
+  paid_by       String?  @db.Uuid
+  voided_at     DateTime? @db.Timestamptz(6)
+  voided_by     String?  @db.Uuid
+  void_reason   String?
+  created_by    String   @db.Uuid
+  created_at    DateTime @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime @default(now()) @db.Timestamptz(6)
+  students      students @relation(fields: [student_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  // kind = 'fine' requires amount > 0; kind = 'warning' requires amount NULL.
+  // status: fines 'pending'|'paid', warnings 'issued' (DB CHECKs). The partial
+  // index on pending non-voided fines is not expressible in Prisma.
+  @@index([student_id, created_at(sort: Desc)], map: "student_conduct_records_student_created_idx")
   @@schema("public")
 }
 

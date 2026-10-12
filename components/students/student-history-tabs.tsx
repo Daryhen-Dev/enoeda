@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { EnrollmentHistory } from "@/components/students/enrollment-history"
 import type { EnrollmentEvent } from "@/lib/domain/disciplines/actions"
 import {
+  CONDUCT_MESSAGES,
   formatNumber,
   STUDENT_DETAIL_MESSAGES,
 } from "@/lib/localization/es-ec"
@@ -23,8 +24,11 @@ interface StudentHistoryTabsProps {
   paymentCount: number
   progressCount: number
   enrollmentEventCount: number
+  conductCount: number
   /** Notes log slot (StudentNotesPanel + CreateNoteDialog when canManage). */
   notesSlot: ReactNode
+  /** Conduct records slot (StudentConductPanel + CreateConductRecordDialog when canManage). */
+  conductSlot: ReactNode
   /** Payments slot (StudentPaymentHistory). */
   paymentsSlot: ReactNode
   /** Promotion timeline slot (StudentProgressPanel). */
@@ -48,7 +52,9 @@ export function StudentHistoryTabs({
   paymentCount,
   progressCount,
   enrollmentEventCount,
+  conductCount,
   notesSlot,
+  conductSlot,
   paymentsSlot,
   progressSlot,
   enrollmentEvents,
@@ -65,12 +71,14 @@ export function StudentHistoryTabs({
       <div className="w-full overflow-x-auto">
         <TabsList className="max-w-full">
           <TabsTrigger value="notes">{tabLabel(STUDENT_DETAIL_MESSAGES.TAB_NOTES, noteCount)}</TabsTrigger>
+          <TabsTrigger value="conduct">{tabLabel(CONDUCT_MESSAGES.TAB_CONDUCT, conductCount)}</TabsTrigger>
           <TabsTrigger value="payments">{tabLabel(STUDENT_DETAIL_MESSAGES.TAB_PAYMENTS, paymentCount)}</TabsTrigger>
           <TabsTrigger value="progress">{tabLabel(STUDENT_DETAIL_MESSAGES.TAB_PROGRESS, progressCount)}</TabsTrigger>
           <TabsTrigger value="enrollments">{tabLabel(STUDENT_DETAIL_MESSAGES.TAB_ENROLLMENTS, enrollmentEventCount)}</TabsTrigger>
         </TabsList>
       </div>
       <TabsContent value="notes">{notesSlot}</TabsContent>
+      <TabsContent value="conduct">{conductSlot}</TabsContent>
       <TabsContent value="payments">{paymentsSlot}</TabsContent>
       <TabsContent value="progress">{progressSlot}</TabsContent>
       <TabsContent value="enrollments">

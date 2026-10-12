@@ -246,6 +246,11 @@ export type student_progress = Prisma.student_progressModel
  */
 export type student_notes = Prisma.student_notesModel
 /**
+ * Model student_conduct_records
+ * This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+ */
+export type student_conduct_records = Prisma.student_conduct_recordsModel
+/**
  * Model one_time_class_students
  * This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
  */

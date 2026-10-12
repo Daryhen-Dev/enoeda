@@ -71,6 +71,9 @@ export const TOAST_MESSAGES = {
   PAYMENT_CORRECTED: "Pago corregido correctamente.",
   PAYMENT_DELETED: "Pago eliminado correctamente.",
   STUDENT_PHONE_UPDATED: "Teléfono actualizado correctamente.",
+  CONDUCT_CREATED: "Registro de conducta creado correctamente.",
+  FINE_MARKED_PAID: "Multa marcada como pagada correctamente.",
+  CONDUCT_VOIDED: "Registro anulado correctamente.",
 } as const
 
 export const STUDENT_ENROLLMENT_MESSAGES = {
@@ -374,6 +377,13 @@ export function formatDateTime(value: Date, timeZone?: string): string {
 
 export function formatNumber(value: number): string {
   return new Intl.NumberFormat(USER_LOCALE).format(value)
+}
+
+export function formatCurrency(value: number): string {
+  return new Intl.NumberFormat(USER_LOCALE, {
+    style: "currency",
+    currency: PAYMENT_CONSOLE_MESSAGES.CURRENCY_CODE,
+  }).format(value)
 }
 
 export const OWNER_MESSAGES = {
@@ -1096,6 +1106,75 @@ export const NOTES_MESSAGES = {
   FILTER_ALL: "Todas",
   FILTER_OPEN: "Abiertas",
   FILTER_COMPLETED: "Completadas",
+} as const
+
+export const CONDUCT_MESSAGES = {
+  BRANCH_REQUIRED: "Contexto de sucursal requerido.",
+  INVALID_ID: "Identificador de registro de conducta inválido.",
+  INVALID_STUDENT_ID: "Identificador de estudiante inválido.",
+  KIND_INVALID: "El tipo debe ser multa o llamado de atención.",
+  REASON_REQUIRED: "El motivo es obligatorio.",
+  REASON_MAX: "El motivo no puede superar 2000 caracteres.",
+  VOID_REASON_REQUIRED: "El motivo de anulación es obligatorio.",
+  VOID_REASON_MAX: "El motivo de anulación no puede superar 500 caracteres.",
+  INCIDENT_DATE_FORMAT: "La fecha del incidente debe tener formato AAAA-MM-DD.",
+  INCIDENT_DATE_INVALID: "La fecha del incidente no es válida.",
+  INCIDENT_DATE_NOT_FUTURE: "La fecha del incidente no puede ser futura.",
+  AMOUNT_POSITIVE: "El monto debe ser mayor a 0.",
+  AMOUNT_MAX: "El monto no puede superar 99999999.99.",
+  AMOUNT_DECIMALS: "El monto admite hasta 2 decimales.",
+  AMOUNT_NOT_ALLOWED: "El monto solo aplica a las multas.",
+  NOT_A_FINE: "Solo las multas se pueden marcar como pagadas.",
+  ALREADY_PAID: "La multa ya está pagada.",
+  ALREADY_VOIDED: "El registro ya fue anulado.",
+  PAID_NOT_VOIDABLE: "Las multas pagadas no se pueden anular.",
+  RECORD_CONFLICT: "El registro cambió de estado. Actualice e inténtelo nuevamente.",
+  // Staff UI (student detail "Conducta" tab) and student portal section.
+  TAB_CONDUCT: "Conducta",
+  PANEL_TITLE: "Multas y llamados de atención",
+  SUMMARY_PENDING_FINES: (count: number, total: string) =>
+    count === 1
+      ? `1 multa pendiente por ${total}`
+      : `${formatNumber(count)} multas pendientes por ${total}`,
+  SUMMARY_WARNINGS: (count: number) =>
+    count === 1
+      ? "1 llamado de atención"
+      : `${formatNumber(count)} llamados de atención`,
+  KIND_FINE: "Multa",
+  KIND_WARNING: "Llamado de atención",
+  STATUS_PENDING: "Pendiente",
+  STATUS_PAID: "Pagada",
+  VOIDED_BADGE: "Anulado",
+  INCIDENT_DATE_LABEL: "Fecha del incidente",
+  AMOUNT_LABEL: "Monto",
+  PAID_AT_LABEL: "Pagada el",
+  VOIDED_WITH_REASON: (reason: string) => `Anulado: ${reason}`,
+  EMPTY_STATE: "No hay multas ni llamados de atención registrados.",
+  REGISTER_ACTION: "Registrar multa o llamado",
+  CREATE_TITLE: "Nueva multa o llamado de atención",
+  CREATE_DESCRIPTION:
+    "Registre una multa o un llamado de atención para el estudiante.",
+  KIND_FIELD_LABEL: "Tipo",
+  KIND_PLACEHOLDER: "Seleccione el tipo",
+  REASON_FIELD_LABEL: "Motivo",
+  REASON_PLACEHOLDER: "Describa el motivo del registro",
+  INCIDENT_DATE_FIELD_LABEL: "Fecha del incidente",
+  AMOUNT_FIELD_LABEL: "Monto",
+  SAVING: "Guardando…",
+  MARK_PAID_ACTION: "Marcar como pagada",
+  MARK_PAID_TITLE: "Marcar multa como pagada",
+  MARK_PAID_DESCRIPTION:
+    "Confirme que esta multa fue pagada. Las multas pagadas no se pueden revertir ni anular.",
+  MARK_PAID_CONFIRM: "Marcar como pagada",
+  MARKING_PAID: "Marcando…",
+  VOID_ACTION: "Anular",
+  VOID_TITLE: "Anular registro",
+  VOID_DESCRIPTION:
+    "El registro quedará anulado y no se puede revertir. Explique el motivo (1 a 500 caracteres).",
+  VOID_CONFIRM: "Anular",
+  VOIDING: "Anulando…",
+  VOID_REASON_LABEL: "Motivo de anulación",
+  VOID_REASON_PLACEHOLDER: "Explique el motivo de la anulación",
 } as const
 
 export const SESSION_INFO_MESSAGES = {
