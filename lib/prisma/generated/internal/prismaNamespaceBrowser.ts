@@ -90,6 +90,7 @@ export const ModelName = {
   discipline_levels: 'discipline_levels',
   student_progress: 'student_progress',
   student_notes: 'student_notes',
+  student_conduct_records: 'student_conduct_records',
   one_time_class_students: 'one_time_class_students',
   class_guests: 'class_guests',
   branch_level_requirements: 'branch_level_requirements',
@@ -728,6 +729,27 @@ export const Student_notesScalarFieldEnum = {
 } as const
 
 export type Student_notesScalarFieldEnum = (typeof Student_notesScalarFieldEnum)[keyof typeof Student_notesScalarFieldEnum]
+
+
+export const Student_conduct_recordsScalarFieldEnum = {
+  id: 'id',
+  student_id: 'student_id',
+  kind: 'kind',
+  reason: 'reason',
+  incident_date: 'incident_date',
+  amount: 'amount',
+  status: 'status',
+  paid_at: 'paid_at',
+  paid_by: 'paid_by',
+  voided_at: 'voided_at',
+  voided_by: 'voided_by',
+  void_reason: 'void_reason',
+  created_by: 'created_by',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
+} as const
+
+export type Student_conduct_recordsScalarFieldEnum = (typeof Student_conduct_recordsScalarFieldEnum)[keyof typeof Student_conduct_recordsScalarFieldEnum]
 
 
 export const One_time_class_studentsScalarFieldEnum = {
