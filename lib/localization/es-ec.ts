@@ -159,6 +159,7 @@ export const DASHBOARD_SHELL_MESSAGES = {
   OVERVIEW: "Resumen",
   BRANCHES: "Sucursales",
   STUDENTS: "Estudiantes",
+  CONDUCT: "Conducta",
   STAFF: "Personal",
   MANAGEMENT: "Administración",
   CALENDAR: "Calendario",
@@ -1175,6 +1176,37 @@ export const CONDUCT_MESSAGES = {
   VOIDING: "Anulando…",
   VOID_REASON_LABEL: "Motivo de anulación",
   VOID_REASON_PLACEHOLDER: "Explique el motivo de la anulación",
+  // Quick-entry search and recent-records list (T1 domain actions).
+  SEARCH_REQUIRED: "El término de búsqueda es obligatorio.",
+  RECENT_LIMIT_INVALID: "La cantidad debe estar entre 1 y 25.",
+} as const
+
+/**
+ * Quick-entry page (/dashboard/conduct): student search, inline record form
+ * and the branch recent-records list. Reuses CONDUCT_MESSAGES for kind,
+ * status, field labels and summary counters.
+ */
+export const CONDUCT_QUICK_ENTRY_MESSAGES = {
+  PAGE_TITLE: "Conducta",
+  PAGE_DESCRIPTION:
+    "Busque un estudiante y registre una multa o un llamado de atención en segundos.",
+  SEARCH_LABEL: "Buscar estudiante",
+  SEARCH_PLACEHOLDER: "Nombre, apellido o cédula…",
+  SEARCH_LOADING: "Buscando estudiantes…",
+  SEARCH_NO_RESULTS: (query: string) => `Sin resultados para “${query}”.`,
+  SEARCH_ERROR: "No se pudieron cargar los estudiantes. Inténtelo nuevamente.",
+  SEARCH_RESULTS_ARIA_LABEL: "Resultados de búsqueda de estudiantes",
+  SEARCH_STATUS_ARIA_LABEL: "Estado de la búsqueda",
+  SELECTED_SECTION_ARIA_LABEL: "Estudiante seleccionado",
+  VIEW_PROFILE: "Ver ficha",
+  CHANGE_STUDENT: "Cambiar",
+  SUBMIT: "Registrar",
+  SUBMITTING: "Registrando…",
+  RECENT_TITLE: "Últimos registros",
+  RECENT_EMPTY: "Aún no hay multas ni llamados de atención en esta sucursal.",
+  RECENT_LOAD_FAILURE: "No se pudieron cargar los últimos registros.",
+  RECENT_LIST_ARIA_LABEL: "Últimos registros de conducta de la sucursal",
+  LOAD_FAILURE_TITLE: "No se pudo cargar la página de conducta.",
 } as const
 
 export const SESSION_INFO_MESSAGES = {

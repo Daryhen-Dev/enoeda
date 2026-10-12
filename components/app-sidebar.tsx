@@ -8,6 +8,7 @@ import {
   CalendarDaysIcon,
   CalendarRangeIcon,
   CreditCardIcon,
+  GavelIcon,
   LayoutDashboardIcon,
   ShieldIcon,
   UserRoundIcon,
@@ -29,7 +30,7 @@ import {
 } from "@/components/ui/sidebar"
 import { DASHBOARD_SHELL_MESSAGES } from "@/lib/localization/es-ec"
 
-interface NavigationItem {
+export interface NavigationItem {
   title: string
   url: string
   icon: typeof LayoutDashboardIcon
@@ -40,9 +41,10 @@ interface NavigationItem {
   branchScoped: boolean
 }
 
-const navigationItems: NavigationItem[] = [
+export const navigationItems: NavigationItem[] = [
   { title: DASHBOARD_SHELL_MESSAGES.OVERVIEW, url: "/dashboard", icon: LayoutDashboardIcon, available: true, hiddenForTeacherOnly: true, branchScoped: true },
   { title: DASHBOARD_SHELL_MESSAGES.STUDENTS, url: "/dashboard/students", icon: UsersIcon, available: true, branchScoped: true },
+  { title: DASHBOARD_SHELL_MESSAGES.CONDUCT, url: "/dashboard/conduct", icon: GavelIcon, available: true, branchScoped: true },
   { title: DASHBOARD_SHELL_MESSAGES.STAFF, url: "/dashboard/staff", icon: ShieldIcon, available: true, adminOnly: true, hiddenForTeacherOnly: true, branchScoped: true },
   { title: DASHBOARD_SHELL_MESSAGES.CALENDAR, url: "/dashboard/calendar", icon: CalendarDaysIcon, available: true, branchScoped: true },
   { title: DASHBOARD_SHELL_MESSAGES.CLASS_SCHEDULES, url: "/dashboard/schedule", icon: CalendarRangeIcon, available: true, adminOnly: true, hiddenForTeacherOnly: true, branchScoped: true },
@@ -50,6 +52,28 @@ const navigationItems: NavigationItem[] = [
   { title: DASHBOARD_SHELL_MESSAGES.PAYMENTS, url: "/dashboard/payments", icon: CreditCardIcon, available: true, adminOnly: true, hiddenForTeacherOnly: true, branchScoped: true },
   { title: DASHBOARD_SHELL_MESSAGES.PROFILE, url: "/dashboard/profile", icon: UserRoundIcon, available: true, profileOnly: true, branchScoped: false },
 ]
+
+interface NavigationVisibilityFlags {
+  isAdmin?: boolean
+  canManageProfile?: boolean
+  isTeacherOnly?: boolean
+}
+
+/**
+ * Visibility filter shared by the sidebar render and its tests: admin-only
+ * and profile-only items are flagged per item; teacher-only users lose the
+ * items marked hiddenForTeacherOnly (admins and teachers keep the rest).
+ */
+export function getVisibleNavigationItems(
+  flags: NavigationVisibilityFlags
+): NavigationItem[] {
+  return navigationItems.filter(
+    (item) =>
+      (!item.adminOnly || flags.isAdmin) &&
+      (!item.profileOnly || flags.canManageProfile) &&
+      (!item.hiddenForTeacherOnly || !flags.isTeacherOnly)
+  )
+}
 
 function matchesNavigationItem(
   item: Pick<NavigationItem, "url">,
@@ -100,12 +124,11 @@ function SidebarNavigation({
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const branchId = searchParams.get("branch")
-  const visibleItems = navigationItems.filter(
-    (item) =>
-      (!item.adminOnly || isAdmin) &&
-      (!item.profileOnly || canManageProfile) &&
-      (!item.hiddenForTeacherOnly || !isTeacherOnly)
-  )
+  const visibleItems = getVisibleNavigationItems({
+    isAdmin,
+    canManageProfile,
+    isTeacherOnly,
+  })
   const activeNavigationItemUrl = getActiveNavigationItemUrl(
     visibleItems,
     pathname

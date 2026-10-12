@@ -3,7 +3,10 @@ import { describe, expect, it } from "vitest";
 import {
   buildNavigationHref,
   getActiveNavigationItemUrl,
+  getVisibleNavigationItems,
+  navigationItems,
 } from "./app-sidebar";
+import { DASHBOARD_SHELL_MESSAGES } from "@/lib/localization/es-ec";
 
 const DASHBOARD_ROUTES = [
   { url: "/dashboard" },
@@ -46,6 +49,51 @@ describe("buildNavigationHref", () => {
   it("encodes a branch id that would otherwise inject query pairs", () => {
     expect(buildNavigationHref("/dashboard", true, "a&b=c")).toBe(
       "/dashboard?branch=a%26b%3Dc"
+    );
+  });
+});
+
+describe("navigationItems — Conducta entry", () => {
+  it("places Conducta right after Estudiantes, branch-scoped and visible to admins and teachers", () => {
+    const studentsIndex = navigationItems.findIndex(
+      (item) => item.url === "/dashboard/students"
+    );
+    const conductIndex = navigationItems.findIndex(
+      (item) => item.url === "/dashboard/conduct"
+    );
+
+    expect(conductIndex).toBe(studentsIndex + 1);
+    const conduct = navigationItems[conductIndex];
+    expect(conduct.title).toBe(DASHBOARD_SHELL_MESSAGES.CONDUCT);
+    expect(conduct.branchScoped).toBe(true);
+    expect(conduct.adminOnly).toBeUndefined();
+    expect(conduct.hiddenForTeacherOnly).toBeUndefined();
+  });
+
+  it("keeps Conducta visible for teacher-only users while hiding admin-only items", () => {
+    const visible = getVisibleNavigationItems({
+      isAdmin: false,
+      canManageProfile: false,
+      isTeacherOnly: true,
+    });
+
+    expect(visible.some((item) => item.url === "/dashboard/conduct")).toBe(
+      true
+    );
+    expect(visible.some((item) => item.url === "/dashboard/staff")).toBe(
+      false
+    );
+  });
+
+  it("keeps Conducta visible for admins", () => {
+    const visible = getVisibleNavigationItems({
+      isAdmin: true,
+      canManageProfile: false,
+      isTeacherOnly: false,
+    });
+
+    expect(visible.some((item) => item.url === "/dashboard/conduct")).toBe(
+      true
     );
   });
 });

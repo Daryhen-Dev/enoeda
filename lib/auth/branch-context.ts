@@ -40,6 +40,12 @@ export type BranchContextResult =
       branchName: string;
       timeZone: EcuadorTimeZone;
       canManage: boolean;
+      /**
+       * Admin OR teacher assignment for the branch and not a global-admin
+       * read-only view. Gates conduct (fines/warnings) writes, which both
+       * roles may register; canManage stays admin-only.
+       */
+      canWriteConduct: boolean;
       isGlobalAdminReadOnly?: true;
     }
   | { type: "redirect"; branchId: string }
@@ -117,18 +123,22 @@ function resolveActiveBranchContext(
 ): BranchContextResult {
   const selectedBranch = activeBranches.find((branch) => branch.id === branchParam);
   if (selectedBranch !== undefined) {
+    const hasOperationalAssignment = hasOperationalAssignmentForBranch(
+      assignments,
+      selectedBranch.id
+    );
+    const isGlobalAdminReadOnly =
+      isGlobalAdminReadMode && !hasOperationalAssignment;
     const result = {
       type: "valid" as const,
       branchId: selectedBranch.id,
       branchName: selectedBranch.name,
       timeZone: selectedBranch.timeZone,
       canManage: hasAdminForBranch(assignments, selectedBranch.id),
+      canWriteConduct: hasOperationalAssignment && !isGlobalAdminReadOnly,
     };
 
-    return isGlobalAdminReadMode &&
-      !hasOperationalAssignmentForBranch(assignments, selectedBranch.id)
-      ? { ...result, isGlobalAdminReadOnly: true }
-      : result;
+    return isGlobalAdminReadOnly ? { ...result, isGlobalAdminReadOnly: true } : result;
   }
 
   const defaultId = defaultBranchId(activeBranches);

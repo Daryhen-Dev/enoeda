@@ -3,10 +3,13 @@ import { describe, it, expect } from "vitest";
 import {
   createConductRecordSchema,
   voidConductRecordSchema,
+  searchConductStudentsSchema,
+  listRecentBranchConductRecordsSchema,
+  RECENT_CONDUCT_LIMITS,
   CONDUCT_KINDS,
   CONDUCT_STATUSES,
 } from "./schema";
-import { CONDUCT_MESSAGES } from "@/lib/localization/es-ec";
+import { CONDUCT_MESSAGES, ROSTER_MESSAGES } from "@/lib/localization/es-ec";
 
 const STUDENT_ID = "b1111111-1111-4111-8111-111111111111";
 const BRANCH_ID = "a0000000-0000-4000-8000-000000000001";
@@ -197,5 +200,127 @@ describe("voidConductRecordSchema", () => {
         CONDUCT_MESSAGES.VOID_REASON_MAX
       );
     }
+  });
+});
+
+describe("searchConductStudentsSchema", () => {
+  it("accepts a valid query and trims it", () => {
+    const parsed = searchConductStudentsSchema.parse({
+      branch_id: BRANCH_ID,
+      query: "  Ana Pérez  ",
+    });
+    expect(parsed.query).toBe("Ana Pérez");
+  });
+
+  it("rejects a missing query", () => {
+    const result = searchConductStudentsSchema.safeParse({
+      branch_id: BRANCH_ID,
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].message).toBe(
+        CONDUCT_MESSAGES.SEARCH_REQUIRED
+      );
+    }
+  });
+
+  it("rejects a whitespace-only query", () => {
+    const result = searchConductStudentsSchema.safeParse({
+      branch_id: BRANCH_ID,
+      query: "   ",
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].message).toBe(
+        CONDUCT_MESSAGES.SEARCH_REQUIRED
+      );
+    }
+  });
+
+  it("rejects a query longer than 100 characters", () => {
+    const result = searchConductStudentsSchema.safeParse({
+      branch_id: BRANCH_ID,
+      query: "x".repeat(101),
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].message).toBe(
+        ROSTER_MESSAGES.SEARCH_MAX_LENGTH
+      );
+    }
+  });
+
+  it("rejects a missing branch_id", () => {
+    const result = searchConductStudentsSchema.safeParse({ query: "Ana" });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].message).toBe(
+        CONDUCT_MESSAGES.BRANCH_REQUIRED
+      );
+    }
+  });
+
+  it("rejects unknown extra keys", () => {
+    const result = searchConductStudentsSchema.safeParse({
+      branch_id: BRANCH_ID,
+      query: "Ana",
+      limit: 5,
+    });
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("listRecentBranchConductRecordsSchema", () => {
+  it("defaults the limit to 10 when omitted", () => {
+    const parsed = listRecentBranchConductRecordsSchema.parse({
+      branch_id: BRANCH_ID,
+    });
+    expect(parsed.limit).toBe(RECENT_CONDUCT_LIMITS.DEFAULT);
+    expect(RECENT_CONDUCT_LIMITS.DEFAULT).toBe(10);
+  });
+
+  it("accepts limits 1 and 25", () => {
+    expect(
+      listRecentBranchConductRecordsSchema.parse({
+        branch_id: BRANCH_ID,
+        limit: 1,
+      }).limit
+    ).toBe(1);
+    expect(
+      listRecentBranchConductRecordsSchema.parse({
+        branch_id: BRANCH_ID,
+        limit: RECENT_CONDUCT_LIMITS.MAX,
+      }).limit
+    ).toBe(25);
+  });
+
+  it("rejects out-of-bounds and non-integer limits", () => {
+    for (const limit of [0, 26, 10.5]) {
+      const result = listRecentBranchConductRecordsSchema.safeParse({
+        branch_id: BRANCH_ID,
+        limit,
+      });
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues[0].message).toBe(
+          CONDUCT_MESSAGES.RECENT_LIMIT_INVALID
+        );
+      }
+    }
+  });
+
+  it("rejects a non-numeric limit", () => {
+    const result = listRecentBranchConductRecordsSchema.safeParse({
+      branch_id: BRANCH_ID,
+      limit: "10",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects a missing branch_id", () => {
+    const result = listRecentBranchConductRecordsSchema.safeParse({
+      limit: 5,
+    });
+    expect(result.success).toBe(false);
   });
 });
