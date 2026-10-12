@@ -1175,6 +1175,9 @@ export const CONDUCT_MESSAGES = {
   VOIDING: "Anulando…",
   VOID_REASON_LABEL: "Motivo de anulación",
   VOID_REASON_PLACEHOLDER: "Explique el motivo de la anulación",
+  // Quick-entry search and recent-records list (T1 domain actions).
+  SEARCH_REQUIRED: "El término de búsqueda es obligatorio.",
+  RECENT_LIMIT_INVALID: "La cantidad debe estar entre 1 y 25.",
 } as const
 
 export const SESSION_INFO_MESSAGES = {

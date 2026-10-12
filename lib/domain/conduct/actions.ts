@@ -17,12 +17,16 @@ import {
   conductRecordActionSchema,
   voidConductRecordSchema,
   conductQuerySchema,
+  searchConductStudentsSchema,
+  listRecentBranchConductRecordsSchema,
   CONDUCT_KINDS,
   CONDUCT_STATUSES,
   type CreateConductRecordInput,
   type ConductRecordActionInput,
   type VoidConductRecordInput,
   type ConductQueryInput,
+  type SearchConductStudentsInput,
+  type ListRecentBranchConductRecordsInput,
 } from "./schema";
 
 export interface ActionResult<T = unknown> {
@@ -61,6 +65,41 @@ export interface ConductSummary {
 export interface ConductRecordsPage {
   records: ConductRecord[];
   summary: ConductSummary;
+}
+
+/** Quick-entry search result row: student identity + conduct counters. */
+export interface ConductStudentSearchRow {
+  id: string;
+  first_name: string;
+  surname: string;
+  national_id: string;
+  pending_fines_count: number;
+  pending_fines_total: number;
+  warnings_count: number;
+}
+
+/** Branch-level recent record with a minimal student for display. */
+export interface RecentConductRecord {
+  id: string;
+  student_id: string;
+  student: {
+    id: string;
+    first_name: string;
+    surname: string;
+  };
+  kind: string;
+  reason: string;
+  incident_date: Date;
+  amount: number | null;
+  status: string;
+  paid_at: Date | null;
+  paid_by: string | null;
+  voided_at: Date | null;
+  voided_by: string | null;
+  void_reason: string | null;
+  created_by: string;
+  created_at: Date;
+  updated_at: Date;
 }
 
 /**
@@ -423,6 +462,225 @@ export async function listStudentConductRecords(
     }));
 
     return { success: true, data: { records, summary: buildSummary(records) } };
+  } catch {
+    return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
+  }
+}
+
+/**
+ * Quick-entry student search: ACTIVE students of the branch matching every
+ * whitespace-separated term against first_name, surname or national_id
+ * (case-insensitive contains; this also matches "first surname" full-name
+ * order). Returns at most 8 students ordered by surname, first_name, id,
+ * with pending-fine and warning counters aggregated in ONE grouped query
+ * (voided records excluded from the counts).
+ * Requires branch context (admin/teacher).
+ */
+export async function searchConductStudents(
+  input: SearchConductStudentsInput
+): Promise<ActionResult<{ students: ConductStudentSearchRow[] }>> {
+  const parsed = searchConductStudentsSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message };
+  }
+
+  const { branch_id, query } = parsed.data;
+
+  try {
+    const result = await withAuthenticatedUser(async (tx, ctx) => {
+      const branchError = assertCallerBranchContext(ctx, branch_id);
+      if (branchError) {
+        return { __branchError: branchError } as const;
+      }
+
+      const terms = query.split(/\s+/u).filter((term) => term.length > 0);
+      const students = await tx.students.findMany({
+        where: {
+          branch_id,
+          is_active: true,
+          AND: terms.map((term) => ({
+            OR: [
+              { first_name: { contains: term, mode: "insensitive" } },
+              { surname: { contains: term, mode: "insensitive" } },
+              { national_id: { contains: term, mode: "insensitive" } },
+            ],
+          })),
+        },
+        select: {
+          id: true,
+          first_name: true,
+          surname: true,
+          national_id: true,
+        },
+        orderBy: [{ surname: "asc" }, { first_name: "asc" }, { id: "asc" }],
+        take: 8,
+      });
+
+      if (students.length === 0) {
+        return { students: [] };
+      }
+
+      const studentIds = students.map((student) => student.id);
+      const groups = await tx.student_conduct_records.groupBy({
+        by: ["student_id", "kind", "status"],
+        where: {
+          student_id: { in: studentIds },
+          voided_at: null,
+          OR: [
+            { kind: CONDUCT_KINDS.WARNING },
+            {
+              kind: CONDUCT_KINDS.FINE,
+              status: CONDUCT_STATUSES.PENDING,
+            },
+          ],
+        },
+        _count: { _all: true },
+        _sum: { amount: true },
+      });
+
+      const summaryByStudent = new Map<
+        string,
+        Omit<ConductStudentSearchRow, "id" | "first_name" | "surname" | "national_id">
+      >();
+      for (const group of groups) {
+        const entry = summaryByStudent.get(group.student_id) ?? {
+          pending_fines_count: 0,
+          pending_fines_total: 0,
+          warnings_count: 0,
+        };
+        if (group.kind === CONDUCT_KINDS.WARNING) {
+          entry.warnings_count += group._count._all;
+        } else {
+          entry.pending_fines_count += group._count._all;
+          entry.pending_fines_total +=
+            group._sum.amount === null ? 0 : Number(group._sum.amount);
+        }
+        summaryByStudent.set(group.student_id, entry);
+      }
+
+      return {
+        students: students.map((student) => ({
+          id: student.id,
+          first_name: student.first_name,
+          surname: student.surname,
+          national_id: student.national_id,
+          ...(summaryByStudent.get(student.id) ?? {
+            pending_fines_count: 0,
+            pending_fines_total: 0,
+            warnings_count: 0,
+          }),
+        })),
+      };
+    });
+
+    if (!result.success) return result;
+
+    if ("__branchError" in result.data) {
+      return {
+        success: false,
+        error: (result.data as { __branchError: string }).__branchError,
+      };
+    }
+
+    return {
+      success: true,
+      data: result.data as Exclude<
+        typeof result.data,
+        { __branchError: string }
+      >,
+    };
+  } catch {
+    return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
+  }
+}
+
+/**
+ * Latest conduct records (fines and warnings) of the branch's students,
+ * newest first. Voided and flagged records are included; each row carries
+ * a minimal student object for display. Amounts are returned as numbers.
+ * Requires branch context (admin/teacher).
+ */
+export async function listRecentBranchConductRecords(
+  input: ListRecentBranchConductRecordsInput
+): Promise<ActionResult<{ records: RecentConductRecord[] }>> {
+  const parsed = listRecentBranchConductRecordsSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message };
+  }
+
+  const { branch_id, limit } = parsed.data;
+
+  try {
+    const result = await withAuthenticatedUser(async (tx, ctx) => {
+      const branchError = assertCallerBranchContext(ctx, branch_id);
+      if (branchError) {
+        return { __branchError: branchError } as const;
+      }
+
+      return tx.student_conduct_records.findMany({
+        where: { students: { branch_id } },
+        select: {
+          id: true,
+          student_id: true,
+          kind: true,
+          reason: true,
+          incident_date: true,
+          amount: true,
+          status: true,
+          paid_at: true,
+          paid_by: true,
+          voided_at: true,
+          voided_by: true,
+          void_reason: true,
+          created_by: true,
+          created_at: true,
+          updated_at: true,
+          students: {
+            select: { id: true, first_name: true, surname: true },
+          },
+        },
+        orderBy: { created_at: "desc" },
+        take: limit,
+      });
+    });
+
+    if (!result.success) return result;
+
+    if ("__branchError" in result.data) {
+      return {
+        success: false,
+        error: (result.data as { __branchError: string }).__branchError,
+      };
+    }
+
+    const rows = result.data as Exclude<
+      typeof result.data,
+      { __branchError: string }
+    >;
+    const records: RecentConductRecord[] = rows.map((row) => ({
+      id: row.id,
+      student_id: row.student_id,
+      student: {
+        id: row.students.id,
+        first_name: row.students.first_name,
+        surname: row.students.surname,
+      },
+      kind: row.kind,
+      reason: row.reason,
+      incident_date: row.incident_date,
+      amount: row.amount === null ? null : Number(row.amount),
+      status: row.status,
+      paid_at: row.paid_at,
+      paid_by: row.paid_by,
+      voided_at: row.voided_at,
+      voided_by: row.voided_by,
+      void_reason: row.void_reason,
+      created_by: row.created_by,
+      created_at: row.created_at,
+      updated_at: row.updated_at,
+    }));
+
+    return { success: true, data: { records } };
   } catch {
     return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
   }

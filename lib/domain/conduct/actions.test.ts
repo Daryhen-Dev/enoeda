@@ -11,6 +11,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { AuthenticatedContext } from "@/lib/auth/server-context";
+import { CONDUCT_MESSAGES } from "@/lib/localization/es-ec";
 
 // --- Mock setup ---
 
@@ -19,6 +20,7 @@ const BRANCH_B = "a0000000-0000-4000-8000-000000000002";
 const STUDENT_ID = "b1111111-1111-4111-8111-111111111111";
 const RECORD_ID = "e5555555-5555-4555-8555-555555555555";
 const USER_ID = "f4444444-4444-4444-8444-444444444444";
+const STUDENT_ID_2 = "b1111111-1111-4111-8111-222222222222";
 
 const ctxBranchA: AuthenticatedContext = {
   userId: USER_ID,
@@ -44,10 +46,17 @@ const ctxTeacherBranchA: AuthenticatedContext = {
   assignments: [{ role: "teacher", branchId: BRANCH_A }],
 };
 
+const ctxOwnerNoAssignment: AuthenticatedContext = {
+  userId: USER_ID,
+  roles: ["owner"],
+  assignments: [],
+};
+
 function buildMockTx(overrides: Record<string, unknown> = {}) {
   return {
     students: {
       findUnique: vi.fn().mockResolvedValue({ branch_id: BRANCH_A }),
+      findMany: vi.fn().mockResolvedValue([]),
     },
     student_conduct_records: {
       findUnique: vi.fn().mockResolvedValue({
@@ -59,6 +68,7 @@ function buildMockTx(overrides: Record<string, unknown> = {}) {
         students: { branch_id: BRANCH_A },
       }),
       findMany: vi.fn().mockResolvedValue([]),
+      groupBy: vi.fn().mockResolvedValue([]),
       create: vi.fn().mockResolvedValue({ id: RECORD_ID }),
       update: vi.fn().mockResolvedValue({}),
     },
@@ -102,6 +112,8 @@ let markFinePaid: typeof import("./actions").markFinePaid;
 let voidConductRecord: typeof import("./actions").voidConductRecord;
 let listStudentConductRecords: typeof import("./actions").listStudentConductRecords;
 let getOwnConductRecords: typeof import("./actions").getOwnConductRecords;
+let searchConductStudents: typeof import("./actions").searchConductStudents;
+let listRecentBranchConductRecords: typeof import("./actions").listRecentBranchConductRecords;
 
 beforeEach(async () => {
   vi.resetModules();
@@ -118,6 +130,8 @@ beforeEach(async () => {
   voidConductRecord = mod.voidConductRecord;
   listStudentConductRecords = mod.listStudentConductRecords;
   getOwnConductRecords = mod.getOwnConductRecords;
+  searchConductStudents = mod.searchConductStudents;
+  listRecentBranchConductRecords = mod.listRecentBranchConductRecords;
 });
 
 function setupWithAuth(
@@ -692,5 +706,298 @@ describe("getOwnConductRecords — student self-read", () => {
       pending_fines_total: 25.5,
       warnings_count: 1,
     });
+  });
+});
+
+// =============================================================================
+// searchConductStudents (quick entry)
+// =============================================================================
+
+describe("searchConductStudents — branch security and search", () => {
+  it("rejects when the query is missing", async () => {
+    setupWithAuth(ctxBranchA);
+    // @ts-expect-error intentionally omitting query to test schema rejection
+    const result = await searchConductStudents({ branch_id: BRANCH_A });
+    expect(result.success).toBe(false);
+    expect(result.error).toBeDefined();
+  });
+
+  it("rejects when caller has no assignment", async () => {
+    setupWithAuth(ctxNoAssignment);
+    const result = await searchConductStudents({
+      branch_id: BRANCH_A,
+      query: "Ana",
+    });
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("asignación");
+  });
+
+  it("rejects an owner without a branch assignment", async () => {
+    setupWithAuth(ctxOwnerNoAssignment);
+    const result = await searchConductStudents({
+      branch_id: BRANCH_A,
+      query: "Ana",
+    });
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("asignación");
+  });
+
+  it("searches only ACTIVE students of the requested branch", async () => {
+    const tx = buildMockTx();
+    setupWithAuth(ctxBranchA, tx);
+
+    await searchConductStudents({ branch_id: BRANCH_A, query: "Ana" });
+    expect(tx.students.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          branch_id: BRANCH_A,
+          is_active: true,
+        }),
+      })
+    );
+  });
+
+  it("matches cédula and full-name order: every term must hit a field", async () => {
+    const tx = buildMockTx();
+    setupWithAuth(ctxBranchA, tx);
+
+    await searchConductStudents({
+      branch_id: BRANCH_A,
+      query: "Ana 1712345678",
+    });
+    const call = tx.students.findMany.mock.calls[0][0] as {
+      where: { AND: Array<{ OR: Record<string, unknown>[] }> };
+    };
+    expect(call.where.AND).toHaveLength(2);
+    for (const termOr of call.where.AND) {
+      expect(termOr.OR).toEqual([
+        { first_name: { contains: expect.any(String), mode: "insensitive" } },
+        { surname: { contains: expect.any(String), mode: "insensitive" } },
+        { national_id: { contains: expect.any(String), mode: "insensitive" } },
+      ]);
+    }
+    expect(
+      call.where.AND[0]?.OR.map((c) => Object.values(c)[0])
+    ).toContainEqual({ contains: "Ana", mode: "insensitive" });
+    expect(
+      call.where.AND[1]?.OR.map((c) => Object.values(c)[0])
+    ).toContainEqual({ contains: "1712345678", mode: "insensitive" });
+  });
+
+  it("orders by surname, first_name, id and takes at most 8", async () => {
+    const tx = buildMockTx();
+    setupWithAuth(ctxBranchA, tx);
+
+    await searchConductStudents({ branch_id: BRANCH_A, query: "Ana" });
+    expect(tx.students.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        orderBy: [{ surname: "asc" }, { first_name: "asc" }, { id: "asc" }],
+        take: 8,
+      })
+    );
+  });
+
+  it("aggregates pending fines and warnings in ONE query excluding voided records", async () => {
+    const tx = buildMockTx();
+    tx.students.findMany = vi.fn().mockResolvedValue([
+      {
+        id: STUDENT_ID,
+        first_name: "Ana",
+        surname: "Pérez",
+        national_id: "1712345678",
+      },
+      {
+        id: STUDENT_ID_2,
+        first_name: "Luis",
+        surname: "Gómez",
+        national_id: "1700000001",
+      },
+    ]);
+    tx.student_conduct_records.groupBy = vi.fn().mockResolvedValue([
+      {
+        student_id: STUDENT_ID,
+        kind: "fine",
+        status: "pending",
+        _count: { _all: 2 },
+        _sum: { amount: "30.50" },
+      },
+      {
+        student_id: STUDENT_ID,
+        kind: "warning",
+        status: "issued",
+        _count: { _all: 1 },
+        _sum: { amount: null },
+      },
+    ]);
+    setupWithAuth(ctxBranchA, tx);
+
+    const result = await searchConductStudents({
+      branch_id: BRANCH_A,
+      query: "a",
+    });
+    expect(result.success).toBe(true);
+    // One aggregate query for the returned ids, not N+1.
+    expect(tx.student_conduct_records.groupBy).toHaveBeenCalledTimes(1);
+    expect(tx.student_conduct_records.groupBy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          student_id: { in: [STUDENT_ID, STUDENT_ID_2] },
+          // Voided records are excluded from the counts.
+          voided_at: null,
+        }),
+      })
+    );
+    expect(result.data?.students).toEqual([
+      {
+        id: STUDENT_ID,
+        first_name: "Ana",
+        surname: "Pérez",
+        national_id: "1712345678",
+        pending_fines_count: 2,
+        pending_fines_total: 30.5,
+        warnings_count: 1,
+      },
+      {
+        id: STUDENT_ID_2,
+        first_name: "Luis",
+        surname: "Gómez",
+        national_id: "1700000001",
+        pending_fines_count: 0,
+        pending_fines_total: 0,
+        warnings_count: 0,
+      },
+    ]);
+  });
+
+  it("skips the aggregate query when no student matches", async () => {
+    const tx = buildMockTx();
+    setupWithAuth(ctxBranchA, tx);
+
+    const result = await searchConductStudents({
+      branch_id: BRANCH_A,
+      query: "inexistente",
+    });
+    expect(result.success).toBe(true);
+    expect(result.data?.students).toEqual([]);
+    expect(tx.student_conduct_records.groupBy).not.toHaveBeenCalled();
+  });
+});
+
+// =============================================================================
+// listRecentBranchConductRecords (quick entry)
+// =============================================================================
+
+describe("listRecentBranchConductRecords — branch security and shape", () => {
+  it("rejects an out-of-bounds limit", async () => {
+    setupWithAuth(ctxBranchA);
+    const result = await listRecentBranchConductRecords({
+      branch_id: BRANCH_A,
+      limit: 26,
+    });
+    expect(result.success).toBe(false);
+    expect(result.error).toBe(CONDUCT_MESSAGES.RECENT_LIMIT_INVALID);
+  });
+
+  it("rejects when caller has no assignment", async () => {
+    setupWithAuth(ctxNoAssignment);
+    const result = await listRecentBranchConductRecords({ branch_id: BRANCH_A });
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("asignación");
+  });
+
+  it("rejects an owner without a branch assignment", async () => {
+    setupWithAuth(ctxOwnerNoAssignment);
+    const result = await listRecentBranchConductRecords({ branch_id: BRANCH_A });
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("asignación");
+  });
+
+  it("scopes to the branch and includes voided records, default limit 10", async () => {
+    const tx = buildMockTx();
+    setupWithAuth(ctxBranchA, tx);
+
+    await listRecentBranchConductRecords({ branch_id: BRANCH_A });
+    expect(tx.student_conduct_records.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { students: { branch_id: BRANCH_A } },
+        take: 10,
+        orderBy: { created_at: "desc" },
+      })
+    );
+  });
+
+  it("caps the limit at 25", async () => {
+    const tx = buildMockTx();
+    setupWithAuth(ctxBranchA, tx);
+
+    await listRecentBranchConductRecords({ branch_id: BRANCH_A, limit: 25 });
+    expect(tx.student_conduct_records.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ take: 25 })
+    );
+  });
+
+  it("returns newest-first records with student info and numeric amounts, voided included", async () => {
+    const tx = buildMockTx();
+    tx.student_conduct_records.findMany = vi.fn().mockResolvedValue([
+      {
+        id: "r1",
+        student_id: STUDENT_ID,
+        kind: "fine",
+        reason: "Daño al equipo",
+        incident_date: new Date("2026-09-01"),
+        amount: "12.50",
+        status: "pending",
+        paid_at: null,
+        paid_by: null,
+        voided_at: null,
+        voided_by: null,
+        void_reason: null,
+        created_by: USER_ID,
+        created_at: new Date("2026-09-02T10:00:00Z"),
+        updated_at: new Date("2026-09-02T10:00:00Z"),
+        students: {
+          id: STUDENT_ID,
+          first_name: "Ana",
+          surname: "Pérez",
+        },
+      },
+      {
+        id: "r2",
+        student_id: STUDENT_ID_2,
+        kind: "warning",
+        reason: "Interrumpió la clase",
+        incident_date: new Date("2026-08-30"),
+        amount: null,
+        status: "issued",
+        paid_at: null,
+        paid_by: null,
+        voided_at: new Date("2026-09-01T09:00:00Z"),
+        voided_by: USER_ID,
+        void_reason: "duplicado",
+        created_by: USER_ID,
+        created_at: new Date("2026-08-30T10:00:00Z"),
+        updated_at: new Date("2026-09-01T09:00:00Z"),
+        students: {
+          id: STUDENT_ID_2,
+          first_name: "Luis",
+          surname: "Gómez",
+        },
+      },
+    ]);
+    setupWithAuth(ctxBranchA, tx);
+
+    const result = await listRecentBranchConductRecords({ branch_id: BRANCH_A });
+    expect(result.success).toBe(true);
+    const records = result.data?.records ?? [];
+    expect(records).toHaveLength(2);
+    expect(records[0]?.student).toEqual({
+      id: STUDENT_ID,
+      first_name: "Ana",
+      surname: "Pérez",
+    });
+    expect(records[0]?.amount).toBe(12.5);
+    // Voided records are included, flagged as such.
+    expect(records[1]?.voided_at).not.toBeNull();
+    expect(records[1]?.void_reason).toBe("duplicado");
   });
 });

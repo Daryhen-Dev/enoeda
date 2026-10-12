@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { CONDUCT_MESSAGES } from "@/lib/localization/es-ec";
+import { CONDUCT_MESSAGES, ROSTER_MESSAGES } from "@/lib/localization/es-ec";
 
 export const CONDUCT_KINDS = {
   FINE: "fine",
@@ -126,7 +126,45 @@ export const conductQuerySchema = z
   })
   .strict();
 
+/** Bounds for the quick-entry recent-records list. */
+export const RECENT_CONDUCT_LIMITS = {
+  DEFAULT: 10,
+  MAX: 25,
+} as const;
+
+export const searchConductStudentsSchema = z
+  .object({
+    branch_id: z.uuid({ error: CONDUCT_MESSAGES.BRANCH_REQUIRED }),
+    query: z
+      .string({ error: CONDUCT_MESSAGES.SEARCH_REQUIRED })
+      .trim()
+      .min(1, { error: CONDUCT_MESSAGES.SEARCH_REQUIRED })
+      // Same search bound and copy as the roster/attendance pickers.
+      .max(100, { error: ROSTER_MESSAGES.SEARCH_MAX_LENGTH }),
+  })
+  .strict();
+
+export const listRecentBranchConductRecordsSchema = z
+  .object({
+    branch_id: z.uuid({ error: CONDUCT_MESSAGES.BRANCH_REQUIRED }),
+    limit: z
+      .number({ error: CONDUCT_MESSAGES.RECENT_LIMIT_INVALID })
+      .int({ error: CONDUCT_MESSAGES.RECENT_LIMIT_INVALID })
+      .min(1, { error: CONDUCT_MESSAGES.RECENT_LIMIT_INVALID })
+      .max(RECENT_CONDUCT_LIMITS.MAX, {
+        error: CONDUCT_MESSAGES.RECENT_LIMIT_INVALID,
+      })
+      .default(RECENT_CONDUCT_LIMITS.DEFAULT),
+  })
+  .strict();
+
 export type CreateConductRecordInput = z.infer<typeof createConductRecordSchema>;
 export type ConductRecordActionInput = z.infer<typeof conductRecordActionSchema>;
 export type VoidConductRecordInput = z.infer<typeof voidConductRecordSchema>;
 export type ConductQueryInput = z.infer<typeof conductQuerySchema>;
+export type SearchConductStudentsInput = z.infer<
+  typeof searchConductStudentsSchema
+>;
+export type ListRecentBranchConductRecordsInput = z.input<
+  typeof listRecentBranchConductRecordsSchema
+>;
