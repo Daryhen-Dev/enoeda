@@ -32,7 +32,7 @@ Branch: feat/student-conduct-records, from main.
 - [x] T3: UI: "Conducta" tab in student detail (list, register dialog,
       mark paid, void with reason) + read-only section in /student; es-ec
       copy.
-- [ ] T4: Apply migration to Supabase (needs user authorization), verify.
+- [x] T4: Apply migration to Supabase (needs user authorization), verify.
 
 ## Evidence
 - T1 (delegated: gentle-ai-worker), commit 53455f3: migration
@@ -60,3 +60,14 @@ Branch: feat/student-conduct-records, from main.
   fines; void only for non-voided records that are not paid fines.
   TDD RED -> GREEN 15/15 focused; tsc clean; eslint clean; pnpm test
   1218 passed / 1 skipped; pnpm build ok.
+- T4: migration 20260912000000 APPLIED to Supabase dboqqtfsywhjqhbpxdbm
+  (user-authorized) via `pg` + DATABASE_URL, file as one transaction.
+  Precheck: table absent, helpers present. Post-check: RLS enabled+forced,
+  8 policies, 2 triggers, authenticated SELECT/INSERT + column UPDATE on
+  the 7 pay/void columns, no anon grants, 7 CHECKs. Live probe as a
+  non-owner branch admin (rolled back, 0 rows left): fine and warning
+  inserts ok; fine without amount -> CHECK; spoofed created_by -> RLS;
+  edit reason and DELETE -> permission denied; mark paid ok; revert paid,
+  void paid, un-void -> guard trigger; void warning ok. Cross-branch
+  insert not probed (no student in another branch); covered by
+  structural and domain tests only.
