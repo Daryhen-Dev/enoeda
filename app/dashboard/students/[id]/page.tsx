@@ -15,12 +15,15 @@ import {
 } from "@/lib/domain/progress/actions"
 import { getLevels } from "@/lib/domain/levels/actions"
 import { getStudentPayments } from "@/lib/domain/payments/actions"
+import { listStudentConductRecords } from "@/lib/domain/conduct"
 import { getBranchPaymentSettings } from "@/lib/domain/branches/actions"
 import { StudentDisciplinePanel } from "@/components/students/student-discipline-panel"
 import { StudentDetailHeader } from "@/components/students/student-detail-header"
 import { StudentHistoryTabs } from "@/components/students/student-history-tabs"
 import { StudentProgressPanel } from "@/components/students/student-progress-panel"
 import { StudentNotesPanel } from "@/components/students/student-notes-panel"
+import { StudentConductPanel } from "@/components/students/student-conduct-panel"
+import { CreateConductRecordDialog } from "@/components/students/create-conduct-record-dialog"
 import { CreateNoteDialog } from "@/components/students/create-note-dialog"
 import { StudentPaymentHistory } from "@/components/payments/student-payment-history"
 import { resolveBranchContext } from "@/lib/auth/branch-context"
@@ -114,8 +117,8 @@ export default async function StudentDetailPage({
     }
   })
 
-  // Fetch progress, progression summary, notes, and payments data
-  const [progressResult, progressSummaryResult, notesResult, paymentsResult] =
+  // Fetch progress, progression summary, notes, conduct records, and payments data
+  const [progressResult, progressSummaryResult, notesResult, conductResult, paymentsResult] =
     await Promise.all([
       listProgress({ student_id: id, branch_id: branchResult.branchId }),
       getStudentProgressSummary({
@@ -123,6 +126,10 @@ export default async function StudentDetailPage({
         branch_id: branchResult.branchId,
       }),
       listNotes({ student_id: id, branch_id: branchResult.branchId }),
+      listStudentConductRecords({
+        student_id: id,
+        branch_id: branchResult.branchId,
+      }),
       getStudentPayments({ student_id: id, branch_id: branchResult.branchId }),
     ])
 
@@ -138,6 +145,17 @@ export default async function StudentDetailPage({
     paymentsResult.success && paymentsResult.data
       ? paymentsResult.data
       : { monthly: [], perClass: [] }
+  const conductData =
+    conductResult.success && conductResult.data
+      ? conductResult.data
+      : {
+          records: [],
+          summary: {
+            pending_fines_count: 0,
+            pending_fines_total: 0,
+            warnings_count: 0,
+          },
+        }
 
   // Fetch levels for each active discipline (needed for promotion dialog)
   const levelsResults = await Promise.all(
@@ -182,6 +200,7 @@ export default async function StudentDetailPage({
       <StudentHistoryTabs
         defaultTab={historyDefaultTab}
         noteCount={notesData.length}
+        conductCount={conductData.records.length}
         paymentCount={paymentsData.monthly.length + paymentsData.perClass.length}
         progressCount={progressData.length}
         enrollmentEventCount={history.length}
@@ -200,6 +219,23 @@ export default async function StudentDetailPage({
                   name: e.discipline_name,
                 }))}
                 branchId={branchResult.branchId}
+              />
+            )}
+          </div>
+        }
+        conductSlot={
+          <div className="flex flex-col gap-3">
+            <StudentConductPanel
+              records={conductData.records}
+              summary={conductData.summary}
+              branchId={branchResult.branchId}
+              canManage={canManage}
+            />
+            {canManage && (
+              <CreateConductRecordDialog
+                studentId={id}
+                branchId={branchResult.branchId}
+                todayDateOnly={todayDateOnly}
               />
             )}
           </div>

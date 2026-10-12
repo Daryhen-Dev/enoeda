@@ -71,6 +71,9 @@ export const TOAST_MESSAGES = {
   PAYMENT_CORRECTED: "Pago corregido correctamente.",
   PAYMENT_DELETED: "Pago eliminado correctamente.",
   STUDENT_PHONE_UPDATED: "Teléfono actualizado correctamente.",
+  CONDUCT_CREATED: "Registro de conducta creado correctamente.",
+  FINE_MARKED_PAID: "Multa marcada como pagada correctamente.",
+  CONDUCT_VOIDED: "Registro anulado correctamente.",
 } as const
 
 export const STUDENT_ENROLLMENT_MESSAGES = {
@@ -374,6 +377,13 @@ export function formatDateTime(value: Date, timeZone?: string): string {
 
 export function formatNumber(value: number): string {
   return new Intl.NumberFormat(USER_LOCALE).format(value)
+}
+
+export function formatCurrency(value: number): string {
+  return new Intl.NumberFormat(USER_LOCALE, {
+    style: "currency",
+    currency: PAYMENT_CONSOLE_MESSAGES.CURRENCY_CODE,
+  }).format(value)
 }
 
 export const OWNER_MESSAGES = {
@@ -1119,6 +1129,52 @@ export const CONDUCT_MESSAGES = {
   ALREADY_VOIDED: "El registro ya fue anulado.",
   PAID_NOT_VOIDABLE: "Las multas pagadas no se pueden anular.",
   RECORD_CONFLICT: "El registro cambió de estado. Actualice e inténtelo nuevamente.",
+  // Staff UI (student detail "Conducta" tab) and student portal section.
+  TAB_CONDUCT: "Conducta",
+  PANEL_TITLE: "Multas y llamados de atención",
+  SUMMARY_PENDING_FINES: (count: number, total: string) =>
+    count === 1
+      ? `1 multa pendiente por ${total}`
+      : `${formatNumber(count)} multas pendientes por ${total}`,
+  SUMMARY_WARNINGS: (count: number) =>
+    count === 1
+      ? "1 llamado de atención"
+      : `${formatNumber(count)} llamados de atención`,
+  KIND_FINE: "Multa",
+  KIND_WARNING: "Llamado de atención",
+  STATUS_PENDING: "Pendiente",
+  STATUS_PAID: "Pagada",
+  VOIDED_BADGE: "Anulado",
+  INCIDENT_DATE_LABEL: "Fecha del incidente",
+  AMOUNT_LABEL: "Monto",
+  PAID_AT_LABEL: "Pagada el",
+  VOIDED_WITH_REASON: (reason: string) => `Anulado: ${reason}`,
+  EMPTY_STATE: "No hay multas ni llamados de atención registrados.",
+  REGISTER_ACTION: "Registrar multa o llamado",
+  CREATE_TITLE: "Nueva multa o llamado de atención",
+  CREATE_DESCRIPTION:
+    "Registre una multa o un llamado de atención para el estudiante.",
+  KIND_FIELD_LABEL: "Tipo",
+  KIND_PLACEHOLDER: "Seleccione el tipo",
+  REASON_FIELD_LABEL: "Motivo",
+  REASON_PLACEHOLDER: "Describa el motivo del registro",
+  INCIDENT_DATE_FIELD_LABEL: "Fecha del incidente",
+  AMOUNT_FIELD_LABEL: "Monto",
+  SAVING: "Guardando…",
+  MARK_PAID_ACTION: "Marcar como pagada",
+  MARK_PAID_TITLE: "Marcar multa como pagada",
+  MARK_PAID_DESCRIPTION:
+    "Confirme que esta multa fue pagada. Las multas pagadas no se pueden revertir ni anular.",
+  MARK_PAID_CONFIRM: "Marcar como pagada",
+  MARKING_PAID: "Marcando…",
+  VOID_ACTION: "Anular",
+  VOID_TITLE: "Anular registro",
+  VOID_DESCRIPTION:
+    "El registro quedará anulado y no se puede revertir. Explique el motivo (1 a 500 caracteres).",
+  VOID_CONFIRM: "Anular",
+  VOIDING: "Anulando…",
+  VOID_REASON_LABEL: "Motivo de anulación",
+  VOID_REASON_PLACEHOLDER: "Explique el motivo de la anulación",
 } as const
 
 export const SESSION_INFO_MESSAGES = {
