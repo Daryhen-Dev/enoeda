@@ -114,6 +114,7 @@ describe("resolveBranchContext", () => {
       branchName: "Sucursal A",
       timeZone: "America/Guayaquil",
       canManage: true,
+      canWriteConduct: true,
     });
   });
 
@@ -165,6 +166,7 @@ describe("resolveBranchContext", () => {
       branchName: "Sucursal B",
       timeZone: "America/Guayaquil",
       canManage: true,
+      canWriteConduct: true,
     });
   });
 
@@ -279,6 +281,7 @@ describe("resolveBranchContext", () => {
       branchName: "Sucursal A",
       timeZone: "America/Guayaquil",
       canManage: true,
+      canWriteConduct: true,
     });
   });
 
@@ -302,6 +305,46 @@ describe("resolveBranchContext", () => {
       branchName: "Sucursal B",
       timeZone: "America/Guayaquil",
       canManage: false,
+      canWriteConduct: true,
+    });
+  });
+
+  it("canWriteConduct is false for a global-admin read-only branch view", async () => {
+    mockGetAuthenticatedContext.mockResolvedValue({
+      ok: true,
+      ctx: {
+        userId: "user-1",
+        roles: ["admin"],
+        assignments: [{ role: "admin", branchId: BRANCH_A }],
+      },
+    });
+
+    // Global-admin read mode fetches ALL active branches; BRANCH_B has no
+    // assignment for this caller, so the view is read-only.
+    mockWithAuthenticatedUser.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
+      const mockTx = {
+        branches: {
+          findMany: () => [
+            { id: BRANCH_A, name: "Sucursal A" },
+            { id: BRANCH_B, name: "Sucursal B" },
+          ],
+        },
+      };
+      const data = await fn(mockTx);
+      return { success: true, data };
+    });
+
+    const result = await resolveBranchContext(BRANCH_B, {
+      allowGlobalAdminRead: true,
+    });
+    expect(result).toEqual({
+      type: "valid",
+      branchId: BRANCH_B,
+      branchName: "Sucursal B",
+      timeZone: "America/Guayaquil",
+      canManage: false,
+      canWriteConduct: false,
+      isGlobalAdminReadOnly: true,
     });
   });
 

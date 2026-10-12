@@ -72,6 +72,10 @@ export default async function StudentDetailPage({
 
   // Valid branch — proceed with scoped data
   const canManage = branchResult.canManage
+  // Conduct writes (register fines/warnings) are allowed for admins AND
+  // teachers of the branch (not for global-admin read-only views);
+  // everything else keeps the admin-only canManage semantics.
+  const canWriteConduct = branchResult.canWriteConduct
   const paymentSettingsResult = canManage
     ? await getBranchPaymentSettings(branchResult.branchId)
     : null
@@ -229,9 +233,10 @@ export default async function StudentDetailPage({
               records={conductData.records}
               summary={conductData.summary}
               branchId={branchResult.branchId}
-              canManage={canManage}
+              // Panel prop is the conduct-write flag: admins and teachers.
+              canManage={canWriteConduct}
             />
-            {canManage && (
+            {canWriteConduct && (
               <CreateConductRecordDialog
                 studentId={id}
                 branchId={branchResult.branchId}

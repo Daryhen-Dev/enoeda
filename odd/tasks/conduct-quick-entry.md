@@ -27,9 +27,28 @@ Branch: feat/conduct-quick-entry, from main (after PR #195).
   Conducta tab (aligns UI with the PR #195 decision "admin and teacher").
 
 ## Tasks
-- [ ] T1: Domain: searchConductStudents and listRecentBranchConductRecords
+- [x] T1: Domain: searchConductStudents and listRecentBranchConductRecords
       in lib/domain/conduct with tests.
-- [ ] T2: UI: sidebar entry, /dashboard/conduct quick-entry page, teacher
+- [x] T2: UI: sidebar entry, /dashboard/conduct quick-entry page, teacher
       actions on the student detail Conducta tab; es-EC copy; tests.
 
 ## Evidence
+- T1 (delegated: gentle-ai-worker), commit 486b7b1: searchConductStudents
+  (active branch students, every term matches name/surname/cédula, max 8,
+  counters via one groupBy excluding voided) and
+  listRecentBranchConductRecords (default 10, max 25, includes voided).
+  TDD RED 25 failed -> GREEN 70/70; tsc clean; eslint clean; pnpm test
+  1243 passed / 1 skipped.
+- T2 (delegated: gentle-ai-worker; verified by gentle-ai-verify): sidebar
+  "Conducta" (GavelIcon, after Estudiantes, admins and teachers);
+  /dashboard/conduct with autofocused debounced combobox search (keyboard
+  pick, Escape), selected card + inline form (kind toggle kept between
+  entries, amount only for fines), toast + refresh + reset + refocus;
+  "Últimos registros" list. canWriteConduct (admin or teacher of the
+  branch) added to resolveBranchContext; it gates conduct only on the
+  student detail tab (canManage unchanged). Shared form module
+  components/conduct/conduct-form.ts reused by the dialog. Parent fix:
+  page uses the same branch scope as Estudiantes (no global-admin read
+  mode, which would show a load error). TDD RED 8 failed -> GREEN; tsc
+  clean; eslint clean; pnpm test 1259 passed / 1 skipped; pnpm build ok
+  (/dashboard/conduct listed). Not checked in a browser.
