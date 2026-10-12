@@ -41,18 +41,39 @@ const REACTIVATION_BRANCH_ERROR =
 const OPERATION_FAILED_ERROR = COMMON_MESSAGES.UNEXPECTED_ERROR;
 
 /**
- * Keep known, expected guard failures as user-facing copy and translate
- * the unique constraints on students (national id, normalized email)
- * into clear duplicate messages; everything else falls back to the
+ * Collects every text where Prisma (driver adapter) may expose the violated
+ * constraint name. With @prisma/adapter-pg a P2002 message only lists the
+ * fields; the constraint name lives in
+ * meta.driverAdapterError.cause.originalMessage.
+ */
+function transactionErrorTexts(error: Error): string[] {
+  const texts = [error.message];
+  const meta = (error as { meta?: unknown }).meta;
+  if (typeof meta === "object" && meta !== null) {
+    const cause = (meta as { driverAdapterError?: { cause?: unknown } })
+      .driverAdapterError?.cause;
+    if (typeof cause === "object" && cause !== null) {
+      const originalMessage = (cause as { originalMessage?: unknown })
+        .originalMessage;
+      if (typeof originalMessage === "string") texts.push(originalMessage);
+    }
+  }
+  return texts;
+}
+
+/**
+ * Translates the unique constraints on students (national id, normalized
+ * email) into clear duplicate messages; everything else falls back to the
  * generic unexpected-error message.
  */
 function mapStudentTransactionError(error: unknown): string | undefined {
   if (!(error instanceof Error)) return undefined;
 
-  if (error.message.includes("students_national_id_uq")) {
+  const texts = transactionErrorTexts(error);
+  if (texts.some((text) => text.includes("students_national_id_uq"))) {
     return STUDENT_MESSAGES.NATIONAL_ID_TAKEN;
   }
-  if (error.message.includes("students_email_normalized_uq")) {
+  if (texts.some((text) => text.includes("students_email_normalized_uq"))) {
     return STUDENT_MESSAGES.EMAIL_TAKEN;
   }
   return undefined;

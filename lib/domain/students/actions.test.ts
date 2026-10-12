@@ -143,11 +143,27 @@ describe("createStudent", () => {
           }
         }
       );
+      // Real @prisma/adapter-pg P2002 shape: the message lists only the
+      // fields; the constraint name is in the driver adapter cause.
       mockCreate.mockRejectedValue(
-        new Error(
-          "Invalid prisma.students.create() invocation:\n\nUnique constraint failed on the constraint: `" +
-            constraint +
-            "`"
+        Object.assign(
+          new Error(
+            "Invalid `tx.students.create()` invocation:\n\nUnique constraint failed on the fields: (`national_id`)"
+          ),
+          {
+            code: "P2002",
+            meta: {
+              modelName: "students",
+              driverAdapterError: {
+                name: "DriverAdapterError",
+                cause: {
+                  originalCode: "23505",
+                  originalMessage: `duplicate key value violates unique constraint "${constraint}"`,
+                  kind: "UniqueConstraintViolation",
+                },
+              },
+            },
+          }
         )
       );
 
