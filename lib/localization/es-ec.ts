@@ -1098,6 +1098,29 @@ export const NOTES_MESSAGES = {
   FILTER_COMPLETED: "Completadas",
 } as const
 
+export const CONDUCT_MESSAGES = {
+  BRANCH_REQUIRED: "Contexto de sucursal requerido.",
+  INVALID_ID: "Identificador de registro de conducta inválido.",
+  INVALID_STUDENT_ID: "Identificador de estudiante inválido.",
+  KIND_INVALID: "El tipo debe ser multa o llamado de atención.",
+  REASON_REQUIRED: "El motivo es obligatorio.",
+  REASON_MAX: "El motivo no puede superar 2000 caracteres.",
+  VOID_REASON_REQUIRED: "El motivo de anulación es obligatorio.",
+  VOID_REASON_MAX: "El motivo de anulación no puede superar 500 caracteres.",
+  INCIDENT_DATE_FORMAT: "La fecha del incidente debe tener formato AAAA-MM-DD.",
+  INCIDENT_DATE_INVALID: "La fecha del incidente no es válida.",
+  INCIDENT_DATE_NOT_FUTURE: "La fecha del incidente no puede ser futura.",
+  AMOUNT_POSITIVE: "El monto debe ser mayor a 0.",
+  AMOUNT_MAX: "El monto no puede superar 99999999.99.",
+  AMOUNT_DECIMALS: "El monto admite hasta 2 decimales.",
+  AMOUNT_NOT_ALLOWED: "El monto solo aplica a las multas.",
+  NOT_A_FINE: "Solo las multas se pueden marcar como pagadas.",
+  ALREADY_PAID: "La multa ya está pagada.",
+  ALREADY_VOIDED: "El registro ya fue anulado.",
+  PAID_NOT_VOIDABLE: "Las multas pagadas no se pueden anular.",
+  RECORD_CONFLICT: "El registro cambió de estado. Actualice e inténtelo nuevamente.",
+} as const
+
 export const SESSION_INFO_MESSAGES = {
   TITLE: "Información de la sesión",
   DESCRIPTION: "Resumen de solo lectura de la sesión y su asistencia.",
