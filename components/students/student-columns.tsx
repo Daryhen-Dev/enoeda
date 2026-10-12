@@ -20,7 +20,7 @@ import {
   type StudentListItem,
   type StudentStatus,
 } from "@/lib/domain/students"
-import { STUDENT_DIRECTORY_MESSAGES, STUDENT_LIFECYCLE_MESSAGES } from "@/lib/localization/es-ec"
+import { STUDENT_DIRECTORY_MESSAGES, STUDENT_LIFECYCLE_MESSAGES, STUDENT_MISSING_DATA_MESSAGES } from "@/lib/localization/es-ec"
 
 interface StudentColumnsOptions {
   branchId: string
@@ -188,6 +188,8 @@ export function getStudentColumns({
     {
       accessorKey: "national_id",
       header: STUDENT_DIRECTORY_MESSAGES.NATIONAL_ID,
+      cell: ({ row }) =>
+        row.original.national_id ?? STUDENT_MISSING_DATA_MESSAGES.NOT_PROVIDED,
     },
     {
       accessorKey: "active_discipline_names",

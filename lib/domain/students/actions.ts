@@ -47,10 +47,10 @@ export interface StudentProfile {
   branch_id: string;
   first_name: string;
   surname: string;
-  national_id: string;
-  email: string;
+  national_id: string | null;
+  email: string | null;
   phone: string | null;
-  date_of_birth: Date;
+  date_of_birth: Date | null;
   is_active: boolean;
 }
 
@@ -66,7 +66,7 @@ export interface StudentListItem {
   branch_id: string;
   first_name: string;
   surname: string;
-  national_id: string;
+  national_id: string | null;
   activation_status: StudentActivationStatus;
   active_discipline_names: string[];
   active_disciplines: ActiveStudentDiscipline[];

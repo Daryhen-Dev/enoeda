@@ -356,6 +356,11 @@ export const STUDENT_MESSAGES = {
   REACTIVATION_BRANCH_REQUIRED: "Se requiere una sucursal activa para reactivar este estudiante.",
 } as const
 
+/** Shared placeholder copy for optional student identity fields not yet provided. */
+export const STUDENT_MISSING_DATA_MESSAGES = {
+  NOT_PROVIDED: "No registrado",
+} as const
+
 const DATE_FORMAT_OPTIONS = {
   dateStyle: "medium",
 } as const satisfies Intl.DateTimeFormatOptions

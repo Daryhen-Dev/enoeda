@@ -30,7 +30,9 @@ export function StudentDetailHeader({
 }: StudentDetailHeaderProps) {
   const age = getAgeInYears(student.date_of_birth, todayDateOnly)
   const metaItems = [
-    STUDENT_DETAIL_MESSAGES.AGE_LABEL(formatNumber(age)),
+    age === null
+      ? null
+      : STUDENT_DETAIL_MESSAGES.AGE_LABEL(formatNumber(age)),
     student.national_id
       ? `${STUDENT_DIRECTORY_MESSAGES.NATIONAL_ID}: ${student.national_id}`
       : null,

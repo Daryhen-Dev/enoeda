@@ -21,12 +21,12 @@ export type StudentActivationStatus =
 export interface StudentIdentity {
   activationStatus: StudentActivationStatus;
   authUserId: string;
-  dateOfBirth: string;
-  email: string;
+  dateOfBirth: string | null;
+  email: string | null;
   firstName: string;
   id: string;
   isActive: boolean;
-  nationalId: string;
+  nationalId: string | null;
   phone: string | null;
   surname: string;
 }
@@ -42,12 +42,12 @@ interface AuthenticatedUser {
 interface StudentIdentityRow {
   activation_status: string;
   auth_user_id: string | null;
-  date_of_birth: string;
-  email: string;
+  date_of_birth: string | null;
+  email: string | null;
   first_name: string;
   id: string;
   is_active: boolean;
-  national_id: string;
+  national_id: string | null;
   phone: string | null;
   surname: string;
 }

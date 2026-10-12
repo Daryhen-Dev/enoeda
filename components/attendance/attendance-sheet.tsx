@@ -27,6 +27,7 @@ import {
   ATTENDANCE_TOAST,
   COMMON_MESSAGES,
   PAYMENT_MESSAGES,
+  STUDENT_MISSING_DATA_MESSAGES,
 } from "@/lib/localization/es-ec"
 
 interface AttendanceSheetProps {
@@ -553,7 +554,7 @@ function AddPerClassControl({
                 />
                 {candidate.first_name} {candidate.surname}
                 <span className="text-xs text-muted-foreground">
-                  {candidate.national_id}
+                  {candidate.national_id ?? STUDENT_MISSING_DATA_MESSAGES.NOT_PROVIDED}
                 </span>
               </label>
             </li>

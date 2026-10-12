@@ -190,10 +190,13 @@ export function StudentFormDialog({
         branch_id: contextBranchId ?? lockedBranchId ?? result.data.branch_id,
         first_name: result.data.first_name,
         surname: result.data.surname,
-        national_id: result.data.national_id,
-        email: result.data.email,
+        national_id: result.data.national_id ?? "",
+        email: result.data.email ?? "",
         phone: result.data.phone ?? "",
-        date_of_birth: formatDateForInput(result.data.date_of_birth),
+        date_of_birth:
+          result.data.date_of_birth === null
+            ? ""
+            : formatDateForInput(result.data.date_of_birth),
         discipline_ids: [],
         enrolled_at: getTodayString(),
         billing_mode: "monthly",

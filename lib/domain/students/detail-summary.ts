@@ -14,9 +14,13 @@ import { formatDatabaseDateOnly } from "@/lib/date";
  * non-leap years.
  */
 export function getAgeInYears(
-  dateOfBirth: Date,
+  dateOfBirth: Date | null,
   todayDateOnly: string
-): number {
+): number | null {
+  if (dateOfBirth === null) {
+    return null;
+  }
+
   const birthDateOnly = formatDatabaseDateOnly(dateOfBirth);
 
   const birthYear = Number(birthDateOnly.slice(0, 4));

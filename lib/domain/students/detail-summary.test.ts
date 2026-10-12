@@ -76,6 +76,10 @@ describe("getAgeInYears", () => {
     expect(todayDateOnly).toBe("2026-03-09");
     expect(getAgeInYears(utcDate(2000, 3, 10), todayDateOnly)).toBe(25);
   });
+
+  it("returns null when the birth date is unknown", () => {
+    expect(getAgeInYears(null, "2025-06-15")).toBeNull();
+  });
 });
 
 describe("getLatestPaidThrough", () => {
