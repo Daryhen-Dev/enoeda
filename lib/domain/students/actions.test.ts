@@ -21,7 +21,9 @@ vi.mock("./schema", async () => {
   return actual;
 });
 
-import { createStudent } from "./actions";
+import { COMMON_MESSAGES, STUDENT_MESSAGES } from "@/lib/localization/es-ec";
+
+import { createStudent, updateStudent } from "./actions";
 
 const validInput = {
   branch_id: UUID,
@@ -30,6 +32,14 @@ const validInput = {
   national_id: "12345678",
   email: "juan@example.com",
   date_of_birth: "1995-03-15",
+  is_active: true,
+};
+
+/** Minimal input: only names required; identity fields stored as NULL. */
+const minimalInput = {
+  branch_id: UUID,
+  first_name: "Juan",
+  surname: "Pérez",
   is_active: true,
 };
 
@@ -81,6 +91,73 @@ describe("createStudent", () => {
     });
   });
 
+  it("writes NULLs for omitted identity fields", async () => {
+    await createStudent(minimalInput);
+
+    expect(mockCreate).toHaveBeenCalledWith({
+      data: {
+        branch_id: UUID,
+        first_name: "Juan",
+        surname: "Pérez",
+        national_id: null,
+        phone: null,
+        email: null,
+        date_of_birth: null,
+        is_active: true,
+      },
+      select: { id: true },
+    });
+  });
+
+  it.each([
+    [
+      "students_national_id_uq",
+      STUDENT_MESSAGES.NATIONAL_ID_TAKEN,
+    ],
+    [
+      "students_email_normalized_uq",
+      STUDENT_MESSAGES.EMAIL_TAKEN,
+    ],
+  ])(
+    "maps unique violation on %s to a clear message",
+    async (constraint, expectedMessage) => {
+      mockWithAuthenticatedUser.mockImplementation(
+        async (
+          fn: (tx: unknown, ctx: unknown) => unknown,
+          options?: { mapTransactionError?: (error: unknown) => string | undefined }
+        ) => {
+          const tx = {
+            students: { create: mockCreate },
+            branches: { findUnique: mockFindUnique },
+          };
+          try {
+            const data = await fn(tx, mockCtx);
+            return { success: true, data };
+          } catch (error) {
+            return {
+              success: false,
+              error:
+                options?.mapTransactionError?.(error) ??
+                COMMON_MESSAGES.UNEXPECTED_ERROR,
+            };
+          }
+        }
+      );
+      mockCreate.mockRejectedValue(
+        new Error(
+          "Invalid prisma.students.create() invocation:\n\nUnique constraint failed on the constraint: `" +
+            constraint +
+            "`"
+        )
+      );
+
+      const result = await createStudent(validInput);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe(expectedMessage);
+    }
+  );
+
   it("returns only { id } on success", async () => {
     const result = await createStudent(validInput);
 
@@ -112,6 +189,72 @@ describe("createStudent", () => {
     expect(result).toEqual({
       success: false,
       error: "Authentication required",
+    });
+  });
+});
+
+describe("updateStudent — clearing optional fields", () => {
+  const STUDENT_IN_BRANCH = {
+    id: STUDENT_ID,
+    branch_id: UUID,
+    is_active: true,
+  };
+  const mockUpdate = vi.fn();
+  const mockUpdateFindUnique = vi.fn();
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockWithAuthenticatedUser.mockImplementation(
+      async (fn: (tx: unknown, ctx: unknown) => unknown) => {
+        const tx = {
+          students: {
+            findUnique: mockUpdateFindUnique,
+            update: mockUpdate,
+          },
+          branches: { findUnique: vi.fn() },
+        };
+        const data = await fn(tx, mockCtx);
+        return { success: true, data };
+      }
+    );
+    mockUpdateFindUnique.mockResolvedValue(STUDENT_IN_BRANCH);
+    mockUpdate.mockResolvedValue({ id: STUDENT_ID });
+  });
+
+  it("stores a cleared date_of_birth as null instead of a Date", async () => {
+    const result = await updateStudent(
+      { id: STUDENT_ID, date_of_birth: "" },
+      UUID
+    );
+
+    expect(result.success).toBe(true);
+    expect(mockUpdate).toHaveBeenCalledWith({
+      where: { id: STUDENT_ID },
+      data: { date_of_birth: null },
+      select: { id: true },
+    });
+  });
+
+  it("passes cleared national_id and email as null", async () => {
+    await updateStudent(
+      { id: STUDENT_ID, national_id: "", email: "" },
+      UUID
+    );
+
+    expect(mockUpdate).toHaveBeenCalledWith({
+      where: { id: STUDENT_ID },
+      data: { national_id: null, email: null },
+      select: { id: true },
+    });
+  });
+
+  it("omits untouched fields from the update payload", async () => {
+    await updateStudent({ id: STUDENT_ID, first_name: "Ana" }, UUID);
+
+    expect(mockUpdate).toHaveBeenCalledWith({
+      where: { id: STUDENT_ID },
+      data: { first_name: "Ana" },
+      select: { id: true },
     });
   });
 });

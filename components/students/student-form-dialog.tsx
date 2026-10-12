@@ -25,7 +25,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
-import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import {
   Select,
@@ -262,14 +262,23 @@ export function StudentFormDialog({
 
     setActionError(null)
 
+    // Optional identity fields round-trip as strings in the form but are
+    // stored as NULL: an empty input clears the field.
+    const optionalIdentity = {
+      national_id: values.national_id === "" ? null : values.national_id,
+      email: values.email === "" ? null : values.email,
+      date_of_birth: values.date_of_birth === "" ? null : values.date_of_birth,
+      phone: values.phone === "" ? null : values.phone,
+    }
+
     try {
       if (isEditing) {
         const result = await updateStudent(
           {
             id: studentId,
             ...values,
+            ...optionalIdentity,
             branch_id: contextBranchId ?? lockedBranchId ?? values.branch_id,
-            phone: values.phone === "" ? null : values.phone,
           },
           contextBranchId
         )
@@ -282,7 +291,7 @@ export function StudentFormDialog({
         // Create student, then enroll in selected disciplines
         const createResult = await createStudent({
           ...values,
-          phone: values.phone === "" ? null : values.phone,
+          ...optionalIdentity,
           is_active: true,
         })
         if (!createResult.success || !createResult.data) {
@@ -451,65 +460,75 @@ export function StudentFormDialog({
               </Field>
 
               <Field data-invalid={Boolean(errors.national_id)}>
-                <FieldLabel htmlFor={nationalId}>{PRODUCT_TERMS.NATIONAL_ID}</FieldLabel>
+                <FieldLabel htmlFor={nationalId}>{STUDENT_FORM_MESSAGES.NATIONAL_ID_OPTIONAL_LABEL}</FieldLabel>
                 <Input
                   id={nationalId}
-                  aria-describedby={errors.national_id ? `${nationalId}-error` : undefined}
+                  aria-describedby={errors.national_id ? `${nationalId}-error` : `${nationalId}-hint`}
                   aria-invalid={Boolean(errors.national_id)}
                   disabled={isPending}
                   {...form.register("national_id", {
-                    required: STUDENT_MESSAGES.NATIONAL_ID_REQUIRED,
                     maxLength: { value: 30, message: STUDENT_MESSAGES.NATIONAL_ID_MAX_LENGTH },
                   })}
                 />
+                <FieldDescription id={`${nationalId}-hint`}>
+                  {STUDENT_FORM_MESSAGES.OPTIONAL_FIELD_HINT}
+                </FieldDescription>
                 <FieldError id={`${nationalId}-error`} errors={[errors.national_id]} />
               </Field>
 
               <Field data-invalid={Boolean(errors.email)}>
-                <FieldLabel htmlFor={emailId}>{STUDENT_FORM_MESSAGES.EMAIL_LABEL}</FieldLabel>
+                <FieldLabel htmlFor={emailId}>{STUDENT_FORM_MESSAGES.EMAIL_OPTIONAL_LABEL}</FieldLabel>
                 <Input
                   id={emailId}
                   type="email"
-                  aria-describedby={errors.email ? `${emailId}-error` : undefined}
+                  aria-describedby={errors.email ? `${emailId}-error` : `${emailId}-hint`}
                   aria-invalid={Boolean(errors.email)}
                   disabled={isPending}
                   {...form.register("email", {
-                    required: STUDENT_FORM_MESSAGES.EMAIL_REQUIRED,
                     pattern: { value: /^\S+@\S+\.\S+$/, message: STUDENT_MESSAGES.INVALID_EMAIL },
                   })}
                 />
+                <FieldDescription id={`${emailId}-hint`}>
+                  {STUDENT_FORM_MESSAGES.OPTIONAL_FIELD_HINT}
+                </FieldDescription>
                 <FieldError id={`${emailId}-error`} errors={[errors.email]} />
               </Field>
 
               <Field data-invalid={Boolean(errors.phone)}>
-                <FieldLabel htmlFor={phoneId}>{STUDENT_FORM_MESSAGES.PHONE_LABEL}</FieldLabel>
+                <FieldLabel htmlFor={phoneId}>{STUDENT_FORM_MESSAGES.PHONE_OPTIONAL_LABEL}</FieldLabel>
                 <Input
                   id={phoneId}
                   type="tel"
                   maxLength={30}
-                  aria-describedby={errors.phone ? `${phoneId}-error` : undefined}
+                  aria-describedby={errors.phone ? `${phoneId}-error` : `${phoneId}-hint`}
                   aria-invalid={Boolean(errors.phone)}
                   disabled={isPending}
                   {...form.register("phone", {
                     maxLength: { value: 30, message: STUDENT_MESSAGES.PHONE_MAX_LENGTH },
                   })}
                 />
+                <FieldDescription id={`${phoneId}-hint`}>
+                  {STUDENT_FORM_MESSAGES.OPTIONAL_FIELD_HINT}
+                </FieldDescription>
                 <FieldError id={`${phoneId}-error`} errors={[errors.phone]} />
               </Field>
 
               <Field data-invalid={Boolean(errors.date_of_birth)}>
-                <FieldLabel htmlFor={dateOfBirthId}>{STUDENT_FORM_MESSAGES.DATE_OF_BIRTH_LABEL}</FieldLabel>
+                <FieldLabel htmlFor={dateOfBirthId}>{STUDENT_FORM_MESSAGES.DATE_OF_BIRTH_OPTIONAL_LABEL}</FieldLabel>
                 <Input
                   id={dateOfBirthId}
                   type="date"
-                  aria-describedby={errors.date_of_birth ? `${dateOfBirthId}-error` : undefined}
+                  max={getTodayString()}
+                  aria-describedby={errors.date_of_birth ? `${dateOfBirthId}-error` : `${dateOfBirthId}-hint`}
                   aria-invalid={Boolean(errors.date_of_birth)}
                   disabled={isPending}
                   {...form.register("date_of_birth", {
-                    required: STUDENT_FORM_MESSAGES.DATE_OF_BIRTH_REQUIRED,
                     pattern: { value: /^\d{4}-\d{2}-\d{2}$/, message: STUDENT_FORM_MESSAGES.DATE_OF_BIRTH_INVALID },
                   })}
                 />
+                <FieldDescription id={`${dateOfBirthId}-hint`}>
+                  {STUDENT_FORM_MESSAGES.OPTIONAL_FIELD_HINT}
+                </FieldDescription>
                 <FieldError id={`${dateOfBirthId}-error`} errors={[errors.date_of_birth]} />
               </Field>
 

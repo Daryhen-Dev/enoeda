@@ -11,16 +11,24 @@ import { StudentDeactivateDialog } from "@/components/students/student-deactivat
 import { StudentFormDialog } from "@/components/students/student-form-dialog"
 import { StudentReactivateDialog } from "@/components/students/student-reactivate-dialog"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import type { EcuadorTimeZone } from "@/lib/domain/branches/schema"
 import { getCalendarDayDifference, getCurrentDateOnly } from "@/lib/date"
 import type { ActiveStudentDiscipline } from "@/lib/domain/students/actions"
 import {
+  getMissingStudentData,
+  hasIncompleteStudentData,
   STUDENT_ACTIVATION_STATUS,
   STUDENT_STATUS,
   type StudentListItem,
+  type StudentMissingDataField,
   type StudentStatus,
 } from "@/lib/domain/students"
-import { STUDENT_DIRECTORY_MESSAGES, STUDENT_LIFECYCLE_MESSAGES, STUDENT_MISSING_DATA_MESSAGES } from "@/lib/localization/es-ec"
+import {
+  STUDENT_DIRECTORY_MESSAGES,
+  STUDENT_LIFECYCLE_MESSAGES,
+  STUDENT_MISSING_DATA_MESSAGES,
+} from "@/lib/localization/es-ec"
 
 interface StudentColumnsOptions {
   branchId: string
@@ -67,6 +75,35 @@ function getDueDateStatus(dueDate: string, today: string): string {
   }
 
   return STUDENT_DIRECTORY_MESSAGES.OVERDUE_BY_DAYS(Math.abs(remainingDays))
+}
+
+function getIncompleteDataDescription(
+  missingFields: StudentMissingDataField[]
+): string {
+  const missingLabels = missingFields.map(
+    (field) => STUDENT_MISSING_DATA_MESSAGES.MISSING_FIELD_LABELS[field]
+  )
+
+  return `${STUDENT_MISSING_DATA_MESSAGES.INCOMPLETE_BADGE} — ${STUDENT_MISSING_DATA_MESSAGES.INCOMPLETE_MISSING_SUMMARY(missingLabels.join(", "))}`
+}
+
+function StudentNameCell({ student }: { student: StudentListItem }) {
+  const missingFields = getMissingStudentData(student)
+
+  return (
+    <div className="flex min-w-32 flex-col items-start gap-1">
+      <span>{student.first_name}</span>
+      {hasIncompleteStudentData(student) && (
+        <Badge
+          variant="secondary"
+          aria-label={getIncompleteDataDescription(missingFields)}
+          title={getIncompleteDataDescription(missingFields)}
+        >
+          {STUDENT_MISSING_DATA_MESSAGES.INCOMPLETE_BADGE}
+        </Badge>
+      )}
+    </div>
+  )
 }
 
 export function getStudentColumns({
@@ -180,6 +217,7 @@ export function getStudentColumns({
     {
       accessorKey: "first_name",
       header: STUDENT_DIRECTORY_MESSAGES.FIRST_NAME,
+      cell: ({ row }) => <StudentNameCell student={row.original} />,
     },
     {
       accessorKey: "surname",

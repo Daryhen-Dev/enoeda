@@ -37,6 +37,24 @@ const REACTIVATION_BRANCH_ERROR =
   STUDENT_MESSAGES.REACTIVATION_BRANCH_REQUIRED;
 const OPERATION_FAILED_ERROR = COMMON_MESSAGES.UNEXPECTED_ERROR;
 
+/**
+ * Keep known, expected guard failures as user-facing copy and translate
+ * the unique constraints on students (national id, normalized email)
+ * into clear duplicate messages; everything else falls back to the
+ * generic unexpected-error message.
+ */
+function mapStudentTransactionError(error: unknown): string | undefined {
+  if (!(error instanceof Error)) return undefined;
+
+  if (error.message.includes("students_national_id_uq")) {
+    return STUDENT_MESSAGES.NATIONAL_ID_TAKEN;
+  }
+  if (error.message.includes("students_email_normalized_uq")) {
+    return STUDENT_MESSAGES.EMAIL_TAKEN;
+  }
+  return undefined;
+}
+
 interface StudentMutationOutcome {
   id: string | null;
   error: string | null;
@@ -67,6 +85,8 @@ export interface StudentListItem {
   first_name: string;
   surname: string;
   national_id: string | null;
+  email: string | null;
+  date_of_birth: Date | null;
   activation_status: StudentActivationStatus;
   active_discipline_names: string[];
   active_disciplines: ActiveStudentDiscipline[];
@@ -140,6 +160,8 @@ export async function listStudents(
         first_name: true,
         surname: true,
         national_id: true,
+        email: true,
+        date_of_birth: true,
         activation_status: true,
         student_disciplines: {
           where: { is_active: true },
@@ -201,6 +223,8 @@ export async function listStudents(
       first_name: student.first_name,
       surname: student.surname,
       national_id: student.national_id,
+      email: student.email,
+      date_of_birth: student.date_of_birth,
       activation_status: activationStatus.data,
       active_discipline_names: activeDisciplines.map(
         (discipline) => discipline.discipline_name
@@ -425,14 +449,17 @@ export async function createStudent(
         national_id: parsed.data.national_id,
         email: parsed.data.email,
         phone: parsed.data.phone,
-        date_of_birth: new Date(parsed.data.date_of_birth),
+        date_of_birth:
+          parsed.data.date_of_birth === null
+            ? null
+            : new Date(parsed.data.date_of_birth),
         is_active: parsed.data.is_active,
       },
       select: { id: true },
     });
 
     return { id: student.id, error: null } satisfies StudentMutationOutcome;
-  });
+  }, { mapTransactionError: mapStudentTransactionError });
 
   if (!result.success) return result;
   if (result.data.id === null) {
@@ -483,7 +510,12 @@ export async function updateStudent(
     ...(editableFields.phone === undefined ? {} : { phone: editableFields.phone }),
     ...(editableFields.date_of_birth === undefined
       ? {}
-      : { date_of_birth: new Date(editableFields.date_of_birth) }),
+      : {
+          date_of_birth:
+            editableFields.date_of_birth === null
+              ? null
+              : new Date(editableFields.date_of_birth),
+        }),
   };
 
   const result = await withAuthenticatedUser(async (tx, ctx) => {
@@ -540,7 +572,7 @@ export async function updateStudent(
       id: updatedStudent.id,
       error: null,
     } satisfies StudentMutationOutcome;
-  });
+  }, { mapTransactionError: mapStudentTransactionError });
 
   if (!result.success) return result;
   if (result.data.id === null) {

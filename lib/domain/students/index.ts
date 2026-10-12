@@ -16,6 +16,14 @@ export {
 } from "./schema";
 
 export {
+  getMissingStudentData,
+  hasIncompleteStudentData,
+  STUDENT_MISSING_DATA_FIELDS,
+  type StudentDataCompleteness,
+  type StudentMissingDataField,
+} from "./completeness";
+
+export {
   activateStudent,
   createStudent,
   deactivateStudent,
