@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   ROSTER_EDITOR_MESSAGES,
   ROSTER_MESSAGES,
+  STUDENT_MISSING_DATA_MESSAGES,
 } from "@/lib/localization/es-ec";
 
 const BRANCH_ID = "bbbbbbbb-1111-2222-8333-444444444444";
@@ -161,6 +162,21 @@ describe("RosterEditorSheet", () => {
         )}"]`
       )
     ).toBeDefined();
+  });
+
+  it("renders the shared placeholder for a roster student without national id", async () => {
+    mocks.listClassRoster.mockResolvedValue({
+      success: true,
+      data: { students: [{ ...ROSTER_STUDENT, national_id: null }] },
+    });
+    rendered = renderSheet();
+    await flush();
+
+    expect(document.body.textContent).toContain("Zapata Ana");
+    expect(document.body.textContent).toContain(
+      STUDENT_MISSING_DATA_MESSAGES.NOT_PROVIDED
+    );
+    expect(document.body.textContent).not.toContain("1712345678");
   });
 
   it("shows the roster empty state when no students are assigned yet", async () => {

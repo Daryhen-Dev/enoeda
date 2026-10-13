@@ -1,15 +1,23 @@
 "use client"
 
-import { useEffect, useId, useState } from "react"
-import { Controller, useForm } from "react-hook-form"
+import { useEffect, useId, useRef, useState } from "react"
+import { Controller, useForm, useWatch } from "react-hook-form"
 import { useRouter } from "next/navigation"
-import { AlertCircleIcon, LoaderCircleIcon, PencilIcon, PlusIcon } from "lucide-react"
+import {
+  AlertCircleIcon,
+  LoaderCircleIcon,
+  PencilIcon,
+  PlusIcon,
+  TriangleAlertIcon,
+} from "lucide-react"
 import { toast } from "sonner"
 
 import {
   createStudent,
+  findStudentsWithSameName,
   getStudentById,
   updateStudent,
+  type StudentDuplicateNameMatch,
 } from "@/lib/domain/students/actions"
 import { enrollStudent } from "@/lib/domain/disciplines/actions"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -25,7 +33,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
-import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import {
   Select,
@@ -40,6 +48,7 @@ import {
   PRODUCT_TERMS,
   STUDENT_FORM_MESSAGES,
   STUDENT_MESSAGES,
+  STUDENT_MISSING_DATA_MESSAGES,
   TOAST_MESSAGES,
 } from "@/lib/localization/es-ec"
 
@@ -128,6 +137,9 @@ function hasActiveBranch(branches: ActiveBranchOption[], branchId: string): bool
   return branches.some((branch) => branch.id === branchId)
 }
 
+/** Debounce for the duplicate-name lookup, mirroring the roster/candidate searches. */
+export const STUDENT_DUPLICATE_NAME_DEBOUNCE_MS = 300
+
 export function StudentFormDialog({
   branches,
   disciplines = [],
@@ -163,6 +175,68 @@ export function StudentFormDialog({
   })
   const isEditing = studentId !== undefined
   const isPending = form.formState.isSubmitting || isLoadingStudent
+
+  // Duplicate-name warning (create mode only): debounced lookup of students
+  // with the same first name AND surname in the branch, reusing the seq-guard
+  // pattern of the roster/quick-entry searches; setState only ever runs inside
+  // timer/async callbacks, never synchronously in the effect body.
+  const [duplicateMatches, setDuplicateMatches] = useState<
+    StudentDuplicateNameMatch[]
+  >([])
+  const duplicateSeqRef = useRef(0)
+  const watchedFirstName = useWatch({ control: form.control, name: "first_name" })
+  const watchedSurname = useWatch({ control: form.control, name: "surname" })
+  const watchedBranchId = useWatch({ control: form.control, name: "branch_id" })
+
+  useEffect(() => {
+    if (isEditing) {
+      return
+    }
+
+    const firstName = watchedFirstName.trim()
+    const surname = watchedSurname.trim()
+    const branchId = lockedBranchId ?? watchedBranchId
+    const canLookup = Boolean(firstName && surname && branchId)
+
+    async function loadDuplicates() {
+      const seq = ++duplicateSeqRef.current
+      try {
+        const result = await findStudentsWithSameName({
+          branch_id: branchId,
+          first_name: firstName,
+          surname,
+        })
+        if (seq !== duplicateSeqRef.current) return
+        // Lookup errors fail silently: the warning stays hidden.
+        setDuplicateMatches(
+          result.success && result.data ? result.data.matches : []
+        )
+      } catch {
+        if (seq === duplicateSeqRef.current) {
+          setDuplicateMatches([])
+        }
+      }
+    }
+
+    const timer = setTimeout(
+      () => {
+        if (!canLookup) {
+          setDuplicateMatches([])
+          return
+        }
+        void loadDuplicates()
+      },
+      canLookup ? STUDENT_DUPLICATE_NAME_DEBOUNCE_MS : 0
+    )
+    return () => clearTimeout(timer)
+  }, [
+    isEditing,
+    watchedFirstName,
+    watchedSurname,
+    watchedBranchId,
+    lockedBranchId,
+  ])
+
   const title = isEditing
     ? STUDENT_FORM_MESSAGES.EDIT_TITLE
     : STUDENT_FORM_MESSAGES.CREATE_TITLE
@@ -190,10 +264,13 @@ export function StudentFormDialog({
         branch_id: contextBranchId ?? lockedBranchId ?? result.data.branch_id,
         first_name: result.data.first_name,
         surname: result.data.surname,
-        national_id: result.data.national_id,
-        email: result.data.email,
+        national_id: result.data.national_id ?? "",
+        email: result.data.email ?? "",
         phone: result.data.phone ?? "",
-        date_of_birth: formatDateForInput(result.data.date_of_birth),
+        date_of_birth:
+          result.data.date_of_birth === null
+            ? ""
+            : formatDateForInput(result.data.date_of_birth),
         discipline_ids: [],
         enrolled_at: getTodayString(),
         billing_mode: "monthly",
@@ -259,14 +336,23 @@ export function StudentFormDialog({
 
     setActionError(null)
 
+    // Optional identity fields round-trip as strings in the form but are
+    // stored as NULL: an empty input clears the field.
+    const optionalIdentity = {
+      national_id: values.national_id === "" ? null : values.national_id,
+      email: values.email === "" ? null : values.email,
+      date_of_birth: values.date_of_birth === "" ? null : values.date_of_birth,
+      phone: values.phone === "" ? null : values.phone,
+    }
+
     try {
       if (isEditing) {
         const result = await updateStudent(
           {
             id: studentId,
             ...values,
+            ...optionalIdentity,
             branch_id: contextBranchId ?? lockedBranchId ?? values.branch_id,
-            phone: values.phone === "" ? null : values.phone,
           },
           contextBranchId
         )
@@ -279,7 +365,7 @@ export function StudentFormDialog({
         // Create student, then enroll in selected disciplines
         const createResult = await createStudent({
           ...values,
-          phone: values.phone === "" ? null : values.phone,
+          ...optionalIdentity,
           is_active: true,
         })
         if (!createResult.success || !createResult.data) {
@@ -447,66 +533,103 @@ export function StudentFormDialog({
                 <FieldError id={`${surnameId}-error`} errors={[errors.surname]} />
               </Field>
 
+              {/* Non-blocking duplicate-name warning: creating stays allowed. */}
+              {!isEditing && duplicateMatches.length > 0 && (
+                <Alert aria-live="polite" data-testid="duplicate-name-warning">
+                  <TriangleAlertIcon />
+                  <AlertDescription>
+                    <p>{STUDENT_FORM_MESSAGES.DUPLICATE_NAME_WARNING}</p>
+                    <ul className="mt-1 flex flex-col gap-1">
+                      {duplicateMatches.map((match) => (
+                        <li key={match.id}>
+                          <a
+                            href={`/dashboard/students/${match.id}?branch=${lockedBranchId ?? watchedBranchId}`}
+                            target="_blank"
+                            rel="noopener"
+                          >
+                            {match.first_name} {match.surname}
+                            {" — "}
+                            {match.national_id ?? STUDENT_MISSING_DATA_MESSAGES.NOT_PROVIDED}
+                            {!match.is_active &&
+                              ` (${STUDENT_FORM_MESSAGES.DUPLICATE_NAME_INACTIVE})`}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </AlertDescription>
+                </Alert>
+              )}
+
               <Field data-invalid={Boolean(errors.national_id)}>
-                <FieldLabel htmlFor={nationalId}>{PRODUCT_TERMS.NATIONAL_ID}</FieldLabel>
+                <FieldLabel htmlFor={nationalId}>{STUDENT_FORM_MESSAGES.NATIONAL_ID_OPTIONAL_LABEL}</FieldLabel>
                 <Input
                   id={nationalId}
-                  aria-describedby={errors.national_id ? `${nationalId}-error` : undefined}
+                  aria-describedby={errors.national_id ? `${nationalId}-error` : `${nationalId}-hint`}
                   aria-invalid={Boolean(errors.national_id)}
                   disabled={isPending}
                   {...form.register("national_id", {
-                    required: STUDENT_MESSAGES.NATIONAL_ID_REQUIRED,
                     maxLength: { value: 30, message: STUDENT_MESSAGES.NATIONAL_ID_MAX_LENGTH },
                   })}
                 />
+                <FieldDescription id={`${nationalId}-hint`}>
+                  {STUDENT_FORM_MESSAGES.OPTIONAL_FIELD_HINT}
+                </FieldDescription>
                 <FieldError id={`${nationalId}-error`} errors={[errors.national_id]} />
               </Field>
 
               <Field data-invalid={Boolean(errors.email)}>
-                <FieldLabel htmlFor={emailId}>{STUDENT_FORM_MESSAGES.EMAIL_LABEL}</FieldLabel>
+                <FieldLabel htmlFor={emailId}>{STUDENT_FORM_MESSAGES.EMAIL_OPTIONAL_LABEL}</FieldLabel>
                 <Input
                   id={emailId}
                   type="email"
-                  aria-describedby={errors.email ? `${emailId}-error` : undefined}
+                  aria-describedby={errors.email ? `${emailId}-error` : `${emailId}-hint`}
                   aria-invalid={Boolean(errors.email)}
                   disabled={isPending}
                   {...form.register("email", {
-                    required: STUDENT_FORM_MESSAGES.EMAIL_REQUIRED,
                     pattern: { value: /^\S+@\S+\.\S+$/, message: STUDENT_MESSAGES.INVALID_EMAIL },
                   })}
                 />
+                <FieldDescription id={`${emailId}-hint`}>
+                  {STUDENT_FORM_MESSAGES.OPTIONAL_FIELD_HINT}
+                </FieldDescription>
                 <FieldError id={`${emailId}-error`} errors={[errors.email]} />
               </Field>
 
               <Field data-invalid={Boolean(errors.phone)}>
-                <FieldLabel htmlFor={phoneId}>{STUDENT_FORM_MESSAGES.PHONE_LABEL}</FieldLabel>
+                <FieldLabel htmlFor={phoneId}>{STUDENT_FORM_MESSAGES.PHONE_OPTIONAL_LABEL}</FieldLabel>
                 <Input
                   id={phoneId}
                   type="tel"
                   maxLength={30}
-                  aria-describedby={errors.phone ? `${phoneId}-error` : undefined}
+                  aria-describedby={errors.phone ? `${phoneId}-error` : `${phoneId}-hint`}
                   aria-invalid={Boolean(errors.phone)}
                   disabled={isPending}
                   {...form.register("phone", {
                     maxLength: { value: 30, message: STUDENT_MESSAGES.PHONE_MAX_LENGTH },
                   })}
                 />
+                <FieldDescription id={`${phoneId}-hint`}>
+                  {STUDENT_FORM_MESSAGES.OPTIONAL_FIELD_HINT}
+                </FieldDescription>
                 <FieldError id={`${phoneId}-error`} errors={[errors.phone]} />
               </Field>
 
               <Field data-invalid={Boolean(errors.date_of_birth)}>
-                <FieldLabel htmlFor={dateOfBirthId}>{STUDENT_FORM_MESSAGES.DATE_OF_BIRTH_LABEL}</FieldLabel>
+                <FieldLabel htmlFor={dateOfBirthId}>{STUDENT_FORM_MESSAGES.DATE_OF_BIRTH_OPTIONAL_LABEL}</FieldLabel>
                 <Input
                   id={dateOfBirthId}
                   type="date"
-                  aria-describedby={errors.date_of_birth ? `${dateOfBirthId}-error` : undefined}
+                  max={getTodayString()}
+                  aria-describedby={errors.date_of_birth ? `${dateOfBirthId}-error` : `${dateOfBirthId}-hint`}
                   aria-invalid={Boolean(errors.date_of_birth)}
                   disabled={isPending}
                   {...form.register("date_of_birth", {
-                    required: STUDENT_FORM_MESSAGES.DATE_OF_BIRTH_REQUIRED,
                     pattern: { value: /^\d{4}-\d{2}-\d{2}$/, message: STUDENT_FORM_MESSAGES.DATE_OF_BIRTH_INVALID },
                   })}
                 />
+                <FieldDescription id={`${dateOfBirthId}-hint`}>
+                  {STUDENT_FORM_MESSAGES.OPTIONAL_FIELD_HINT}
+                </FieldDescription>
                 <FieldError id={`${dateOfBirthId}-error`} errors={[errors.date_of_birth]} />
               </Field>
 

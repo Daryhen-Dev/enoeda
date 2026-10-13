@@ -51,7 +51,6 @@ describe("studentCreateSchema", () => {
     ["branch_id bad UUID", { ...base, branch_id: "nope" }],
     ["first_name empty", { ...base, first_name: "" }],
     ["surname empty", { ...base, surname: "" }],
-    ["national_id empty", { ...base, national_id: "" }],
     ["first_name > 100", { ...base, first_name: "a".repeat(101) }],
     ["surname > 100", { ...base, surname: "a".repeat(101) }],
     ["national_id > 30", { ...base, national_id: "x".repeat(31) }],
@@ -75,6 +74,63 @@ describe("studentCreateSchema", () => {
     expect(
       studentCreateSchema.safeParse({ ...base, date_of_birth: "2024-02-29" }).success,
     ).toBe(true);
+  });
+});
+
+describe("studentCreateSchema — optional identity fields", () => {
+  const minimal = {
+    branch_id: UUID,
+    first_name: "Juan",
+    surname: "Pérez",
+  } as const;
+
+  it("accepts only first name and surname, storing nulls for the rest", () => {
+    const r = studentCreateSchema.safeParse(minimal);
+    expect(r.success).toBe(true);
+    if (r.success) {
+      expect(r.data.national_id).toBeNull();
+      expect(r.data.email).toBeNull();
+      expect(r.data.date_of_birth).toBeNull();
+      expect(r.data.phone).toBeNull();
+    }
+  });
+
+  it.each([
+    "national_id",
+    "email",
+    "date_of_birth",
+  ] as const)("normalizes a blank %s to null", (field) => {
+    const r = studentCreateSchema.safeParse({ ...base, [field]: "   " });
+    expect(r.success).toBe(true);
+    if (r.success) expect(r.data[field]).toBeNull();
+  });
+
+  it("trims first_name and surname", () => {
+    const r = studentCreateSchema.safeParse({
+      ...minimal,
+      first_name: "  Juan  ",
+      surname: " Pérez ",
+    });
+    expect(r.success).toBe(true);
+    if (r.success) {
+      expect(r.data.first_name).toBe("Juan");
+      expect(r.data.surname).toBe("Pérez");
+    }
+  });
+
+  it.each([
+    ["national_id invalid when filled", { ...base, national_id: "x".repeat(31) }],
+    ["email invalid when filled", { ...base, email: "not-an-email" }],
+    ["date_of_birth invalid when filled", { ...base, date_of_birth: "01/15/1995" }],
+    ["future date_of_birth rejected", { ...base, date_of_birth: "2100-12-31" }],
+  ])("rejects %s", (_label, input) => {
+    expect(studentCreateSchema.safeParse(input).success).toBe(false);
+  });
+
+  it("rejects a whitespace-only first name after trimming", () => {
+    expect(
+      studentCreateSchema.safeParse({ ...minimal, first_name: "   " }).success,
+    ).toBe(false);
   });
 });
 
@@ -105,6 +161,40 @@ describe("studentUpdateSchema", () => {
 
   it("rejects invalid UUID for id", () => {
     expect(studentUpdateSchema.safeParse({ id: "bad" }).success).toBe(false);
+  });
+
+  it.each([
+    "national_id",
+    "email",
+    "date_of_birth",
+  ] as const)("accepts a blank %s and clears it to null", (field) => {
+    const r = studentUpdateSchema.safeParse({ id, [field]: "" });
+    expect(r.success).toBe(true);
+    if (r.success) expect(r.data[field]).toBeNull();
+  });
+
+  it.each([
+    "national_id",
+    "email",
+    "date_of_birth",
+  ] as const)("keeps an omitted %s as undefined (no change)", (field) => {
+    const r = studentUpdateSchema.safeParse({ id, first_name: "Ana" });
+    expect(r.success).toBe(true);
+    if (r.success) expect(r.data[field]).toBeUndefined();
+  });
+
+  it("counts a null (cleared) field as provided for the at-least-one refine", () => {
+    const r = studentUpdateSchema.safeParse({ id, email: "" });
+    expect(r.success).toBe(true);
+  });
+
+  it.each([
+    ["national_id invalid when filled", { id, national_id: "x".repeat(31) }],
+    ["email invalid when filled", { id, email: "nope" }],
+    ["date_of_birth invalid when filled", { id, date_of_birth: "2000-02-30" }],
+    ["future date_of_birth rejected", { id, date_of_birth: "2100-12-31" }],
+  ])("rejects %s", (_label, input) => {
+    expect(studentUpdateSchema.safeParse(input).success).toBe(false);
   });
 });
 

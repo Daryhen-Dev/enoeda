@@ -4,11 +4,16 @@ import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import type { StudentProfile } from "@/lib/domain/students/actions"
+import {
+  getMissingStudentData,
+  hasIncompleteStudentData,
+} from "@/lib/domain/students/completeness"
 import { getAgeInYears } from "@/lib/domain/students/detail-summary"
 import {
   formatNumber,
   STUDENT_DIRECTORY_MESSAGES,
   STUDENT_DETAIL_MESSAGES,
+  STUDENT_MISSING_DATA_MESSAGES,
 } from "@/lib/localization/es-ec"
 
 interface StudentDetailHeaderProps {
@@ -29,8 +34,18 @@ export function StudentDetailHeader({
   todayDateOnly,
 }: StudentDetailHeaderProps) {
   const age = getAgeInYears(student.date_of_birth, todayDateOnly)
+  const missingDataFields = getMissingStudentData(student)
+  const incompleteDescription = hasIncompleteStudentData(student)
+    ? `${STUDENT_MISSING_DATA_MESSAGES.INCOMPLETE_BADGE} — ${STUDENT_MISSING_DATA_MESSAGES.INCOMPLETE_MISSING_SUMMARY(
+        missingDataFields
+          .map((field) => STUDENT_MISSING_DATA_MESSAGES.MISSING_FIELD_LABELS[field])
+          .join(", ")
+      )}`
+    : null
   const metaItems = [
-    STUDENT_DETAIL_MESSAGES.AGE_LABEL(formatNumber(age)),
+    age === null
+      ? null
+      : STUDENT_DETAIL_MESSAGES.AGE_LABEL(formatNumber(age)),
     student.national_id
       ? `${STUDENT_DIRECTORY_MESSAGES.NATIONAL_ID}: ${student.national_id}`
       : null,
@@ -59,6 +74,15 @@ export function StudentDetailHeader({
             ? STUDENT_DETAIL_MESSAGES.ACTIVE_BADGE
             : STUDENT_DETAIL_MESSAGES.INACTIVE_BADGE}
         </Badge>
+        {incompleteDescription !== null && (
+          <Badge
+            variant="secondary"
+            aria-label={incompleteDescription}
+            title={incompleteDescription}
+          >
+            {STUDENT_MISSING_DATA_MESSAGES.INCOMPLETE_BADGE}
+          </Badge>
+        )}
       </div>
       <p className="text-sm text-muted-foreground">{metaItems.join(" · ")}</p>
     </header>

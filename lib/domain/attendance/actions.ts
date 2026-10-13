@@ -59,7 +59,7 @@ export interface PerClassCandidateRow {
   student_discipline_id: string;
   first_name: string;
   surname: string;
-  national_id: string;
+  national_id: string | null;
 }
 
 export interface PresentStudent {

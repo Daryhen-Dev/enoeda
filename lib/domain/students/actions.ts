@@ -10,15 +10,18 @@ import {
 import { COMMON_MESSAGES, STUDENT_MESSAGES } from "@/lib/localization/es-ec";
 import {
   STUDENT_ACTIVATION_STATUS,
+  STUDENT_DUPLICATE_NAME_LIMIT,
   STUDENT_STATUS,
   studentActivationStatusSchema,
   studentCreateSchema,
+  studentDuplicateNameSchema,
   studentIdSchema,
   studentListSchema,
   studentReactivateSchema,
   studentUpdateSchema,
   type StudentActivationStatus,
   type StudentCreateInput,
+  type StudentDuplicateNameInput,
   type StudentListInput,
   type StudentReactivateInput,
   type StudentUpdateInput,
@@ -37,6 +40,45 @@ const REACTIVATION_BRANCH_ERROR =
   STUDENT_MESSAGES.REACTIVATION_BRANCH_REQUIRED;
 const OPERATION_FAILED_ERROR = COMMON_MESSAGES.UNEXPECTED_ERROR;
 
+/**
+ * Collects every text where Prisma (driver adapter) may expose the violated
+ * constraint name. With @prisma/adapter-pg a P2002 message only lists the
+ * fields; the constraint name lives in
+ * meta.driverAdapterError.cause.originalMessage.
+ */
+function transactionErrorTexts(error: Error): string[] {
+  const texts = [error.message];
+  const meta = (error as { meta?: unknown }).meta;
+  if (typeof meta === "object" && meta !== null) {
+    const cause = (meta as { driverAdapterError?: { cause?: unknown } })
+      .driverAdapterError?.cause;
+    if (typeof cause === "object" && cause !== null) {
+      const originalMessage = (cause as { originalMessage?: unknown })
+        .originalMessage;
+      if (typeof originalMessage === "string") texts.push(originalMessage);
+    }
+  }
+  return texts;
+}
+
+/**
+ * Translates the unique constraints on students (national id, normalized
+ * email) into clear duplicate messages; everything else falls back to the
+ * generic unexpected-error message.
+ */
+function mapStudentTransactionError(error: unknown): string | undefined {
+  if (!(error instanceof Error)) return undefined;
+
+  const texts = transactionErrorTexts(error);
+  if (texts.some((text) => text.includes("students_national_id_uq"))) {
+    return STUDENT_MESSAGES.NATIONAL_ID_TAKEN;
+  }
+  if (texts.some((text) => text.includes("students_email_normalized_uq"))) {
+    return STUDENT_MESSAGES.EMAIL_TAKEN;
+  }
+  return undefined;
+}
+
 interface StudentMutationOutcome {
   id: string | null;
   error: string | null;
@@ -47,10 +89,10 @@ export interface StudentProfile {
   branch_id: string;
   first_name: string;
   surname: string;
-  national_id: string;
-  email: string;
+  national_id: string | null;
+  email: string | null;
   phone: string | null;
-  date_of_birth: Date;
+  date_of_birth: Date | null;
   is_active: boolean;
 }
 
@@ -66,7 +108,9 @@ export interface StudentListItem {
   branch_id: string;
   first_name: string;
   surname: string;
-  national_id: string;
+  national_id: string | null;
+  email: string | null;
+  date_of_birth: Date | null;
   activation_status: StudentActivationStatus;
   active_discipline_names: string[];
   active_disciplines: ActiveStudentDiscipline[];
@@ -140,6 +184,8 @@ export async function listStudents(
         first_name: true,
         surname: true,
         national_id: true,
+        email: true,
+        date_of_birth: true,
         activation_status: true,
         student_disciplines: {
           where: { is_active: true },
@@ -201,6 +247,8 @@ export async function listStudents(
       first_name: student.first_name,
       surname: student.surname,
       national_id: student.national_id,
+      email: student.email,
+      date_of_birth: student.date_of_birth,
       activation_status: activationStatus.data,
       active_discipline_names: activeDisciplines.map(
         (discipline) => discipline.discipline_name
@@ -219,6 +267,108 @@ export async function listStudents(
         hasExtraItem && lastItem !== undefined ? lastItem.id : null,
     },
   };
+}
+
+export interface StudentDuplicateNameMatch {
+  id: string;
+  first_name: string;
+  surname: string;
+  national_id: string | null;
+  is_active: boolean;
+  activation_status: StudentActivationStatus;
+}
+
+/**
+ * Non-blocking duplicate-name warning for the create flow: students of the
+ * branch whose normalized first name AND surname match the input (trim,
+ * collapsed inner whitespace, case-insensitive via `mode: "insensitive"`).
+ * Includes inactive students — an inactive duplicate is still worth flagging.
+ * Authorization mirrors createStudent (branch context + teacher A6 check).
+ * Accent-insensitive matching is intentionally NOT implemented: Prisma
+ * `equals` cannot transliterate accents and Postgres `unaccent` would be a
+ * DB extension, so "Jose" does not match "José".
+ */
+export async function findStudentsWithSameName(
+  input: StudentDuplicateNameInput
+): Promise<ActionResult<{ matches: StudentDuplicateNameMatch[] }>> {
+  const parsed = studentDuplicateNameSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message };
+  }
+
+  const result = await withAuthenticatedUser(async (tx, ctx) => {
+    // Branch context assertion: caller must have active assignment for branch
+    const branchError = assertCallerBranchContext(ctx, parsed.data.branch_id);
+    if (branchError) {
+      return { __branchError: branchError } as const;
+    }
+
+    // A6: Teacher-only branch check (defense-in-depth), mirroring createStudent
+    const isTeacher = ctx.roles.includes("teacher");
+    const isAdminOrOwner = ctx.roles.some(
+      (r) => r === "admin" || r === "owner"
+    );
+    if (isTeacher && !isAdminOrOwner) {
+      const teacherBranchIds = ctx.assignments
+        .filter((a) => a.role === "teacher" && a.branchId)
+        .map((a) => a.branchId);
+      if (!teacherBranchIds.includes(parsed.data.branch_id)) {
+        return {
+          __branchError: COMMON_MESSAGES.INSUFFICIENT_PERMISSIONS,
+        } as const;
+      }
+    }
+
+    return tx.students.findMany({
+      where: {
+        branch_id: parsed.data.branch_id,
+        first_name: { equals: parsed.data.first_name, mode: "insensitive" },
+        surname: { equals: parsed.data.surname, mode: "insensitive" },
+      },
+      select: {
+        id: true,
+        first_name: true,
+        surname: true,
+        national_id: true,
+        is_active: true,
+        activation_status: true,
+      },
+      orderBy: [{ surname: "asc" }, { first_name: "asc" }, { id: "asc" }],
+      take: STUDENT_DUPLICATE_NAME_LIMIT,
+    });
+  });
+
+  if (!result.success) return result;
+
+  if ("__branchError" in result.data) {
+    return { success: false, error: result.data.__branchError };
+  }
+
+  const rows = result.data as Exclude<
+    typeof result.data,
+    { __branchError: string }
+  >;
+  const matches: StudentDuplicateNameMatch[] = [];
+
+  for (const student of rows) {
+    const activationStatus = studentActivationStatusSchema.safeParse(
+      student.activation_status
+    );
+    if (!activationStatus.success) {
+      return { success: false, error: OPERATION_FAILED_ERROR };
+    }
+
+    matches.push({
+      id: student.id,
+      first_name: student.first_name,
+      surname: student.surname,
+      national_id: student.national_id,
+      is_active: student.is_active,
+      activation_status: activationStatus.data,
+    });
+  }
+
+  return { success: true, data: { matches } };
 }
 
 export async function activateStudent(
@@ -425,14 +575,17 @@ export async function createStudent(
         national_id: parsed.data.national_id,
         email: parsed.data.email,
         phone: parsed.data.phone,
-        date_of_birth: new Date(parsed.data.date_of_birth),
+        date_of_birth:
+          parsed.data.date_of_birth === null
+            ? null
+            : new Date(parsed.data.date_of_birth),
         is_active: parsed.data.is_active,
       },
       select: { id: true },
     });
 
     return { id: student.id, error: null } satisfies StudentMutationOutcome;
-  });
+  }, { mapTransactionError: mapStudentTransactionError });
 
   if (!result.success) return result;
   if (result.data.id === null) {
@@ -483,7 +636,12 @@ export async function updateStudent(
     ...(editableFields.phone === undefined ? {} : { phone: editableFields.phone }),
     ...(editableFields.date_of_birth === undefined
       ? {}
-      : { date_of_birth: new Date(editableFields.date_of_birth) }),
+      : {
+          date_of_birth:
+            editableFields.date_of_birth === null
+              ? null
+              : new Date(editableFields.date_of_birth),
+        }),
   };
 
   const result = await withAuthenticatedUser(async (tx, ctx) => {
@@ -540,7 +698,7 @@ export async function updateStudent(
       id: updatedStudent.id,
       error: null,
     } satisfies StudentMutationOutcome;
-  });
+  }, { mapTransactionError: mapStudentTransactionError });
 
   if (!result.success) return result;
   if (result.data.id === null) {

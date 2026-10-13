@@ -72,7 +72,7 @@ export interface ConductStudentSearchRow {
   id: string;
   first_name: string;
   surname: string;
-  national_id: string;
+  national_id: string | null;
   pending_fines_count: number;
   pending_fines_total: number;
   warnings_count: number;

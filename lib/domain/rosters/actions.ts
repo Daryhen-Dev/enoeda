@@ -32,7 +32,7 @@ export interface RosterStudentRow {
   student_id: string;
   first_name: string;
   surname: string;
-  national_id: string;
+  national_id: string | null;
   /** ISO timestamp of when the student was added to the roster. */
   added_at: string;
 }
@@ -41,7 +41,7 @@ export interface RosterCandidateRow {
   student_id: string;
   first_name: string;
   surname: string;
-  national_id: string;
+  national_id: string | null;
 }
 
 export type RosterSkipReason = Extract<

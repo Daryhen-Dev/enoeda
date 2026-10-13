@@ -11,6 +11,7 @@ import {
   PRODUCT_TERMS,
   PUBLIC_STUDENT_REGISTRATION_MESSAGES,
   STUDENT_ENROLLMENT_MESSAGES,
+  STUDENT_MISSING_DATA_MESSAGES,
   CONDUCT_MESSAGES,
   formatCurrency,
   formatDate,
@@ -148,15 +149,23 @@ export default async function StudentProfilePage() {
           </div>
           <div className="space-y-1">
             <dt className="text-muted-foreground">{PRODUCT_TERMS.NATIONAL_ID}</dt>
-            <dd className="font-medium">{student.nationalId}</dd>
+            <dd className="font-medium">
+              {student.nationalId ?? STUDENT_MISSING_DATA_MESSAGES.NOT_PROVIDED}
+            </dd>
           </div>
           <div className="space-y-1">
             <dt className="text-muted-foreground">{STUDENT_ENROLLMENT_MESSAGES.DATE_OF_BIRTH_LABEL}</dt>
-            <dd className="font-medium">{formatStudentDate(student.dateOfBirth)}</dd>
+            <dd className="font-medium">
+              {student.dateOfBirth === null
+                ? STUDENT_MISSING_DATA_MESSAGES.NOT_PROVIDED
+                : formatStudentDate(student.dateOfBirth)}
+            </dd>
           </div>
           <div className="space-y-1 sm:col-span-2">
             <dt className="text-muted-foreground">{STUDENT_ENROLLMENT_MESSAGES.EMAIL_LABEL}</dt>
-            <dd className="font-medium">{student.email}</dd>
+            <dd className="font-medium">
+              {student.email ?? STUDENT_MISSING_DATA_MESSAGES.NOT_PROVIDED}
+            </dd>
           </div>
         </dl>
       </section>

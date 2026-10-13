@@ -26,6 +26,7 @@ import {
   COMMON_MESSAGES,
   CONDUCT_MESSAGES,
   CONDUCT_QUICK_ENTRY_MESSAGES,
+  STUDENT_MISSING_DATA_MESSAGES,
   TOAST_MESSAGES,
   formatCurrency,
 } from "@/lib/localization/es-ec"
@@ -314,7 +315,7 @@ export function ConductQuickEntry({
                         {fullName(student)}
                       </span>
                       <span className="text-xs text-muted-foreground">
-                        {student.national_id}
+                        {student.national_id ?? STUDENT_MISSING_DATA_MESSAGES.NOT_PROVIDED}
                       </span>
                       {counters && (
                         <span className="text-xs text-muted-foreground">
@@ -339,7 +340,7 @@ export function ConductQuickEntry({
                 {fullName(selectedStudent)}
               </span>
               <span className="text-xs text-muted-foreground">
-                {selectedStudent.national_id}
+                {selectedStudent.national_id ?? STUDENT_MISSING_DATA_MESSAGES.NOT_PROVIDED}
               </span>
               {summarizeConductCounters(selectedStudent) && (
                 <span className="text-xs text-muted-foreground">

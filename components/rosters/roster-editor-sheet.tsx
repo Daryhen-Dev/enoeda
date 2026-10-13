@@ -45,6 +45,7 @@ import {
   COMMON_MESSAGES,
   ROSTER_EDITOR_MESSAGES,
   ROSTER_MESSAGES,
+  STUDENT_MISSING_DATA_MESSAGES,
 } from "@/lib/localization/es-ec";
 
 /** Roster target without branch_id (the sheet always sends the caller's branch). */
@@ -293,7 +294,7 @@ export function RosterEditorSheet({
                         {student.surname} {student.first_name}
                       </span>
                       <span className="text-xs text-muted-foreground">
-                        {student.national_id}
+                        {student.national_id ?? STUDENT_MISSING_DATA_MESSAGES.NOT_PROVIDED}
                       </span>
                     </span>
                     <Button
@@ -368,7 +369,7 @@ export function RosterEditorSheet({
                           {candidate.surname} {candidate.first_name}
                         </span>
                         <span className="text-xs text-muted-foreground">
-                          {candidate.national_id}
+                          {candidate.national_id ?? STUDENT_MISSING_DATA_MESSAGES.NOT_PROVIDED}
                         </span>
                       </span>
                     </label>

@@ -304,7 +304,14 @@ export const STUDENT_FORM_MESSAGES = {
   SURNAME_LABEL: "Apellido",
   EMAIL_LABEL: "Correo electrónico",
   DATE_OF_BIRTH_LABEL: "Fecha de nacimiento",
+  NATIONAL_ID_OPTIONAL_LABEL: `${PRODUCT_TERMS.NATIONAL_ID} (opcional)`,
+  EMAIL_OPTIONAL_LABEL: "Correo electrónico (opcional)",
+  DATE_OF_BIRTH_OPTIONAL_LABEL: "Fecha de nacimiento (opcional)",
+  PHONE_OPTIONAL_LABEL: "Teléfono (opcional)",
+  OPTIONAL_FIELD_HINT: "Puede completarlo más tarde.",
   SAVING: "Guardando…",
+  DUPLICATE_NAME_WARNING: "Ya existe un estudiante con este nombre y apellido en esta sucursal.",
+  DUPLICATE_NAME_INACTIVE: "Inactivo",
 } as const
 
 export const STUDENT_LIFECYCLE_MESSAGES = {
@@ -350,10 +357,25 @@ export const STUDENT_MESSAGES = {
   INVALID_EMAIL: "El correo electrónico no es válido.",
   DATE_OF_BIRTH_FORMAT: "La fecha de nacimiento debe tener el formato YYYY-MM-DD.",
   INVALID_DATE_OF_BIRTH: "La fecha de nacimiento no es una fecha válida.",
+  DATE_OF_BIRTH_FUTURE: "La fecha de nacimiento no puede ser futura.",
+  NATIONAL_ID_TAKEN: "Ya existe un estudiante con esa cédula.",
+  EMAIL_TAKEN: "Ya existe un estudiante con ese correo.",
   AT_LEAST_ONE_FIELD_REQUIRED: "Debe proporcionar al menos un campo.",
   NOT_FOUND: "Estudiante no encontrado.",
   ACTIVE_STUDENT_BRANCH_REQUIRED: "Se requiere una sucursal activa para un estudiante activo.",
   REACTIVATION_BRANCH_REQUIRED: "Se requiere una sucursal activa para reactivar este estudiante.",
+} as const
+
+/** Shared placeholder copy for optional student identity fields not yet provided. */
+export const STUDENT_MISSING_DATA_MESSAGES = {
+  NOT_PROVIDED: "No registrado",
+  INCOMPLETE_BADGE: "Datos incompletos",
+  INCOMPLETE_MISSING_SUMMARY: (missing: string) => `Falta: ${missing}`,
+  MISSING_FIELD_LABELS: {
+    national_id: "cédula",
+    email: "correo electrónico",
+    date_of_birth: "fecha de nacimiento",
+  },
 } as const
 
 const DATE_FORMAT_OPTIONS = {

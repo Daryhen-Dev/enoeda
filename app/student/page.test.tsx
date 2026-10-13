@@ -5,6 +5,7 @@ import {
   CONDUCT_MESSAGES,
   PUBLIC_STUDENT_REGISTRATION_MESSAGES,
   STUDENT_ENROLLMENT_MESSAGES,
+  STUDENT_MISSING_DATA_MESSAGES,
   formatCurrency,
 } from "@/lib/localization/es-ec";
 import type { ConductRecord } from "@/lib/domain/conduct";
@@ -134,6 +135,35 @@ describe("StudentProfilePage", () => {
     markup = renderToStaticMarkup(await StudentProfilePage());
     expect(markup).toContain(CONDUCT_MESSAGES.EMPTY_STATE);
     expect(markup).not.toContain(PENDING_FINE.reason);
+  });
+
+  it("shows the shared placeholder for null national id, email and date of birth", async () => {
+    mocks.getStudentIdentity.mockResolvedValue({
+      ok: true,
+      student: {
+        ...baseStudent,
+        nationalId: null,
+        dateOfBirth: null,
+        email: null,
+      },
+    });
+    mocks.getOwnConductRecords.mockResolvedValue({
+      success: true,
+      data: {
+        records: [],
+        summary: {
+          pending_fines_count: 0,
+          pending_fines_total: 0,
+          warnings_count: 0,
+        },
+      },
+    });
+
+    const markup = renderToStaticMarkup(await StudentProfilePage());
+
+    expect(markup).toContain(STUDENT_MISSING_DATA_MESSAGES.NOT_PROVIDED);
+    // The full date of birth must not be rendered for a null value.
+    expect(markup).not.toContain("2000");
   });
 
   it("shows pending activation while preserving phone editing for an active student", async () => {
