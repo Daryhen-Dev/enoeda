@@ -144,25 +144,23 @@ describe("MarketingKickboxing", () => {
     })
   })
 
-  it("points the WhatsApp calls to action at the kickboxing message", () => {
+  it("points the hero WhatsApp call to action at the kickboxing message", () => {
     renderedKickboxing = renderKickboxing()
     const expectedUrl = getMarketingWhatsAppUrl(KICKBOXING_WHATSAPP_MESSAGE)
     const whatsappLinks = Array.from(renderedKickboxing.container.querySelectorAll("a")).filter(
       (link) => (link.getAttribute("href") ?? "").startsWith("https://wa.me/"),
     )
 
-    expect(whatsappLinks.length).toBeGreaterThanOrEqual(2)
-    whatsappLinks.forEach((link) => {
-      expect(link.getAttribute("href")).toBe(expectedUrl)
-    })
+    expect(whatsappLinks).toHaveLength(1)
+    expect(whatsappLinks[0].textContent).toBe("QUIERO ENTRENAR")
+    expect(whatsappLinks[0].getAttribute("href")).toBe(expectedUrl)
   })
 
-  it("keeps the sedes shortcut reachable from the closing call to action", () => {
+  it("omits the closing call to action already covered by the footer", () => {
     renderedKickboxing = renderKickboxing()
-    const sedesLink = Array.from(renderedKickboxing.container.querySelectorAll("a")).find(
-      (link) => link.getAttribute("href") === "/#sedes",
-    )
+    const pageText = renderedKickboxing.container.textContent ?? ""
 
-    expect(sedesLink?.textContent).toBe("CONOCE NUESTRAS SEDES")
+    expect(pageText).not.toContain("TU PRIMERA GUARDIA EMPIEZA AQUÍ.")
+    expect(pageText).not.toContain("ESCRIBIR POR WHATSAPP")
   })
 })

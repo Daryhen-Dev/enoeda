@@ -53,3 +53,10 @@ red accent, hard borders and offset shadows).
 - Checks: vitest `components/marketing` + `middleware.test.ts` 10 files / 53 tests passed; tsc and eslint clean;
   `pnpm build` `○ /kickboxing`; served HTML has no origin/quote text; Playwright: no horizontal overflow at
   390x844 / 1440x900, 6 sections strictly alternate, all 4 gallery images loaded.
+
+## Follow-up: remove closing CTA section (2026-10-16)
+
+- User request: drop "Tu primera guardia empieza aquí" — the footer already offers WhatsApp, so it was redundant.
+- Its "Conoce nuestras sedes" link went with it (header nav already links to Sedes); the hero "QUIERO ENTRENAR"
+  WhatsApp CTA remains. Page now ends on "¿Sudar o aprender a pelear?" before the footer, same edge as home's Sedes.
+- Checks: vitest `components/marketing` 35 tests passed; tsc and eslint clean; `pnpm build` `○ /kickboxing`.

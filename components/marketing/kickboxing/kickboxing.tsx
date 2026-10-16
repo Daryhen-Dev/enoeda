@@ -1,5 +1,4 @@
 import Image from "next/image"
-import Link from "next/link"
 
 import styles from "@/components/marketing/marketing.module.css"
 import { getMarketingWhatsAppUrl } from "@/components/marketing/shared/contact"
@@ -224,31 +223,6 @@ export function MarketingKickboxing() {
                 <p className={BODY_TEXT_CLASSES}>{option.description}</p>
               </article>
             ))}
-          </div>
-        </div>
-      </section>
-
-      <section
-        aria-labelledby="kickboxing-cierre-heading"
-        className="bg-marketing-muted px-5 py-18 sm:px-8 sm:py-24 lg:px-16 lg:py-32"
-      >
-        <div className="mx-auto max-w-360 text-center">
-          <h2
-            className="mx-auto font-marketing-display text-[clamp(3.5rem,8vw,7rem)] leading-[0.85] tracking-[-0.02em] text-marketing-foreground"
-            id="kickboxing-cierre-heading"
-          >
-            TU PRIMERA GUARDIA EMPIEZA AQUÍ.
-          </h2>
-          <p className="mx-auto mt-6 max-w-md font-marketing-body text-base leading-6 text-marketing-foreground">
-            No necesitas experiencia ni estar en forma. Solo necesitas llegar.
-          </p>
-          <div className="mt-10 flex flex-col items-center gap-6">
-            <a className={HERO_CTA_CLASSES} href={KICKBOXING_WHATSAPP_URL}>
-              ESCRIBIR POR WHATSAPP
-            </a>
-            <Link className={kickboxingStyles.editorialLink} href="/#sedes">
-              CONOCE NUESTRAS SEDES
-            </Link>
           </div>
         </div>
       </section>
