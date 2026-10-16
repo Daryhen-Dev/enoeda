@@ -1,0 +1,160 @@
+// @vitest-environment jsdom
+
+import type { ComponentProps } from "react"
+import { act } from "react"
+import { createRoot } from "react-dom/client"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+
+import { getMarketingWhatsAppUrl } from "@/components/marketing/shared/contact"
+
+import {
+  KICKBOXING_GALLERY,
+  KICKBOXING_STYLES,
+  KICKBOXING_TIMELINE,
+  KICKBOXING_WHATSAPP_MESSAGE,
+} from "./kickboxing-content"
+import { MarketingKickboxing } from "./kickboxing"
+
+type ImageProps = ComponentProps<"img"> & { src: string | { src: string } }
+type LinkProps = ComponentProps<"a"> & { href: string }
+
+interface RenderedKickboxing {
+  container: HTMLElement
+  unmount(): void
+}
+
+vi.mock("next/image", () => ({
+  // Plain <img> on purpose: the stub must keep `alt` queryable so every
+  // photo label can be asserted. next/image is optimised away in tests.
+  default: ({ alt, className, src }: ImageProps) => {
+    const resolvedSrc = typeof src === "string" ? src : src.src
+
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img alt={alt} className={className} data-image-src={resolvedSrc} src={resolvedSrc} />
+    )
+  },
+}))
+
+vi.mock("next/link", () => ({
+  default: ({ children, href, ...props }: LinkProps) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
+}))
+
+function renderKickboxing(): RenderedKickboxing {
+  const container = document.createElement("div")
+  document.body.append(container)
+  const root = createRoot(container)
+
+  act(() => {
+    root.render(<MarketingKickboxing />)
+  })
+
+  return {
+    container,
+    unmount() {
+      act(() => {
+        root.unmount()
+      })
+      container.remove()
+    },
+  }
+}
+
+describe("MarketingKickboxing", () => {
+  let renderedKickboxing: RenderedKickboxing | undefined
+
+  beforeEach(() => {
+    ;(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true
+  })
+
+  afterEach(() => {
+    renderedKickboxing?.unmount()
+    renderedKickboxing = undefined
+  })
+
+  it("renders a single h1 with the three-word battle cry", () => {
+    renderedKickboxing = renderKickboxing()
+    const headings = renderedKickboxing.container.querySelectorAll("h1")
+
+    expect(headings).toHaveLength(1)
+
+    const heroText = headings[0].textContent ?? ""
+    expect(heroText).toContain("PUÑOS.")
+    expect(heroText).toContain("PIERNAS.")
+    expect(heroText).toContain("INSTINTO.")
+  })
+
+  it("renders the training video with poster and controls but no autoplay", () => {
+    renderedKickboxing = renderKickboxing()
+    const video = renderedKickboxing.container.querySelector("video")
+
+    expect(video).not.toBeNull()
+    expect(video!.getAttribute("poster")).toBe("/media/kickboxing/entrenamiento.webp")
+    expect(video!.hasAttribute("controls")).toBe(true)
+    expect(video!.hasAttribute("playsinline")).toBe(true)
+    expect(video!.hasAttribute("autoplay")).toBe(false)
+
+    const source = video!.querySelector("source")
+    expect(source?.getAttribute("src")).toBe("/media/kickboxing/entrenamiento.mp4")
+    expect(source?.getAttribute("type")).toBe("video/mp4")
+  })
+
+  it("renders the full origin timeline from the content array", () => {
+    renderedKickboxing = renderKickboxing()
+    const timelineItems = renderedKickboxing.container.querySelectorAll("ol li")
+
+    expect(timelineItems).toHaveLength(KICKBOXING_TIMELINE.length)
+    expect(timelineItems[0].textContent).toContain(KICKBOXING_TIMELINE[0].year)
+    expect(timelineItems[timelineItems.length - 1].textContent).toContain(
+      KICKBOXING_TIMELINE[KICKBOXING_TIMELINE.length - 1].year,
+    )
+  })
+
+  it("renders one card per kickboxing style", () => {
+    renderedKickboxing = renderKickboxing()
+    const estilosSection = renderedKickboxing.container.querySelector("#estilos")
+
+    expect(estilosSection).not.toBeNull()
+    expect(estilosSection!.querySelectorAll("article")).toHaveLength(KICKBOXING_STYLES.length)
+
+    KICKBOXING_STYLES.forEach((style) => {
+      expect(estilosSection!.textContent).toContain(style.name)
+    })
+  })
+
+  it("renders every photo of the gallery with an accessible label", () => {
+    renderedKickboxing = renderKickboxing()
+    const images = Array.from(renderedKickboxing.container.querySelectorAll("img"))
+
+    expect(images.length).toBeGreaterThanOrEqual(KICKBOXING_GALLERY.length)
+    images.forEach((image) => {
+      expect((image.getAttribute("alt") ?? "").trim().length).toBeGreaterThan(0)
+    })
+  })
+
+  it("points the WhatsApp calls to action at the kickboxing message", () => {
+    renderedKickboxing = renderKickboxing()
+    const expectedUrl = getMarketingWhatsAppUrl(KICKBOXING_WHATSAPP_MESSAGE)
+    const whatsappLinks = Array.from(renderedKickboxing.container.querySelectorAll("a")).filter(
+      (link) => (link.getAttribute("href") ?? "").startsWith("https://wa.me/"),
+    )
+
+    expect(whatsappLinks.length).toBeGreaterThanOrEqual(2)
+    whatsappLinks.forEach((link) => {
+      expect(link.getAttribute("href")).toBe(expectedUrl)
+    })
+  })
+
+  it("keeps the sedes shortcut reachable from the closing call to action", () => {
+    renderedKickboxing = renderKickboxing()
+    const sedesLink = Array.from(renderedKickboxing.container.querySelectorAll("a")).find(
+      (link) => link.getAttribute("href") === "/#sedes",
+    )
+
+    expect(sedesLink?.textContent).toBe("CONOCE NUESTRAS SEDES")
+  })
+})
