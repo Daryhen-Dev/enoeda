@@ -9,7 +9,6 @@ import {
   KICKBOXING_GALLERY,
   KICKBOXING_HERO_IMAGE,
   KICKBOXING_STYLES,
-  KICKBOXING_TIMELINE,
   KICKBOXING_TRAINING_OPTIONS,
   KICKBOXING_WHATSAPP_MESSAGE,
 } from "./kickboxing-content"
@@ -68,7 +67,7 @@ export function MarketingKickboxing() {
                 <a className={HERO_CTA_CLASSES} href={KICKBOXING_WHATSAPP_URL}>
                   QUIERO ENTRENAR
                 </a>
-                <a className={kickboxingStyles.editorialLink} href="#origen">
+                <a className={kickboxingStyles.editorialLink} href="#historia">
                   VER LA HISTORIA
                 </a>
               </div>
@@ -127,52 +126,8 @@ export function MarketingKickboxing() {
       </section>
 
       <section
-        aria-labelledby="kickboxing-origen-heading"
-        className={`${styles.anchorTarget} border-b-2 border-marketing-section-border bg-marketing-surface px-5 py-18 sm:px-8 sm:py-24 lg:px-16 lg:py-32`}
-        id="origen"
-      >
-        <div className="mx-auto max-w-360">
-          <p className={SECTION_LABEL_CLASSES}>EL ORIGEN</p>
-          <h2 className={`mt-4 max-w-4xl ${SECTION_TITLE_CLASSES}`} id="kickboxing-origen-heading">
-            NADIE LO INVENTÓ. ALGUIEN SE ATREVIÓ A NOMBRARLO.
-          </h2>
-
-          <ol className={kickboxingStyles.timelineList}>
-            {KICKBOXING_TIMELINE.map((entry) => (
-              <li className={kickboxingStyles.timelineItem} key={entry.year}>
-                <span className={kickboxingStyles.timelineIndex}>{entry.year}</span>
-                <div className={kickboxingStyles.timelineBody}>
-                  <h3 className="font-marketing-display text-3xl leading-[0.85] tracking-[0.01em] text-marketing-foreground sm:text-4xl">
-                    {entry.title}
-                  </h3>
-                  <p className={`mt-4 max-w-2xl ${BODY_TEXT_CLASSES}`}>{entry.text}</p>
-                </div>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </section>
-
-      <section className="border-b-2 border-marketing-section-border bg-marketing-deep-accent px-5 py-18 sm:px-8 sm:py-24 lg:px-16 lg:py-32">
-        <figure
-          className={`mx-auto max-w-300 border-2 border-marketing-foreground bg-marketing-accent p-8 sm:p-12 lg:p-16 ${styles.hardShadow}`}
-        >
-          <blockquote>
-            <p className="font-marketing-display text-[clamp(2.75rem,6vw,5.5rem)] leading-[0.85] tracking-[-0.02em] text-marketing-foreground">
-              SI RECONOCES DE DÓNDE VIENE UN PELEADOR CON SOLO VER TREINTA SEGUNDOS DE SUS
-              COMBINACIONES, PROBABLEMENTE APRENDIÓ EN HOLANDA.
-            </p>
-          </blockquote>
-          <figcaption className="mt-8 max-w-xl font-marketing-body text-sm font-bold uppercase leading-5 tracking-[0.12em] text-marketing-foreground">
-            Ernesto Hoost, Peter Aerts, Semmy Schilt y Remy Bonjasky dominaron el peso pesado de
-            K-1 durante más de una década con esa fórmula.
-          </figcaption>
-        </figure>
-      </section>
-
-      <section
         aria-labelledby="kickboxing-alumnos-heading"
-        className="border-b-2 border-marketing-section-border bg-marketing-muted px-5 py-18 sm:px-8 sm:py-24 lg:px-16 lg:py-32"
+        className="border-b-2 border-marketing-section-border bg-marketing-surface px-5 py-18 sm:px-8 sm:py-24 lg:px-16 lg:py-32"
         id="alumnos"
       >
         <div className="mx-auto max-w-360">
@@ -214,7 +169,7 @@ export function MarketingKickboxing() {
 
       <section
         aria-labelledby="kickboxing-estilos-heading"
-        className="border-b-2 border-marketing-section-border bg-marketing-surface px-5 py-18 sm:px-8 sm:py-24 lg:px-16 lg:py-32"
+        className="border-b-2 border-marketing-section-border bg-marketing-muted px-5 py-18 sm:px-8 sm:py-24 lg:px-16 lg:py-32"
         id="estilos"
       >
         <div className="mx-auto max-w-360">
@@ -246,7 +201,7 @@ export function MarketingKickboxing() {
 
       <section
         aria-labelledby="kickboxing-entrenamiento-heading"
-        className="border-b-2 border-marketing-section-border bg-marketing-muted px-5 py-18 sm:px-8 sm:py-24 lg:px-16 lg:py-32"
+        className="border-b-2 border-marketing-section-border bg-marketing-surface px-5 py-18 sm:px-8 sm:py-24 lg:px-16 lg:py-32"
       >
         <div className="mx-auto max-w-360">
           <p className={SECTION_LABEL_CLASSES}>ANTES DE EMPEZAR</p>
@@ -275,7 +230,7 @@ export function MarketingKickboxing() {
 
       <section
         aria-labelledby="kickboxing-cierre-heading"
-        className="bg-marketing-surface px-5 py-18 sm:px-8 sm:py-24 lg:px-16 lg:py-32"
+        className="bg-marketing-muted px-5 py-18 sm:px-8 sm:py-24 lg:px-16 lg:py-32"
       >
         <div className="mx-auto max-w-360 text-center">
           <h2

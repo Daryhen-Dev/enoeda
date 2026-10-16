@@ -10,7 +10,6 @@ import { getMarketingWhatsAppUrl } from "@/components/marketing/shared/contact"
 import {
   KICKBOXING_GALLERY,
   KICKBOXING_STYLES,
-  KICKBOXING_TIMELINE,
   KICKBOXING_WHATSAPP_MESSAGE,
 } from "./kickboxing-content"
 import { MarketingKickboxing } from "./kickboxing"
@@ -103,15 +102,24 @@ describe("MarketingKickboxing", () => {
     expect(source?.getAttribute("type")).toBe("video/mp4")
   })
 
-  it("renders the full origin timeline from the content array", () => {
+  it("omits the origin timeline and the Dutch-school quote band", () => {
     renderedKickboxing = renderKickboxing()
-    const timelineItems = renderedKickboxing.container.querySelectorAll("ol li")
+    const pageText = renderedKickboxing.container.textContent ?? ""
 
-    expect(timelineItems).toHaveLength(KICKBOXING_TIMELINE.length)
-    expect(timelineItems[0].textContent).toContain(KICKBOXING_TIMELINE[0].year)
-    expect(timelineItems[timelineItems.length - 1].textContent).toContain(
-      KICKBOXING_TIMELINE[KICKBOXING_TIMELINE.length - 1].year,
+    expect(renderedKickboxing.container.querySelector("#origen")).toBeNull()
+    expect(renderedKickboxing.container.querySelector("blockquote")).toBeNull()
+    expect(pageText).not.toContain("EL ORIGEN")
+    expect(pageText).not.toContain("SI RECONOCES DE DÓNDE VIENE UN PELEADOR")
+  })
+
+  it("points the hero history link at the training video section", () => {
+    renderedKickboxing = renderKickboxing()
+    const historyLink = Array.from(renderedKickboxing.container.querySelectorAll("a")).find(
+      (link) => link.textContent === "VER LA HISTORIA",
     )
+
+    expect(historyLink?.getAttribute("href")).toBe("#historia")
+    expect(renderedKickboxing.container.querySelector("#historia video")).not.toBeNull()
   })
 
   it("renders one card per kickboxing style", () => {

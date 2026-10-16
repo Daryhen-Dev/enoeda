@@ -106,33 +106,6 @@
   text-transform: uppercase;
 }
 
-.timelineList {
-  display: grid;
-  margin: 3rem 0 0;
-  border-top: 2px solid var(--marketing-foreground);
-  padding: 0;
-  list-style: none;
-}
-
-.timelineItem {
-  display: grid;
-  gap: 1rem;
-  align-items: start;
-  border-bottom: 2px solid var(--marketing-foreground);
-  padding: 2rem 0;
-}
-
-.timelineIndex {
-  color: var(--marketing-accent);
-  font-family: var(--font-bebas-neue);
-  font-size: 2.5rem;
-  line-height: 0.85;
-  letter-spacing: 0.01em;
-}
-
-.timelineBody {
-  min-width: 0;
-}
 
 .galleryGrid {
   display: grid;
@@ -189,7 +162,7 @@
   gap: 1rem;
   align-content: start;
   border: 2px solid var(--marketing-foreground);
-  background-color: var(--marketing-muted);
+  background-color: var(--marketing-surface);
   padding: 1.5rem;
 }
 
@@ -244,16 +217,6 @@
   .heroPhotoFrame {
     border-width: 1rem;
     box-shadow: 1.25rem 1.625rem 3.25rem color-mix(in srgb, var(--marketing-foreground) 22%, transparent);
-  }
-
-  .timelineItem {
-    grid-template-columns: minmax(8rem, 14rem) minmax(0, 1fr);
-    gap: 2rem;
-    padding: 2.5rem 0;
-  }
-
-  .timelineIndex {
-    font-size: 3.25rem;
   }
 
   .stylesGrid {

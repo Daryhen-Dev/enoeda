@@ -44,3 +44,12 @@ red accent, hard borders and offset shadows).
 
 - No changes to the home dojo-stories player.
 - No push / PR (user decides).
+
+## Follow-up: remove origin timeline and quote band (2026-10-16)
+
+- User request: drop the "El origen" timeline and the red "Si reconoces de dónde viene un peleador..." band.
+- Hero "VER LA HISTORIA" now targets `#historia` (training video); section backgrounds re-alternated
+  (surface/muted) and style cards switched to surface fill to keep contrast on the muted band.
+- Checks: vitest `components/marketing` + `middleware.test.ts` 10 files / 53 tests passed; tsc and eslint clean;
+  `pnpm build` `○ /kickboxing`; served HTML has no origin/quote text; Playwright: no horizontal overflow at
+  390x844 / 1440x900, 6 sections strictly alternate, all 4 gallery images loaded.

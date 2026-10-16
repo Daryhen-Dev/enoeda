@@ -7,54 +7,6 @@ import kick5Image from "@/assets/kickboxing/kick5.jpeg"
 export const KICKBOXING_WHATSAPP_MESSAGE =
   "Hola, quiero conocer las clases de Kickboxing de ENOEDA Dojo."
 
-export const KICKBOXING_TIMELINE = [
-  {
-    text: "En la antigua Grecia, el Pankration ya permitía puños y patadas. En Tailandia, el Muay Thai se pulía generación tras generación. En India, el musti-yuddha combinaba puños, rodillas y cabezazos. La idea estaba ahí; faltaba que alguien la ordenara.",
-    title: "El golpe antes del nombre",
-    year: "SIGLOS ATRÁS",
-  },
-  {
-    text: "El karateka Tatsuo Yamada propone algo que muchos consideraban impensable: karate de contacto completo. Lo llama \"karate-boxing\". La semilla está plantada.",
-    title: "Karate sin freno",
-    year: "1959",
-  },
-  {
-    text: "Tres karatecas japoneses viajan a Bangkok para medirse con tres peleadores de Muay Thai. Japón gana 2 a 1, pero la lección llega en la derrota: Kenji Kurosaki cae noqueado por un codazo, un golpe que el karate no había previsto. Desde esa noche, nada vuelve a ser igual.",
-    title: "La noche de Lumpinee",
-    year: "1963",
-  },
-  {
-    text: "El promotor Osamu Noguchi toma lo aprendido, prohíbe codos y cabezazos para marcar distancia con el Muay Thai y le da un nombre propio al deporte. Funda la Asociación de Kickboxing y, el 11 de abril, organiza en Osaka el primer evento oficial.",
-    title: "Nace el kickboxing",
-    year: "1966",
-  },
-  {
-    text: "Tres canales japoneses transmiten peleas cada semana y Tadashi Sawamura se convierte en la primera estrella. Pero la fama es frágil: hacia 1980 el kickboxing desaparece de las pantallas.",
-    title: "Fiebre en televisión",
-    year: "1970",
-  },
-  {
-    text: "En Estados Unidos, karatecas cansados de los combates sin contacto real crean su propio formato. La PKA celebra sus primeros mundiales con nombres como Joe Lewis, Bill \"Superfoot\" Wallace y Benny \"The Jet\" Urquidez. Su regla clave: patadas solo de la cintura hacia arriba.",
-    title: "América pelea a su manera",
-    year: "1974",
-  },
-  {
-    text: "En Holanda, peleadores formados en karate y boxeo absorben el Muay Thai que llega a Europa. El resultado es una máquina de presión: jab, cross, gancho y, sin pausa, una patada baja al muslo. Rob Kaman marca el camino; gimnasios como Mejiro, Vos y Chakuriki lo perfeccionan.",
-    title: "La escuela holandesa",
-    year: "70s — 80s",
-  },
-  {
-    text: "Kazuyoshi Ishii reúne bajo un mismo reglamento a karatecas, tailandeses, holandeses y boxeadores. Una sola regla —un golpe en el clinch y separación— obliga a decidir las peleas a distancia y llena estadios con más de 70 000 personas.",
-    title: "K-1 cambia las reglas",
-    year: "1993",
-  },
-  {
-    text: "Tras la caída financiera de K-1 después de 2011, GLORY toma el relevo, ONE Championship suma divisiones de kickboxing y K-1 vuelve a Japón. En el plano amateur, la WAKO es el organismo reconocido por el Comité Olímpico Internacional.",
-    title: "La herencia sigue viva",
-    year: "HOY",
-  },
-] as const
-
 export const KICKBOXING_STYLES = [
   {
     description:
