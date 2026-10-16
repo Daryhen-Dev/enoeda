@@ -225,4 +225,16 @@ describe("middleware session refresh responses", () => {
     expect(createServerClientMock).not.toHaveBeenCalled();
     expect(response).toBe(publicResponse);
   });
+
+  it("delegates anonymous Kickboxing requests to the public session update", async () => {
+    const routeRequest = request("/kickboxing");
+    const publicResponse = NextResponse.next({ request: routeRequest });
+    updateSessionMock.mockResolvedValue(publicResponse);
+
+    const response = await middleware(routeRequest);
+
+    expect(updateSessionMock).toHaveBeenCalledWith(routeRequest);
+    expect(createServerClientMock).not.toHaveBeenCalled();
+    expect(response).toBe(publicResponse);
+  });
 });

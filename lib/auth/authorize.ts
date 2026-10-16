@@ -62,6 +62,7 @@ export const STUDENT_PATH = "/student" as const;
 export const PUBLIC_PATHS = [
   "/",
   "/el-camino",
+  "/kickboxing",
   "/login",
   "/auth",
   "/api/auth",

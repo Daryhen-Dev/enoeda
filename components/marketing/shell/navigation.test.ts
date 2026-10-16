@@ -7,6 +7,7 @@ describe("MARKETING_NAVIGATION", () => {
     expect(MARKETING_NAVIGATION.map((item) => item.href)).toEqual([
       "/#dojo",
       "/el-camino",
+      "/kickboxing",
       "/#maestros",
       "/#sedes",
     ])
@@ -16,6 +17,7 @@ describe("MARKETING_NAVIGATION", () => {
     expect(MARKETING_NAVIGATION.map((item) => item.label)).toEqual([
       "El dojo",
       "El camino",
+      "Kickboxing",
       "Maestros",
       "Sedes",
     ])
