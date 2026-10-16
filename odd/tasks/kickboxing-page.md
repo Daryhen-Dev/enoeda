@@ -38,6 +38,8 @@ red accent, hard borders and offset shadows).
   390x844 and 1440x900; h1 sits 126px / 162px below the fixed header.
 - Note: lazy gallery images render blank in full-page screenshots (the footer logos do too); not inspected in a real scroll.
 
+- Commit: `60b2e8a feat(marketing): add public kickboxing history page` on `feat/kickboxing-page`.
+
 ## Non-goals
 
 - No changes to the home dojo-stories player.
