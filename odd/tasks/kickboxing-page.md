@@ -60,3 +60,9 @@ red accent, hard borders and offset shadows).
 - Its "Conoce nuestras sedes" link went with it (header nav already links to Sedes); the hero "QUIERO ENTRENAR"
   WhatsApp CTA remains. Page now ends on "¿Sudar o aprender a pelear?" before the footer, same edge as home's Sedes.
 - Checks: vitest `components/marketing` 35 tests passed; tsc and eslint clean; `pnpm build` `○ /kickboxing`.
+
+## Follow-up: drop duplicate source video (2026-10-16)
+
+- `assets/kickboxing/enoedatrainingkickboxing.mp4` was byte-identical to the published
+  `public/media/kickboxing/entrenamiento.mp4` (verified with `cmp`) and referenced nowhere in code.
+  Removed from git and ignored via `/assets/kickboxing/*.mp4`, matching the dojo-stories source convention.

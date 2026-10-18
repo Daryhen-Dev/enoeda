@@ -66,6 +66,9 @@ skills-lock.json
 # published outputs live in public/media/dojo-stories)
 /assets/*.mp4
 
+# kickboxing page source video; the published copy lives in public/media/kickboxing
+/assets/kickboxing/*.mp4
+
 # OpenNext Cloudflare build output
 .open-next/
 
