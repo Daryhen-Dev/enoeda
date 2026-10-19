@@ -13,9 +13,12 @@ const PAYMENTS_SKELETON_ROW_COUNT = 3
 function PanelSkeleton({
   label,
   rowCount,
+  footer = "link",
 }: {
   label: string
   rowCount: number
+  /** "button" mirrors the payments panel's sm footer button height. */
+  footer?: "link" | "button"
 }) {
   return (
     <section aria-label={label} className="rounded-lg border border-border bg-card">
@@ -37,7 +40,7 @@ function PanelSkeleton({
         ))}
       </div>
       <div className="px-4 py-2.5 md:px-5">
-        <Skeleton className="h-4 w-28" />
+        <Skeleton className={footer === "button" ? "h-7 w-32" : "h-4 w-28"} />
       </div>
     </section>
   )
@@ -63,7 +66,7 @@ export default function DashboardLoading() {
         <div className="flex items-baseline gap-3">
           <h2
             id="dashboard-loading-heading"
-            className="text-lg font-semibold tracking-[-0.01em]"
+            className="text-xl font-semibold tracking-[-0.01em]"
           >
             {CALENDAR_MESSAGES.TODAY}
           </h2>
@@ -83,6 +86,7 @@ export default function DashboardLoading() {
           <PanelSkeleton
             label={DASHBOARD_OVERVIEW_MESSAGES.PAYMENTS_ACTION_TITLE}
             rowCount={PAYMENTS_SKELETON_ROW_COUNT}
+            footer="button"
           />
         </div>
       </div>

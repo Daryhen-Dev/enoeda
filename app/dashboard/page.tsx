@@ -131,7 +131,7 @@ export default async function DashboardOverview({
     <div className="flex flex-col gap-4 p-4 md:gap-6 md:p-6">
       <header className="flex flex-col gap-0.5">
         <div className="flex items-baseline gap-3">
-          <h2 className="text-lg font-semibold tracking-[-0.01em]">
+          <h2 className="text-xl font-semibold tracking-[-0.01em]">
             {CALENDAR_MESSAGES.TODAY}
           </h2>
           <p className="text-sm text-muted-foreground">

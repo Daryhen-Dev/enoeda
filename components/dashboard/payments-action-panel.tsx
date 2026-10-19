@@ -73,7 +73,8 @@ function PaymentGroup({
             >
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium">{row.student_name}</p>
-                <p className="truncate text-xs text-muted-foreground">
+                {/* Wraps instead of truncating so the grace deadline stays readable. */}
+                <p className="text-xs text-muted-foreground">
                   {row.discipline_name}
                   {showGraceDeadline && row.grace_deadline &&
                     ` · ${PAYMENT_VALIDATION_MESSAGES.GRACE_DEADLINE}: ${formatDateOnlyEsEC(row.grace_deadline)}`}
