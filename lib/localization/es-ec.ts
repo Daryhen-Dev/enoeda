@@ -183,34 +183,25 @@ export const DIALOG_ACCESSIBILITY_MESSAGES = {
 } as const
 
 export const DASHBOARD_OVERVIEW_MESSAGES = {
-  NO_BRANCH_CONTEXT: "No tiene una sucursal activa asignada. Contacte al administrador.",
-  WELCOME: "Le damos la bienvenida a Enoeda Dojo",
-  WORKSPACE_READY: "Su espacio de gestión académica está listo.",
-  DATA_UNAVAILABLE_ALERT:
-    "Los datos del resumen no están disponibles temporalmente. Aún puede abrir cada área de gestión directamente.",
-  UNAVAILABLE: "No disponible",
-  BRANCHES: "Sucursales",
-  ACTIVE_BRANCHES_DESCRIPTION: "Sucursales activas de la academia.",
-  ACTIVE_STUDENTS: "Estudiantes activos",
-  ACTIVE_STUDENTS_DESCRIPTION: "Registros de estudiantes activos.",
-  INACTIVE_STUDENTS: "Estudiantes inactivos",
-  INACTIVE_STUDENTS_DESCRIPTION: "Registros de estudiantes marcados como inactivos.",
-  ACTIVE_STUDENTS_BY_BRANCH: "Estudiantes activos por sucursal",
-  ACTIVE_STUDENTS_BY_BRANCH_DESCRIPTION:
-    "Registros de estudiantes activos en las sucursales activas de la academia.",
-  BRANCH_DISTRIBUTION_UNAVAILABLE:
-    "La distribución por sucursal no está disponible.",
-  NO_ACTIVE_BRANCHES: "No hay sucursales activas disponibles.",
-  ACTIVE_STUDENTS_BY_BRANCH_LIST_LABEL: "Estudiantes activos por sucursal",
-  BRANCH_COUNT_ARIA_LABEL: (count: string) => `${count} sucursales activas`,
-  ACTIVE_STUDENT_COUNT_ARIA_LABEL: (count: string) => `${count} estudiantes activos`,
-  INACTIVE_STUDENT_COUNT_ARIA_LABEL: (count: string) =>
-    `${count} estudiantes inactivos`,
-  ACTIVE_STUDENTS_COUNT: (count: string) => `${count} activos`,
-  OVERDUE_STUDENTS: "Pagos en espera",
-  OVERDUE_STUDENTS_DESCRIPTION: "Inscripciones con pago pendiente.",
-  OVERDUE_STUDENT_COUNT_ARIA_LABEL: (count: string) =>
-    `${count} inscripciones con pago pendiente`,
+  NO_BRANCH_CONTEXT:
+    "No tiene una sucursal activa asignada. Contacte al administrador.",
+  TODAY_CLASSES: "Clases de hoy",
+  ATTENDANCE_PENDING: "Asistencia pendiente",
+  CALENDAR_LINK: "Ver calendario",
+  SUMMARY_CLASSES: (count: number) =>
+    count === 1 ? "1 clase" : `${count} clases`,
+  SUMMARY_SEALED: (count: number) =>
+    count === 1
+      ? "1 con asistencia registrada"
+      : `${count} con asistencia registrada`,
+  SUMMARY_PENDING: (count: number) =>
+    count === 1 ? "1 pendiente" : `${count} pendientes`,
+  SUMMARY_SUSPENDED: (count: number) =>
+    count === 1 ? "1 suspendida" : `${count} suspendidas`,
+  PAYMENTS_ACTION_TITLE: "Pagos que requieren acción",
+  VALIDATION_LINK: "Ver validación mensual",
+  DAYS_OVERDUE_COUNT: (days: number) =>
+    days === 1 ? "1 día de atraso" : `${days} días de atraso`,
 } as const
 
 export const STUDENT_DIRECTORY_MESSAGES = {
