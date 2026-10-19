@@ -30,6 +30,7 @@ vi.mock("@/components/attendance/attendance-sheet-dialog", () => ({
   },
 }))
 
+import { SealMark } from "./seal-mark"
 import { TodayAgendaPanel } from "./today-agenda-panel"
 
 const BRANCH_ID = "bbbbbbbb-1111-2222-3333-444444444444"
@@ -279,5 +280,57 @@ describe("TodayAgendaPanel", () => {
     const alert = rendered.container.querySelector('[role="alert"]')
     expect(alert?.textContent).toContain(CALENDAR_MESSAGES.LOAD_FAILURE)
     expect(rendered.container.querySelector("ul")).toBeNull()
+  })
+})
+
+describe("SealMark — 24px small-size geometry", () => {
+  beforeEach(() => {
+    ;(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true
+  })
+
+  function renderSealMark(): { container: HTMLElement; unmount(): void } {
+    const container = document.createElement("div")
+    document.body.append(container)
+    const root = createRoot(container)
+
+    act(() => {
+      root.render(<SealMark />)
+    })
+
+    return {
+      container,
+      unmount() {
+        act(() => {
+          root.unmount()
+        })
+        container.remove()
+      },
+    }
+  }
+
+  it("re-derives the geometry for 24px: single ring, no inner square", () => {
+    const { container, unmount } = renderSealMark()
+    const svg = container.querySelector("svg")
+
+    expect(svg).not.toBeNull()
+    expect(svg!.getAttribute("viewBox")).toBe("0 0 24 24")
+    // The 56-unit hanko's inner rounded square is sub-pixel at 24px: gone here.
+    expect(svg!.querySelector("rect")).toBeNull()
+    expect(svg!.querySelectorAll("circle")).toHaveLength(1)
+
+    unmount()
+  })
+
+  it("announces the sealed meaning exactly once via role img + aria-label", () => {
+    const { container, unmount } = renderSealMark()
+    const svg = container.querySelector("svg")
+
+    expect(svg).not.toBeNull()
+    expect(svg!.getAttribute("role")).toBe("img")
+    expect(svg!.getAttribute("aria-label")).toBe(
+      ATTENDANCE_FORM_MESSAGES.SEAL_ARIA
+    )
+
+    unmount()
   })
 })
