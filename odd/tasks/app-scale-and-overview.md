@@ -56,6 +56,13 @@ Branch `feat/app-scale-and-overview` from `main` (after #201 and #202 merged).
   (stage-1 defect) -> `LogoutButton tone="sidebar"` (12.95:1), commit below.
 - Final checks: full `pnpm test` 135 files / 1383 passed, 1 skipped; tsc clean; `pnpm build` ok; no horizontal
   overflow at 390/1440; 0 console errors.
+- Last full finish review on the final state (user-requested, fresh recapture of all 9 views): `disposition: fix`.
+  Persistence pass; GROUND/TYPE/MATERIAL, ledger topology, states, sidebar and logout all match. Open: (1) mobile
+  header renders on paper while the contract/DESIGN.md promise an ink top bar; (2) the 24px `SealMark` loses its
+  inner square and reads as a generic check-circle; (3) 768px shell crowds (rail does not collapse to icons);
+  (4) DESIGN.md lacks the 24px ledger seal and the real mobile header surface; (5) marketing kicker bands and
+  hard offset CTA shadow (out of this stage). Shipped as a PR per user instruction; items 1-4 proposed as the
+  next stage.
 - Known: at 768px the 288px sidebar leaves narrow text columns (ellipsis) — pre-existing `md:` sidebar breakpoint.
 
 ## Non-goals
