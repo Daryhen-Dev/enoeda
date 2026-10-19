@@ -308,15 +308,19 @@ describe("SealMark — 24px small-size geometry", () => {
     }
   }
 
-  it("re-derives the geometry for 24px: single ring, no inner square", () => {
+  it("draws the seal on its own 24-unit grid with ring, inner square and check", () => {
     const { container, unmount } = renderSealMark()
     const svg = container.querySelector("svg")
 
     expect(svg).not.toBeNull()
     expect(svg!.getAttribute("viewBox")).toBe("0 0 24 24")
-    // The 56-unit hanko's inner rounded square is sub-pixel at 24px: gone here.
-    expect(svg!.querySelector("rect")).toBeNull()
     expect(svg!.querySelectorAll("circle")).toHaveLength(1)
+    // The inner rounded square is the stamp cue; at 24 units its stroke is
+    // a full device pixel, so it survives at the shipping size.
+    const square = svg!.querySelector("rect")
+    expect(square).not.toBeNull()
+    expect(Number(square!.getAttribute("stroke-width"))).toBeGreaterThanOrEqual(1)
+    expect(svg!.querySelectorAll("path")).toHaveLength(1)
 
     unmount()
   })

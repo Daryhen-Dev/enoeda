@@ -132,8 +132,8 @@
       "name": "Ledger Seal",
       "kind": "custom",
       "refersTo": null,
-      "description": "24px seal for ledger rows with its own small-size geometry: one ring (r 10.5, stroke 2) and a bold check (stroke 2.25), rotated −8°, no inner square (it falls below a pixel at 24px). Use the full Attendance Seal from 44px up.",
-      "html": "<svg class=\"ds-ledger-seal\" viewBox=\"0 0 24 24\" role=\"img\" aria-label=\"Asistencia registrada\"><circle cx=\"12\" cy=\"12\" r=\"10.5\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"/><path d=\"M7.9 12.2 L10.7 15 L16.3 9.2\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.25\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>",
+      "description": "24px seal for ledger rows drawn on its own 24-unit grid: ring (r 10.875, stroke 1.75), inner rounded square (13 units, rx 2, stroke 1) and a bold check (stroke 2), rotated −8°; every stroke is at least one device pixel so the stamp silhouette survives. Use the full Attendance Seal from 44px up.",
+      "html": "<svg class=\"ds-ledger-seal\" viewBox=\"0 0 24 24\" role=\"img\" aria-label=\"Asistencia registrada\"><circle cx=\"12\" cy=\"12\" r=\"10.875\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\"/><rect x=\"5.5\" y=\"5.5\" width=\"13\" height=\"13\" rx=\"2\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1\"/><path d=\"M8.6 12.1 L10.9 14.4 L15.4 9.7\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>",
       "css": ".ds-ledger-seal { width: 1.5rem; height: 1.5rem; flex-shrink: 0; color: var(--seal); transform: rotate(-8deg); }"
     }
   ],

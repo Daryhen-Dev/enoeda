@@ -4,14 +4,14 @@ import { ATTENDANCE_FORM_MESSAGES } from "@/lib/localization/es-ec";
 
 /**
  * Small vermilion seal mark ("Tinta y sello") for ledger rows at 24px.
- * It does NOT reuse the 56-unit hanko geometry: at 24px the hanko's 1.5-unit
- * inner square is sub-pixel mush, so this mark is re-derived for the size it
- * actually ships — a single 2-unit ring and a bold 2.25-unit check with round
- * caps, no inner square. The full ring + inner square hanko lives in
- * AttendanceSeal at 44px+, where the geometry survives. Marks a sealed (done)
- * row only — the vermilion seal never appears on pending or suspended rows.
- * Meaning is announced exactly once via role="img" + aria-label; no text
- * lives inside the ring.
+ * Drawn on its own 24-unit grid instead of scaling the 56-unit hanko down
+ * (scaled, the hanko's inner square falls below a pixel). At this grid every
+ * stroke is at least one device pixel: a 1.75-unit ring, a 1-unit inner
+ * rounded square — the stamp cue that keeps it from reading as a generic
+ * check-circle — and a bold 2-unit check with round caps. The 44px+
+ * AttendanceSeal keeps the full hanko. Marks a sealed (done) row only; the
+ * vermilion seal never appears on pending or suspended rows. Meaning is
+ * announced exactly once via role="img" + aria-label.
  */
 export function SealMark({ className }: { className?: string }) {
   return (
@@ -24,16 +24,26 @@ export function SealMark({ className }: { className?: string }) {
       <circle
         cx="12"
         cy="12"
-        r="10.5"
+        r="10.875"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.75"
+      />
+      <rect
+        x="5.5"
+        y="5.5"
+        width="13"
+        height="13"
+        rx="2"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1"
+      />
+      <path
+        d="M8.6 12.1 L10.9 14.4 L15.4 9.7"
         fill="none"
         stroke="currentColor"
         strokeWidth="2"
-      />
-      <path
-        d="M7.9 12.2 L10.7 15 L16.3 9.2"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2.25"
         strokeLinecap="round"
         strokeLinejoin="round"
       />

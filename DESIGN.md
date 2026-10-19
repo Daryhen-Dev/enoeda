@@ -211,7 +211,7 @@ Depth is built by ruling, not by stacking: three flat planes (ink shell, paper g
 
 ## Shapes
 
-Small, precise radii anchored at **6px** (`--radius: 0.375rem`), derived down for dense controls (`sm` ≈ 3.6px, `md` ≈ 4.8px) and up for panels (`xl` ≈ 8.4px). Badges are near-pills (`rounded-4xl`, ≈ 15.6px on a 20px height); the belt swatch is a full-round vertical strip. Borders are 1px hairlines everywhere on paper; the ink shell separates from paper with a 10%-white hairline instead. Two recurring silhouettes: the bordered text marker pill for state ("Ausente"), and the seal — a rotated (−8°) SVG composition of a 2.5px ring, an inner 1.5px rounded square, and a bold 3.5px check, pure geometry with no illustration.
+Small, precise radii anchored at **6px** (`--radius: 0.375rem`), derived down for dense controls (`sm` ≈ 3.6px, `md` ≈ 4.8px) and up for panels (`xl` ≈ 8.4px). Badges are near-pills (`rounded-4xl`, ≈ 15.6px on a 20px height); the belt swatch is a full-round vertical strip. Borders are 1px hairlines everywhere on paper; the ink shell separates from paper with a 10%-white hairline instead. Two recurring silhouettes: the bordered text marker pill for state ("Ausente"), and the seal — a rotated (−8°) SVG composition of a ring, an inner rounded square and a bold check, pure geometry with no illustration (2.5 / 1.5 / 3.5px strokes on the 56-unit hanko at 44px+; redrawn on a 24-unit grid for the 24px ledger seal, see Ledger seal).
 
 ## Components
 
@@ -253,7 +253,7 @@ The dashboard overview's work areas generalize the ledger list into a white pane
 A vermilion hanko-style stamp: SVG ring + inner rounded square + bold check, rotated −8°, at 44px inline or 96px in the post-save overlay (over a 60% paper scrim). The visible label ("Asistencia registrada") renders beside the stamp in ink, never inside the ring. `role="img"` with an aria-label carries the meaning exactly once. Its only animation is the one-shot stamp: 220ms expo-out from `scale(1.25)`, skipped entirely under `prefers-reduced-motion`.
 
 ### Ledger seal (small)
-The 24px seal on ledger rows (`SealMark`) has its own geometry drawn for that size: 24-unit viewBox, a single ring (r 10.5, stroke 2) and a bold check (stroke 2.25, round caps and joins), rotated −8°, in `--seal`, `role="img"` with the same aria-label. It drops the inner square on purpose: scaled down from the 56-unit hanko the square falls below a pixel and the mark reads as a generic check-circle. Use the full hanko from 44px up and the ledger seal below.
+The 24px seal on ledger rows (`SealMark`) is drawn on its own 24-unit grid instead of scaling the 56-unit hanko down (scaled, the hanko's inner square falls below a pixel): a ring (r 10.875, stroke 1.75), an inner rounded square (13 units, rx 2, stroke 1) and a bold check (stroke 2, round caps and joins), rotated −8°, in `--seal`, `role="img"` with the same aria-label. Every stroke is at least one device pixel, so it keeps the stamp silhouette instead of reading as a generic check-circle. Use the full hanko from 44px up and the ledger seal below.
 
 ### Browser surfaces
 Selection (ink fill, paper-bright text), caret, form accent color, and scrollbar are all themed to the ink palette via `html:not(:has([data-marketing-page]))`, so even native controls speak the system. Tables default to tabular numerals.
