@@ -12,7 +12,7 @@ import { resolveBranchContext } from "@/lib/auth/branch-context"
 import { getAuthenticatedContext } from "@/lib/auth/identity-resolver"
 import { getCurrentDateOnly } from "@/lib/date"
 import { getSessionsForRange } from "@/lib/domain/classes/actions"
-import { buildTodayAgenda } from "@/lib/domain/dashboard"
+import { buildTodayAgenda, formatOverviewDate } from "@/lib/domain/dashboard"
 import {
   CALENDAR_MESSAGES,
   DASHBOARD_OVERVIEW_MESSAGES,
@@ -21,19 +21,6 @@ import {
 
 interface DashboardOverviewProps {
   searchParams: Promise<{ branch?: string; [key: string]: string | undefined }>
-}
-
-/** Formats a date-only string as a capitalized es-EC long date in the branch time zone. */
-function formatLongDate(dateOnly: string, timeZone: string): string {
-  const [year, month, day] = dateOnly.split("-").map(Number)
-  const label = new Intl.DateTimeFormat("es-EC", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    timeZone,
-  }).format(new Date(Date.UTC(year, (month ?? 1) - 1, day ?? 1)))
-
-  return label.charAt(0).toUpperCase() + label.slice(1)
 }
 
 /** Ledger summary line: "3 clases · 1 con asistencia registrada · 2 pendientes". */
@@ -148,7 +135,7 @@ export default async function DashboardOverview({
             {CALENDAR_MESSAGES.TODAY}
           </h2>
           <p className="text-sm text-muted-foreground">
-            {formatLongDate(today, timeZone)}
+            {formatOverviewDate(today)}
           </p>
         </div>
         {summaryLine !== null && (
