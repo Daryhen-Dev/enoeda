@@ -210,7 +210,7 @@ export function AppSidebar({
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <LogoutButton />
+            <LogoutButton tone="sidebar" />
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
