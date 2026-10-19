@@ -29,10 +29,24 @@ Out of scope: marketing kicker bands and hard offset CTA shadow (the user keeps 
 - [x] 2. Small-size seal geometry
 - [x] 3. Icon rail between md and lg
 - [x] 4. DESIGN.md + design.json + direction contract updated
-- [ ] 5. Verify (tests, build, screenshots 390/768/1024/1440) + Impeccable verdict
-- [ ] 6. Work-unit commits + PR
+- [x] 5. Verify (tests, build, screenshots 390/768/1024/1440) + Impeccable verdict
+- [x] 6. Work-unit commits + PR
 
 ## Evidence
+
+- `8ea7b4d` (delegated, gentle-ai-worker): ink header below md (dashboard + owner, emblem only there, title 16.62:1),
+  `collapsible="icon"` + compact default md-lg in the sidebar state provider (collapses once on entering 768-1023,
+  restores the user's choice on leaving; trigger still toggles), small-size seal geometry.
+- `bf5a2ef`: DESIGN.md, design.json and the direction contract describe the shell by width and the ledger seal.
+- Browser (temporary preview routes with synthetic data, served by the user's running dev server on :3003 because
+  it held `.next/dev/lock`; it was not stopped): sheet <768, 48px icon rail at 768 with tooltips, 288px from 1024,
+  trigger toggles, resize ends expanded; no overflow at 390/768/1024/1280/1440; 0 console errors.
+- At 1024 the expanded rail left the 7/5 panels ~390px and names truncated -> `1616a86` panels stack until xl.
+- Finish review: `fix` with 3 items -> `516e286` 24px seal redrawn with ring + inner square + check (every stroke
+  >= 1 device pixel), DESIGN.md Shapes reconciled, tooltip capture added. Verdict pass: all 3 resolved,
+  `disposition: ship` scoped to those fixes. Ceiling notes left as ideas (stamp animation on in-place state change,
+  ink bar hinting sheet nav).
+- Checks: full `pnpm test` 135 files / 1387 passed, 1 skipped; tsc clean; `pnpm build` ok; detector `[]`.
 
 ## Non-goals
 
