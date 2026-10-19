@@ -1,0 +1,164 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-19T07:32:51-05:00",
+  "title": "Design System: ENOEDA Dojo — Tinta y sello",
+  "extensions": {
+    "colorMeta": {
+      "paper": { "role": "neutral", "displayName": "Cool Paper", "canonical": "oklch(0.975 0.006 250)", "tonalRamp": ["oklch(0.3 0.02 250)", "oklch(0.45 0.02 250)", "oklch(0.6 0.015 250)", "oklch(0.72 0.012 250)", "oklch(0.82 0.01 250)", "oklch(0.89 0.012 255)", "oklch(0.945 0.01 255)", "oklch(0.975 0.006 250)"] },
+      "panel-white": { "role": "neutral", "displayName": "Panel White", "canonical": "oklch(1 0 0)", "tonalRamp": ["oklch(0.55 0.005 250)", "oklch(0.68 0.005 250)", "oklch(0.78 0.004 250)", "oklch(0.86 0.003 250)", "oklch(0.92 0.002 250)", "oklch(0.96 0.002 250)", "oklch(0.985 0.004 250)", "oklch(1 0 0)"] },
+      "mist": { "role": "neutral", "displayName": "Mist", "canonical": "oklch(0.945 0.01 255)", "tonalRamp": ["oklch(0.3 0.02 255)", "oklch(0.45 0.02 255)", "oklch(0.6 0.018 255)", "oklch(0.72 0.015 255)", "oklch(0.82 0.013 255)", "oklch(0.89 0.012 255)", "oklch(0.945 0.01 255)", "oklch(0.965 0.008 253)"] },
+      "hairline": { "role": "neutral", "displayName": "Hairline", "canonical": "oklch(0.89 0.012 255)", "tonalRamp": ["oklch(0.3 0.02 255)", "oklch(0.45 0.02 255)", "oklch(0.6 0.018 255)", "oklch(0.72 0.015 255)", "oklch(0.82 0.013 255)", "oklch(0.89 0.012 255)", "oklch(0.945 0.01 255)", "oklch(0.975 0.006 250)"] },
+      "sumi-ink": { "role": "primary", "displayName": "Sumi Ink", "canonical": "oklch(0.21 0.03 262)", "tonalRamp": ["oklch(0.15 0.022 262)", "oklch(0.21 0.03 262)", "oklch(0.29 0.035 262)", "oklch(0.38 0.04 262)", "oklch(0.47 0.025 260)", "oklch(0.6 0.02 260)", "oklch(0.78 0.012 256)", "oklch(0.94 0.01 255)"] },
+      "ink-primary": { "role": "primary", "displayName": "Ink Primary", "canonical": "oklch(0.26 0.045 262)", "tonalRamp": ["oklch(0.15 0.022 262)", "oklch(0.22 0.035 262)", "oklch(0.26 0.045 262)", "oklch(0.38 0.04 262)", "oklch(0.5 0.06 262)", "oklch(0.65 0.04 260)", "oklch(0.8 0.02 258)", "oklch(0.94 0.01 255)"] },
+      "paper-bright": { "role": "neutral", "displayName": "Paper Bright", "canonical": "oklch(0.985 0.004 250)", "tonalRamp": ["oklch(0.6 0.005 250)", "oklch(0.72 0.005 250)", "oklch(0.8 0.005 250)", "oklch(0.87 0.004 250)", "oklch(0.92 0.004 250)", "oklch(0.96 0.004 250)", "oklch(0.985 0.004 250)", "oklch(1 0 0)"] },
+      "ink-muted": { "role": "neutral", "displayName": "Muted Ink", "canonical": "oklch(0.47 0.025 260)", "tonalRamp": ["oklch(0.18 0.02 260)", "oklch(0.28 0.025 260)", "oklch(0.38 0.025 260)", "oklch(0.47 0.025 260)", "oklch(0.58 0.02 260)", "oklch(0.7 0.015 258)", "oklch(0.84 0.01 256)", "oklch(0.94 0.008 255)"] },
+      "ring-ink": { "role": "neutral", "displayName": "Ring Ink", "canonical": "oklch(0.5 0.06 262)", "tonalRamp": ["oklch(0.2 0.04 262)", "oklch(0.3 0.05 262)", "oklch(0.4 0.055 262)", "oklch(0.5 0.06 262)", "oklch(0.62 0.05 262)", "oklch(0.74 0.04 260)", "oklch(0.86 0.02 258)", "oklch(0.95 0.01 255)"] },
+      "seal-vermilion": { "role": "accent", "displayName": "Seal Vermilion", "canonical": "oklch(0.6 0.2 33)", "tonalRamp": ["oklch(0.3 0.12 33)", "oklch(0.4 0.15 33)", "oklch(0.5 0.185 33)", "oklch(0.6 0.2 33)", "oklch(0.68 0.185 33)", "oklch(0.76 0.15 33)", "oklch(0.85 0.1 33)", "oklch(0.93 0.05 33)"] },
+      "destructive-carmine": { "role": "danger", "displayName": "Destructive Carmine", "canonical": "oklch(0.52 0.19 18)", "tonalRamp": ["oklch(0.25 0.1 18)", "oklch(0.35 0.14 18)", "oklch(0.45 0.17 18)", "oklch(0.52 0.19 18)", "oklch(0.62 0.17 18)", "oklch(0.72 0.14 18)", "oklch(0.83 0.09 18)", "oklch(0.92 0.04 18)"] },
+      "sidebar-sumi": { "role": "neutral", "displayName": "Shell Ink", "canonical": "oklch(0.22 0.035 262)", "tonalRamp": ["oklch(0.15 0.022 262)", "oklch(0.22 0.035 262)", "oklch(0.29 0.04 262)", "oklch(0.4 0.04 262)", "oklch(0.52 0.03 262)", "oklch(0.66 0.025 260)", "oklch(0.8 0.015 258)", "oklch(0.9 0.012 255)"] },
+      "sidebar-ink": { "role": "neutral", "displayName": "Shell Text", "canonical": "oklch(0.9 0.012 255)", "tonalRamp": ["oklch(0.3 0.02 255)", "oklch(0.45 0.018 255)", "oklch(0.6 0.015 255)", "oklch(0.72 0.013 255)", "oklch(0.82 0.013 255)", "oklch(0.89 0.012 255)", "oklch(0.945 0.01 255)", "oklch(0.985 0.004 250)"] },
+      "sidebar-ink-hover": { "role": "neutral", "displayName": "Shell Ink Hover", "canonical": "oklch(0.29 0.04 262)", "tonalRamp": ["oklch(0.15 0.022 262)", "oklch(0.22 0.035 262)", "oklch(0.29 0.04 262)", "oklch(0.4 0.04 262)", "oklch(0.52 0.035 262)", "oklch(0.66 0.025 260)", "oklch(0.8 0.015 258)", "oklch(0.92 0.01 255)"] },
+      "sidebar-hairline": { "role": "neutral", "displayName": "Shell Hairline", "canonical": "oklch(1 0 0 / 10%)", "tonalRamp": ["oklch(1 0 0 / 4%)", "oklch(1 0 0 / 6%)", "oklch(1 0 0 / 8%)", "oklch(1 0 0 / 10%)", "oklch(1 0 0 / 14%)", "oklch(1 0 0 / 20%)", "oklch(1 0 0 / 30%)", "oklch(1 0 0 / 45%)"] },
+      "chart-seal": { "role": "data", "displayName": "Chart 1 — Seal", "canonical": "oklch(0.6 0.2 33)", "tonalRamp": ["oklch(0.3 0.12 33)", "oklch(0.4 0.15 33)", "oklch(0.5 0.185 33)", "oklch(0.6 0.2 33)", "oklch(0.68 0.185 33)", "oklch(0.76 0.15 33)", "oklch(0.85 0.1 33)", "oklch(0.93 0.05 33)"] },
+      "chart-ink-soft": { "role": "data", "displayName": "Chart 2 — Soft Ink", "canonical": "oklch(0.45 0.09 262)", "tonalRamp": ["oklch(0.2 0.06 262)", "oklch(0.28 0.07 262)", "oklch(0.36 0.08 262)", "oklch(0.45 0.09 262)", "oklch(0.56 0.08 262)", "oklch(0.68 0.06 262)", "oklch(0.8 0.04 262)", "oklch(0.92 0.02 262)"] },
+      "chart-slate": { "role": "data", "displayName": "Chart 3 — Slate", "canonical": "oklch(0.55 0.07 200)", "tonalRamp": ["oklch(0.25 0.05 200)", "oklch(0.34 0.06 200)", "oklch(0.44 0.065 200)", "oklch(0.55 0.07 200)", "oklch(0.66 0.06 200)", "oklch(0.76 0.045 200)", "oklch(0.86 0.03 200)", "oklch(0.94 0.015 200)"] },
+      "chart-ochre": { "role": "data", "displayName": "Chart 4 — Ochre", "canonical": "oklch(0.72 0.12 80)", "tonalRamp": ["oklch(0.35 0.08 80)", "oklch(0.45 0.1 80)", "oklch(0.56 0.11 80)", "oklch(0.65 0.115 80)", "oklch(0.72 0.12 80)", "oklch(0.8 0.1 80)", "oklch(0.88 0.07 80)", "oklch(0.94 0.04 80)"] },
+      "chart-grey": { "role": "data", "displayName": "Chart 5 — Ledger Grey", "canonical": "oklch(0.6 0.02 260)", "tonalRamp": ["oklch(0.25 0.015 260)", "oklch(0.35 0.018 260)", "oklch(0.47 0.02 260)", "oklch(0.6 0.02 260)", "oklch(0.7 0.018 260)", "oklch(0.8 0.014 260)", "oklch(0.89 0.012 255)", "oklch(0.95 0.008 255)"] }
+    },
+    "typographyMeta": {
+      "title": { "displayName": "Title", "purpose": "Page titles in the header and sheet titles — the largest text in the app, always semibold." },
+      "brand": { "displayName": "Brand", "purpose": "The 'Enoeda Dojo' wordmark beside the emblem in the shell." },
+      "body": { "displayName": "Body", "purpose": "All UI text, list rows, form labels. Money and counts additionally set in tabular-nums." },
+      "meta": { "displayName": "Meta", "purpose": "Timestamps, level names, notes, badges; sidebar group labels add uppercase + 0.08em tracking." }
+    },
+    "shadows": [
+      { "name": "sticky-action-lift", "value": "0 -8px 16px -12px color-mix(in oklch, var(--foreground) 25%, transparent)", "purpose": "Soft upward cue under sticky bottom action bars so content scrolls visibly beneath them." },
+      { "name": "floating-panel-lift", "value": "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)", "purpose": "Tailwind shadow-lg — side sheets and popovers only." }
+    ],
+    "motion": [
+      { "name": "seal-stamp", "value": "220ms cubic-bezier(0.16, 1, 0.3, 1) both — keyframes attendance-seal-stamp: from rotate(-8deg) scale(1.25) to rotate(-8deg) scale(1)", "purpose": "The only authored motion: one-shot stamp when attendance is saved. Skipped entirely under prefers-reduced-motion." },
+      { "name": "overlay-fade", "value": "150ms opacity", "purpose": "Sheet/dialog backdrop fade." },
+      { "name": "sheet-slide", "value": "200ms ease-in-out transform + opacity", "purpose": "Side sheet entry/exit slide." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "lg", "value": "1024px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Sumi ink fill, paper-bright text — the main action (e.g. 'Guardar asistencia').",
+      "html": "<button class=\"ds-btn-primary\">Guardar asistencia</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 0.375rem; height: 2rem; padding: 0 0.625rem; background: var(--primary); color: var(--primary-foreground); border: 1px solid transparent; border-radius: var(--radius); font-family: var(--font-geist-sans), Geist, sans-serif; font-size: 0.875rem; font-weight: 500; white-space: nowrap; cursor: pointer; transition: all 150ms ease; } .ds-btn-primary:hover { background: color-mix(in oklch, var(--primary) 80%, transparent); } .ds-btn-primary:active { transform: translateY(1px); } .ds-btn-primary:focus-visible { border-color: var(--ring); outline: none; box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 50%, transparent); } .ds-btn-primary:disabled { opacity: 0.5; pointer-events: none; }"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Paper fill with hairline border — the workhorse secondary action ('Marcar todos presentes').",
+      "html": "<button class=\"ds-btn-outline\">Marcar todos presentes</button>",
+      "css": ".ds-btn-outline { display: inline-flex; align-items: center; justify-content: center; gap: 0.375rem; height: 2rem; padding: 0 0.625rem; background: var(--background); color: var(--foreground); border: 1px solid var(--border); border-radius: var(--radius); font-family: var(--font-geist-sans), Geist, sans-serif; font-size: 0.875rem; font-weight: 500; white-space: nowrap; cursor: pointer; transition: all 150ms ease; } .ds-btn-outline:hover { background: var(--muted); } .ds-btn-outline:active { transform: translateY(1px); } .ds-btn-outline:focus-visible { border-color: var(--ring); outline: none; box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 50%, transparent); } .ds-btn-outline:disabled { opacity: 0.5; pointer-events: none; }"
+    },
+    {
+      "name": "Destructive Button",
+      "kind": "button",
+      "refersTo": null,
+      "description": "10% carmine tint with carmine text — errors and destructive actions, never solid fills.",
+      "html": "<button class=\"ds-btn-destructive\">Eliminar</button>",
+      "css": ".ds-btn-destructive { display: inline-flex; align-items: center; justify-content: center; gap: 0.375rem; height: 2rem; padding: 0 0.625rem; background: color-mix(in oklch, var(--destructive) 10%, transparent); color: var(--destructive); border: 1px solid transparent; border-radius: var(--radius); font-family: var(--font-geist-sans), Geist, sans-serif; font-size: 0.875rem; font-weight: 500; white-space: nowrap; cursor: pointer; transition: all 150ms ease; } .ds-btn-destructive:hover { background: color-mix(in oklch, var(--destructive) 20%, transparent); } .ds-btn-destructive:focus-visible { border-color: color-mix(in oklch, var(--destructive) 40%, transparent); outline: none; box-shadow: 0 0 0 3px color-mix(in oklch, var(--destructive) 20%, transparent); }"
+    },
+    {
+      "name": "Secondary Badge",
+      "kind": "chip",
+      "refersTo": "badge-secondary",
+      "description": "Near-pill mist chip for quiet source labels like 'Por clase'.",
+      "html": "<span class=\"ds-badge-secondary\">Por clase</span>",
+      "css": ".ds-badge-secondary { display: inline-flex; align-items: center; height: 1.25rem; padding: 0 0.5rem; background: var(--secondary); color: var(--secondary-foreground); border: 1px solid transparent; border-radius: calc(var(--radius) * 2.6); font-family: var(--font-geist-sans), Geist, sans-serif; font-size: 0.75rem; font-weight: 500; white-space: nowrap; }"
+    },
+    {
+      "name": "Outline Badge",
+      "kind": "chip",
+      "refersTo": "badge-outline",
+      "description": "Hairline-bordered chip for read-only history rows.",
+      "html": "<span class=\"ds-badge-outline\">Historial</span>",
+      "css": ".ds-badge-outline { display: inline-flex; align-items: center; height: 1.25rem; padding: 0 0.5rem; background: transparent; color: var(--foreground); border: 1px solid var(--border); border-radius: calc(var(--radius) * 2.6); font-family: var(--font-geist-sans), Geist, sans-serif; font-size: 0.75rem; font-weight: 500; white-space: nowrap; }"
+    },
+    {
+      "name": "Checkbox (checked)",
+      "kind": "input",
+      "refersTo": "checkbox-checked",
+      "description": "16px square, 6px radius; checked = solid ink fill with paper-bright check (attendance: present).",
+      "html": "<button class=\"ds-checkbox ds-checkbox-checked\" role=\"checkbox\" aria-checked=\"true\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 6 9 17l-5-5\"/></svg></button>",
+      "css": ".ds-checkbox { display: inline-flex; align-items: center; justify-content: center; width: 1rem; height: 1rem; background: transparent; color: var(--primary-foreground); border: 1px solid var(--input); border-radius: var(--radius); cursor: pointer; transition: background 150ms ease, border-color 150ms ease; } .ds-checkbox:focus-visible { border-color: var(--ring); outline: none; box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 50%, transparent); } .ds-checkbox-checked { background: var(--primary); border-color: var(--primary); }"
+    },
+    {
+      "name": "Ledger Row",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "The attendance sheet's defining pattern: ruled ledger lines with a hairline-bordered belt swatch, a bordered text marker pill for absence — never a card stack.",
+      "html": "<ul class=\"ds-ledger\"><li><span class=\"ds-belt-chip\" title=\"Cintón blanco\"></span><span class=\"ds-ledger-name\">María Fernanda Torres</span><button class=\"ds-checkbox\" role=\"checkbox\" aria-checked=\"false\"></button></li><li class=\"ds-ledger-absent\"><span class=\"ds-belt-chip ds-belt-yellow\" title=\"Cintón amarillo\"></span><span class=\"ds-ledger-name\">Diego Salazar</span><span class=\"ds-absent-marker\">Ausente</span><button class=\"ds-checkbox\" role=\"checkbox\" aria-checked=\"false\"></button></li></ul>",
+      "css": ".ds-ledger { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--border); font-family: var(--font-geist-sans), Geist, sans-serif; } .ds-ledger li { display: flex; align-items: center; gap: 0.75rem; min-height: 3rem; padding: 0.375rem 0.5rem; border-bottom: 1px solid var(--border); } .ds-ledger-absent { background: color-mix(in oklch, var(--muted) 60%, transparent); } .ds-belt-chip { width: 0.625rem; height: 1.375rem; flex-shrink: 0; border-radius: 999px; border: 1px solid var(--border); background: #f3f3f1; } .ds-belt-yellow { background: #e8c93e; } .ds-ledger-name { flex: 1; min-width: 0; font-size: 0.875rem; font-weight: 500; color: var(--foreground); } .ds-absent-marker { flex-shrink: 0; border: 1px solid color-mix(in oklch, var(--foreground) 30%, transparent); color: var(--foreground); border-radius: calc(var(--radius) * 0.5); padding: 0 0.375rem; font-size: 0.75rem; font-weight: 500; }"
+    },
+    {
+      "name": "Sidebar Nav Item",
+      "kind": "nav",
+      "refersTo": null,
+      "description": "Ink shell navigation: quiet paper-bright rows; the active item's icon alone turns seal vermilion.",
+      "html": "<nav class=\"ds-side\" aria-label=\"Gestión\"><a class=\"ds-side-link\" href=\"#\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M8 2v4\"/><path d=\"M16 2v4\"/><rect width=\"18\" height=\"18\" x=\"3\" y=\"4\" rx=\"2\"/><path d=\"M3 10h18\"/></svg>Calendario</a><a class=\"ds-side-link ds-side-active\" href=\"#\" aria-current=\"page\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\"/><circle cx=\"9\" cy=\"7\" r=\"4\"/><path d=\"M22 21v-2a4 4 0 0 0-3-3.87\"/><path d=\"M16 3.13a4 4 0 0 1 0 7.75\"/></svg>Estudiantes</a></nav>",
+      "css": ".ds-side { background: var(--sidebar); color: var(--sidebar-foreground); padding: 0.5rem; width: 16rem; display: flex; flex-direction: column; gap: 0.125rem; font-family: var(--font-geist-sans), Geist, sans-serif; } .ds-side-link { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; border-radius: var(--radius); color: var(--sidebar-foreground); text-decoration: none; font-size: 0.875rem; font-weight: 500; transition: background 150ms ease; } .ds-side-link:hover { background: var(--sidebar-accent); } .ds-side-active { background: var(--sidebar-accent); } .ds-side-active svg { color: var(--sidebar-primary); }"
+    },
+    {
+      "name": "Attendance Seal",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "Vermilion hanko-style stamp: ring + inner rounded square + bold check, rotated −8°; the label renders beside it in ink, never inside the ring.",
+      "html": "<span class=\"ds-seal\"><svg class=\"ds-seal-mark\" viewBox=\"0 0 56 56\" aria-hidden=\"true\"><circle cx=\"28\" cy=\"28\" r=\"26.5\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\"/><rect x=\"9.5\" y=\"9.5\" width=\"37\" height=\"37\" rx=\"5\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"/><path d=\"M18.5 28.5 L25 35 L38 21.5\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"3.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg><span class=\"ds-seal-label\">Asistencia registrada</span></span>",
+      "css": ".ds-seal { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--seal); font-family: var(--font-geist-sans), Geist, sans-serif; } .ds-seal-mark { width: 2.75rem; height: 2.75rem; transform: rotate(-8deg); } .ds-seal-label { color: var(--foreground); font-size: 0.875rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.025em; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Tinta y sello — the app records the dojo's day like an ink ledger that gets sealed.",
+    "overview": "The authenticated app is a working ledger. Sumi blue-black ink owns the shell — the sidebar rail, the header text, the primary buttons — and cool paper carries the work area. Everything that needs doing is plain ink; everything that is done carries the red seal. The vermilion stamp is the single emotional gesture in an otherwise quiet, ruled, workmanlike system: closing work is the ritual, and the interface celebrates nothing else. It refuses the grey SaaS card grid with a decorative accent — structure comes from hairline rules, not from boxes and tints.\n\nDensity is compact and ledger-like (2rem controls, 1px rules, tabular numerals for money and counts), built for a teacher on a phone at the mat and an admin on desktop. Type is a single workhorse sans (Geist) doing all the work through weight and size — no serif, no display face. There is exactly one theme: a single light theme, with the class-based dark: variant intentionally kept inert.",
+    "keyCharacteristics": [
+      "Ink shell, paper ground, white work panels — three flat planes separated by 1px hairlines.",
+      "Vermilion seal red (--seal) reserved exclusively for done/active state; never decoration.",
+      "Lists read as ruled ledger lines (1px rule in every state), never card stacks.",
+      "Tabular numerals for money and counts; compact 2rem control height.",
+      "Belt colors from discipline_levels.color are the only other chroma, always as a hairline-bordered swatch.",
+      "One authored motion: a reduced-motion-aware one-shot seal stamp (220ms expo-out).",
+      "Browser surfaces are themed: selection, caret, accent color, scrollbar all speak ink."
+    ],
+    "rules": [
+      { "name": "The Seal Rule", "body": "Vermilion is reserved exclusively for done/active state. Never decoration, never a second accent, never small text (its contrast, 4.15–4.34:1, forbids it). On the ink shell it appears only as the active nav icon.", "section": "colors" },
+      { "name": "The One Chroma Rule", "body": "Real belt colors from discipline_levels.color are the only other chroma in the system, and they always render as a small hairline-bordered swatch (so a white belt stays visible on paper). No arbitrary color values anywhere else.", "section": "colors" },
+      { "name": "The Print-Grey Rule", "body": "Retired or inactive entities print grey — muted ink, no color — like struck entries in a ledger.", "section": "colors" },
+      { "name": "The No-Color-Only Rule", "body": "Absence and state are never color alone: an absent row gets a bordered text marker pill (\"Ausente\"), not just a tint.", "section": "colors" },
+      { "name": "The Workhorse Rule", "body": "Geist is the only family; heavy title weights carry the hierarchy. No serif, no display face — user-approved, 2026-10-16.", "section": "typography" },
+      { "name": "The Ledger Rule", "body": "Money and counts are always tabular numerals, so columns of figures align like a ruled ledger.", "section": "typography" },
+      { "name": "The Hairline Rule", "body": "1px rules structure the page. Lists read as ruled ledger lines — every row carries its bottom rule in every state; they never become a stack of bordered cards.", "section": "elevation" },
+      { "name": "The Soft Shadow Rule", "body": "Shadows are soft, single-direction lift cues for floating surfaces only. No hard offset shadows, ever.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do reserve seal vermilion for done/active state only: active nav icon, sealed attendance, the post-save stamp. Its rarity is the point.",
+      "Do structure lists with 1px hairlines in every row state — ledger lines, not card stacks.",
+      "Do set all money and counts in tabular numerals.",
+      "Do render belt colors from discipline_levels.color as hairline-bordered swatches, with the level name available to screen readers.",
+      "Do print retired/inactive entities in muted ink with outline badges.",
+      "Do pair every state color with a text or geometric marker (absent tint + \"Ausente\" pill).",
+      "Do keep the single light theme; leave the dark: variant inert rather than deleting it, so leftover utilities stay harmless.",
+      "Do keep controls compact (2rem default) and the seal stamp the only authored motion."
+    ],
+    "donts": [
+      "Don't use the seal vermilion as decoration, for hover states, or for text below ~14px (contrast 4.15–4.34:1 forbids it).",
+      "Don't introduce a second accent or arbitrary colors — belt colors are the only other chroma.",
+      "Don't stack bordered cards where a ruled list will do; don't add tints to differentiate list states beyond the absent row's 60% mist.",
+      "Don't add a dark theme or honor prefers-color-scheme in the authenticated app.",
+      "Don't use hard offset shadows or add new authored animations.",
+      "Don't put text inside the seal ring; the label renders beside it.",
+      "Don't set the root font-size to compensate for density problems — see the known defect below."
+    ]
+  }
+}

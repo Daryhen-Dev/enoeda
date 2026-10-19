@@ -27,8 +27,8 @@ stage-1 tokens (`--seal`, ink/paper palette). PR base: `feat/app-visual-foundati
 - [x] 1. Domain: current belt (level name/color) per attendance entry + tests
 - [x] 2. UI: attendance sheet redesign (counter, mark all, rows, notes, sticky save, seal) + copy + tests
 - [x] 3. Verify: tests, tsc, eslint, build, browser screenshots (mobile + desktop)
-- [ ] 4. Impeccable finish review + DESIGN.md for the "Tinta y sello" system
-- [ ] 5. Work-unit commits + PR
+- [x] 4. Impeccable finish review + DESIGN.md for the "Tinta y sello" system
+- [x] 5. Work-unit commits + PR
 
 ## Evidence
 
@@ -63,6 +63,11 @@ stage-1 tokens (`--seal`, ink/paper palette). PR base: `feat/app-visual-foundati
   resolved, no new regressions; `disposition: fix` remains because #7 (dashboard stat trio) and #8 (global
   `html { font-size: 18px }`) are still open on shipped surfaces — deferred to the dashboard stage by scope.
   Tests: 50 attendance-area tests, full suite 1360 passed / 1 skipped; tsc, eslint, build, detector clean.
+- DESIGN.md + `.impeccable/design.json` written by the Impeccable documenter role (inline substitute; shipped
+  documenter agent unavailable): 8 sections, 20 colors, 8 named rules; marketing identity recorded as out of
+  scope; #7 and #8 recorded as not canonized. Provenance scan flags only pre-existing marketing rasters
+  (`public/media/**`); this build produced no rasters.
+- Final disposition reported verbatim: `fix` (open: #7 dashboard stat trio, #8 18px root — next stage).
 - Known (pre-review): mobile counter wraps to two lines next to the seal; plain rows are ~96px because the meta row always
   carries the note toggle.
 
