@@ -23,9 +23,9 @@ Branch `feat/app-scale-and-overview` from `main` (after #201 and #202 merged).
 
 - [x] 1. Root scale: 16px app root, marketing pinned at 18px, readable app text scale
 - [x] 2. Overview: today's classes with attendance state + payments needing action
-- [ ] 3. Verify: tests, tsc, eslint, build, screenshots (app + marketing unchanged)
-- [ ] 4. Impeccable verdict on #7/#8 + DESIGN.md update
-- [ ] 5. Work-unit commits + PR
+- [x] 3. Verify: tests, tsc, eslint, build, screenshots (app + marketing unchanged)
+- [x] 4. Impeccable verdict on #7/#8 + DESIGN.md update
+- [x] 5. Work-unit commits + PR
 
 ## Evidence
 
@@ -44,6 +44,18 @@ Branch `feat/app-scale-and-overview` from `main` (after #201 and #202 merged).
   action right). Recapture: 390/768/1440 no horizontal overflow.
 - Checks: full `pnpm test` 133 files / 1376 passed, 1 skipped; tsc clean; eslint clean on touched files
   (one pre-existing warning in `app/dashboard/staff/page.tsx`, untouched); `pnpm build` ok.
+- Finish review (Impeccable reviewer inline in a fresh read-only subagent): #7 and #8 **resolved**; disposition
+  `fix` with 6 material fixes, applied in one batch `05b88e5`: DESIGN.md + design.json updated (15px body, 16/18
+  root split, Ledger panel component), "Ver los N" when a payments group is truncated, "Validar pagos" button
+  (filled when there is something to suspend), sealed rows read "Ver asistencia" (`AttendanceSheetDialog`
+  `triggerLabel`), loading skeleton aligned and localized, panel titles 18px.
+- Verdict pass: all 6 resolved; 2 batch regressions (header/"Hoy"/panel titles on one 18px rung; payments footer
+  skeleton) fixed in `bf00843` ("Hoy" 20px, skeleton button height) plus grace-deadline meta now wraps.
+- Found by the verifier: header date was one day early (formatted UTC midnight in UTC-5) -> `95a1c3f`
+  `formatOverviewDate` + tests. Found in the user's screenshot: "Cerrar sesión" unreadable on the ink rail
+  (stage-1 defect) -> `LogoutButton tone="sidebar"` (12.95:1), commit below.
+- Final checks: full `pnpm test` 135 files / 1383 passed, 1 skipped; tsc clean; `pnpm build` ok; no horizontal
+  overflow at 390/1440; 0 console errors.
 - Known: at 768px the 288px sidebar leaves narrow text columns (ellipsis) — pre-existing `md:` sidebar breakpoint.
 
 ## Non-goals
