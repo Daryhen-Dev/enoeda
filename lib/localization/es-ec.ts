@@ -1301,6 +1301,7 @@ export const ATTENDANCE_FORM_MESSAGES = {
   LIST_LABEL: "Estudiantes de la sesión",
   SEAL_LABEL: "Registrada",
   SEAL_ARIA: "Asistencia registrada",
+  UNSAVED_CHANGES: "Cambios sin guardar",
 } as const
 
 export const ATTENDANCE_TOAST = {

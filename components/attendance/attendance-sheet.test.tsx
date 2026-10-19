@@ -473,15 +473,76 @@ describe("AttendanceSheet redesign", () => {
     expect(mocks.onSuccess).toHaveBeenCalledTimes(1)
   })
 
-  it("shows the seal on open when the session already has saved attendance", () => {
+  it("shows the seal on open for an initially recorded session, hides it while dirty, and restores it when edits are reverted", () => {
     rendered = renderSheet([
       entry(ANA_ID, "Ana", { attended: false }),
       entry(BELO_ID, "Belo"),
     ])
 
-    const seal = rendered.container.querySelector(
-      '[role="img"][aria-label="Asistencia registrada"]'
+    // Open state equals the stored record: seal, no unsaved marker.
+    expect(
+      rendered.container.querySelector(
+        '[role="img"][aria-label="Asistencia registrada"]'
+      )
+    ).not.toBeNull()
+    expect(document.body.textContent).not.toContain(
+      ATTENDANCE_FORM_MESSAGES.UNSAVED_CHANGES
     )
-    expect(seal).not.toBeNull()
+
+    // Toggling Ana (false -> true) diverges from the stored record.
+    clickCheckbox(ANA_ID)
+    expect(
+      rendered.container.querySelector(
+        '[role="img"][aria-label="Asistencia registrada"]'
+      )
+    ).toBeNull()
+    expect(document.body.textContent).toContain(
+      ATTENDANCE_FORM_MESSAGES.UNSAVED_CHANGES
+    )
+
+    // Toggling back restores the stored state, so the seal returns.
+    clickCheckbox(ANA_ID)
+    expect(
+      rendered.container.querySelector(
+        '[role="img"][aria-label="Asistencia registrada"]'
+      )
+    ).not.toBeNull()
+    expect(document.body.textContent).not.toContain(
+      ATTENDANCE_FORM_MESSAGES.UNSAVED_CHANGES
+    )
+  })
+
+  it("shows neither the seal nor the unsaved marker on a fresh session before saving", () => {
+    rendered = renderSheet()
+
+    expect(
+      rendered.container.querySelector(
+        '[role="img"][aria-label="Asistencia registrada"]'
+      )
+    ).toBeNull()
+    expect(document.body.textContent).not.toContain(
+      ATTENDANCE_FORM_MESSAGES.UNSAVED_CHANGES
+    )
+  })
+
+  it("keeps absent row names in foreground ink and shows the Ausente pill", () => {
+    rendered = renderSheet()
+
+    clickButtonWithText(ATTENDANCE_FORM_MESSAGES.MARK_ALL_ABSENT)
+
+    const anaLabel = document.querySelector<HTMLLabelElement>(
+      `label[for="attended-${ANA_ID}"]`
+    )
+    expect(anaLabel).not.toBeNull()
+    expect(anaLabel!.textContent).toContain("Ana")
+    const nameSpan = anaLabel!.querySelector("span span")!
+    expect(nameSpan.className).not.toContain("text-muted-foreground")
+
+    const anaRow = anaLabel!.closest("li")!
+    const absentMarker = [...anaRow.querySelectorAll("span")].find(
+      (el) => el.textContent === ATTENDANCE_FORM_MESSAGES.ATTENDED_STATE_ABSENT
+    )!
+    expect(absentMarker).toBeDefined()
+    expect(absentMarker.className).toContain("text-foreground")
   })
 })

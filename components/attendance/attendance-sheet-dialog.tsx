@@ -95,7 +95,7 @@ export function AttendanceSheetDialog({
       </SheetTrigger>
       <SheetContent side="right" size="content">
         <SheetHeader>
-          <SheetTitle className="text-lg font-semibold">
+          <SheetTitle className="text-xl font-semibold tracking-[-0.01em] sm:text-2xl">
             {ATTENDANCE_FORM_MESSAGES.TITLE}
           </SheetTitle>
           <SheetDescription>

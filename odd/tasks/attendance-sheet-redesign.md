@@ -49,7 +49,15 @@ stage-1 tokens (`--seal`, ink/paper palette). PR base: `feat/app-visual-foundati
   observed: needs an authenticated session).
 - Checks: full `pnpm test` 131 files / 1356 passed, 1 skipped; tsc, eslint, `git diff --check` clean;
   `pnpm build` ok; Impeccable detector `[]`.
-- Known: mobile counter wraps to two lines next to the seal; plain rows are ~96px because the meta row always
+- Finish review (Impeccable reviewer run inline in a fresh read-only subagent; the shipped reviewer agent is
+  not available in this harness): `disposition: fix`, 8 material fixes. Fix batch applied: ledger rows (1px rule
+  in every state, no card stack), seal bound to the saved record (hidden + "Cambios sin guardar" when edited),
+  title outranks the count (count on one line), absent names keep ink with an outlined "Ausente" pill, FORM seed
+  replaced by `seed:97f65a55ae679f12` (check-seed exit 0), brief pins Geist as user-approved workhorse type.
+  Verdict pass: #1-#5 resolved, #6 partial (grey level text on the absent tint), #7 shell stat trio and #8 18px
+  root unresolved (out of this stage), 2 regressions (row pitch ~117px, doubled rule above the save bar).
+  Tests after the batch: 48 attendance tests, full suite 1358 passed / 1 skipped; tsc, eslint, build clean.
+- Known (pre-review): mobile counter wraps to two lines next to the seal; plain rows are ~96px because the meta row always
   carries the note toggle.
 
 ## Non-goals

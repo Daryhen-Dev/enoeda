@@ -3,7 +3,12 @@
 import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { NotebookPenIcon, UserPlusIcon, UsersIcon } from "lucide-react"
+import {
+  NotebookPenIcon,
+  PencilLineIcon,
+  UserPlusIcon,
+  UsersIcon,
+} from "lucide-react"
 
 import {
   addPerClassStudentToSession,
@@ -383,6 +388,21 @@ export function AttendanceSheet({
     (record) => editableIds.has(record.student_id) && record.attended
   ).length
 
+  // The seal belongs to the stored record, not to the open session: it holds
+  // only while the visible marks still equal the values the sheet was opened
+  // with. Initial nulls map to the same defaults the records start from
+  // (attended null -> true, observation null -> ""), so a fresh session reads
+  // as clean — and it shows no seal at all until its first save.
+  const initialById = new Map(students.map((s) => [s.student_id, s]))
+  const isDirty = records.some((record) => {
+    const initial = initialById.get(record.student_id)
+    if (!initial || initial.source === "history") return false
+    if (record.attended !== (initial.attended ?? true)) return true
+    if (record.observation.trim() !== (initial.observation ?? "").trim())
+      return true
+    return false
+  })
+
   const guestsSection = (
     <GuestsSection
       branchId={branchId}
@@ -437,15 +457,24 @@ export function AttendanceSheet({
   return (
     <div className="relative flex flex-col gap-6">
       {editableEntries.length > 0 && (
-        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-          <div className="flex items-center gap-3">
-            <p className="text-2xl font-semibold tracking-tight tabular-nums">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          {/* Count on one line, seal or unsaved marker at its end. */}
+          <div className="flex min-w-0 items-center justify-between gap-3">
+            <p className="whitespace-nowrap text-base font-semibold tabular-nums">
               {ATTENDANCE_FORM_MESSAGES.PRESENT_COUNT(
                 presentCount,
                 editableEntries.length
               )}
             </p>
-            {initiallyRecorded && <AttendanceSeal size="md" />}
+            {initiallyRecorded &&
+              (isDirty ? (
+                <span className="flex shrink-0 items-center gap-1.5 text-xs font-medium text-foreground">
+                  <PencilLineIcon aria-hidden="true" className="size-3.5" />
+                  {ATTENDANCE_FORM_MESSAGES.UNSAVED_CHANGES}
+                </span>
+              ) : (
+                <AttendanceSeal size="md" />
+              ))}
           </div>
           <div className="flex gap-2">
             <Button
@@ -483,7 +512,7 @@ export function AttendanceSheet({
         {entries.length > 0 && (
           <ul
             aria-label={ATTENDANCE_FORM_MESSAGES.LIST_LABEL}
-            className="flex flex-col gap-2"
+            className="flex flex-col border-t border-border"
           >
             {entries.map((student) => {
               const recordIndex = records.findIndex(
@@ -505,7 +534,7 @@ export function AttendanceSheet({
                   <li
                     key={student.student_id}
                     data-disabled="true"
-                    className="rounded-md border border-border/60 px-3 py-1.5"
+                    className="border-b border-border px-2 py-1.5"
                   >
                     <div className="flex min-h-8 items-center gap-3">
                       <BeltChip
@@ -524,7 +553,7 @@ export function AttendanceSheet({
                       </span>
                     </div>
                     {/* Meta row: read-only history state, outside any tap target. */}
-                    <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2 ps-5.5">
                       <Badge variant="outline">
                         {sourceBadgeLabel(student.source)}
                       </Badge>
@@ -540,8 +569,8 @@ export function AttendanceSheet({
                 <li
                   key={student.student_id}
                   className={cn(
-                    "rounded-md border px-3 py-1.5 transition-colors",
-                    isAbsent ? "border-transparent bg-muted" : "bg-card"
+                    "border-b border-border px-2 py-1.5",
+                    isAbsent && "bg-muted/60"
                   )}
                 >
                   {/*
@@ -560,8 +589,8 @@ export function AttendanceSheet({
                     <span className="min-w-0 flex-1">
                       <span
                         className={cn(
-                          "block line-clamp-2 text-sm font-medium",
-                          isAbsent && "text-muted-foreground"
+                          "block line-clamp-2 text-sm text-foreground",
+                          !isAbsent && "font-medium"
                         )}
                       >
                         {student.first_name} {student.surname}
@@ -588,14 +617,14 @@ export function AttendanceSheet({
                     absent marker, the note preview, the note toggle and the
                     per-class charge action.
                   */}
-                  <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2 ps-5.5">
                     {student.source !== "roster" && (
                       <Badge variant="secondary">
                         {sourceBadgeLabel(student.source)}
                       </Badge>
                     )}
                     {isAbsent && (
-                      <span className="text-xs font-medium text-muted-foreground">
+                      <span className="rounded-sm border border-foreground/30 px-1.5 text-xs font-medium text-foreground">
                         {ATTENDANCE_FORM_MESSAGES.ATTENDED_STATE_ABSENT}
                       </span>
                     )}
