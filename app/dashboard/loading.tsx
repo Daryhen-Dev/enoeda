@@ -75,14 +75,14 @@ export default function DashboardLoading() {
         <Skeleton className="h-4 w-64" />
       </header>
 
-      <div className="grid gap-4 lg:grid-cols-12 lg:gap-6">
-        <div className="min-w-0 lg:col-span-7">
+      <div className="grid gap-4 xl:grid-cols-12 xl:gap-6">
+        <div className="min-w-0 xl:col-span-7">
           <PanelSkeleton
             label={DASHBOARD_OVERVIEW_MESSAGES.TODAY_CLASSES}
             rowCount={AGENDA_SKELETON_ROW_COUNT}
           />
         </div>
-        <div className="min-w-0 lg:col-span-5">
+        <div className="min-w-0 xl:col-span-5">
           <PanelSkeleton
             label={DASHBOARD_OVERVIEW_MESSAGES.PAYMENTS_ACTION_TITLE}
             rowCount={PAYMENTS_SKELETON_ROW_COUNT}
