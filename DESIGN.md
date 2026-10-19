@@ -187,11 +187,11 @@ A near-monochrome ink ramp on cool blue-tinted paper, with one vermilion accent 
 
 ## Layout
 
-The shell is a fixed spatial contract: **ink sidebar at left on desktop, ink top bar with sheet navigation on mobile**. The brand emblem and name sit at the top of the rail and are always visible; the header carries the page title (large and heavy) on the left and the branch switcher plus user name on the right, separated from the work area by a 1px bottom hairline. The work area is paper. The student area (`/student`) uses the same language in a centered single column (`max-w-4xl`) with an ink top bar instead of a rail.
+The shell is a fixed spatial contract: **ink sidebar at left on desktop, ink top bar with sheet navigation on mobile**. Below `md` (768px) the site header itself is the ink top bar (`bg-sidebar`, sidebar ink text, brand emblem before the page title) and the rail opens as a sheet; from `md` up the header sits on paper next to the ink rail. The brand emblem and name sit at the top of the rail; the header carries the page title (large and heavy) on the left and the branch switcher plus user name on the right, separated from the work area by a 1px bottom hairline. The work area is paper. The student area (`/student`) uses the same language in a centered single column (`max-w-4xl`) with an ink top bar instead of a rail.
 
 Rhythm: sections breathe at `1.5rem` gaps; form rows and list internals at `0.375–0.75rem`; page gutters `1rem` (mobile) to `1.5rem` (desktop). Controls are compact — `2rem` height by default, `1.75rem` (`sm`) and `1.5rem` (`xs`) for dense toolbars. Full-width primary actions (`min-h-3rem`) anchor mobile forms. Long content sheets take at least 40% of the viewport on desktop; on mobile they take the full width or become bottom sheets.
 
-Sticky elements: the attendance save bar sticks to the bottom of its scroll area with a soft upward lift shadow and a popover-white ground. Responsive behavior is Tailwind's default (`sm` 640px, `lg` 1024px); the shell collapses the rail to icons before resorting to an offcanvas drawer.
+Sticky elements: the attendance save bar sticks to the bottom of its scroll area with a soft upward lift shadow and a popover-white ground. Responsive behavior is Tailwind's default (`sm` 640px, `md` 768px, `lg` 1024px). The rail is a sheet below `md`, starts collapsed to a 48px icon rail between `md` and `lg` (expandable with the trigger), and is expanded from `lg`, where the user's toggle owns its state. In icon mode the brand shows only the emblem, menu items show tooltips, and logout is reached by expanding the rail.
 
 **Type root split.** The authenticated app runs a 16px root (`html { font-size: 16px }`); the marketing site keeps its historical 18px root through `html:has([data-marketing-page])`. The readable-body override (`--text-sm: 0.9375rem`) is scoped app-only via `html:not(:has([data-marketing-page]))` and must never leak into the marketing root, which also uses `text-sm`.
 
@@ -252,6 +252,9 @@ The dashboard overview's work areas generalize the ledger list into a white pane
 ### AttendanceSeal (signature)
 A vermilion hanko-style stamp: SVG ring + inner rounded square + bold check, rotated −8°, at 44px inline or 96px in the post-save overlay (over a 60% paper scrim). The visible label ("Asistencia registrada") renders beside the stamp in ink, never inside the ring. `role="img"` with an aria-label carries the meaning exactly once. Its only animation is the one-shot stamp: 220ms expo-out from `scale(1.25)`, skipped entirely under `prefers-reduced-motion`.
 
+### Ledger seal (small)
+The 24px seal on ledger rows (`SealMark`) has its own geometry drawn for that size: 24-unit viewBox, a single ring (r 10.5, stroke 2) and a bold check (stroke 2.25, round caps and joins), rotated −8°, in `--seal`, `role="img"` with the same aria-label. It drops the inner square on purpose: scaled down from the 56-unit hanko the square falls below a pixel and the mark reads as a generic check-circle. Use the full hanko from 44px up and the ledger seal below.
+
 ### Browser surfaces
 Selection (ink fill, paper-bright text), caret, form accent color, and scrollbar are all themed to the ink palette via `html:not(:has([data-marketing-page]))`, so even native controls speak the system. Tables default to tabular numerals.
 
@@ -276,4 +279,4 @@ Selection (ink fill, paper-bright text), caret, form accent color, and scrollbar
 - **Don't** put text inside the seal ring; the label renders beside it.
 - **Don't** let the app-only `--text-sm` override (`0.9375rem`) leak into the marketing root — marketing keeps its own 18px root and its own `text-sm`.
 
-**Not canonized / known defect:** the 768px tablet layout still leaves narrow text columns next to the 288px sidebar. (#7, the dashboard stat-card trio, and #8, the 18px app root, were closed in this stage.)
+**Not canonized / known defects:** none open on the authenticated app. (#7, the dashboard stat-card trio, and #8, the 18px app root, were closed in stage 3; the mobile paper header, the sub-pixel 24px seal and the crowded 768px shell were closed in stage 4.) The public marketing site is a separate identity and is out of scope for this document.

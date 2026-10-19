@@ -28,7 +28,7 @@ Out of scope: marketing kicker bands and hard offset CTA shadow (the user keeps 
 - [x] 1. Mobile ink top bar (dashboard + owner headers)
 - [x] 2. Small-size seal geometry
 - [x] 3. Icon rail between md and lg
-- [ ] 4. DESIGN.md + design.json + direction contract updated
+- [x] 4. DESIGN.md + design.json + direction contract updated
 - [ ] 5. Verify (tests, build, screenshots 390/768/1024/1440) + Impeccable verdict
 - [ ] 6. Work-unit commits + PR
 

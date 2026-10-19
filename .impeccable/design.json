@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-19T08:59:10-05:00",
+  "generatedAt": "2026-10-19T12:00:00-05:00",
   "title": "Design System: ENOEDA Dojo — Tinta y sello",
   "extensions": {
     "colorMeta": {
@@ -42,6 +42,7 @@
     ],
     "breakpoints": [
       { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
       { "name": "lg", "value": "1024px" }
     ]
   },
@@ -125,12 +126,21 @@
       "description": "Vermilion hanko-style stamp: ring + inner rounded square + bold check, rotated −8°; the label renders beside it in ink, never inside the ring.",
       "html": "<span class=\"ds-seal\"><svg class=\"ds-seal-mark\" viewBox=\"0 0 56 56\" aria-hidden=\"true\"><circle cx=\"28\" cy=\"28\" r=\"26.5\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\"/><rect x=\"9.5\" y=\"9.5\" width=\"37\" height=\"37\" rx=\"5\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"/><path d=\"M18.5 28.5 L25 35 L38 21.5\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"3.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg><span class=\"ds-seal-label\">Asistencia registrada</span></span>",
       "css": ".ds-seal { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--seal); font-family: var(--font-geist-sans), Geist, sans-serif; } .ds-seal-mark { width: 2.75rem; height: 2.75rem; transform: rotate(-8deg); } .ds-seal-label { color: var(--foreground); font-size: 0.9375rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.025em; }"
+    },
+    {
+      "name": "Ledger Seal",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "24px seal for ledger rows with its own small-size geometry: one ring (r 10.5, stroke 2) and a bold check (stroke 2.25), rotated −8°, no inner square (it falls below a pixel at 24px). Use the full Attendance Seal from 44px up.",
+      "html": "<svg class=\"ds-ledger-seal\" viewBox=\"0 0 24 24\" role=\"img\" aria-label=\"Asistencia registrada\"><circle cx=\"12\" cy=\"12\" r=\"10.5\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"/><path d=\"M7.9 12.2 L10.7 15 L16.3 9.2\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.25\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>",
+      "css": ".ds-ledger-seal { width: 1.5rem; height: 1.5rem; flex-shrink: 0; color: var(--seal); transform: rotate(-8deg); }"
     }
   ],
   "narrative": {
     "northStar": "Tinta y sello — the app records the dojo's day like an ink ledger that gets sealed.",
     "overview": "The authenticated app is a working ledger. Sumi blue-black ink owns the shell — the sidebar rail, the header text, the primary buttons — and cool paper carries the work area. Everything that needs doing is plain ink; everything that is done carries the red seal. The vermilion stamp is the single emotional gesture in an otherwise quiet, ruled, workmanlike system: closing work is the ritual, and the interface celebrates nothing else. It refuses the grey SaaS card grid with a decorative accent — structure comes from hairline rules, not from boxes and tints.\n\nDensity is compact and ledger-like (2rem controls, 1px rules, tabular numerals for money and counts), built for a teacher on a phone at the mat and an admin on desktop. Type is a single workhorse sans (Geist) doing all the work through weight and size — no serif, no display face. There is exactly one theme: a single light theme, with the class-based dark: variant intentionally kept inert.",
     "keyCharacteristics": [
+      "Shell by width: ink top bar with a sheet rail below md (768px), a 48px icon rail between md and lg (starts collapsed, expandable), the expanded rail from lg (the user's toggle owns it).",
       "Ink shell, paper ground, white work panels — three flat planes separated by 1px hairlines.",
       "Vermilion seal red (--seal) reserved exclusively for done/active state; never decoration.",
       "Lists read as ruled ledger lines (1px rule in every state), never card stacks.",
