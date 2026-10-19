@@ -125,7 +125,23 @@
   }
   html {
     @apply font-sans;
+    font-size: 16px;
+  }
+  /* Marketing keeps the historical 18px root so every rem in the
+     components/marketing/** CSS modules and utilities renders exactly as
+     before. Specificity (0,1,1) beats `html` without !important.
+     Marketing never client-navigates into the app (its CTAs are WhatsApp,
+     mailto and marketing routes), so :has() always resolves before paint;
+     keep it that way or expect a one-frame size change on navigation. */
+  html:has([data-marketing-page]) {
     font-size: 18px;
+  }
+  /* Readable app text: text-sm carries most data and body copy in the app,
+     so it goes one step up (15px at the 16px root). Scoped away from
+     marketing, which also uses text-sm. */
+  html:not(:has([data-marketing-page])) {
+    --text-sm: 0.9375rem;
+    --text-sm--line-height: calc(1.375 / 0.9375);
   }
   /* Marketing font preservation: before the Geist fix, --font-sans was a
      self-referential variable (invalid), so every unstyled element — all
