@@ -1,5 +1,6 @@
 import Link from "next/link"
 
+import { buttonVariants } from "@/components/ui/button"
 import {
   getMonthlyPaymentValidation,
   type MonthlyPaymentValidationResult,
@@ -32,6 +33,8 @@ interface PaymentGroupProps {
   rows: MonthlyPaymentValidationRow[]
   emptyText: string
   showGraceDeadline?: boolean
+  /** Validation page link for the "Ver los N" line when rows are hidden. */
+  viewAllHref: string
 }
 
 function PaymentGroup({
@@ -41,7 +44,10 @@ function PaymentGroup({
   rows,
   emptyText,
   showGraceDeadline = false,
+  viewAllHref,
 }: PaymentGroupProps) {
+  const visibleRows = rows.slice(0, MAX_ROWS_PER_GROUP)
+  const hiddenCount = Math.max(0, rows.length - MAX_ROWS_PER_GROUP)
   return (
     <div>
       <div className="flex items-baseline justify-between gap-2 px-4 py-2.5 md:px-5">
@@ -60,7 +66,7 @@ function PaymentGroup({
         </p>
       ) : (
         <ul aria-label={label}>
-          {rows.map((row) => (
+          {visibleRows.map((row) => (
             <li
               key={row.student_discipline_id}
               className="flex items-center justify-between gap-3 border-b border-border px-4 py-2.5 md:px-5"
@@ -78,6 +84,16 @@ function PaymentGroup({
               </span>
             </li>
           ))}
+          {hiddenCount > 0 && (
+            <li className="border-b border-border px-4 py-2.5 md:px-5">
+              <Link
+                href={viewAllHref}
+                className="text-sm font-medium underline-offset-4 hover:underline"
+              >
+                {DASHBOARD_OVERVIEW_MESSAGES.VIEW_ALL_IN_GROUP(rows.length)}
+              </Link>
+            </li>
+          )}
         </ul>
       )}
     </div>
@@ -95,8 +111,10 @@ interface PaymentsActionPanelProps {
  * Work area (B) of the dashboard overview: the enrollments that need a
  * decision, as ruled ledger lines — "A suspender" first (destructive
  * carmine count, never the seal vermilion), then "En período de gracia".
- * Shows at most five rows per group; the full table stays on the
- * validation page, linked from the footer.
+ * Shows at most five rows per group, closing with a ruled "Ver los N" line
+ * when rows are hidden; the full table stays on the validation page, whose
+ * "Validar pagos" control anchors the footer — primary when enrollments
+ * await suspension, outline otherwise.
  */
 export function PaymentsActionPanel({
   branchId,
@@ -104,6 +122,7 @@ export function PaymentsActionPanel({
   error,
 }: PaymentsActionPanelProps) {
   const validationHref = `/dashboard/payments/validation?branch=${encodeURIComponent(branchId)}`
+  const canSuspend = (validation?.to_suspend.length ?? 0) > 0
 
   return (
     <section
@@ -111,7 +130,7 @@ export function PaymentsActionPanel({
       className="rounded-lg border border-border bg-card"
     >
       <div className="border-b border-border px-4 py-3 md:px-5">
-        <h3 id={HEADING_ID} className="text-base font-semibold">
+        <h3 id={HEADING_ID} className="text-lg font-semibold tracking-[-0.01em]">
           {DASHBOARD_OVERVIEW_MESSAGES.PAYMENTS_ACTION_TITLE}
         </h3>
       </div>
@@ -129,15 +148,17 @@ export function PaymentsActionPanel({
             label={PAYMENT_VALIDATION_MESSAGES.TO_SUSPEND}
             count={validation.to_suspend.length}
             tone="destructive"
-            rows={validation.to_suspend.slice(0, MAX_ROWS_PER_GROUP)}
+            rows={validation.to_suspend}
             emptyText={PAYMENT_VALIDATION_MESSAGES.TO_SUSPEND_EMPTY}
+            viewAllHref={validationHref}
           />
           <PaymentGroup
             label={PAYMENT_VALIDATION_MESSAGES.IN_GRACE}
             count={validation.in_grace.length}
-            rows={validation.in_grace.slice(0, MAX_ROWS_PER_GROUP)}
+            rows={validation.in_grace}
             emptyText={PAYMENT_VALIDATION_MESSAGES.IN_GRACE_EMPTY}
             showGraceDeadline
+            viewAllHref={validationHref}
           />
         </>
       )}
@@ -145,9 +166,12 @@ export function PaymentsActionPanel({
       <div className="px-4 py-2.5 md:px-5">
         <Link
           href={validationHref}
-          className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+          className={buttonVariants({
+            variant: canSuspend ? "default" : "outline",
+            size: "sm",
+          })}
         >
-          {DASHBOARD_OVERVIEW_MESSAGES.VALIDATION_LINK}
+          {DASHBOARD_OVERVIEW_MESSAGES.VALIDATE_PAYMENTS}
         </Link>
       </div>
     </section>

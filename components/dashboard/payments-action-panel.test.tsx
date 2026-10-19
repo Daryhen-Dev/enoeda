@@ -11,8 +11,18 @@ import {
 } from "@/lib/localization/es-ec"
 
 vi.mock("next/link", () => ({
-  default: ({ href, children }: { href: string; children?: ReactNode }) => (
-    <a href={href}>{children}</a>
+  default: ({
+    href,
+    children,
+    className,
+  }: {
+    href: string
+    children?: ReactNode
+    className?: string
+  }) => (
+    <a href={href} className={className}>
+      {children}
+    </a>
   ),
 }))
 
@@ -121,7 +131,7 @@ describe("PaymentsActionPanel", () => {
     expect(counts[1]?.className).not.toContain("text-destructive")
   })
 
-  it("caps each group at five rows", () => {
+  it("caps each group at five rows and links the hidden rows to the validation page", () => {
     rendered = renderPanel({
       validation: buildValidation({
         to_suspend: Array.from({ length: 7 }, (_, index) =>
@@ -135,10 +145,44 @@ describe("PaymentsActionPanel", () => {
     })
 
     const groups = rendered.container.querySelectorAll("ul")
-    expect(groups[0]?.querySelectorAll("li")).toHaveLength(5)
-    expect(groups[1]?.querySelectorAll("li")).toHaveLength(5)
+    // 5 visible rows + the final ruled "Ver los N" line inside each group.
+    expect(groups[0]?.querySelectorAll("li")).toHaveLength(6)
+    expect(groups[1]?.querySelectorAll("li")).toHaveLength(6)
     expect(rendered.container.textContent).not.toContain("Suspendido 5")
+
+    const toSuspendLink = groups[0]?.querySelector<HTMLAnchorElement>(
+      "li:last-child a"
+    )
+    expect(toSuspendLink?.textContent).toBe(
+      DASHBOARD_OVERVIEW_MESSAGES.VIEW_ALL_IN_GROUP(7)
+    )
+    expect(toSuspendLink?.getAttribute("href")).toBe(
+      `/dashboard/payments/validation?branch=${BRANCH_ID}`
+    )
+
+    const inGraceLink = groups[1]?.querySelector<HTMLAnchorElement>(
+      "li:last-child a"
+    )
+    expect(inGraceLink?.textContent).toBe(
+      DASHBOARD_OVERVIEW_MESSAGES.VIEW_ALL_IN_GROUP(6)
+    )
   })
+
+  it("shows no view-all line when a group fits within five rows", () => {
+    rendered = renderPanel({
+      validation: buildValidation({
+        to_suspend: [buildRow({ student_name: "Ana Zapata" })],
+        in_grace: [buildRow({ student_name: "Beto Silva", days_overdue: 2 })],
+      }),
+      error: null,
+    })
+
+    const groups = rendered.container.querySelectorAll("ul")
+    expect(groups).toHaveLength(2)
+    expect(groups[0]?.querySelectorAll("li")).toHaveLength(1)
+    expect(groups[1]?.querySelectorAll("li")).toHaveLength(1)
+    expect(rendered.container.querySelectorAll("ul a")).toHaveLength(0)
+  });
 
   it("renders overdue days and the grace deadline for in-grace rows", () => {
     rendered = renderPanel({
@@ -174,18 +218,30 @@ describe("PaymentsActionPanel", () => {
     )
   })
 
-  it("links to the monthly validation page with the encoded branch", () => {
+  it("renders the footer validate-payments control, primary when rows await suspension", () => {
     rendered = renderPanel({
-      validation: buildValidation(),
+      validation: buildValidation({
+        to_suspend: [buildRow({ student_name: "Ana Zapata" })],
+      }),
       error: null,
     })
 
-    const link = rendered.container.querySelector(
+    const link = rendered.container.querySelector<HTMLAnchorElement>(
       `a[href="/dashboard/payments/validation?branch=${BRANCH_ID}"]`
     )
-    expect(link?.textContent).toContain(
-      DASHBOARD_OVERVIEW_MESSAGES.VALIDATION_LINK
+    expect(link?.textContent).toBe(DASHBOARD_OVERVIEW_MESSAGES.VALIDATE_PAYMENTS)
+    expect(link?.className).toContain("bg-primary")
+  })
+
+  it("renders the footer validate-payments control as outline without to-suspend rows", () => {
+    rendered = renderPanel({ validation: buildValidation(), error: null })
+
+    const link = rendered.container.querySelector<HTMLAnchorElement>(
+      `a[href="/dashboard/payments/validation?branch=${BRANCH_ID}"]`
     )
+    expect(link?.textContent).toBe(DASHBOARD_OVERVIEW_MESSAGES.VALIDATE_PAYMENTS)
+    expect(link?.className).toContain("border-border")
+    expect(link?.className).not.toContain("bg-primary")
   })
 
   it("renders the service-unavailable alert on load failure", () => {

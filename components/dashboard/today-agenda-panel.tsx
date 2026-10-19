@@ -70,6 +70,11 @@ function AgendaRowStateCell({ session, branchId }: AgendaRowStateCellProps) {
           sessionDate={session.session_date}
           branchId={branchId}
           disabled={!session.can_take_attendance}
+          triggerLabel={
+            session.state === "sealed"
+              ? DASHBOARD_OVERVIEW_MESSAGES.VIEW_ATTENDANCE
+              : undefined
+          }
           triggerClassName={`ml-auto sm:ml-0 ${buttonVariants({
             variant: session.state === "sealed" ? "ghost" : "default",
             size: "sm",
@@ -110,7 +115,7 @@ export function TodayAgendaPanel({
       className="rounded-lg border border-border bg-card"
     >
       <div className="border-b border-border px-4 py-3 md:px-5">
-        <h3 id={HEADING_ID} className="text-base font-semibold">
+        <h3 id={HEADING_ID} className="text-lg font-semibold tracking-[-0.01em]">
           {DASHBOARD_OVERVIEW_MESSAGES.TODAY_CLASSES}
         </h3>
       </div>

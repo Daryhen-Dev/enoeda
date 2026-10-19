@@ -1,6 +1,10 @@
 import { LoaderCircleIcon } from "lucide-react"
 
 import { Skeleton } from "@/components/ui/skeleton"
+import {
+  CALENDAR_MESSAGES,
+  DASHBOARD_OVERVIEW_MESSAGES,
+} from "@/lib/localization/es-ec"
 
 const AGENDA_SKELETON_ROW_COUNT = 4
 const PAYMENTS_SKELETON_ROW_COUNT = 3
@@ -16,7 +20,7 @@ function PanelSkeleton({
   return (
     <section aria-label={label} className="rounded-lg border border-border bg-card">
       <div className="border-b border-border px-4 py-3 md:px-5">
-        <Skeleton className="h-5 w-40" />
+        <Skeleton className="h-7 w-40" />
       </div>
       <div aria-hidden="true" className="flex flex-col px-4 py-1.5 md:px-5">
         {Array.from({ length: rowCount }, (_, index) => (
@@ -53,13 +57,16 @@ export default function DashboardLoading() {
         >
           <LoaderCircleIcon aria-hidden="true" className="size-4 animate-spin" />
           <span className="text-sm font-medium">
-            Cargando el panel de control...
+            {DASHBOARD_OVERVIEW_MESSAGES.LOADING_OVERVIEW}
           </span>
         </div>
         <div className="flex items-baseline gap-3">
-          <h1 id="dashboard-loading-heading" className="text-lg font-semibold">
-            Hoy
-          </h1>
+          <h2
+            id="dashboard-loading-heading"
+            className="text-lg font-semibold tracking-[-0.01em]"
+          >
+            {CALENDAR_MESSAGES.TODAY}
+          </h2>
           <Skeleton className="h-4 w-48" />
         </div>
         <Skeleton className="h-4 w-64" />
@@ -68,13 +75,13 @@ export default function DashboardLoading() {
       <div className="grid gap-4 lg:grid-cols-12 lg:gap-6">
         <div className="min-w-0 lg:col-span-7">
           <PanelSkeleton
-            label="Clases de hoy"
+            label={DASHBOARD_OVERVIEW_MESSAGES.TODAY_CLASSES}
             rowCount={AGENDA_SKELETON_ROW_COUNT}
           />
         </div>
         <div className="min-w-0 lg:col-span-5">
           <PanelSkeleton
-            label="Pagos que requieren acción"
+            label={DASHBOARD_OVERVIEW_MESSAGES.PAYMENTS_ACTION_TITLE}
             rowCount={PAYMENTS_SKELETON_ROW_COUNT}
           />
         </div>

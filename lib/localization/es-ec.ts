@@ -185,8 +185,10 @@ export const DIALOG_ACCESSIBILITY_MESSAGES = {
 export const DASHBOARD_OVERVIEW_MESSAGES = {
   NO_BRANCH_CONTEXT:
     "No tiene una sucursal activa asignada. Contacte al administrador.",
+  LOADING_OVERVIEW: "Cargando el panel de control...",
   TODAY_CLASSES: "Clases de hoy",
   ATTENDANCE_PENDING: "Asistencia pendiente",
+  VIEW_ATTENDANCE: "Ver asistencia",
   CALENDAR_LINK: "Ver calendario",
   SUMMARY_CLASSES: (count: number) =>
     count === 1 ? "1 clase" : `${count} clases`,
@@ -200,6 +202,8 @@ export const DASHBOARD_OVERVIEW_MESSAGES = {
     count === 1 ? "1 suspendida" : `${count} suspendidas`,
   PAYMENTS_ACTION_TITLE: "Pagos que requieren acción",
   VALIDATION_LINK: "Ver validación mensual",
+  VALIDATE_PAYMENTS: "Validar pagos",
+  VIEW_ALL_IN_GROUP: (count: number) => `Ver los ${count}`,
   DAYS_OVERDUE_COUNT: (days: number) =>
     days === 1 ? "1 día de atraso" : `${days} días de atraso`,
 } as const

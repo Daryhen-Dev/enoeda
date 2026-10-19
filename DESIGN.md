@@ -37,9 +37,9 @@ typography:
     letterSpacing: "normal"
   body:
     fontFamily: "Geist, sans-serif"
-    fontSize: "0.875rem"
+    fontSize: "0.9375rem"
     fontWeight: 400
-    lineHeight: 1.43
+    lineHeight: 1.4667
     letterSpacing: "normal"
   meta:
     fontFamily: "Geist, sans-serif"
@@ -126,6 +126,7 @@ Density is compact and ledger-like (2rem controls, 1px rules, tabular numerals f
 - Lists read as ruled ledger lines (1px rule in every state), never card stacks.
 - Tabular numerals for money and counts; compact 2rem control height.
 - Belt colors from `discipline_levels.color` are the only other chroma, always as a hairline-bordered swatch.
+- Type root is split by surface: the app runs 16px; marketing keeps 18px via `html:has([data-marketing-page])`.
 - One authored motion: a reduced-motion-aware one-shot seal stamp (220ms expo-out).
 - Browser surfaces are themed: selection, caret, accent color, scrollbar all speak ink.
 
@@ -174,7 +175,7 @@ A near-monochrome ink ramp on cool blue-tinted paper, with one vermilion accent 
 ### Hierarchy
 - **Title** (600, `1.25rem` mobile → `1.5rem` sm, `-0.01em` tracking): page titles in the header and sheet titles. The largest text in the app.
 - **Brand** (600, `1rem`): the "Enoeda Dojo" wordmark beside the emblem in the sidebar.
-- **Body** (400–500, `0.875rem`, 1.43 line-height): all UI text, list rows, form labels.
+- **Body** (400–500, `0.9375rem` — 15px at the 16px app root, via the app-scoped `text-sm` step — ≈1.47 line-height): all UI text, list rows, form labels.
 - **Meta** (500, `0.75rem`): timestamps, level names, notes, source badges; sidebar group labels additionally uppercase with `0.08em` tracking.
 - **Ledger figures**: all money and counts in `tabular-nums` (applied globally to tables, and to count lines like "12/15 presentes").
 
@@ -191,6 +192,8 @@ The shell is a fixed spatial contract: **ink sidebar at left on desktop, ink top
 Rhythm: sections breathe at `1.5rem` gaps; form rows and list internals at `0.375–0.75rem`; page gutters `1rem` (mobile) to `1.5rem` (desktop). Controls are compact — `2rem` height by default, `1.75rem` (`sm`) and `1.5rem` (`xs`) for dense toolbars. Full-width primary actions (`min-h-3rem`) anchor mobile forms. Long content sheets take at least 40% of the viewport on desktop; on mobile they take the full width or become bottom sheets.
 
 Sticky elements: the attendance save bar sticks to the bottom of its scroll area with a soft upward lift shadow and a popover-white ground. Responsive behavior is Tailwind's default (`sm` 640px, `lg` 1024px); the shell collapses the rail to icons before resorting to an offcanvas drawer.
+
+**Type root split.** The authenticated app runs a 16px root (`html { font-size: 16px }`); the marketing site keeps its historical 18px root through `html:has([data-marketing-page])`. The readable-body override (`--text-sm: 0.9375rem`) is scoped app-only via `html:not(:has([data-marketing-page]))` and must never leak into the marketing root, which also uses `text-sm`.
 
 ## Elevation & Depth
 
@@ -243,6 +246,9 @@ Small, precise radii anchored at **6px** (`--radius: 0.375rem`), derived down fo
 ### Ledger list (signature)
 The attendance sheet is the system's defining pattern: a `border-t`-opened list of rows, each closed by a 1px `border-b` in every state — present, absent, history — never cards. Each row leads with the belt swatch (hairline-bordered `2.5 × 5.5` strip filled from `discipline_levels.color`, level name in visually-hidden text), the student name at `text-sm`, the checkbox always in the same position so nothing jumps between states, and a meta line (outside the tap target) holding source badges, the absent marker pill, note previews, and per-row actions. History rows are visually retired: muted ink, `outline` badge, no interaction. A full-width sticky save bar with the soft lift shadow anchors the flow; on save, the seal stamps.
 
+### Ledger panel (signature)
+The dashboard overview's work areas generalize the ledger list into a white panel: a `bg-card` plane framed by 1px hairlines, with a hairline-separated header (panel title at `text-lg` semibold, `-0.01em`), ruled rows each closed by a 1px `border-b` in every state, and a hairline-separated footer. Each row leads with its name and a muted meta line; the **state cell sits at the trailing edge** — the vermilion seal for done work, an outline pill for pending work, muted grey for suspended rows. Actions are **named by what they do** ("Tomar asistencia", "Validar pagos") and live in the row or the footer, never as bare "ver más" links; a group sliced at five rows closes with its own ruled "Ver los N" line pointing at the full table.
+
 ### AttendanceSeal (signature)
 A vermilion hanko-style stamp: SVG ring + inner rounded square + bold check, rotated −8°, at 44px inline or 96px in the post-save overlay (over a 60% paper scrim). The visible label ("Asistencia registrada") renders beside the stamp in ink, never inside the ring. `role="img"` with an aria-label carries the meaning exactly once. Its only animation is the one-shot stamp: 220ms expo-out from `scale(1.25)`, skipped entirely under `prefers-reduced-motion`.
 
@@ -268,6 +274,6 @@ Selection (ink fill, paper-bright text), caret, form accent color, and scrollbar
 - **Don't** add a dark theme or honor `prefers-color-scheme` in the authenticated app.
 - **Don't** use hard offset shadows or add new authored animations.
 - **Don't** put text inside the seal ring; the label renders beside it.
-- **Don't** set the root font-size to compensate for density problems — see the known defect below.
+- **Don't** let the app-only `--text-sm` override (`0.9375rem`) leak into the marketing root — marketing keeps its own 18px root and its own `text-sm`.
 
-**Not canonized / known defects:** (#7) the dashboard overview still leads with three equal stat cards (hero-metric template — a craft-floor refusal; it must NOT be copied as a pattern by future surfaces) and (#8) `html { font-size: 18px }` multiplies every rem (a known scale defect, not a system rule — authored rem values in this document assume the standard 16px root).
+**Not canonized / known defect:** the 768px tablet layout still leaves narrow text columns next to the 288px sidebar. (#7, the dashboard stat-card trio, and #8, the 18px app root, were closed in this stage.)

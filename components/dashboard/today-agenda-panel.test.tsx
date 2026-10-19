@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import type { SessionView } from "@/lib/domain/classes/actions"
 import {
+  ATTENDANCE_FORM_MESSAGES,
   CALENDAR_MESSAGES,
   DASHBOARD_OVERVIEW_MESSAGES,
 } from "@/lib/localization/es-ec"
@@ -23,7 +24,7 @@ vi.mock("@/components/attendance/attendance-sheet-dialog", () => ({
     dialogSpy(props)
     return (
       <button data-testid="attendance-trigger" disabled={Boolean(props.disabled)}>
-        Tomar asistencia
+        {(props.triggerLabel as string | undefined) ?? ATTENDANCE_FORM_MESSAGES.TAKE_ATTENDANCE}
       </button>
     )
   },
@@ -155,6 +156,48 @@ describe("TodayAgendaPanel", () => {
     const rows = rendered.container.querySelectorAll("ul > li")
     expect(rows[0]?.querySelectorAll("svg[aria-label]")).toHaveLength(1)
     expect(rows[1]?.querySelectorAll("svg[aria-label]")).toHaveLength(0)
+  })
+
+  it("passes 'Ver asistencia' as the trigger label for sealed rows and the default for pending ones", () => {
+    rendered = renderPanel({
+      sessions: [
+        buildSession({
+          start_time: "07:00",
+          scheduled_class_id: "class-sealed",
+          attendance: { record_count: 5, present_count: 4 },
+          can_view_attendance: true,
+        }),
+        buildSession({
+          start_time: "09:00",
+          scheduled_class_id: "class-pending",
+          can_view_attendance: true,
+        }),
+      ],
+    })
+
+    const calls = dialogSpy.mock.calls.map(
+      (call) => call[0] as Record<string, unknown>
+    )
+    const sealedCall = calls.find(
+      (call) => call.scheduledClassId === "class-sealed"
+    )
+    const pendingCall = calls.find(
+      (call) => call.scheduledClassId === "class-pending"
+    )
+    expect(sealedCall?.triggerLabel).toBe(
+      DASHBOARD_OVERVIEW_MESSAGES.VIEW_ATTENDANCE
+    )
+    expect(pendingCall?.triggerLabel).toBeUndefined()
+
+    const triggers = rendered.container.querySelectorAll(
+      '[data-testid="attendance-trigger"]'
+    )
+    expect(triggers[0]?.textContent).toBe(
+      DASHBOARD_OVERVIEW_MESSAGES.VIEW_ATTENDANCE
+    )
+    expect(triggers[1]?.textContent).toBe(
+      ATTENDANCE_FORM_MESSAGES.TAKE_ATTENDANCE
+    )
   })
 
   it("renders the attendance trigger only when can_view_attendance", () => {
