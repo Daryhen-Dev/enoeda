@@ -7,9 +7,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
+  --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-heading: var(--font-geist-sans);
   --font-marketing-display: var(--font-bebas-neue);
   --font-marketing-body: var(--font-archivo-narrow);
   --font-marketing-logo: var(--font-shojumaru);
@@ -50,6 +50,8 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-seal-foreground: var(--seal-foreground);
+  --color-seal: var(--seal);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -68,73 +70,51 @@
   --marketing-menu-border: #ffb3b1;
   --marketing-section-border: #d5e3ff;
   --marketing-menu-foreground: #d5e3ff;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+
+  /* "Tinta y sello" — single light theme for the authenticated app.
+     Sumi blue-black ink owns the shell; cool paper is the ground; work panels
+     are white; vermilion seal red is reserved exclusively for done/active
+     state (never decoration); deep carmine stays distinct for destructive. */
+  --background: oklch(0.975 0.006 250);
+  --foreground: oklch(0.21 0.03 262);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  --card-foreground: oklch(0.21 0.03 262);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --popover-foreground: oklch(0.21 0.03 262);
+  --primary: oklch(0.26 0.045 262);
+  --primary-foreground: oklch(0.985 0.004 250);
+  --secondary: oklch(0.945 0.01 255);
+  --secondary-foreground: oklch(0.21 0.03 262);
+  --muted: oklch(0.945 0.01 255);
+  --muted-foreground: oklch(0.47 0.025 260);
+  --accent: oklch(0.945 0.01 255);
+  --accent-foreground: oklch(0.21 0.03 262);
+  --destructive: oklch(0.52 0.19 18);
+  --border: oklch(0.89 0.012 255);
+  --input: oklch(0.89 0.012 255);
+  --ring: oklch(0.5 0.06 262);
+  --seal: oklch(0.6 0.2 33);
+  --seal-foreground: oklch(0.985 0.004 250);
+  --chart-1: oklch(0.6 0.2 33);
+  --chart-2: oklch(0.45 0.09 262);
+  --chart-3: oklch(0.55 0.07 200);
+  --chart-4: oklch(0.72 0.12 80);
+  --chart-5: oklch(0.6 0.02 260);
+  --radius: 0.375rem;
+  --sidebar: oklch(0.22 0.035 262);
+  --sidebar-foreground: oklch(0.9 0.012 255);
+  --sidebar-primary: oklch(0.6 0.2 33);
+  --sidebar-primary-foreground: oklch(0.985 0.004 250);
+  --sidebar-accent: oklch(0.29 0.04 262);
+  --sidebar-accent-foreground: oklch(0.985 0.004 250);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.7 0.05 262);
 }
 
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
-}
+/* Single light theme: no .dark token block exists. The class-based dark
+   variant is kept so leftover `dark:` utilities stay inert (they only match
+   under an ancestor `.dark` class that is never applied) instead of following
+   prefers-color-scheme. */
 
 @layer base {
   * {
@@ -146,6 +126,29 @@
   html {
     @apply font-sans;
     font-size: 18px;
+  }
+  /* Marketing font preservation: before the Geist fix, --font-sans was a
+     self-referential variable (invalid), so every unstyled element — all
+     marketing text — computed the UA default font. Resetting the marketing
+     subtree to `initial` reproduces that computed value exactly, while the
+     app now resolves Geist. Explicit font-marketing-* classes are untouched. */
+  [data-marketing-page] {
+    font-family: initial;
+  }
+  /* Browser surfaces for the app, scoped away from [data-marketing-page]
+     routes so marketing keeps its exact current rendering. */
+  html:not(:has([data-marketing-page])) {
+    color-scheme: light;
+    caret-color: var(--foreground);
+    accent-color: var(--primary);
+    scrollbar-color: var(--border) transparent;
+  }
+  html:not(:has([data-marketing-page])) ::selection {
+    background-color: var(--primary);
+    color: var(--primary-foreground);
+  }
+  html:not(:has([data-marketing-page])) table {
+    font-variant-numeric: tabular-nums;
   }
 }
 

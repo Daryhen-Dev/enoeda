@@ -7,10 +7,10 @@ import {
   BookOpenIcon,
   BuildingIcon,
   LayoutDashboardIcon,
-  ShieldIcon,
 } from "lucide-react"
 
 import { LogoutButton } from "@/components/auth/logout-button"
+import { EnoedaMark } from "@/components/brand/enoeda-mark"
 import {
   Sidebar,
   SidebarContent,
@@ -63,9 +63,14 @@ export function OwnerSidebar(props: ComponentProps<typeof Sidebar>) {
               className="data-[slot=sidebar-menu-button]:p-1.5!"
               render={<Link href="/owner" />}
             >
-              <ShieldIcon className="size-5!" />
-              <span className="text-base font-semibold">
-                {OWNER_MESSAGES.SHELL_TITLE}
+              <EnoedaMark className="size-8 shrink-0 rounded-full" />
+              <span className="flex flex-col leading-tight">
+                <span className="text-base font-semibold">
+                  {OWNER_MESSAGES.SHELL_TITLE}
+                </span>
+                <span className="text-xs text-sidebar-foreground/70">
+                  {OWNER_MESSAGES.CONTROL_PLANE}
+                </span>
               </span>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -73,7 +78,7 @@ export function OwnerSidebar(props: ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>
+          <SidebarGroupLabel className="uppercase tracking-[0.08em]">
             {OWNER_MESSAGES.MANAGEMENT}
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -87,6 +92,7 @@ export function OwnerSidebar(props: ComponentProps<typeof Sidebar>) {
                     <SidebarMenuButton
                       isActive={isActive}
                       tooltip={item.title}
+                      className="[&[data-active]>svg]:text-sidebar-primary"
                       render={<Link href={item.url} />}
                     >
                       <Icon />

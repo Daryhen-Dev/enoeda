@@ -32,7 +32,7 @@ export default async function OwnerLayout({
   return (
     <TooltipProvider>
       <SidebarProvider style={ownerLayoutStyle}>
-        <OwnerSidebar variant="inset" />
+        <OwnerSidebar variant="sidebar" />
         <SidebarInset>
           <OwnerHeader />
           <div className="flex flex-1 flex-col">

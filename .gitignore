@@ -79,3 +79,6 @@ skills-lock.json
 
 # pnpm local store artifact
 .pnpm-store/
+
+# impeccable machine-local settings
+.impeccable/config.local.json

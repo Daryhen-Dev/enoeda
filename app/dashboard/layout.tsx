@@ -45,7 +45,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
   })()
 
   return <TooltipProvider><SidebarProvider style={dashboardLayoutStyle}>
-    <AppSidebar canManageProfile={canManageProfile} isAdmin={isAdmin} isTeacherOnly={isTeacherOnly} variant="inset" />
+    <AppSidebar canManageProfile={canManageProfile} isAdmin={isAdmin} isTeacherOnly={isTeacherOnly} variant="sidebar" />
     <SidebarInset>
       <SiteHeader displayName={displayName} branches={headerBranches.branches} globalReadBranches={headerBranches.globalReadBranches} />
       <div className="flex flex-1 flex-col"><div className="@container/main flex flex-1 flex-col gap-2">{children}</div></div>
