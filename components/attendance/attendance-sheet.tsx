@@ -528,6 +528,20 @@ export function AttendanceSheet({
                 !student.class_payment_registered &&
                 Boolean(student.student_discipline_id)
               const record = recordIndex !== -1 ? records[recordIndex] : null
+              const noteOpen =
+                record !== null && openNoteIds.has(student.student_id)
+              const noteButtonLabel = record?.observation
+                ? ATTENDANCE_FORM_MESSAGES.EDIT_NOTE
+                : ATTENDANCE_FORM_MESSAGES.ADD_NOTE
+              // Two-line layout only when there is real meta content; plain
+              // rows stay single-line so the note toggle lives in line 1
+              // (outside the label) and row pitch stays compact.
+              const hasMetaContent =
+                student.source !== "roster" ||
+                isAbsent ||
+                canCharge ||
+                noteOpen ||
+                Boolean(record?.observation)
 
               if (isHistory || recordIndex === -1) {
                 return (
@@ -565,6 +579,45 @@ export function AttendanceSheet({
                 )
               }
 
+              const nameBlock = (
+                <span className="min-w-0 flex-1">
+                  <span
+                    className={cn(
+                      "block line-clamp-2 text-sm text-foreground",
+                      !isAbsent && "font-medium"
+                    )}
+                  >
+                    {student.first_name} {student.surname}
+                  </span>
+                  {student.level_name && (
+                    <span
+                      className={cn(
+                        "block text-xs",
+                        // On the absent tint, muted ink drops below 4.5:1:
+                        // absent rows read the level in full-ink regular
+                        // weight; present rows keep muted ink on white.
+                        isAbsent
+                          ? "font-normal text-foreground"
+                          : "text-muted-foreground"
+                      )}
+                    >
+                      {student.level_name}
+                    </span>
+                  )}
+                </span>
+              )
+
+              const checkboxEl = (
+                <Checkbox
+                  id={`attended-${student.student_id}`}
+                  checked={record!.attended}
+                  onCheckedChange={(checked) =>
+                    updateRecord(recordIndex, "attended", Boolean(checked))
+                  }
+                  disabled={isSubmitting}
+                />
+              )
+
               return (
                 <li
                   key={student.student_id}
@@ -573,102 +626,126 @@ export function AttendanceSheet({
                     isAbsent && "bg-muted/60"
                   )}
                 >
-                  {/*
-                    Line 1 — tap target: the whole label toggles the checkbox.
-                    The checkbox stays in this line in every state, so its
-                    position never jumps between present/absent.
-                  */}
-                  <label
-                    htmlFor={`attended-${student.student_id}`}
-                    className="flex min-h-12 cursor-pointer items-center gap-3"
-                  >
-                    <BeltChip
-                      levelName={student.level_name}
-                      levelColor={student.level_color}
-                    />
-                    <span className="min-w-0 flex-1">
-                      <span
-                        className={cn(
-                          "block line-clamp-2 text-sm text-foreground",
-                          !isAbsent && "font-medium"
+                  {hasMetaContent ? (
+                    <>
+                      {/**
+                       * Line 1 — tap target: the whole label toggles the
+                       * checkbox. The checkbox stays in this line in every
+                       * state, so its position never jumps between
+                       * present/absent.
+                       */}
+                      <label
+                        htmlFor={`attended-${student.student_id}`}
+                        className="flex min-h-12 cursor-pointer items-center gap-3"
+                      >
+                        <BeltChip
+                          levelName={student.level_name}
+                          levelColor={student.level_color}
+                        />
+                        {nameBlock}
+                        {checkboxEl}
+                      </label>
+
+                      {/**
+                       * Line 2 — meta row, outside the label so activating
+                       * any of it never toggles attendance. Holds the source
+                       * badge, the absent marker, the note preview, the note
+                       * toggle and the per-class charge action.
+                       */}
+                      <div className="flex flex-wrap items-center gap-2 ps-5.5">
+                        {student.source !== "roster" && (
+                          <Badge variant="secondary">
+                            {sourceBadgeLabel(student.source)}
+                          </Badge>
                         )}
+                        {isAbsent && (
+                          <span className="rounded-sm border border-foreground/30 px-1.5 text-xs font-medium text-foreground">
+                            {ATTENDANCE_FORM_MESSAGES.ATTENDED_STATE_ABSENT}
+                          </span>
+                        )}
+                        {record &&
+                          !noteOpen &&
+                          record.observation && (
+                            <p
+                              className={cn(
+                                "min-w-0 truncate text-xs",
+                                // Same contrast rule as the level line: the
+                                // preview reads full-ink on the absent tint.
+                                isAbsent
+                                  ? "font-normal text-foreground"
+                                  : "text-muted-foreground"
+                              )}
+                            >
+                              {record.observation}
+                            </p>
+                          )}
+                        {record && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="xs"
+                            className="ml-auto"
+                            onClick={() => toggleNote(student.student_id)}
+                            disabled={isSubmitting}
+                          >
+                            <NotebookPenIcon aria-hidden="true" />
+                            {noteButtonLabel}
+                          </Button>
+                        )}
+                        {canCharge && (
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => handleChargeClass(student)}
+                            disabled={
+                              isSubmitting ||
+                              chargingStudentId === student.student_id
+                            }
+                          >
+                            {chargingStudentId === student.student_id
+                              ? ATTENDANCE_FORM_MESSAGES.SAVING
+                              : PAYMENT_MESSAGES.CHARGE_CLASS}
+                          </Button>
+                        )}
+                      </div>
+                    </>
+                  ) : (
+                    /**
+                     * Single-line layout — plain rows only. The note toggle is
+                     * OUTSIDE the label (so it never toggles attendance) and
+                     * the checkbox sits after it, still associated through
+                     * the label's htmlFor.
+                     */
+                    <div className="flex items-center gap-3">
+                      <label
+                        htmlFor={`attended-${student.student_id}`}
+                        className="flex min-h-12 min-w-0 flex-1 cursor-pointer items-center gap-3"
                       >
-                        {student.first_name} {student.surname}
-                      </span>
-                      {student.level_name && (
-                        <span className="block text-xs text-muted-foreground">
-                          {student.level_name}
-                        </span>
+                        <BeltChip
+                          levelName={student.level_name}
+                          levelColor={student.level_color}
+                        />
+                        {nameBlock}
+                      </label>
+                      {record && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label={noteButtonLabel}
+                          title={noteButtonLabel}
+                          onClick={() => toggleNote(student.student_id)}
+                          disabled={isSubmitting}
+                        >
+                          <NotebookPenIcon aria-hidden="true" />
+                        </Button>
                       )}
-                    </span>
-                    <Checkbox
-                      id={`attended-${student.student_id}`}
-                      checked={record!.attended}
-                      onCheckedChange={(checked) =>
-                        updateRecord(recordIndex, "attended", Boolean(checked))
-                      }
-                      disabled={isSubmitting}
-                    />
-                  </label>
+                      {checkboxEl}
+                    </div>
+                  )}
 
-                  {/*
-                    Line 2 — meta row, outside the label so activating any of
-                    it never toggles attendance. Holds the source badge, the
-                    absent marker, the note preview, the note toggle and the
-                    per-class charge action.
-                  */}
-                  <div className="flex flex-wrap items-center gap-2 ps-5.5">
-                    {student.source !== "roster" && (
-                      <Badge variant="secondary">
-                        {sourceBadgeLabel(student.source)}
-                      </Badge>
-                    )}
-                    {isAbsent && (
-                      <span className="rounded-sm border border-foreground/30 px-1.5 text-xs font-medium text-foreground">
-                        {ATTENDANCE_FORM_MESSAGES.ATTENDED_STATE_ABSENT}
-                      </span>
-                    )}
-                    {record &&
-                      !openNoteIds.has(student.student_id) &&
-                      record.observation && (
-                        <p className="min-w-0 truncate text-xs text-muted-foreground">
-                          {record.observation}
-                        </p>
-                      )}
-                    {record && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="xs"
-                        className="ml-auto"
-                        onClick={() => toggleNote(student.student_id)}
-                        disabled={isSubmitting}
-                      >
-                        <NotebookPenIcon aria-hidden="true" />
-                        {record.observation
-                          ? ATTENDANCE_FORM_MESSAGES.EDIT_NOTE
-                          : ATTENDANCE_FORM_MESSAGES.ADD_NOTE}
-                      </Button>
-                    )}
-                    {canCharge && (
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => handleChargeClass(student)}
-                        disabled={
-                          isSubmitting ||
-                          chargingStudentId === student.student_id
-                        }
-                      >
-                        {chargingStudentId === student.student_id
-                          ? ATTENDANCE_FORM_MESSAGES.SAVING
-                          : PAYMENT_MESSAGES.CHARGE_CLASS}
-                      </Button>
-                    )}
-                  </div>
-
-                  {record && openNoteIds.has(student.student_id) && (
+                  {record && noteOpen && (
                     <Input
                       aria-label={ATTENDANCE_FORM_MESSAGES.OBSERVATION_LABEL}
                       placeholder={
@@ -692,7 +769,9 @@ export function AttendanceSheet({
         {addPerClassControl}
 
         {editableEntries.length > 0 && (
-          <div className="sticky bottom-0 -mx-4 border-t border-border bg-popover px-4 py-2">
+          <div
+            className="sticky bottom-0 -mx-4 bg-popover px-4 py-2 shadow-[0_-8px_16px_-12px_color-mix(in_oklch,var(--foreground)_25%,transparent)]"
+          >
             <Button
               type="submit"
               disabled={isSubmitting}

@@ -57,6 +57,12 @@ stage-1 tokens (`--seal`, ink/paper palette). PR base: `feat/app-visual-foundati
   Verdict pass: #1-#5 resolved, #6 partial (grey level text on the absent tint), #7 shell stat trio and #8 18px
   root unresolved (out of this stage), 2 regressions (row pitch ~117px, doubled rule above the save bar).
   Tests after the batch: 48 attendance tests, full suite 1358 passed / 1 skipped; tsc, eslint, build clean.
+- Final polish round (user chose one more round): absent-row level/preview text in ink, single-line plain rows
+  with an icon-only note button outside the label (plain row 68.5px, 10 rows visible at 1440x900 vs 7),
+  sticky save bar uses a soft shadow instead of a second rule. Second verdict pass: #6 and both regressions
+  resolved, no new regressions; `disposition: fix` remains because #7 (dashboard stat trio) and #8 (global
+  `html { font-size: 18px }`) are still open on shipped surfaces — deferred to the dashboard stage by scope.
+  Tests: 50 attendance-area tests, full suite 1360 passed / 1 skipped; tsc, eslint, build, detector clean.
 - Known (pre-review): mobile counter wraps to two lines next to the seal; plain rows are ~96px because the meta row always
   carries the note toggle.
 

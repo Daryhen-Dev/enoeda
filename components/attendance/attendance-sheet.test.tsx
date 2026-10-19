@@ -194,10 +194,14 @@ function submitForm() {
 }
 
 function attendedCheckbox(studentId: string): HTMLElement {
-  // Base UI renders the visible checkbox as span[role=checkbox] and puts the
-  // id on the hidden native input that the row label activates.
-  const checkbox = document.querySelector<HTMLElement>(
-    `label[for="attended-${studentId}"] [role="checkbox"]`
+  // Base UI renders the visible span[role=checkbox] and puts the id on a
+  // hidden native input rendered BESIDE it (sibling, not child). The pair
+  // lives inside the row label (meta layout) or beside it (single-line
+  // layout); association with the label is via htmlFor either way.
+  const input = document.getElementById(`attended-${studentId}`)
+  if (!input) throw new Error(`checkbox input for ${studentId} not found`)
+  const checkbox = input.parentElement?.querySelector<HTMLElement>(
+    '[role="checkbox"]'
   )
   if (!checkbox) throw new Error(`checkbox for ${studentId} not found`)
   return checkbox
@@ -212,8 +216,13 @@ function clickCheckbox(studentId: string) {
 }
 
 function expectCheckedCount(expected: number) {
-  const checked = document.querySelectorAll(
-    'label[for^="attended-"] [role="checkbox"][data-checked]'
+  const checked = [
+    ...document.querySelectorAll<HTMLInputElement>('input[id^="attended-"]'),
+  ].filter(
+    (input) =>
+      input.parentElement
+        ?.querySelector('[role="checkbox"]')
+        ?.hasAttribute("data-checked")
   )
   expect(checked.length).toBe(expected)
 }
@@ -544,5 +553,72 @@ describe("AttendanceSheet redesign", () => {
     )!
     expect(absentMarker).toBeDefined()
     expect(absentMarker.className).toContain("text-foreground")
+  })
+
+  it("keeps absent row level lines out of muted ink on the tinted row", () => {
+    rendered = renderSheet([
+      entry(BELO_ID, "Belo", {
+        level_name: "Cinturón amarillo",
+      }),
+    ])
+
+    clickButtonWithText(ATTENDANCE_FORM_MESSAGES.MARK_ALL_ABSENT)
+
+    const beloLabel = document.querySelector<HTMLLabelElement>(
+      `label[for="attended-${BELO_ID}"]`
+    )
+    expect(beloLabel).not.toBeNull()
+    const levelSpan = [...beloLabel!.querySelectorAll("span")].find(
+      (el) =>
+        !el.className.includes("sr-only") &&
+        el.textContent === "Cinturón amarillo"
+    )!
+    expect(levelSpan).toBeDefined()
+    // Muted ink on the bg-muted/60 tint falls below 4.5:1; absent rows must
+    // use full-ink regular text instead.
+    expect(levelSpan.className).not.toContain("text-muted-foreground")
+    expect(levelSpan.className).toContain("text-foreground")
+    expect(levelSpan.className).toContain("font-normal")
+  })
+
+  it("gives plain roster rows an icon-only note button that never toggles attendance", () => {
+    rendered = renderSheet([entry(ANA_ID, "Ana")])
+
+    const noteButton = document.querySelector<HTMLButtonElement>(
+      `button[aria-label="${ATTENDANCE_FORM_MESSAGES.ADD_NOTE}"]`
+    )
+    expect(noteButton).not.toBeNull()
+    expect(noteButton!.getAttribute("title")).toBe(
+      ATTENDANCE_FORM_MESSAGES.ADD_NOTE
+    )
+    // Icon-only: the name is not part of the visible text.
+    expect(noteButton!.textContent).not.toContain(
+      ATTENDANCE_FORM_MESSAGES.ADD_NOTE
+    )
+
+    act(() => {
+      noteButton!.dispatchEvent(
+        new MouseEvent("click", { bubbles: true, cancelable: true })
+      )
+    })
+
+    // The note toggle must not toggle attendance.
+    expect(attendedCheckbox(ANA_ID).hasAttribute("data-checked")).toBe(true)
+    const observationInput = document.querySelector<HTMLInputElement>(
+      'input[aria-label="Observación"]'
+    )
+    expect(observationInput).not.toBeNull()
+
+    // Clicking the row label still toggles attendance.
+    const rowLabel = document.querySelector<HTMLLabelElement>(
+      `label[for="attended-${ANA_ID}"]`
+    )
+    expect(rowLabel).not.toBeNull()
+    act(() => {
+      rowLabel!.dispatchEvent(
+        new MouseEvent("click", { bubbles: true, cancelable: true })
+      )
+    })
+    expect(attendedCheckbox(ANA_ID).hasAttribute("data-checked")).toBe(false)
   })
 })
