@@ -159,7 +159,7 @@ export default async function DashboardOverview({
       </header>
 
       <div className="grid gap-4 lg:grid-cols-12 lg:gap-6">
-        <div className={branchResult.canManage ? "lg:col-span-7" : "lg:col-span-12"}>
+        <div className={`min-w-0 ${branchResult.canManage ? "lg:col-span-7" : "lg:col-span-12"}`}>
           <TodayAgendaPanel
             sessions={sessions ?? []}
             branchId={branchResult.branchId}
@@ -170,7 +170,7 @@ export default async function DashboardOverview({
         </div>
 
         {branchResult.canManage && (
-          <div className="lg:col-span-5">
+          <div className="min-w-0 lg:col-span-5">
             <Suspense fallback={<PaymentsActionPanelFallback />}>
               <PaymentsActionPanelSection branchId={branchResult.branchId} />
             </Suspense>

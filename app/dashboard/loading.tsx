@@ -66,13 +66,13 @@ export default function DashboardLoading() {
       </header>
 
       <div className="grid gap-4 lg:grid-cols-12 lg:gap-6">
-        <div className="lg:col-span-7">
+        <div className="min-w-0 lg:col-span-7">
           <PanelSkeleton
             label="Clases de hoy"
             rowCount={AGENDA_SKELETON_ROW_COUNT}
           />
         </div>
-        <div className="lg:col-span-5">
+        <div className="min-w-0 lg:col-span-5">
           <PanelSkeleton
             label="Pagos que requieren acción"
             rowCount={PAYMENTS_SKELETON_ROW_COUNT}

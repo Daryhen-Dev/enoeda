@@ -29,6 +29,23 @@ Branch `feat/app-scale-and-overview` from `main` (after #201 and #202 merged).
 
 ## Evidence
 
+- T1 `b1a3ec1`: `html { font-size: 16px }`; `html:has([data-marketing-page])` keeps 18px; app-only
+  `--text-sm: 0.9375rem` (15px). Verified in the production build: marketing root 18px and Tailwind `text-sm`
+  15.75px on `/` and `/kickboxing` (no token leak), `/login` root 16px with 15px body; sidebar 324 -> 288px,
+  header 54 -> 48px.
+- T2 `e4b9be6` (delegated, gentle-ai-worker): `/dashboard` leads with "Hoy" + branch-tz date + ledger summary;
+  (A) "Clases de hoy" ruled rows with sealed (seal + present count) / pending (ink pill + "Tomar asistencia"
+  via `AttendanceSheetDialog`) / suspended (grey + reason); (B) "Pagos que requieren acción" (admins only,
+  streamed in Suspense): "A suspender" then "En gracia", top 5 each, link to the validation page. KPI trio,
+  greeting and `getDashboardKpis` removed (no other consumers). Pure helper `buildTodayAgenda` + tests.
+- Browser (temporary preview routes with synthetic data, deleted): desktop two columns, one seal red + one
+  carmine count as the only reds, no console errors. Mobile overflowed (566px at 390) because the grid columns
+  lacked `min-w-0` and rows were single-line; fixed with `min-w-0` and stacked mobile rows (status left,
+  action right). Recapture: 390/768/1440 no horizontal overflow.
+- Checks: full `pnpm test` 133 files / 1376 passed, 1 skipped; tsc clean; eslint clean on touched files
+  (one pre-existing warning in `app/dashboard/staff/page.tsx`, untouched); `pnpm build` ok.
+- Known: at 768px the 288px sidebar leaves narrow text columns (ellipsis) — pre-existing `md:` sidebar breakpoint.
+
 ## Non-goals
 
 - No change to attendance, payment or suspension rules.

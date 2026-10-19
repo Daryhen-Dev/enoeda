@@ -29,7 +29,7 @@ interface AgendaRowStateCellProps {
 function AgendaRowStateCell({ session, branchId }: AgendaRowStateCellProps) {
   if (session.state === "suspended") {
     return (
-      <div className="flex min-w-0 flex-col items-end text-right">
+      <div className="flex min-w-0 flex-col items-start text-left sm:items-end sm:text-right">
         <span className="text-sm text-muted-foreground">
           {CALENDAR_MESSAGES.SUSPENDED_BADGE}
         </span>
@@ -45,7 +45,7 @@ function AgendaRowStateCell({ session, branchId }: AgendaRowStateCellProps) {
   const canViewAttendance = session.can_view_attendance === true
 
   return (
-    <div className="flex shrink-0 flex-col items-end gap-1.5">
+    <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 sm:flex-col sm:items-end sm:justify-start sm:gap-1.5">
       {session.state === "sealed" ? (
         <div className="flex items-center gap-2">
           <SealMark />
@@ -70,10 +70,10 @@ function AgendaRowStateCell({ session, branchId }: AgendaRowStateCellProps) {
           sessionDate={session.session_date}
           branchId={branchId}
           disabled={!session.can_take_attendance}
-          triggerClassName={buttonVariants({
+          triggerClassName={`ml-auto sm:ml-0 ${buttonVariants({
             variant: session.state === "sealed" ? "ghost" : "default",
             size: "sm",
-          })}
+          })}`}
         />
       )}
     </div>
@@ -139,10 +139,13 @@ export function TodayAgendaPanel({
           {agenda.entries.map((session) => (
             <li
               key={session.scheduled_class_id}
-              className={`flex items-center gap-3 border-b border-border px-4 py-3 md:px-5 ${
+              className={`flex flex-col gap-2 border-b border-border px-4 py-3 sm:flex-row sm:items-center sm:gap-3 md:px-5 ${
                 session.state === "suspended" ? "text-muted-foreground" : ""
               }`}
             >
+              {/* Mobile: time + class on the first line, state and action on
+                  the second; from sm up, one ruled line. */}
+              <div className="flex min-w-0 flex-1 items-center gap-3">
               <span className="w-24 shrink-0 text-sm tabular-nums">
                 {session.start_time}–{session.end_time}
               </span>
@@ -164,6 +167,7 @@ export function TodayAgendaPanel({
                     : CALENDAR_MESSAGES.NO_TEACHER}
                   {session.is_substitute && ` · ${CALENDAR_MESSAGES.SUBSTITUTE}`}
                 </p>
+              </div>
               </div>
               <AgendaRowStateCell session={session} branchId={branchId} />
             </li>
