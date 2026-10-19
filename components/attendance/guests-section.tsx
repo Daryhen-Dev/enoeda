@@ -199,7 +199,7 @@ export function GuestsSection({
 
   return (
     <section
-      className="flex flex-col gap-3"
+      className="flex flex-col gap-3 border-t border-border pt-4"
       aria-label={GUEST_FORM_MESSAGES.SECTION_TITLE}
     >
       <div className="flex items-center justify-between gap-2">

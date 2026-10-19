@@ -1,0 +1,273 @@
+---
+name: ENOEDA Dojo — Tinta y sello
+description: Ink-ledger visual system for the authenticated ENOEDA Dojo app — sumi ink shell, cool paper ground, vermilion seal reserved for done/active state.
+colors:
+  paper: "oklch(0.975 0.006 250)"
+  panel-white: "oklch(1 0 0)"
+  mist: "oklch(0.945 0.01 255)"
+  hairline: "oklch(0.89 0.012 255)"
+  sumi-ink: "oklch(0.21 0.03 262)"
+  ink-primary: "oklch(0.26 0.045 262)"
+  paper-bright: "oklch(0.985 0.004 250)"
+  ink-muted: "oklch(0.47 0.025 260)"
+  ring-ink: "oklch(0.5 0.06 262)"
+  seal-vermilion: "oklch(0.6 0.2 33)"
+  destructive-carmine: "oklch(0.52 0.19 18)"
+  sidebar-sumi: "oklch(0.22 0.035 262)"
+  sidebar-ink: "oklch(0.9 0.012 255)"
+  sidebar-ink-hover: "oklch(0.29 0.04 262)"
+  sidebar-hairline: "oklch(1 0 0 / 10%)"
+  chart-seal: "oklch(0.6 0.2 33)"
+  chart-ink-soft: "oklch(0.45 0.09 262)"
+  chart-slate: "oklch(0.55 0.07 200)"
+  chart-ochre: "oklch(0.72 0.12 80)"
+  chart-grey: "oklch(0.6 0.02 260)"
+typography:
+  title:
+    fontFamily: "Geist, sans-serif"
+    fontSize: "1.25rem"
+    fontWeight: 600
+    lineHeight: 1.4
+    letterSpacing: "-0.01em"
+  brand:
+    fontFamily: "Geist, sans-serif"
+    fontSize: "1rem"
+    fontWeight: 600
+    lineHeight: 1.4
+    letterSpacing: "normal"
+  body:
+    fontFamily: "Geist, sans-serif"
+    fontSize: "0.875rem"
+    fontWeight: 400
+    lineHeight: 1.43
+    letterSpacing: "normal"
+  meta:
+    fontFamily: "Geist, sans-serif"
+    fontSize: "0.75rem"
+    fontWeight: 500
+    lineHeight: 1.33
+    letterSpacing: "0.08em"
+rounded:
+  sm: "0.225rem"
+  md: "0.3rem"
+  lg: "0.375rem"
+  xl: "0.525rem"
+  pill: "0.975rem"
+spacing:
+  xs: "0.25rem"
+  sm: "0.5rem"
+  md: "1rem"
+  lg: "1.5rem"
+components:
+  button-primary:
+    backgroundColor: "{colors.ink-primary}"
+    textColor: "{colors.paper-bright}"
+    rounded: "{rounded.lg}"
+    height: "2rem"
+    padding: "0 0.625rem"
+  button-outline:
+    backgroundColor: "{colors.paper}"
+    textColor: "{colors.sumi-ink}"
+    rounded: "{rounded.lg}"
+    height: "2rem"
+    padding: "0 0.625rem"
+  button-secondary:
+    backgroundColor: "{colors.mist}"
+    textColor: "{colors.sumi-ink}"
+    rounded: "{rounded.lg}"
+    height: "2rem"
+    padding: "0 0.625rem"
+  button-ghost:
+    backgroundColor: "transparent"
+    textColor: "{colors.sumi-ink}"
+    rounded: "{rounded.lg}"
+    height: "2rem"
+    padding: "0 0.625rem"
+  badge-secondary:
+    backgroundColor: "{colors.mist}"
+    textColor: "{colors.sumi-ink}"
+    rounded: "{rounded.pill}"
+    height: "1.25rem"
+    padding: "0 0.5rem"
+  badge-outline:
+    backgroundColor: "transparent"
+    textColor: "{colors.sumi-ink}"
+    rounded: "{rounded.pill}"
+    height: "1.25rem"
+    padding: "0 0.5rem"
+  checkbox:
+    backgroundColor: "transparent"
+    textColor: "{colors.paper-bright}"
+    rounded: "{rounded.lg}"
+    size: "1rem"
+  checkbox-checked:
+    backgroundColor: "{colors.ink-primary}"
+    textColor: "{colors.paper-bright}"
+    rounded: "{rounded.lg}"
+    size: "1rem"
+---
+
+# Design System: ENOEDA Dojo — Tinta y sello
+
+## Overview
+
+**Creative North Star: "Tinta y sello" — the app records the dojo's day like an ink ledger that gets sealed.**
+
+The authenticated app is a working ledger. Sumi blue-black ink owns the shell — the sidebar rail, the header text, the primary buttons — and cool paper carries the work area. Everything that needs doing is plain ink; everything that is done carries the red seal. The vermilion stamp is the single emotional gesture in an otherwise quiet, ruled, workmanlike system: closing work is the ritual, and the interface celebrates nothing else. It refuses the grey SaaS card grid with a decorative accent — structure comes from hairline rules, not from boxes and tints.
+
+Density is compact and ledger-like (2rem controls, 1px rules, tabular numerals for money and counts), built for a teacher on a phone at the mat and an admin on desktop. Type is a single workhorse sans (Geist) doing all the work through weight and size — no serif, no display face (user-approved on the direction card, 2026-10-16). There is exactly one theme: a single light theme, with the class-based `dark:` variant intentionally kept inert.
+
+**Scope note:** the public marketing site (`app/(marketing)`, `components/marketing/**`, `--marketing-*` tokens, Bebas Neue / Archivo Narrow) is a separate, older identity and is out of scope for this document.
+
+**Key Characteristics:**
+
+- Ink shell, paper ground, white work panels — three flat planes separated by 1px hairlines.
+- Vermilion seal red (`--seal`) reserved exclusively for done/active state; never decoration.
+- Lists read as ruled ledger lines (1px rule in every state), never card stacks.
+- Tabular numerals for money and counts; compact 2rem control height.
+- Belt colors from `discipline_levels.color` are the only other chroma, always as a hairline-bordered swatch.
+- One authored motion: a reduced-motion-aware one-shot seal stamp (220ms expo-out).
+- Browser surfaces are themed: selection, caret, accent color, scrollbar all speak ink.
+
+## Colors
+
+A near-monochrome ink ramp on cool blue-tinted paper, with one vermilion accent that means "done" and nothing else. All values are OKLCH, matching the project's `:root` tokens in `app/globals.css`.
+
+### Primary
+- **Sumi Ink** (`oklch(0.21 0.03 262)` / `oklch(0.26 0.045 262)`): the voice of the system. Foreground text, primary buttons, checked checkboxes, focused rings. Slightly blue-leaning black, like ink on a brush. Contrast on paper: 16.51:1.
+- **Shell Ink** (`oklch(0.22 0.035 262)`): the sidebar plane, a half-step deeper than text ink so the rail reads as a surface, not a color block. Hover state lifts to `oklch(0.29 0.04 262)`; its 10%-white hairline separates it from the paper.
+
+### Secondary
+- **Seal Vermilion** (`oklch(0.6 0.2 33)`): the signature. Appears only as done/active state — the sealed attendance, the active nav icon (`--sidebar-primary`), the post-save stamp overlay. Contrast on white: 4.34:1; white on seal: 4.15:1 — which is why it is never used for small text.
+
+### Tertiary
+- **Destructive Carmine** (`oklch(0.52 0.19 18)`): a deeper, colder red, kept clearly distinct from the seal. Errors and destructive actions only, on a 10% tint of itself (`destructive/10`) rather than solid fills. Contrast on white: 6.10:1.
+
+### Neutral
+- **Cool Paper** (`oklch(0.975 0.006 250)`): the ground every work area sits on.
+- **Panel White** (`oklch(1 0 0)`): cards, popovers, sheets — the work surface.
+- **Mist** (`oklch(0.945 0.01 255)`): secondary/muted/accent fills — hover states, quiet badges, absent-row tints (at 60%).
+- **Hairline** (`oklch(0.89 0.012 255)`): every border and input stroke on paper.
+- **Muted Ink** (`oklch(0.47 0.025 260)`): secondary text. 6.35:1 on paper, 6.82:1 on white, 5.81:1 on mist.
+- **Paper Bright** (`oklch(0.985 0.004 250)`): text on ink surfaces (primary buttons, sidebar). 14.92:1 on primary ink, 12.87:1 on the shell.
+- **Ring Ink** (`oklch(0.5 0.06 262)`): focus rings, at 50% for the standard 3px ring.
+- **Chart series** (`oklch(0.6 0.2 33)`, `oklch(0.45 0.09 262)`, `oklch(0.55 0.07 200)`, `oklch(0.72 0.12 80)`, `oklch(0.6 0.02 260)`): reserved palette for any future data visualization; the seal leads the series.
+
+### Named Rules
+
+**The Seal Rule.** Vermilion is reserved exclusively for done/active state. Never decoration, never a second accent, never small text (its contrast, 4.15–4.34:1, forbids it). On the ink shell it appears only as the active nav icon.
+
+**The One Chroma Rule.** Real belt colors from `discipline_levels.color` are the only other chroma in the system, and they always render as a small hairline-bordered swatch (so a white belt stays visible on paper). No arbitrary color values anywhere else.
+
+**The Print-Grey Rule.** Retired or inactive entities print grey — muted ink, no color — like struck entries in a ledger.
+
+**The No-Color-Only Rule.** Absence and state are never color alone: an absent row gets a bordered text marker pill ("Ausente"), not just a tint.
+
+## Typography
+
+**Display Font:** none — this system has no display face.
+**Body Font:** Geist (variable, via `--font-geist-sans`), sans-serif fallback.
+**Label/Mono Font:** Geist Mono is loaded (`--font-geist-mono`) but is not load-bearing; use it only where monospace data genuinely helps.
+
+**Character:** one workhorse sans doing everything through weight and size. Titles are heavy and slightly tightened; body text is quiet and compact. The personality comes from the ledger ruling and the seal, not from the letterforms.
+
+### Hierarchy
+- **Title** (600, `1.25rem` mobile → `1.5rem` sm, `-0.01em` tracking): page titles in the header and sheet titles. The largest text in the app.
+- **Brand** (600, `1rem`): the "Enoeda Dojo" wordmark beside the emblem in the sidebar.
+- **Body** (400–500, `0.875rem`, 1.43 line-height): all UI text, list rows, form labels.
+- **Meta** (500, `0.75rem`): timestamps, level names, notes, source badges; sidebar group labels additionally uppercase with `0.08em` tracking.
+- **Ledger figures**: all money and counts in `tabular-nums` (applied globally to tables, and to count lines like "12/15 presentes").
+
+### Named Rules
+
+**The Workhorse Rule.** Geist is the only family; heavy title weights carry the hierarchy. No serif, no display face — user-approved, 2026-10-16.
+
+**The Ledger Rule.** Money and counts are always tabular numerals, so columns of figures align like a ruled ledger.
+
+## Layout
+
+The shell is a fixed spatial contract: **ink sidebar at left on desktop, ink top bar with sheet navigation on mobile**. The brand emblem and name sit at the top of the rail and are always visible; the header carries the page title (large and heavy) on the left and the branch switcher plus user name on the right, separated from the work area by a 1px bottom hairline. The work area is paper. The student area (`/student`) uses the same language in a centered single column (`max-w-4xl`) with an ink top bar instead of a rail.
+
+Rhythm: sections breathe at `1.5rem` gaps; form rows and list internals at `0.375–0.75rem`; page gutters `1rem` (mobile) to `1.5rem` (desktop). Controls are compact — `2rem` height by default, `1.75rem` (`sm`) and `1.5rem` (`xs`) for dense toolbars. Full-width primary actions (`min-h-3rem`) anchor mobile forms. Long content sheets take at least 40% of the viewport on desktop; on mobile they take the full width or become bottom sheets.
+
+Sticky elements: the attendance save bar sticks to the bottom of its scroll area with a soft upward lift shadow and a popover-white ground. Responsive behavior is Tailwind's default (`sm` 640px, `lg` 1024px); the shell collapses the rail to icons before resorting to an offcanvas drawer.
+
+## Elevation & Depth
+
+Depth is built by ruling, not by stacking: three flat planes (ink shell, paper ground, white panel) separated by 1px hairlines. Shadows are rare and always soft, appearing only where a surface genuinely floats above the page.
+
+### Shadow Vocabulary
+- **Sticky action lift** (`0 -8px 16px -12px color-mix(in oklch, var(--foreground) 25%, transparent)`): a soft upward cue under sticky bottom action bars so content scrolls visibly beneath them.
+- **Floating panel lift** (Tailwind `shadow-lg`): side sheets and popovers only.
+
+### Named Rules
+
+**The Hairline Rule.** 1px rules structure the page. Lists read as ruled ledger lines — every row carries its bottom rule in every state; they never become a stack of bordered cards.
+
+**The Soft Shadow Rule.** Shadows are soft, single-direction lift cues for floating surfaces only. No hard offset shadows, ever.
+
+## Shapes
+
+Small, precise radii anchored at **6px** (`--radius: 0.375rem`), derived down for dense controls (`sm` ≈ 3.6px, `md` ≈ 4.8px) and up for panels (`xl` ≈ 8.4px). Badges are near-pills (`rounded-4xl`, ≈ 15.6px on a 20px height); the belt swatch is a full-round vertical strip. Borders are 1px hairlines everywhere on paper; the ink shell separates from paper with a 10%-white hairline instead. Two recurring silhouettes: the bordered text marker pill for state ("Ausente"), and the seal — a rotated (−8°) SVG composition of a 2.5px ring, an inner 1.5px rounded square, and a bold 3.5px check, pure geometry with no illustration.
+
+## Components
+
+### Buttons
+- **Shape:** gently rounded rectangles (6px radius), `2rem` tall by default.
+- **Primary:** sumi ink fill, paper-bright text (`bg-primary`, `px-2.5`); hover deepens via 80% opacity; active presses down 1px.
+- **Outline:** paper fill, hairline border; hover tints to mist. The workhorse for secondary actions ("Marcar todos presentes").
+- **Secondary:** mist fill, ink text — used for quiet in-row actions like "Cobrar clase".
+- **Ghost:** transparent, mist on hover — used for inline toggles like the note button.
+- **Destructive:** a 10% carmine tint with carmine text (no solid fill); hover doubles the tint.
+- **Focus:** 3px ring at 50% ring ink; invalid state rings carmine.
+- **Sizes:** `xs` (1.5rem), `sm` (1.75rem), default (2rem), `lg` (2.25rem); icon-only square variants for each.
+
+### Badges
+- **Style:** near-pill (`h-5`, `px-2`), `text-xs` medium.
+- **Variants:** `secondary` (mist fill) for source labels like "Por clase"; `outline` (hairline border) for read-only history rows; no colored status badges — state meaning lives in the ledger row, not in a tinted chip.
+
+### Checkbox
+- **Style:** 16px square, 6px radius, hairline border on paper.
+- **Checked:** solid ink fill, paper-bright check; the tap target extends invisibly beyond the box for the teacher's thumb.
+- **Attendance semantics:** checked = present; an unchecked row drops to the 60%-mist absent tint with its bordered "Ausente" marker pill.
+
+### Inputs / Fields
+- **Style:** hairline stroke (`--input`), transparent fill, 6px radius.
+- **Focus:** 3px ring at 50% ring ink, no glow.
+- **Error:** a bordered alert block — 50% carmine border on a 10% carmine tint with carmine text (`role="alert"`), never a toast alone.
+
+### Navigation
+- **Sidebar:** ink rail; items are quiet paper-bright rows with lucide icons; hover and active states lift to the lighter shell ink; the **active item's icon alone turns seal vermilion** — the seal's only appearance on the shell. Group labels are uppercase, tracked (`0.08em`), muted. Collapses to icons; mobile uses the ink top bar plus sheets.
+- **Header:** hairline bottom border on paper; page title `text-lg/xl` semibold with `-0.01em` tracking; branch switcher is a native select on desktop and a bottom-sheet drawer on mobile, always visible (one branch, one truth).
+
+### Ledger list (signature)
+The attendance sheet is the system's defining pattern: a `border-t`-opened list of rows, each closed by a 1px `border-b` in every state — present, absent, history — never cards. Each row leads with the belt swatch (hairline-bordered `2.5 × 5.5` strip filled from `discipline_levels.color`, level name in visually-hidden text), the student name at `text-sm`, the checkbox always in the same position so nothing jumps between states, and a meta line (outside the tap target) holding source badges, the absent marker pill, note previews, and per-row actions. History rows are visually retired: muted ink, `outline` badge, no interaction. A full-width sticky save bar with the soft lift shadow anchors the flow; on save, the seal stamps.
+
+### AttendanceSeal (signature)
+A vermilion hanko-style stamp: SVG ring + inner rounded square + bold check, rotated −8°, at 44px inline or 96px in the post-save overlay (over a 60% paper scrim). The visible label ("Asistencia registrada") renders beside the stamp in ink, never inside the ring. `role="img"` with an aria-label carries the meaning exactly once. Its only animation is the one-shot stamp: 220ms expo-out from `scale(1.25)`, skipped entirely under `prefers-reduced-motion`.
+
+### Browser surfaces
+Selection (ink fill, paper-bright text), caret, form accent color, and scrollbar are all themed to the ink palette via `html:not(:has([data-marketing-page]))`, so even native controls speak the system. Tables default to tabular numerals.
+
+## Do's and Don'ts
+
+### Do:
+- **Do** reserve seal vermilion for done/active state only: active nav icon, sealed attendance, the post-save stamp. Its rarity is the point.
+- **Do** structure lists with 1px hairlines in every row state — ledger lines, not card stacks.
+- **Do** set all money and counts in tabular numerals.
+- **Do** render belt colors from `discipline_levels.color` as hairline-bordered swatches, with the level name available to screen readers.
+- **Do** print retired/inactive entities in muted ink with outline badges.
+- **Do** pair every state color with a text or geometric marker (absent tint + "Ausente" pill).
+- **Do** keep the single light theme; leave the `dark:` variant inert rather than deleting it, so leftover utilities stay harmless.
+- **Do** keep controls compact (`2rem` default) and the seal stamp the only authored motion.
+
+### Don't:
+- **Don't** use the seal vermilion as decoration, for hover states, or for text below ~14px (contrast 4.15–4.34:1 forbids it).
+- **Don't** introduce a second accent or arbitrary colors — belt colors are the only other chroma.
+- **Don't** stack bordered cards where a ruled list will do; don't add tints to differentiate list states beyond the absent row's 60% mist.
+- **Don't** add a dark theme or honor `prefers-color-scheme` in the authenticated app.
+- **Don't** use hard offset shadows or add new authored animations.
+- **Don't** put text inside the seal ring; the label renders beside it.
+- **Don't** set the root font-size to compensate for density problems — see the known defect below.
+
+**Not canonized / known defects:** (#7) the dashboard overview still leads with three equal stat cards (hero-metric template — a craft-floor refusal; it must NOT be copied as a pattern by future surfaces) and (#8) `html { font-size: 18px }` multiplies every rem (a known scale defect, not a system rule — authored rem values in this document assume the standard 16px root).

@@ -142,6 +142,10 @@ function makeMockTx() {
     class_guests: {
       findMany: vi.fn().mockResolvedValue([]),
     },
+    student_progress: {
+      // No progress rows by default: entries get null belt level/color.
+      findMany: vi.fn().mockResolvedValue([]),
+    },
     disciplines: {
       findUnique: vi.fn(),
     },
@@ -308,6 +312,96 @@ describe("getAttendanceForSession — roster ∪ per-class ∪ history compositi
       attended: null,
       class_payment_registered: false,
     });
+  });
+
+  it("attaches the current belt level per student: latest promotion wins, no progress means nulls", async () => {
+    const { sessionDate, scheduled } = baseSessionInput();
+    const tx = makeMockTx();
+    setupAuth(tx);
+    authorizeScheduled(tx, sessionDate);
+
+    tx.class_series_students.findMany.mockResolvedValue([
+      {
+        student_id: S_ROSTER_1,
+        students: { first_name: "Ana", surname: "Zapata" },
+      },
+      {
+        student_id: S_ROSTER_2,
+        students: { first_name: "Bruno", surname: "Alvarez" },
+      },
+    ]);
+    tx.attendance.findMany.mockResolvedValue([]);
+    tx.student_disciplines.findMany.mockResolvedValue([
+      {
+        id: SD_ROSTER_1,
+        student_id: S_ROSTER_1,
+        billing_mode: "monthly",
+        is_active: true,
+      },
+      {
+        id: SD_ROSTER_2,
+        student_id: S_ROSTER_2,
+        billing_mode: "monthly",
+        is_active: true,
+      },
+    ]);
+    // Rows in the order the DB returns them (promoted_at desc, created_at
+    // desc): the FIRST row per student is the current level.
+    tx.student_progress.findMany.mockResolvedValue([
+      {
+        student_id: S_ROSTER_1,
+        discipline_levels: { name: "Blanco", color: "#ffffff" },
+      },
+      {
+        student_id: S_ROSTER_1,
+        discipline_levels: { name: "Amarillo", color: "#ffff00" },
+      },
+    ]);
+    tx.class_payments.findMany.mockResolvedValue([]);
+
+    const result = await getAttendanceForSession(
+      scheduled as AttendanceForSessionInput
+    );
+
+    expect(result.success).toBe(true);
+    const rows = result.data!.students;
+    expect(rows).toHaveLength(2);
+    const zapata = rows.find((r) => r.student_id === S_ROSTER_1)!;
+    expect(zapata.level_name).toBe("Blanco");
+    expect(zapata.level_color).toBe("#ffffff");
+    const alvarez = rows.find((r) => r.student_id === S_ROSTER_2)!;
+    expect(alvarez.level_name).toBeNull();
+    expect(alvarez.level_color).toBeNull();
+
+    // One query, scoped to the session's discipline and involved students.
+    expect(tx.student_progress.findMany).toHaveBeenCalledTimes(1);
+    const progressArgs = tx.student_progress.findMany.mock.calls[0][0];
+    expect(progressArgs.where.discipline_id).toBe(DISCIPLINE_ID);
+    expect(new Set(progressArgs.where.student_id.in)).toEqual(
+      new Set([S_ROSTER_1, S_ROSTER_2])
+    );
+    expect(progressArgs.orderBy).toEqual([
+      { promoted_at: "desc" },
+      { created_at: "desc" },
+    ]);
+  });
+
+  it("does not query student_progress when the session has no involved students", async () => {
+    const { sessionDate, scheduled } = baseSessionInput();
+    const tx = makeMockTx();
+    setupAuth(tx);
+    authorizeScheduled(tx, sessionDate);
+
+    tx.class_series_students.findMany.mockResolvedValue([]);
+    tx.attendance.findMany.mockResolvedValue([]);
+
+    const result = await getAttendanceForSession(
+      scheduled as AttendanceForSessionInput
+    );
+
+    expect(result.success).toBe(true);
+    expect(result.data!.students).toEqual([]);
+    expect(tx.student_progress.findMany).not.toHaveBeenCalled();
   });
 
   it("builds the roster from one_time_class_students for one-time classes", async () => {
