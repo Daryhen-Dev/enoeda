@@ -52,6 +52,9 @@ export interface SessionAttendanceEntry {
   source: AttendanceSource;
   billing_mode: "monthly" | "per_class" | null;
   class_payment_registered: boolean;
+  /** Current belt in the session's discipline (latest promotion); null when the student has no recorded progress. */
+  level_name: string | null;
+  level_color: string | null;
 }
 
 export interface PerClassCandidateRow {
@@ -124,6 +127,32 @@ async function getEnrollmentsForStudents(
     select: { id: true, student_id: true, billing_mode: true, is_active: true },
   });
   return new Map(rows.map((row) => [row.student_id, row]));
+}
+
+interface StudentProgressLevelRow {
+  student_id: string;
+  discipline_levels: { name: string; color: string | null };
+}
+
+/**
+ * Current belt per student: the FIRST row per student wins — the caller
+ * fetches rows ordered by promoted_at desc, created_at desc (latest
+ * promotion, creation tiebreak), mirroring the current-level semantics of
+ * lib/domain/progress/actions.ts.
+ */
+function pickCurrentLevelByStudent(
+  rows: StudentProgressLevelRow[]
+): Map<string, { name: string; color: string | null }> {
+  const levelByStudent = new Map<
+    string,
+    { name: string; color: string | null }
+  >();
+  for (const row of rows) {
+    if (!levelByStudent.has(row.student_id)) {
+      levelByStudent.set(row.student_id, row.discipline_levels);
+    }
+  }
+  return levelByStudent;
 }
 
 /** Attendance rows of an occurrence (both class kinds). */
@@ -430,6 +459,23 @@ export async function getAttendanceForSession(
       involvedIds
     );
 
+    // 3b. Current belt in the session's discipline for every involved
+    // student (read-only display data; no write-path impact).
+    const progressRows = involvedIds.length
+      ? await tx.student_progress.findMany({
+          where: {
+            discipline_id: disciplineId,
+            student_id: { in: involvedIds },
+          },
+          orderBy: [{ promoted_at: "desc" }, { created_at: "desc" }],
+          select: {
+            student_id: true,
+            discipline_levels: { select: { name: true, color: true } },
+          },
+        })
+      : [];
+    const currentLevelByStudent = pickCurrentLevelByStudent(progressRows);
+
     // 4. Class payments registered for those enrollments in this occurrence
     const enrollmentIds = [...new Set(
       [...enrollments.values()].map((e) => e.id)
@@ -493,6 +539,8 @@ export async function getAttendanceForSession(
         class_payment_registered: enrollment
           ? paidEnrollmentIds.has(enrollment.id)
           : false,
+        level_name: currentLevelByStudent.get(studentId)?.name ?? null,
+        level_color: currentLevelByStudent.get(studentId)?.color ?? null,
       };
     }
 

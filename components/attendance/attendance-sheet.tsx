@@ -181,6 +181,8 @@ export function AttendanceSheet({
         source: "per_class",
         billing_mode: "per_class",
         class_payment_registered: registerPayment,
+        level_name: null,
+        level_color: null,
       }
       setEntries((prev) => [
         ...prev,
