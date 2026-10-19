@@ -1,12 +1,13 @@
 "use client"
 
 import { useState } from "react"
-import { LoaderCircleIcon, ClipboardCheckIcon } from "lucide-react"
+import { ClipboardCheckIcon } from "lucide-react"
 
 import { getAttendanceForSession } from "@/lib/domain/attendance/actions"
 import type { SessionAttendanceEntry } from "@/lib/domain/attendance/actions"
 import type { SessionGuestRow } from "@/lib/domain/guests/actions"
 import { AttendanceSheet } from "@/components/attendance/attendance-sheet"
+import { Skeleton } from "@/components/ui/skeleton"
 import {
   Sheet,
   SheetContent,
@@ -94,7 +95,9 @@ export function AttendanceSheetDialog({
       </SheetTrigger>
       <SheetContent side="right" size="content">
         <SheetHeader>
-          <SheetTitle>{ATTENDANCE_FORM_MESSAGES.TITLE}</SheetTitle>
+          <SheetTitle className="text-lg font-semibold">
+            {ATTENDANCE_FORM_MESSAGES.TITLE}
+          </SheetTitle>
           <SheetDescription>
             {ATTENDANCE_FORM_MESSAGES.DESCRIPTION}
           </SheetDescription>
@@ -102,14 +105,20 @@ export function AttendanceSheetDialog({
 
         <div className="flex-1 overflow-y-auto px-4 py-2">
           {isLoading ? (
-            <p
-              className="flex items-center gap-2 text-sm text-muted-foreground"
-              role="status"
-              aria-live="polite"
-            >
-              <LoaderCircleIcon className="size-4 animate-spin" aria-hidden="true" />
-              {COMMON_MESSAGES.LOADING}
-            </p>
+            <div role="status" aria-live="polite" className="flex flex-col gap-3">
+              <span className="sr-only">{COMMON_MESSAGES.LOADING}</span>
+              {[0, 1, 2, 3].map((row) => (
+                <div
+                  key={row}
+                  className="flex items-center gap-3"
+                  aria-hidden="true"
+                >
+                  <Skeleton className="size-2.5 rounded-full" />
+                  <Skeleton className="h-5 flex-1" />
+                  <Skeleton className="h-5 w-16" />
+                </div>
+              ))}
+            </div>
           ) : loadError ? (
             <p
               role="alert"

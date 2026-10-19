@@ -25,12 +25,32 @@ stage-1 tokens (`--seal`, ink/paper palette). PR base: `feat/app-visual-foundati
 ## Tasks
 
 - [x] 1. Domain: current belt (level name/color) per attendance entry + tests
-- [ ] 2. UI: attendance sheet redesign (counter, mark all, rows, notes, sticky save, seal) + copy + tests
-- [ ] 3. Verify: tests, tsc, eslint, build, browser screenshots (mobile + desktop)
+- [x] 2. UI: attendance sheet redesign (counter, mark all, rows, notes, sticky save, seal) + copy + tests
+- [x] 3. Verify: tests, tsc, eslint, build, browser screenshots (mobile + desktop)
 - [ ] 4. Impeccable finish review + DESIGN.md for the "Tinta y sello" system
 - [ ] 5. Work-unit commits + PR
 
 ## Evidence
+
+- T1 `eff4837`: `getAttendanceForSession` adds `level_name`/`level_color` from the latest `student_progress`
+  per student in the session's discipline (one batched query, skipped when empty); 2 new tests.
+- T2 (delegated, gentle-ai-worker, plus one fix round): live "N de M presentes" counter, "Todos presentes /
+  Todos ausentes", two-line rows (full-width label tap target with belt swatch + wrapping name + checkbox;
+  meta row outside the label with source badge, "Ausente" marker, note preview, note toggle, "Cobrar clase"),
+  collapsed notes, sticky save footer, skeleton loading, Empty state, and the seal (`AttendanceSeal`: ring +
+  inner square + check mark in `--seal`, visible "Registrada" label in ink, `role="img"` "Asistencia
+  registrada"). Seal shows on open when the session already has records, and stamps over the list on save
+  (650ms, 0ms with reduced motion) before refresh/close. New copy keys in `ATTENDANCE_FORM_MESSAGES` only.
+- Browser round 1 found: belt swatch hydration mismatch (`CSS.supports` branch), seal text clipped, names
+  truncated on narrow rows. Round 2 (after fixes): 0 console errors, all belt colors rendered, no clipping
+  (seal bbox inside viewBox), full names with line-clamp-2, per-class row with no overlaps, meta-row clicks do
+  not toggle attendance, no horizontal overflow at 390 and 1440. Submit against the real action without a
+  session shows "Debe iniciar sesión para continuar." (real success path, toast and stamp animation not
+  observed: needs an authenticated session).
+- Checks: full `pnpm test` 131 files / 1356 passed, 1 skipped; tsc, eslint, `git diff --check` clean;
+  `pnpm build` ok; Impeccable detector `[]`.
+- Known: mobile counter wraps to two lines next to the seal; plain rows are ~96px because the meta row always
+  carries the note toggle.
 
 ## Non-goals
 

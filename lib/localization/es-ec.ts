@@ -1292,6 +1292,15 @@ export const ATTENDANCE_FORM_MESSAGES = {
   ATTENDED_STATE_PRESENT: "Presente",
   ATTENDED_STATE_ABSENT: "Ausente",
   ATTENDED_STATE_UNMARKED: "Sin registrar",
+  PRESENT_COUNT: (present: number, total: number) =>
+    `${present} de ${total} presentes`,
+  MARK_ALL_PRESENT: "Todos presentes",
+  MARK_ALL_ABSENT: "Todos ausentes",
+  ADD_NOTE: "Agregar nota",
+  EDIT_NOTE: "Editar nota",
+  LIST_LABEL: "Estudiantes de la sesión",
+  SEAL_LABEL: "Registrada",
+  SEAL_ARIA: "Asistencia registrada",
 } as const
 
 export const ATTENDANCE_TOAST = {

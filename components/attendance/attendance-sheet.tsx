@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { UserPlusIcon } from "lucide-react"
+import { NotebookPenIcon, UserPlusIcon, UsersIcon } from "lucide-react"
 
 import {
   addPerClassStudentToSession,
@@ -16,10 +16,17 @@ import type {
 } from "@/lib/domain/attendance/actions"
 import type { SessionGuestRow } from "@/lib/domain/guests/actions"
 import { registerClassPayment } from "@/lib/domain/payments/actions"
+import { AttendanceSeal } from "@/components/attendance/attendance-seal"
 import { GuestsSection } from "@/components/attendance/guests-section"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
@@ -29,6 +36,7 @@ import {
   PAYMENT_MESSAGES,
   STUDENT_MISSING_DATA_MESSAGES,
 } from "@/lib/localization/es-ec"
+import { cn } from "@/lib/utils"
 
 interface AttendanceSheetProps {
   scheduledClassId?: string
@@ -45,6 +53,9 @@ interface AttendanceRecord {
   attended: boolean
   observation: string
 }
+
+/** Post-save seal delay: lets the one-shot stamp animation play before the refresh closes the flow. */
+const SEAL_STAMP_DELAY_MS = 650
 
 function formatAmount(amount: number): string {
   return `$${amount.toFixed(2)}`
@@ -73,6 +84,36 @@ function occurrencePayload(scheduledClassId?: string, oneTimeClassId?: string) {
     : { one_time_class_id: oneTimeClassId! }
 }
 
+/**
+ * Belt "obi" strip: a small swatch always carrying a hairline border (so very
+ * light belts like white stay visible on paper) and filled with the level
+ * color whenever one exists. Rendering is deterministic on server and client
+ * — no `CSS.supports` branching, which caused hydration mismatches and
+ * uncolored swatches in server-rendered trees; browsers ignore invalid color
+ * values, leaving the bordered hairline swatch. The level name travels via
+ * `title` and visually-hidden text; no level means no text at all.
+ */
+function BeltChip({
+  levelName,
+  levelColor,
+}: {
+  levelName: string | null
+  levelColor: string | null
+}) {
+  const hasColor = typeof levelColor === "string" && levelColor.length > 0
+  return (
+    <>
+      <span
+        title={levelName ?? undefined}
+        aria-hidden={levelName ? undefined : true}
+        className="h-5.5 w-2.5 shrink-0 rounded-full border border-border"
+        style={hasColor ? { backgroundColor: levelColor } : undefined}
+      />
+      {levelName && <span className="sr-only">{levelName}</span>}
+    </>
+  )
+}
+
 export function AttendanceSheet({
   scheduledClassId,
   oneTimeClassId,
@@ -93,6 +134,20 @@ export function AttendanceSheet({
   )
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // The session already had saved attendance on open (any editable entry
+  // recorded): show the seal in the summary bar, statically.
+  const [initiallyRecorded] = useState(() =>
+    students.some((s) => s.source !== "history" && s.attended !== null)
+  )
+  const [stamped, setStamped] = useState(false)
+  const [openNoteIds, setOpenNoteIds] = useState<Set<string>>(new Set())
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+    }
+  }, [])
 
   // --- Per-class student picker ---
   const [showAddControl, setShowAddControl] = useState(false)
@@ -142,6 +197,31 @@ export function AttendanceSheet({
       next[index] = { ...next[index], [field]: value }
       return next
     })
+  }
+
+  function toggleNote(studentId: string) {
+    setOpenNoteIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(studentId)) {
+        next.delete(studentId)
+      } else {
+        next.add(studentId)
+      }
+      return next
+    })
+  }
+
+  function markAllEditable(attended: boolean) {
+    const editableIds = new Set(
+      entries
+        .filter((entry) => entry.source !== "history")
+        .map((entry) => entry.student_id)
+    )
+    setRecords((prev) =>
+      prev.map((record) =>
+        editableIds.has(record.student_id) ? { ...record, attended } : record
+      )
+    )
   }
 
   function resetAddControl() {
@@ -275,8 +355,21 @@ export function AttendanceSheet({
       }
 
       toast.success(ATTENDANCE_TOAST.SAVED)
-      router.refresh()
-      onSuccess?.()
+      // Stamp the seal, let the one-shot animation play (skipped under
+      // reduced motion), then refresh and close.
+      setStamped(true)
+      const reducedMotion =
+        typeof window !== "undefined" &&
+        typeof window.matchMedia === "function" &&
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      saveTimerRef.current = setTimeout(
+        () => {
+          saveTimerRef.current = null
+          router.refresh()
+          onSuccess?.()
+        },
+        reducedMotion ? 0 : SEAL_STAMP_DELAY_MS
+      )
     } catch {
       setError(COMMON_MESSAGES.UNEXPECTED_ERROR)
     } finally {
@@ -285,6 +378,10 @@ export function AttendanceSheet({
   }
 
   const editableEntries = entries.filter((entry) => entry.source !== "history")
+  const editableIds = new Set(editableEntries.map((entry) => entry.student_id))
+  const presentCount = records.filter(
+    (record) => editableIds.has(record.student_id) && record.attended
+  ).length
 
   const guestsSection = (
     <GuestsSection
@@ -296,161 +393,295 @@ export function AttendanceSheet({
     />
   )
 
+  const addPerClassControl = (
+    <AddPerClassControl
+      {...{
+        showAddControl,
+        setShowAddControl,
+        search,
+        setSearch,
+        candidates,
+        classPrice,
+        selectedCandidate,
+        setSelectedCandidate,
+        registerPayment,
+        setRegisterPayment,
+        isSearching,
+        isAdding,
+        handleAddPerClassStudent,
+        resetAddControl,
+        error,
+      }}
+    />
+  )
+
   if (entries.length === 0 && !showAddControl) {
     return (
       <div className="flex flex-col gap-6">
-        <div className="flex flex-col gap-4">
-          <p className="py-4 text-center text-sm text-muted-foreground">
-            {ATTENDANCE_FORM_MESSAGES.EMPTY_ELIGIBLE}
-          </p>
-          <AddPerClassControl
-            {...{
-              showAddControl,
-              setShowAddControl,
-              search,
-              setSearch,
-              candidates,
-              classPrice,
-              selectedCandidate,
-              setSelectedCandidate,
-              registerPayment,
-              setRegisterPayment,
-              isSearching,
-              isAdding,
-              handleAddPerClassStudent,
-              resetAddControl,
-              error,
-            }}
-          />
-        </div>
+        <Empty className="rounded-lg border border-dashed py-8">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <UsersIcon aria-hidden="true" />
+            </EmptyMedia>
+            <EmptyTitle>
+              {ATTENDANCE_FORM_MESSAGES.EMPTY_ELIGIBLE}
+            </EmptyTitle>
+          </EmptyHeader>
+        </Empty>
+        {addPerClassControl}
         {guestsSection}
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      {error && (
-        <p
-          role="alert"
-          className="rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive"
-        >
-          {error}
-        </p>
+    <div className="relative flex flex-col gap-6">
+      {editableEntries.length > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+          <div className="flex items-center gap-3">
+            <p className="text-2xl font-semibold tracking-tight tabular-nums">
+              {ATTENDANCE_FORM_MESSAGES.PRESENT_COUNT(
+                presentCount,
+                editableEntries.length
+              )}
+            </p>
+            {initiallyRecorded && <AttendanceSeal size="md" />}
+          </div>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => markAllEditable(true)}
+              disabled={isSubmitting}
+            >
+              {ATTENDANCE_FORM_MESSAGES.MARK_ALL_PRESENT}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => markAllEditable(false)}
+              disabled={isSubmitting}
+            >
+              {ATTENDANCE_FORM_MESSAGES.MARK_ALL_ABSENT}
+            </Button>
+          </div>
+        </div>
       )}
 
-      <div className="flex flex-col gap-3">
-        {entries.map((student) => {
-          const recordIndex = records.findIndex(
-            (r) => r.student_id === student.student_id
-          )
-          const isHistory = student.source === "history"
-          const canCharge =
-            student.source === "per_class" &&
-            !student.class_payment_registered &&
-            Boolean(student.student_discipline_id)
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+        {error && (
+          <p
+            role="alert"
+            className="rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+          >
+            {error}
+          </p>
+        )}
 
-          return (
-            <div
-              key={student.student_id}
-              className="flex flex-col gap-1.5 rounded-md border p-3"
-              aria-disabled={isHistory}
-            >
-              <div className="flex items-center gap-3">
-                {isHistory || recordIndex === -1 ? (
-                  <span className="flex-1 text-sm font-medium text-muted-foreground">
-                    {student.first_name} {student.surname}
-                  </span>
-                ) : (
+        {entries.length > 0 && (
+          <ul
+            aria-label={ATTENDANCE_FORM_MESSAGES.LIST_LABEL}
+            className="flex flex-col gap-2"
+          >
+            {entries.map((student) => {
+              const recordIndex = records.findIndex(
+                (r) => r.student_id === student.student_id
+              )
+              const isHistory = student.source === "history"
+              const isAbsent =
+                !isHistory &&
+                recordIndex !== -1 &&
+                !records[recordIndex].attended
+              const canCharge =
+                student.source === "per_class" &&
+                !student.class_payment_registered &&
+                Boolean(student.student_discipline_id)
+              const record = recordIndex !== -1 ? records[recordIndex] : null
+
+              if (isHistory || recordIndex === -1) {
+                return (
+                  <li
+                    key={student.student_id}
+                    data-disabled="true"
+                    className="rounded-md border border-border/60 px-3 py-1.5"
+                  >
+                    <div className="flex min-h-8 items-center gap-3">
+                      <BeltChip
+                        levelName={student.level_name}
+                        levelColor={student.level_color}
+                      />
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-sm font-medium text-muted-foreground">
+                          {student.first_name} {student.surname}
+                        </span>
+                        {student.level_name && (
+                          <span className="block text-xs text-muted-foreground">
+                            {student.level_name}
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                    {/* Meta row: read-only history state, outside any tap target. */}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant="outline">
+                        {sourceBadgeLabel(student.source)}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">
+                        {attendedStateLabel(student.attended)}
+                      </span>
+                    </div>
+                  </li>
+                )
+              }
+
+              return (
+                <li
+                  key={student.student_id}
+                  className={cn(
+                    "rounded-md border px-3 py-1.5 transition-colors",
+                    isAbsent ? "border-transparent bg-muted" : "bg-card"
+                  )}
+                >
+                  {/*
+                    Line 1 — tap target: the whole label toggles the checkbox.
+                    The checkbox stays in this line in every state, so its
+                    position never jumps between present/absent.
+                  */}
                   <label
                     htmlFor={`attended-${student.student_id}`}
-                    className="flex flex-1 items-center gap-2 text-sm font-medium"
+                    className="flex min-h-12 cursor-pointer items-center gap-3"
                   >
+                    <BeltChip
+                      levelName={student.level_name}
+                      levelColor={student.level_color}
+                    />
+                    <span className="min-w-0 flex-1">
+                      <span
+                        className={cn(
+                          "block line-clamp-2 text-sm font-medium",
+                          isAbsent && "text-muted-foreground"
+                        )}
+                      >
+                        {student.first_name} {student.surname}
+                      </span>
+                      {student.level_name && (
+                        <span className="block text-xs text-muted-foreground">
+                          {student.level_name}
+                        </span>
+                      )}
+                    </span>
                     <Checkbox
                       id={`attended-${student.student_id}`}
-                      checked={records[recordIndex].attended}
+                      checked={record!.attended}
                       onCheckedChange={(checked) =>
                         updateRecord(recordIndex, "attended", Boolean(checked))
                       }
                       disabled={isSubmitting}
                     />
-                    {student.first_name} {student.surname}
                   </label>
-                )}
-                <Badge
-                  variant={
-                    student.source === "history" ? "outline" : "secondary"
-                  }
-                >
-                  {sourceBadgeLabel(student.source)}
-                </Badge>
-              </div>
-              {isHistory ? (
-                <p className="text-xs text-muted-foreground">
-                  {attendedStateLabel(student.attended)}
-                </p>
-              ) : (
-                recordIndex !== -1 && (
-                  <Input
-                    aria-label={ATTENDANCE_FORM_MESSAGES.OBSERVATION_LABEL}
-                    placeholder={ATTENDANCE_FORM_MESSAGES.OBSERVATION_PLACEHOLDER}
-                    value={records[recordIndex].observation}
-                    onChange={(e) =>
-                      updateRecord(recordIndex, "observation", e.target.value)
-                    }
-                    maxLength={500}
-                    disabled={isSubmitting}
-                    className="text-xs"
-                  />
-                )
-              )}
-              {canCharge && (
-                <div>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => handleChargeClass(student)}
-                    disabled={isSubmitting || chargingStudentId === student.student_id}
-                  >
-                    {chargingStudentId === student.student_id
-                      ? ATTENDANCE_FORM_MESSAGES.SAVING
-                      : PAYMENT_MESSAGES.CHARGE_CLASS}
-                  </Button>
-                </div>
-              )}
-            </div>
-          )
-        })}
-      </div>
 
-      <AddPerClassControl
-        {...{
-          showAddControl,
-          setShowAddControl,
-          search,
-          setSearch,
-          candidates,
-          classPrice,
-          selectedCandidate,
-          setSelectedCandidate,
-          registerPayment,
-          setRegisterPayment,
-          isSearching,
-          isAdding,
-          handleAddPerClassStudent,
-          resetAddControl,
-          error: null,
-        }}
-      />
+                  {/*
+                    Line 2 — meta row, outside the label so activating any of
+                    it never toggles attendance. Holds the source badge, the
+                    absent marker, the note preview, the note toggle and the
+                    per-class charge action.
+                  */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    {student.source !== "roster" && (
+                      <Badge variant="secondary">
+                        {sourceBadgeLabel(student.source)}
+                      </Badge>
+                    )}
+                    {isAbsent && (
+                      <span className="text-xs font-medium text-muted-foreground">
+                        {ATTENDANCE_FORM_MESSAGES.ATTENDED_STATE_ABSENT}
+                      </span>
+                    )}
+                    {record &&
+                      !openNoteIds.has(student.student_id) &&
+                      record.observation && (
+                        <p className="min-w-0 truncate text-xs text-muted-foreground">
+                          {record.observation}
+                        </p>
+                      )}
+                    {record && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="xs"
+                        className="ml-auto"
+                        onClick={() => toggleNote(student.student_id)}
+                        disabled={isSubmitting}
+                      >
+                        <NotebookPenIcon aria-hidden="true" />
+                        {record.observation
+                          ? ATTENDANCE_FORM_MESSAGES.EDIT_NOTE
+                          : ATTENDANCE_FORM_MESSAGES.ADD_NOTE}
+                      </Button>
+                    )}
+                    {canCharge && (
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => handleChargeClass(student)}
+                        disabled={
+                          isSubmitting ||
+                          chargingStudentId === student.student_id
+                        }
+                      >
+                        {chargingStudentId === student.student_id
+                          ? ATTENDANCE_FORM_MESSAGES.SAVING
+                          : PAYMENT_MESSAGES.CHARGE_CLASS}
+                      </Button>
+                    )}
+                  </div>
 
-      {editableEntries.length > 0 && (
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? ATTENDANCE_FORM_MESSAGES.SAVING : ATTENDANCE_FORM_MESSAGES.SUBMIT}
-        </Button>
-      )}
+                  {record && openNoteIds.has(student.student_id) && (
+                    <Input
+                      aria-label={ATTENDANCE_FORM_MESSAGES.OBSERVATION_LABEL}
+                      placeholder={
+                        ATTENDANCE_FORM_MESSAGES.OBSERVATION_PLACEHOLDER
+                      }
+                      value={record.observation}
+                      onChange={(e) =>
+                        updateRecord(recordIndex, "observation", e.target.value)
+                      }
+                      maxLength={500}
+                      disabled={isSubmitting}
+                      className="mt-2 text-xs"
+                    />
+                  )}
+                </li>
+              )
+            })}
+          </ul>
+        )}
+
+        {addPerClassControl}
+
+        {editableEntries.length > 0 && (
+          <div className="sticky bottom-0 -mx-4 border-t border-border bg-popover px-4 py-2">
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="min-h-12 w-full text-base"
+            >
+              {isSubmitting
+                ? ATTENDANCE_FORM_MESSAGES.SAVING
+                : ATTENDANCE_FORM_MESSAGES.SUBMIT}
+            </Button>
+          </div>
+        )}
       </form>
+
+      {stamped && (
+        <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center bg-background/60">
+          <AttendanceSeal stamped size="lg" />
+        </div>
+      )}
 
       {guestsSection}
     </div>
@@ -507,7 +738,7 @@ function AddPerClassControl({
 
   return (
     <div className="flex flex-col gap-3 rounded-md border p-3">
-      <p className="text-sm font-medium">
+      <p className="text-sm font-semibold">
         {ATTENDANCE_FORM_MESSAGES.ADD_PER_CLASS_TITLE}
       </p>
       {error && (
