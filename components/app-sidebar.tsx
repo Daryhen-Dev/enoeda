@@ -16,6 +16,7 @@ import {
 } from "lucide-react"
 
 import { LogoutButton } from "@/components/auth/logout-button"
+import { EnoedaMark } from "@/components/brand/enoeda-mark"
 import {
   Sidebar,
   SidebarContent,
@@ -145,7 +146,7 @@ function SidebarNavigation({
                 <Link href={buildNavigationHref("/dashboard", true, branchId)} />
               }
             >
-              <ShieldIcon className="size-5!" />
+              <EnoedaMark className="size-8 shrink-0 rounded-full" />
               <span className="text-base font-semibold">Enoeda Dojo</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -153,7 +154,9 @@ function SidebarNavigation({
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>{DASHBOARD_SHELL_MESSAGES.MANAGEMENT}</SidebarGroupLabel>
+          <SidebarGroupLabel className="uppercase tracking-[0.08em]">
+            {DASHBOARD_SHELL_MESSAGES.MANAGEMENT}
+          </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {visibleItems.map((item) => {
@@ -164,6 +167,7 @@ function SidebarNavigation({
                     <SidebarMenuButton
                       isActive={isActive}
                       tooltip={item.title}
+                      className="[&[data-active]>svg]:text-sidebar-primary"
                       render={
                         <Link
                           href={buildNavigationHref(

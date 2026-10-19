@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Archivo_Narrow, Bebas_Neue, Geist, Geist_Mono, Shojumaru } from "next/font/google";
-import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { Analytics } from "@vercel/analytics/next"
 import { APPLICATION_METADATA_MESSAGES, USER_LOCALE } from "@/lib/localization/es-ec";
@@ -47,16 +46,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          {children}
-          <Analytics />
-          <Toaster />
-        </ThemeProvider>
+        {children}
+        <Analytics />
+        <Toaster />
       </body>
     </html>
   );
