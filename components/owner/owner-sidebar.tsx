@@ -55,16 +55,16 @@ export function OwnerSidebar(props: ComponentProps<typeof Sidebar>) {
   const pathname = usePathname()
 
   return (
-    <Sidebar collapsible="offcanvas" {...props}>
+    <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
-              className="data-[slot=sidebar-menu-button]:p-1.5!"
+              className="data-[slot=sidebar-menu-button]:p-1.5! data-[slot=sidebar-menu-button]:group-data-[collapsible=icon]:p-0!"
               render={<Link href="/owner" />}
             >
               <EnoedaMark className="size-8 shrink-0 rounded-full" />
-              <span className="flex flex-col leading-tight">
+              <span className="flex flex-col leading-tight group-data-[collapsible=icon]:hidden">
                 <span className="text-base font-semibold">
                   {OWNER_MESSAGES.SHELL_TITLE}
                 </span>
@@ -108,7 +108,10 @@ export function OwnerSidebar(props: ComponentProps<typeof Sidebar>) {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <LogoutButton tone="sidebar" />
+            {/* Icon mode drops the label button; expand the rail to log out. */}
+            <div className="group-data-[collapsible=icon]:hidden">
+              <LogoutButton tone="sidebar" />
+            </div>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>

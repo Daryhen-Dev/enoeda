@@ -13,6 +13,7 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer"
+import { EnoedaMark } from "@/components/brand/enoeda-mark"
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { DASHBOARD_SHELL_MESSAGES } from "@/lib/localization/es-ec"
@@ -127,15 +128,17 @@ export function SiteHeader({
   const pageTitle = getPageTitle(pathname)
 
   return (
-    <header className="flex min-h-(--header-height) shrink-0 items-center gap-2 border-b bg-background py-2 transition-[width,height] ease-linear sm:h-(--header-height) sm:py-0 group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
+    <header className="flex min-h-(--header-height) shrink-0 items-center gap-2 border-b bg-sidebar border-sidebar-border text-sidebar-foreground py-2 transition-[width,height] ease-linear sm:h-(--header-height) sm:py-0 md:border-border md:bg-background md:text-foreground group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
       <div className="flex w-full flex-col gap-1 px-4 sm:flex-row sm:items-center sm:gap-2 lg:px-6">
         <div className="flex min-w-0 items-center gap-1 lg:gap-2">
-          <SidebarTrigger className="-ml-1" />
+          <SidebarTrigger className="-ml-1 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-sidebar-ring md:text-foreground md:hover:bg-muted md:hover:text-foreground md:focus-visible:ring-ring/50" />
           <Separator
             orientation="vertical"
-            className="mx-2 h-4 data-vertical:self-auto"
+            className="mx-2 h-4 bg-sidebar-border data-vertical:self-auto md:bg-border"
           />
-          <h1 className="truncate text-lg font-semibold tracking-[-0.01em] sm:text-xl">
+          {/* Below md the header is the ink top bar; the emblem fronts it. */}
+          <EnoedaMark className="size-6 shrink-0 md:hidden" />
+          <h1 className="truncate text-lg font-semibold tracking-[-0.01em] text-sidebar-accent-foreground sm:text-xl md:text-foreground">
             {pageTitle}
           </h1>
         </div>
@@ -180,6 +183,7 @@ export function SiteHeader({
                         variant="outline"
                         size="sm"
                         aria-label="Cambiar sucursal"
+                        className="border-sidebar-border bg-transparent text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-sidebar-ring"
                       />
                     }
                   >
@@ -188,7 +192,7 @@ export function SiteHeader({
                       {currentBranch?.name ?? "Sucursal"}
                     </span>
                     <ChevronDownIcon
-                      className="size-3.5 text-muted-foreground"
+                      className="size-3.5 text-sidebar-foreground/80"
                       aria-hidden="true"
                     />
                   </DrawerTrigger>
@@ -234,13 +238,13 @@ export function SiteHeader({
           )}
 
           {showBranchSwitcher && mode === "static" && currentBranch && (
-            <span className="flex items-center gap-1.5 truncate text-sm text-muted-foreground">
+            <span className="flex items-center gap-1.5 truncate text-sm text-sidebar-foreground md:text-muted-foreground">
               <BuildingIcon className="size-3.5 shrink-0" aria-hidden="true" />
               <span className="truncate">{currentBranch.name}</span>
             </span>
           )}
 
-          <span className="truncate text-sm text-muted-foreground">
+          <span className="truncate text-sm text-sidebar-foreground md:text-muted-foreground">
             {displayName}
           </span>
         </div>

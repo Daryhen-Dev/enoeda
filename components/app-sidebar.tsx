@@ -141,13 +141,15 @@ function SidebarNavigation({
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
-              className="data-[slot=sidebar-menu-button]:p-1.5!"
+              className="data-[slot=sidebar-menu-button]:p-1.5! data-[slot=sidebar-menu-button]:group-data-[collapsible=icon]:p-0!"
               render={
                 <Link href={buildNavigationHref("/dashboard", true, branchId)} />
               }
             >
               <EnoedaMark className="size-8 shrink-0 rounded-full" />
-              <span className="text-base font-semibold">Enoeda Dojo</span>
+              <span className="text-base font-semibold group-data-[collapsible=icon]:hidden">
+                Enoeda Dojo
+              </span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
@@ -199,7 +201,7 @@ export function AppSidebar({
   ...props
 }: AppSidebarProps) {
   return (
-    <Sidebar collapsible="offcanvas" {...props}>
+    <Sidebar collapsible="icon" {...props}>
       <Suspense fallback={null}>
         <SidebarNavigation
           isAdmin={isAdmin}
@@ -210,7 +212,10 @@ export function AppSidebar({
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <LogoutButton tone="sidebar" />
+            {/* Icon mode drops the label button; expand the rail to log out. */}
+            <div className="group-data-[collapsible=icon]:hidden">
+              <LogoutButton tone="sidebar" />
+            </div>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>

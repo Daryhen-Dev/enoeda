@@ -21,7 +21,7 @@ OWN-WORLD: Sumi blue-black ink owns the shell (sidebar rail, header text, primar
 
 STORY: The user sees what is open today, acts, and watches it get sealed. Teacher: today's class -> attendance -> seal. Admin: what is overdue -> resolve -> seal.
 
-FIRST VIEWPORT: Ink sidebar at left (desktop) / ink top bar with sheet nav (mobile), branch name always visible in the shell, page title large and heavy in the header, work area on paper. Primary action in ink; done states in vermilion.
+FIRST VIEWPORT: Ink sidebar at left (desktop, collapsed to an icon rail between md and lg) / ink top bar with sheet nav (below md: the site header itself turns ink), branch name always visible in the shell, page title large and heavy in the header, work area on paper. Primary action in ink; done states in vermilion.
 
 FORM: Ink and seal (shodo/hanko), candidate 3 of 7, seed:97f65a55ae679f12. Raises: orienteering map (red reserved for one meaning), character catalog (retired entities print grey), centre-rail setting (one-pixel ruling, small radii), datamatics (tabular numerals).
 

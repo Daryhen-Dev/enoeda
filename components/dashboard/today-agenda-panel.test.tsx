@@ -30,6 +30,7 @@ vi.mock("@/components/attendance/attendance-sheet-dialog", () => ({
   },
 }))
 
+import { SealMark } from "./seal-mark"
 import { TodayAgendaPanel } from "./today-agenda-panel"
 
 const BRANCH_ID = "bbbbbbbb-1111-2222-3333-444444444444"
@@ -279,5 +280,61 @@ describe("TodayAgendaPanel", () => {
     const alert = rendered.container.querySelector('[role="alert"]')
     expect(alert?.textContent).toContain(CALENDAR_MESSAGES.LOAD_FAILURE)
     expect(rendered.container.querySelector("ul")).toBeNull()
+  })
+})
+
+describe("SealMark — 24px small-size geometry", () => {
+  beforeEach(() => {
+    ;(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true
+  })
+
+  function renderSealMark(): { container: HTMLElement; unmount(): void } {
+    const container = document.createElement("div")
+    document.body.append(container)
+    const root = createRoot(container)
+
+    act(() => {
+      root.render(<SealMark />)
+    })
+
+    return {
+      container,
+      unmount() {
+        act(() => {
+          root.unmount()
+        })
+        container.remove()
+      },
+    }
+  }
+
+  it("draws the seal on its own 24-unit grid with ring, inner square and check", () => {
+    const { container, unmount } = renderSealMark()
+    const svg = container.querySelector("svg")
+
+    expect(svg).not.toBeNull()
+    expect(svg!.getAttribute("viewBox")).toBe("0 0 24 24")
+    expect(svg!.querySelectorAll("circle")).toHaveLength(1)
+    // The inner rounded square is the stamp cue; at 24 units its stroke is
+    // a full device pixel, so it survives at the shipping size.
+    const square = svg!.querySelector("rect")
+    expect(square).not.toBeNull()
+    expect(Number(square!.getAttribute("stroke-width"))).toBeGreaterThanOrEqual(1)
+    expect(svg!.querySelectorAll("path")).toHaveLength(1)
+
+    unmount()
+  })
+
+  it("announces the sealed meaning exactly once via role img + aria-label", () => {
+    const { container, unmount } = renderSealMark()
+    const svg = container.querySelector("svg")
+
+    expect(svg).not.toBeNull()
+    expect(svg!.getAttribute("role")).toBe("img")
+    expect(svg!.getAttribute("aria-label")).toBe(
+      ATTENDANCE_FORM_MESSAGES.SEAL_ARIA
+    )
+
+    unmount()
   })
 })
