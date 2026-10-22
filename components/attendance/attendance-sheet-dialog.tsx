@@ -30,6 +30,7 @@ type AttendanceSheetDialogProps =
       branchId: string
       disabled?: boolean
       triggerClassName?: string
+      triggerLabel?: string
     }
   | {
       scheduledClassId?: undefined
@@ -38,6 +39,7 @@ type AttendanceSheetDialogProps =
       branchId: string
       disabled?: boolean
       triggerClassName?: string
+      triggerLabel?: string
     }
 
 export function AttendanceSheetDialog({
@@ -47,6 +49,7 @@ export function AttendanceSheetDialog({
   branchId,
   disabled = false,
   triggerClassName,
+  triggerLabel = ATTENDANCE_FORM_MESSAGES.TAKE_ATTENDANCE,
 }: AttendanceSheetDialogProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -91,7 +94,7 @@ export function AttendanceSheetDialog({
     <Sheet open={isOpen} onOpenChange={handleOpen}>
       <SheetTrigger className={triggerClassName} disabled={disabled}>
         <ClipboardCheckIcon data-icon="inline-start" />
-        {ATTENDANCE_FORM_MESSAGES.TAKE_ATTENDANCE}
+        {triggerLabel}
       </SheetTrigger>
       <SheetContent side="right" size="content">
         <SheetHeader>

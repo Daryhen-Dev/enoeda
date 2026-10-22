@@ -4,10 +4,20 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 import { AUTH_MESSAGES } from "@/lib/localization/es-ec"
 import { createClient as createBrowserClient } from "@/lib/supabase/client"
 
-export function LogoutButton() {
+interface LogoutButtonProps {
+  /**
+   * "sidebar" sits on the ink rail: hairline border and sidebar ink text, so
+   * it stays legible on --sidebar. "default" is the outline button for paper
+   * surfaces.
+   */
+  tone?: "default" | "sidebar"
+}
+
+export function LogoutButton({ tone = "default" }: LogoutButtonProps) {
   const router = useRouter()
   const [isPending, setIsPending] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -36,7 +46,14 @@ export function LogoutButton() {
   return (
     <div className="flex items-center gap-2">
       {errorMessage ? (
-        <p aria-live="polite" className="text-sm text-destructive" role="alert">
+        <p
+          aria-live="polite"
+          className={cn(
+            "text-sm",
+            tone === "sidebar" ? "text-sidebar-foreground" : "text-destructive"
+          )}
+          role="alert"
+        >
           {errorMessage}
         </p>
       ) : null}
@@ -46,7 +63,11 @@ export function LogoutButton() {
         onClick={handleLogout}
         size="sm"
         type="button"
-        variant="outline"
+        variant={tone === "sidebar" ? "ghost" : "outline"}
+        className={cn(
+          tone === "sidebar" &&
+            "border border-sidebar-border text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-sidebar-ring"
+        )}
       >
         {isPending ? AUTH_MESSAGES.LOGOUT_PENDING : AUTH_MESSAGES.LOGOUT_ACTION}
       </Button>

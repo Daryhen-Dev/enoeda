@@ -108,7 +108,7 @@ export function OwnerSidebar(props: ComponentProps<typeof Sidebar>) {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <LogoutButton />
+            <LogoutButton tone="sidebar" />
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
