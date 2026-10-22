@@ -3,8 +3,7 @@
 ## Goal
 
 Stage 4 of the authenticated-app redesign ("Tinta y sello"): close items 1-4 the final stage 3 finish review left
-open on the shipped shell. Branch `feat/app-shell-polish`, stacked on `feat/app-scale-and-overview` (PR #203, not
-merged yet) — retarget to `main` after #203 merges.
+open on the shipped shell. Delivered to `main` as PR #205, on top of PR #203 (`feat/app-scale-and-overview`).
 
 ## Items (from the stage 3 final review)
 
@@ -47,6 +46,9 @@ Out of scope: marketing kicker bands and hard offset CTA shadow (the user keeps 
   `disposition: ship` scoped to those fixes. Ceiling notes left as ideas (stamp animation on in-place state change,
   ink bar hinting sheet nav).
 - Checks: full `pnpm test` 135 files / 1387 passed, 1 skipped; tsc clean; `pnpm build` ok; detector `[]`.
+- Delivery: #203 merged to `main` as `b8ffb71`; GitHub auto-closed #204 when its base branch was deleted, so the
+  same commits were reopened as #205 and merged as `c44d099`. The `main` tree at `c44d099` equals the tested tree at
+  `b7ae6a3` (`3d4338c`), so the recorded checks cover what shipped.
 
 ## Non-goals
 
