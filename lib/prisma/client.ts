@@ -96,17 +96,39 @@ function redactCredentials(value: string): string {
  * this the real cause never reaches the Workers logs and infrastructure
  * failures become undiagnosable.
  */
-function reportTransactionFailure(error: unknown): void {
-  if (error instanceof Error) {
-    console.error("[prisma] withUser transaction failed", {
-      name: error.name,
-      message: redactCredentials(error.message),
-      code: (error as { code?: unknown }).code,
-      stack: error.stack ? redactCredentials(error.stack) : undefined,
-    });
-    return;
+export function formatTransactionFailure(error: unknown): string {
+  if (!(error instanceof Error)) {
+    return redactCredentials(String(error));
   }
-  console.error("[prisma] withUser transaction failed", redactCredentials(String(error)));
+
+  const code = (error as { code?: unknown }).code;
+  // Driver adapters put the database error under `cause`, where the Postgres
+  // message, constraint and detail actually live.
+  const cause = (error as { cause?: unknown }).cause;
+  const causeText =
+    cause instanceof Error
+      ? cause.message
+      : cause !== undefined
+        ? JSON.stringify(cause)
+        : undefined;
+
+  return redactCredentials(
+    [
+      `${error.name}: ${error.message}`,
+      code !== undefined ? `code=${String(code)}` : null,
+      causeText ? `cause=${causeText}` : null,
+    ]
+      .filter(Boolean)
+      .join(" | ")
+  );
+}
+
+function reportTransactionFailure(error: unknown): void {
+  // One plain string: structured objects were serialized as "{}" by the dev
+  // log sink, which hid the real cause of every failed transaction.
+  console.error(
+    `[prisma] withUser transaction failed: ${formatTransactionFailure(error)}`
+  );
 }
 
 export async function withUser<T>(
