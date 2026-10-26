@@ -56,6 +56,11 @@ interface RegisterMonthlyPaymentDialogProps {
   triggerVariant?: "default" | "outline"
   /** Accessible name for the trigger, e.g. one that names the discipline. */
   triggerAriaLabel?: string
+  /** Controlled open state; the built-in trigger keeps working when omitted. */
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+  /** Do not render the trigger button (the caller opens the sheet itself). */
+  hideTrigger?: boolean
 }
 
 function getLocalDateInputValue() {
@@ -99,9 +104,14 @@ export function RegisterMonthlyPaymentDialog({
   branchId,
   triggerVariant = "outline",
   triggerAriaLabel,
+  open: controlledOpen,
+  onOpenChange,
+  hideTrigger = false,
 }: RegisterMonthlyPaymentDialogProps) {
   const router = useRouter()
-  const [open, setOpen] = useState(false)
+  const [internalOpen, setInternalOpen] = useState(false)
+  const isControlled = controlledOpen !== undefined
+  const isOpen = isControlled ? (controlledOpen as boolean) : internalOpen
   const [amount, setAmount] = useState("")
   const [startYear, setStartYear] = useState(getCurrentYearValue)
   const [startMonth, setStartMonth] = useState("")
@@ -125,6 +135,22 @@ export function RegisterMonthlyPaymentDialog({
     setPaymentDate(getLocalDateInputValue())
     setNote("")
     setError(null)
+  }
+
+  function requestOpenChange(nextOpen: boolean) {
+    if (isControlled) {
+      onOpenChange?.(nextOpen)
+      return
+    }
+
+    setInternalOpen(nextOpen)
+  }
+
+  function handleOpenChange(nextOpen: boolean) {
+    if (isPending) return
+
+    requestOpenChange(nextOpen)
+    resetForm()
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -155,7 +181,7 @@ export function RegisterMonthlyPaymentDialog({
         branch_id: branchId,
       })
       if (result.success) {
-        setOpen(false)
+        requestOpenChange(false)
         resetForm()
         toast.success(TOAST_MESSAGES.MONTHLY_PAYMENT_REGISTERED)
         router.refresh()
@@ -166,27 +192,21 @@ export function RegisterMonthlyPaymentDialog({
   }
 
   return (
-    <Sheet
-      open={open}
-      onOpenChange={(nextOpen) => {
-        if (isPending) return
-
-        setOpen(nextOpen)
-        resetForm()
-      }}
-    >
-      <SheetTrigger
-        render={
-          <Button
-            variant={triggerVariant}
-            size="sm"
-            aria-label={triggerAriaLabel}
-          />
-        }
-      >
-        <PlusIcon className="size-4" />
-        {PAYMENT_MESSAGES.REGISTER_MONTHLY_TITLE}
-      </SheetTrigger>
+    <Sheet open={isOpen} onOpenChange={handleOpenChange}>
+      {!hideTrigger && (
+        <SheetTrigger
+          render={
+            <Button
+              variant={triggerVariant}
+              size="sm"
+              aria-label={triggerAriaLabel}
+            />
+          }
+        >
+          <PlusIcon className="size-4" />
+          {PAYMENT_MESSAGES.REGISTER_MONTHLY_TITLE}
+        </SheetTrigger>
+      )}
       <SheetContent side="right" size="content" showCloseButton={!isPending}>
         <SheetHeader>
           <SheetTitle>{PAYMENT_MESSAGES.REGISTER_MONTHLY_TITLE}</SheetTitle>

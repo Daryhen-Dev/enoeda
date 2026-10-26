@@ -381,6 +381,24 @@ export const STUDENT_LIFECYCLE_MESSAGES = {
   CANCEL: COMMON_MESSAGES.CANCEL,
 } as const
 
+/**
+ * Actions menu shared by every student row of the directory (S2): one trigger
+ * per student and the labels of the actions it exposes. Item labels reuse the
+ * lifecycle/forms copy verbatim so the menu reads like the dialogs it opens.
+ */
+export const STUDENT_ROW_ACTIONS_MESSAGES = {
+  TRIGGER_ARIA: (studentName: string) => `Acciones de ${studentName}`,
+  VIEW_DETAIL: "Ver ficha",
+  MONTHLY_PAYMENT: (disciplineName: string) =>
+    `Pago mensual · ${disciplineName}`,
+  CLASS_PAYMENT: (disciplineName: string) =>
+    `Pago por clase · ${disciplineName}`,
+  EDIT: COMMON_MESSAGES.EDIT,
+  ACTIVATE: "Activar",
+  DEACTIVATE: STUDENT_LIFECYCLE_MESSAGES.DEACTIVATE_TRIGGER,
+  REACTIVATE: STUDENT_LIFECYCLE_MESSAGES.REACTIVATE_TRIGGER,
+} as const
+
 export const STUDENT_MESSAGES = {
   INVALID_ID: "El identificador del estudiante no es válido.",
   INVALID_BRANCH_ID: "El identificador de la sucursal no es válido.",

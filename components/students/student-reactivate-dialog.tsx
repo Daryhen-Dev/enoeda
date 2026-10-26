@@ -38,24 +38,43 @@ interface StudentReactivateDialogProps {
   student: ReactivateStudentSummary
   branches: ActiveBranchOption[]
   callerBranchId: string
+  /** Controlled open state; the built-in trigger keeps working when omitted. */
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+  /** Do not render the trigger button (the caller opens the dialog itself). */
+  hideTrigger?: boolean
 }
 
 export function StudentReactivateDialog({
   student,
   branches,
   callerBranchId,
+  open: controlledOpen,
+  onOpenChange,
+  hideTrigger = false,
 }: StudentReactivateDialogProps) {
   const router = useRouter()
   const branchSelectId = useId()
-  const [isOpen, setIsOpen] = useState(false)
+  const [internalOpen, setInternalOpen] = useState(false)
+  const isControlled = controlledOpen !== undefined
+  const isOpen = isControlled ? (controlledOpen as boolean) : internalOpen
   const [isPending, setIsPending] = useState(false)
   const [branchId, setBranchId] = useState("")
   const [error, setError] = useState<string | null>(null)
   const requiresBranch = !branches.some((branch) => branch.id === student.branch_id)
 
+  function requestOpenChange(nextIsOpen: boolean) {
+    if (isControlled) {
+      onOpenChange?.(nextIsOpen)
+      return
+    }
+
+    setInternalOpen(nextIsOpen)
+  }
+
   function setDialogOpen(open: boolean) {
     if (isPending) return
-    setIsOpen(open)
+    requestOpenChange(open)
     setBranchId("")
     setError(null)
   }
@@ -77,7 +96,7 @@ export function StudentReactivateDialog({
         setError(result.error ?? STUDENT_LIFECYCLE_MESSAGES.REACTIVATE_FAILURE)
         return
       }
-      setIsOpen(false)
+      requestOpenChange(false)
       toast.success(TOAST_MESSAGES.STUDENT_REACTIVATED)
       router.refresh()
     } catch {
@@ -89,9 +108,11 @@ export function StudentReactivateDialog({
 
   return (
     <AlertDialog open={isOpen} onOpenChange={setDialogOpen}>
-      <AlertDialogTrigger render={<Button size="sm" variant="outline" />}>
-        {STUDENT_LIFECYCLE_MESSAGES.REACTIVATE_TRIGGER}
-      </AlertDialogTrigger>
+      {!hideTrigger && (
+        <AlertDialogTrigger render={<Button size="sm" variant="outline" />}>
+          {STUDENT_LIFECYCLE_MESSAGES.REACTIVATE_TRIGGER}
+        </AlertDialogTrigger>
+      )}
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{STUDENT_LIFECYCLE_MESSAGES.REACTIVATE_CONFIRMATION_TITLE}</AlertDialogTitle>

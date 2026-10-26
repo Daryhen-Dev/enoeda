@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState, useTransition } from "react"
 
 import { getStudentColumns } from "@/components/students/student-columns"
+import { StudentCard } from "@/components/students/student-card"
 import {
   StudentFormDialog,
   type ActiveBranchOption,
@@ -18,6 +19,7 @@ import {
   SelectItem,
   SelectTrigger,
 } from "@/components/ui/select"
+import { Skeleton } from "@/components/ui/skeleton"
 import {
   Tabs,
   TabsContent,
@@ -395,21 +397,51 @@ export function StudentList({
           )}
 
           {!error && (
-            <DataTable
-              columns={columns}
-              data={items}
-              isLoading={isPending}
-              caption={
-                isActiveTab
-                  ? STUDENT_DIRECTORY_MESSAGES.ACTIVE_TABLE_CAPTION
-                  : STUDENT_DIRECTORY_MESSAGES.INACTIVE_TABLE_CAPTION
-              }
-              emptyState={
-                isActiveTab
-                  ? STUDENT_DIRECTORY_MESSAGES.ACTIVE_EMPTY_STATE
-                  : STUDENT_DIRECTORY_MESSAGES.INACTIVE_EMPTY_STATE
-              }
-            />
+            <>
+              {/* Below `md` the directory is a stack of cards, never a wide table. */}
+              <div className="flex flex-col gap-2 md:hidden">
+                {items.length > 0 ? (
+                  items.map((student) => (
+                    <StudentCard
+                      key={student.id}
+                      student={student}
+                      branchId={branchId}
+                      branches={branches}
+                      status={selectedTab}
+                      canManage={canManage}
+                      onActivated={reloadActiveStudents}
+                      timeZone={timeZone}
+                    />
+                  ))
+                ) : isPending ? (
+                  <Skeleton className="h-24 w-full" />
+                ) : (
+                  <p className="rounded-lg border border-dashed px-3 py-6 text-center text-sm text-muted-foreground">
+                    {isActiveTab
+                      ? STUDENT_DIRECTORY_MESSAGES.ACTIVE_EMPTY_STATE
+                      : STUDENT_DIRECTORY_MESSAGES.INACTIVE_EMPTY_STATE}
+                  </p>
+                )}
+              </div>
+
+              <div className="hidden md:block">
+                <DataTable
+                  columns={columns}
+                  data={items}
+                  isLoading={isPending}
+                  caption={
+                    isActiveTab
+                      ? STUDENT_DIRECTORY_MESSAGES.ACTIVE_TABLE_CAPTION
+                      : STUDENT_DIRECTORY_MESSAGES.INACTIVE_TABLE_CAPTION
+                  }
+                  emptyState={
+                    isActiveTab
+                      ? STUDENT_DIRECTORY_MESSAGES.ACTIVE_EMPTY_STATE
+                      : STUDENT_DIRECTORY_MESSAGES.INACTIVE_EMPTY_STATE
+                  }
+                />
+              </div>
+            </>
           )}
 
           {nextCursor !== null && !error && (

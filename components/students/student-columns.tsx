@@ -1,27 +1,23 @@
 "use client"
 
 import type { ColumnDef, TableFeatures } from "@tanstack/react-table"
-import Link from "next/link"
 
 import type { ActiveBranchOption } from "@/components/students/student-form-dialog"
-import { RegisterClassPaymentDialog } from "@/components/payments/register-class-payment-dialog"
-import { RegisterMonthlyPaymentDialog } from "@/components/payments/register-monthly-payment-dialog"
-import { StudentActivateDialog } from "@/components/students/student-activate-dialog"
-import { StudentDeactivateDialog } from "@/components/students/student-deactivate-dialog"
-import { StudentFormDialog } from "@/components/students/student-form-dialog"
-import { StudentReactivateDialog } from "@/components/students/student-reactivate-dialog"
-import { Button } from "@/components/ui/button"
+import {
+  getDueDateStatus,
+  getIncompleteDataDescription,
+  getNearestDueDiscipline,
+} from "@/components/students/student-card"
+import { StudentRowActions } from "@/components/students/student-row-actions"
 import { Badge } from "@/components/ui/badge"
 import type { EcuadorTimeZone } from "@/lib/domain/branches/schema"
-import { getCalendarDayDifference, getCurrentDateOnly } from "@/lib/date"
-import type { ActiveStudentDiscipline } from "@/lib/domain/students/actions"
+import { getCurrentDateOnly } from "@/lib/date"
 import {
   getMissingStudentData,
   hasIncompleteStudentData,
   STUDENT_ACTIVATION_STATUS,
   STUDENT_STATUS,
   type StudentListItem,
-  type StudentMissingDataField,
   type StudentStatus,
 } from "@/lib/domain/students"
 import {
@@ -37,54 +33,6 @@ interface StudentColumnsOptions {
   canManage: boolean
   onActivated: () => void
   timeZone: EcuadorTimeZone
-}
-
-function getNearestDueDiscipline(
-  disciplines: ActiveStudentDiscipline[]
-): ActiveStudentDiscipline | undefined {
-  // Per-class enrollments have no due date; only monthly ones can be overdue.
-  return disciplines
-    .filter((discipline) => discipline.billing_mode === "monthly")
-    .reduce<ActiveStudentDiscipline | undefined>(
-      (nearestDiscipline, discipline) => {
-        if (discipline.next_due_date === null) return nearestDiscipline
-
-        if (
-          nearestDiscipline === undefined ||
-          nearestDiscipline.next_due_date === null ||
-          discipline.next_due_date < nearestDiscipline.next_due_date
-        ) {
-          return discipline
-        }
-
-        return nearestDiscipline
-      },
-      undefined,
-    )
-}
-
-function getDueDateStatus(dueDate: string, today: string): string {
-  const remainingDays = getCalendarDayDifference(today, dueDate)
-
-  if (remainingDays > 0) {
-    return STUDENT_DIRECTORY_MESSAGES.DUE_IN_DAYS(remainingDays)
-  }
-
-  if (remainingDays === 0) {
-    return STUDENT_DIRECTORY_MESSAGES.DUE_TODAY
-  }
-
-  return STUDENT_DIRECTORY_MESSAGES.OVERDUE_BY_DAYS(Math.abs(remainingDays))
-}
-
-function getIncompleteDataDescription(
-  missingFields: StudentMissingDataField[]
-): string {
-  const missingLabels = missingFields.map(
-    (field) => STUDENT_MISSING_DATA_MESSAGES.MISSING_FIELD_LABELS[field]
-  )
-
-  return `${STUDENT_MISSING_DATA_MESSAGES.INCOMPLETE_BADGE} — ${STUDENT_MISSING_DATA_MESSAGES.INCOMPLETE_MISSING_SUMMARY(missingLabels.join(", "))}`
 }
 
 function StudentNameCell({ student }: { student: StudentListItem }) {
@@ -121,98 +69,17 @@ export function getStudentColumns({
     {
       id: "actions",
       header: STUDENT_DIRECTORY_MESSAGES.ACTIONS,
-      cell: ({ row }) => {
-        const student = row.original
-
-        return (
-          <div className="flex min-w-56 flex-wrap items-start gap-3">
-            <Button
-              variant="outline"
-              size="sm"
-              nativeButton={false}
-              render={<Link href={`/dashboard/students/${student.id}?branch=${branchId}`} />}
-            >
-              {STUDENT_DIRECTORY_MESSAGES.VIEW_DETAILS}
-            </Button>
-
-            {isActive && (
-              <>
-                <section
-                  aria-label={STUDENT_DIRECTORY_MESSAGES.PAYMENT_ENROLLMENTS_LABEL}
-                  className="flex flex-wrap items-center gap-2"
-                >
-                  {student.active_disciplines.length > 0 ? (
-                    student.active_disciplines.map((discipline) => (
-                      <div
-                        key={discipline.id}
-                        role="group"
-                        aria-label={STUDENT_DIRECTORY_MESSAGES.PAYMENT_ACTIONS_BY_DISCIPLINE(
-                          discipline.discipline_name,
-                        )}
-                        className="flex flex-wrap gap-2"
-                      >
-                        {canManage && discipline.billing_mode === "monthly" && (
-                          <RegisterMonthlyPaymentDialog
-                            studentDisciplineId={discipline.id}
-                            branchId={branchId}
-                          />
-                        )}
-                        <RegisterClassPaymentDialog
-                          studentDisciplineId={discipline.id}
-                          branchId={branchId}
-                        />
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-sm text-muted-foreground">
-                      {STUDENT_DIRECTORY_MESSAGES.NO_PAYMENT_ENROLLMENTS}
-                    </p>
-                  )}
-                </section>
-
-                <div
-                  aria-label={STUDENT_DIRECTORY_MESSAGES.ADMINISTRATIVE_ACTIONS_LABEL}
-                  className="flex flex-wrap gap-2"
-                >
-                  {canManage &&
-                    student.activation_status === STUDENT_ACTIVATION_STATUS.PENDING && (
-                      <StudentActivateDialog
-                        student={{
-                          id: student.id,
-                          first_name: student.first_name,
-                          surname: student.surname,
-                        }}
-                        branchId={branchId}
-                        onActivated={onActivated}
-                      />
-                    )}
-                  <StudentFormDialog
-                    branches={branches}
-                    studentId={student.id}
-                    branchId={branchId}
-                  />
-                  <StudentDeactivateDialog
-                    student={{
-                      id: student.id,
-                      first_name: student.first_name,
-                      surname: student.surname,
-                    }}
-                    branchId={branchId}
-                  />
-                </div>
-              </>
-            )}
-
-            {!isActive && (
-              <StudentReactivateDialog
-                student={{ id: student.id, branch_id: student.branch_id }}
-                branches={branches}
-                callerBranchId={branchId}
-              />
-            )}
-          </div>
-        )
-      },
+      cell: ({ row }) => (
+        // One menu per row keeps every action reachable without widening the row.
+        <StudentRowActions
+          student={row.original}
+          branchId={branchId}
+          branches={branches}
+          status={status}
+          canManage={canManage}
+          onActivated={onActivated}
+        />
+      ),
     },
     {
       accessorKey: "first_name",
