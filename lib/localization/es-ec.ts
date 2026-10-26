@@ -415,6 +415,47 @@ export const STUDENT_ROW_ACTIONS_MESSAGES = {
   REACTIVATE: STUDENT_LIFECYCLE_MESSAGES.REACTIVATE_TRIGGER,
 } as const
 
+/**
+ * Bulk deactivation of directory rows (S4): the selection bar, the shared
+ * confirmation and the copy that names how many students the batch touches.
+ * The undo copy stays in UNDO_MESSAGES because the inverse is the same one-tap
+ * reactivation the single-row path already offers.
+ */
+export const STUDENT_BULK_ACTIONS_MESSAGES = {
+  SELECTION_BAR_LABEL: "Selección de estudiantes",
+  SELECTED_COUNT: (count: number) =>
+    count === 1 ? "1 seleccionado" : `${count} seleccionados`,
+  SELECT_ALL_LABEL: "Seleccionar todos los estudiantes de esta página",
+  SELECT_ROW_LABEL: (studentName: string) => `Seleccionar a ${studentName}`,
+  CLEAR_SELECTION: "Limpiar selección",
+  DEACTIVATE_SELECTED: "Desactivar seleccionados",
+  DEACTIVATING_SELECTED: "Desactivando estudiantes…",
+  CONFIRMATION_TITLE: (count: number) =>
+    count === 1 ? "¿Desactivar 1 estudiante?" : `¿Desactivar ${count} estudiantes?`,
+  CONFIRMATION_DESCRIPTION:
+    "Estos estudiantes dejarán de aparecer en la lista de estudiantes activos.",
+  CONFIRMATION_NAMES: (names: string[], remaining: number) =>
+    remaining > 0
+      ? `${names.join(", ")} y ${remaining} más`
+      : names.join(", "),
+  CONFIRMATION_ALERT_TITLE:
+    "No se pudieron desactivar los estudiantes seleccionados",
+  FAILURE: "No se pudieron desactivar los estudiantes seleccionados.",
+  DEACTIVATED: (count: number) =>
+    count === 1
+      ? TOAST_MESSAGES.STUDENT_DEACTIVATED
+      : `${count} estudiantes desactivados correctamente.`,
+  SELECTION_REQUIRED: "Seleccione al menos un estudiante.",
+  SELECTION_LIMIT: (limit: number) =>
+    `Puede desactivar hasta ${limit} estudiantes a la vez.`,
+  INACTIVE_SELECTION: (studentNames: string) =>
+    `Ya no están activos en esta sucursal: ${studentNames}. Actualice la lista e intente de nuevo.`,
+  MISSING_SELECTION:
+    "La selección incluye estudiantes que no pertenecen a esta sucursal. Actualice la lista e intente de nuevo.",
+  STALE_SELECTION:
+    "La selección cambió mientras se procesaba. Actualice la lista e intente de nuevo.",
+} as const
+
 export const STUDENT_MESSAGES = {
   INVALID_ID: "El identificador del estudiante no es válido.",
   INVALID_BRANCH_ID: "El identificador de la sucursal no es válido.",

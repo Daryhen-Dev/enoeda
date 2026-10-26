@@ -5,6 +5,7 @@ import Link from "next/link"
 import type { ActiveBranchOption } from "@/components/students/student-form-dialog"
 import { StudentRowActions } from "@/components/students/student-row-actions"
 import { Badge } from "@/components/ui/badge"
+import { Checkbox } from "@/components/ui/checkbox"
 import type { EcuadorTimeZone } from "@/lib/domain/branches/schema"
 import type { ActiveStudentDiscipline } from "@/lib/domain/students/actions"
 import {
@@ -18,6 +19,7 @@ import {
 } from "@/lib/domain/students"
 import { getCalendarDayDifference, getCurrentDateOnly } from "@/lib/date"
 import {
+  STUDENT_BULK_ACTIONS_MESSAGES,
   STUDENT_DIRECTORY_MESSAGES,
   STUDENT_LIFECYCLE_MESSAGES,
   STUDENT_MISSING_DATA_MESSAGES,
@@ -81,6 +83,9 @@ interface StudentCardProps {
   /** Tab the card belongs to: the history tab has no due date. */
   status: StudentStatus
   canManage: boolean
+  /** Bulk selection state owned by the directory; omitted cards get none. */
+  selected?: boolean
+  onSelectedChange?: (selected: boolean) => void
   onActivated: () => void
   timeZone: EcuadorTimeZone
 }
@@ -96,10 +101,15 @@ export function StudentCard({
   branches,
   status,
   canManage,
+  selected = false,
+  onSelectedChange,
   onActivated,
   timeZone,
 }: StudentCardProps) {
   const isActiveTab = status === STUDENT_STATUS.ACTIVE
+  // Bulk deactivation only makes sense where the caller can manage the branch
+  // and only over the active students the tab is showing (S4).
+  const canSelect = canManage && isActiveTab && onSelectedChange !== undefined
   const today = getCurrentDateOnly(timeZone)
   const missingFields = getMissingStudentData(student)
   const incompleteDescription = getIncompleteDataDescription(missingFields)
@@ -115,6 +125,16 @@ export function StudentCard({
   return (
     <article className="flex flex-col gap-3 rounded-lg border bg-card p-3">
       <div className="flex items-start justify-between gap-2">
+        {canSelect && (
+          <Checkbox
+            aria-label={STUDENT_BULK_ACTIONS_MESSAGES.SELECT_ROW_LABEL(
+              studentName
+            )}
+            checked={selected}
+            onCheckedChange={(nextChecked) => onSelectedChange?.(nextChecked)}
+            className="mt-0.5"
+          />
+        )}
         <Link
           href={`/dashboard/students/${student.id}?branch=${branchId}`}
           className="flex min-w-0 flex-1 flex-col items-start gap-1"
