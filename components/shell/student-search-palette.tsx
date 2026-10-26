@@ -143,18 +143,28 @@ export function StudentSearchPalette() {
           return
         }
 
-        const merged: PaletteResult[] = [
-          ...(active.data?.items ?? []).map((student) => ({
-            student,
-            isActive: true,
-          })),
-          ...(inactive.data?.items ?? []).map((student) => ({
-            student,
-            isActive: false,
-          })),
-        ].slice(0, STUDENT_SEARCH_MAX_RESULTS)
+        // The two queries are mutually exclusive in the database, but a student
+        // that appears in both must never render twice (or collide on its key):
+        // the active row wins because it is merged first.
+        const seen = new Set<string>()
+        const merged: PaletteResult[] = []
 
-        setSearch({ query: trimmedQuery, results: merged, status: "done" })
+        for (const [items, isActive] of [
+          [active.data?.items ?? [], true],
+          [inactive.data?.items ?? [], false],
+        ] as const) {
+          for (const student of items) {
+            if (seen.has(student.id)) continue
+            seen.add(student.id)
+            merged.push({ student, isActive })
+          }
+        }
+
+        setSearch({
+          query: trimmedQuery,
+          results: merged.slice(0, STUDENT_SEARCH_MAX_RESULTS),
+          status: "done",
+        })
         setHighlighted(0)
       } catch {
         if (cancelled) return

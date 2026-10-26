@@ -145,6 +145,7 @@ export function StudentRowActions({
 
             {canManage && isActiveTab && (
               <DropdownMenuItem
+                variant="destructive"
                 onClick={() => setAction({ kind: "deactivate" })}
               >
                 {STUDENT_ROW_ACTIONS_MESSAGES.DEACTIVATE}
