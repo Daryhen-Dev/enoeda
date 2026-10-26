@@ -33,7 +33,42 @@ with the same confirmation and undo as the single-row path.
 - [x] T2 — Students directory: row actions menu + mobile cards (S2), route: delegated (gentle-ai-worker), commit: TBD
 - [x] T3 — Calendar session block on semantic tokens and one status language (S3), route: delegated (gentle-ai-worker), commit: TBD
 - [x] T4 — Undo for reversible actions + bulk deactivate (S4), route: inline (undo) + delegated (bulk), commit: b1f84d2 + TBD
-- [ ] T5 — Docs and close-out verification, route: inline, commit: TBD
+- [x] T5 — Docs and close-out verification, route: inline, commit: TBD
+
+## Evidence
+
+- `49997ea` — S1: `StudentSearchPalette` in the dashboard layout (debounced search over active and inactive
+  students of the branch, arrow keys, Enter keeps the branch, Escape closes), the `enoeda:open-student-search`
+  event, and `StudentSearchTrigger` in the header. The search state is derived from the last answered query, so
+  the effect never sets state synchronously (repo lint rule).
+- `cad3dbe` — S2, delegated to `gentle-ai-worker`: `StudentRowActions` (one Acciones menu per row, dialogs
+  rendered outside the popup through an additive controlled mode on five dialogs), `StudentCard` for phones, and
+  the `md` split in `student-list.tsx`. Existing dialog tests untouched.
+- `7b8a229` — S3, delegated: `session-block.tsx` moved from 51 palette utilities and 35 `dark:` variants to the
+  design tokens and the shared `buttonVariants`/`Badge`; one status vocabulary (pending pill, seal for attended,
+  retired grey for suspended), the compact month dots on `seal`/`destructive`, and three `COMPACT_STATUS_*`
+  message keys removed as orphaned. Pinned by `session-block.tokens.test.tsx`.
+- `b1f84d2` — S4 undo half: `showUndoableAction` + `UNDO_MESSAGES`, wired to student deactivate ↔ reactivate and
+  class suspend → reinstate (a reinstatement re-suspends with the session's recorded category; with no recorded
+  category it keeps the plain toast instead of guessing).
+- `b6115cf` — S4 bulk half, delegated: `deactivateStudents` (1-50 ids, one transaction, all-or-nothing, same
+  branch-context guard), `StudentSelectionBar`, `BulkDeactivateDialog`, checkboxes on rows and cards, selection
+  cleared when the visible set changes.
+- T5 — DESIGN.md documents the command palette, row actions, selection bar and the undo affordance.
+
+### Verification
+
+- `npx tsc --noEmit`: clean.
+- `npx eslint` on every touched file: clean. Pre-existing and untouched: `lib/domain/students/actions.test.ts:56`
+  (`(fn: Function)`, `@typescript-eslint/no-unsafe-function-type`) fails lint on `main` as well; the file is not
+  part of this branch.
+- `pnpm build`: exit 0.
+- `pnpm vitest run`: 1516 passed, 1 skipped, 1 failed — the only failure is issue #208
+  (`get-sessions-resolver` asserting a strictly future Monday), which reproduces on `main` with the same clock.
+- Not verified: no authenticated browser pass and no visual check of the palette, the mobile card list, the
+  selection bar or the token-refactored calendar. The base-ui menu popup cannot be opened in jsdom in this repo
+  (leaks floating-ui timers and kills the worker), so `student-row-actions.test.tsx` drives a stateful double of
+  the dropdown; the real trigger is exercised by `student-card.test.tsx`.
 
 ## Log
 
