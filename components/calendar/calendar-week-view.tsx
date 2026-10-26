@@ -73,7 +73,7 @@ export function CalendarWeekView({
           return (
             <section key={date} className="flex flex-col gap-3 border-b pb-4 last:border-b-0">
               <h2
-                className={`rounded-md px-3 py-2 text-base font-medium capitalize ${
+                className={`rounded-md px-3 py-2 text-base font-medium first-letter:uppercase ${
                   isToday
                     ? "bg-primary text-primary-foreground"
                     : "bg-muted text-foreground"

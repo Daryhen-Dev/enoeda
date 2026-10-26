@@ -34,7 +34,7 @@ export function CalendarDayView({
   return (
     <section className="flex flex-col gap-4" aria-labelledby="calendar-day-title">
       <div className="flex flex-col gap-1">
-        <h2 id="calendar-day-title" className="text-lg font-semibold capitalize">
+        <h2 id="calendar-day-title" className="text-lg font-semibold first-letter:uppercase">
           {dateLabel}
         </h2>
         <p className="text-sm text-muted-foreground">{CALENDAR_MESSAGES.DAY_AGENDA}</p>
