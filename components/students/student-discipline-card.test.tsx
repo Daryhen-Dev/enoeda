@@ -49,6 +49,45 @@ vi.mock("sonner", () => ({
   },
 }));
 
+/**
+ * The card's only job with the monthly payment form is to choose the month it
+ * should suggest, so the sheet is replaced by a stub that renders the trigger
+ * with the same labels and exposes the received prop on the DOM.
+ */
+vi.mock("@/components/payments/register-monthly-payment-dialog", async () => {
+  const React = await import("react");
+  const { PAYMENT_FOLLOW_UP_MESSAGES, PAYMENT_MESSAGES } = await import(
+    "@/lib/localization/es-ec"
+  );
+
+  return {
+    RegisterMonthlyPaymentDialog: ({
+      triggerAriaLabel,
+      suspended,
+      suggestedMonth,
+    }: {
+      triggerAriaLabel?: string;
+      suspended?: boolean;
+      suggestedMonth?: string;
+    }) =>
+      React.createElement(
+        "div",
+        {
+          "data-testid": "monthly-payment-dialog",
+          "data-suggested-month": suggestedMonth ?? "",
+          "data-suspended": suspended ? "true" : "false",
+        },
+        React.createElement(
+          "button",
+          { type: "button", "aria-label": triggerAriaLabel },
+          suspended
+            ? PAYMENT_FOLLOW_UP_MESSAGES.PAY_AND_REACTIVATE
+            : PAYMENT_MESSAGES.REGISTER_MONTHLY_TITLE
+        )
+      ),
+  };
+});
+
 import { StudentDisciplineCard } from "./student-discipline-card";
 
 const STUDENT_ID = "cccccccc-1111-2222-8333-444444444444";
@@ -129,6 +168,12 @@ function renderCard(
 function queryButtonByAriaLabel(container: HTMLElement, label: string) {
   return container.querySelector<HTMLButtonElement>(
     `button[aria-label="${label}"]`
+  );
+}
+
+function queryMonthlyDialog(container: HTMLElement) {
+  return container.querySelector<HTMLElement>(
+    '[data-testid="monthly-payment-dialog"]'
   );
 }
 
@@ -256,6 +301,45 @@ describe("StudentDisciplineCard", () => {
     expect(rendered.container.textContent).toContain(
       ENROLLMENT_MESSAGES.REACTIVATE_ACTION
     );
+  });
+
+  it("suggests the first unpaid month to the monthly payment form", () => {
+    rendered = renderCard({
+      enrollment: { ...ACTIVE_ENROLLMENT, next_due_date: "2026-11-05" },
+    });
+
+    expect(
+      queryMonthlyDialog(rendered.container)?.getAttribute(
+        "data-suggested-month"
+      )
+    ).toBe("2026-11");
+  });
+
+  it("suggests nothing when the enrollment has no due date", () => {
+    rendered = renderCard({
+      enrollment: { ...ACTIVE_ENROLLMENT, next_due_date: null },
+    });
+
+    expect(
+      queryMonthlyDialog(rendered.container)?.getAttribute(
+        "data-suggested-month"
+      )
+    ).toBe("");
+  });
+
+  it("suggests the first unpaid month to the pay-and-reactivate form too", () => {
+    rendered = renderCard({
+      enrollment: {
+        ...ACTIVE_ENROLLMENT,
+        is_active: false,
+        next_due_date: "2026-11-05",
+      },
+      canManage: true,
+    });
+
+    const dialog = queryMonthlyDialog(rendered.container);
+    expect(dialog?.getAttribute("data-suggested-month")).toBe("2026-11");
+    expect(dialog?.getAttribute("data-suspended")).toBe("true");
   });
 
   it("shows the billing mode badge for the enrollment", () => {

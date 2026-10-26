@@ -51,6 +51,23 @@ const MONTH_VALUES = [
   "12",
 ] as const
 
+const PAYMENT_MODES = {
+  EASY: "easy",
+  ADVANCED: "advanced",
+} as const
+
+type PaymentMode = (typeof PAYMENT_MODES)[keyof typeof PAYMENT_MODES]
+
+/** "YYYY-MM" as produced by the domain (`next_due_date` is a date-only string). */
+const SUGGESTED_MONTH_PATTERN = /^(\d{4})-(0[1-9]|1[0-2])$/
+
+const MAX_COVERAGE_MONTHS = 24
+
+interface MonthSelection {
+  year: string
+  month: string
+}
+
 interface RegisterMonthlyPaymentDialogProps {
   studentDisciplineId: string
   branchId: string
@@ -68,6 +85,11 @@ interface RegisterMonthlyPaymentDialogProps {
    * reactivates it, and the trigger names both steps.
    */
   suspended?: boolean
+  /**
+   * First unpaid month as "YYYY-MM"; easy mode starts here instead of on the
+   * current month. Anything else falls back to the current month.
+   */
+  suggestedMonth?: string
 }
 
 function getLocalDateInputValue() {
@@ -88,6 +110,7 @@ function formatMonth(value: string) {
   )
 }
 
+/** First day of the month AFTER `lastMonth` (December rolls into January). */
 function getPeriodEnd(year: string, lastMonth: string) {
   const month = Number(lastMonth)
   const endYear = month === 12 ? Number(year) + 1 : Number(year)
@@ -106,6 +129,35 @@ function getCoverageMonthCount(
   return (Number(endYear) - Number(startYear)) * 12 + Number(endMonth) - Number(startMonth) + 1
 }
 
+/** The month easy mode opens on: the suggested one, else the current month. */
+function getDefaultMonth(suggestedMonth?: string): MonthSelection {
+  const match = SUGGESTED_MONTH_PATTERN.exec(suggestedMonth ?? "")
+  if (match) return { year: match[1], month: match[2] }
+
+  const now = new Date()
+  return {
+    year: String(now.getFullYear()),
+    month: String(now.getMonth() + 1).padStart(2, "0"),
+  }
+}
+
+/** The visible years, plus whatever year the form is already anchored on. */
+function getCalendarYears(...anchors: string[]): number[] {
+  const currentYear = Number(getCurrentYearValue())
+  const years = new Set([
+    currentYear - 1,
+    currentYear,
+    currentYear + 1,
+    currentYear + 2,
+  ])
+  for (const anchor of anchors) {
+    const year = Number(anchor)
+    if (year > 0) years.add(year)
+  }
+
+  return [...years].sort((a, b) => a - b)
+}
+
 export function RegisterMonthlyPaymentDialog({
   studentDisciplineId,
   branchId,
@@ -115,31 +167,47 @@ export function RegisterMonthlyPaymentDialog({
   onOpenChange,
   hideTrigger = false,
   suspended = false,
+  suggestedMonth,
 }: RegisterMonthlyPaymentDialogProps) {
   const router = useRouter()
   const [internalOpen, setInternalOpen] = useState(false)
   const isControlled = controlledOpen !== undefined
   const isOpen = isControlled ? (controlledOpen as boolean) : internalOpen
-  const [amount, setAmount] = useState("")
+  const [mode, setMode] = useState<PaymentMode>(PAYMENT_MODES.EASY)
+  // Easy mode: exactly one month, so one month + one year selection.
+  const [singleMonth, setSingleMonth] = useState<MonthSelection>(() =>
+    getDefaultMonth(suggestedMonth)
+  )
+  // Advanced mode: the first/last month range.
   const [startYear, setStartYear] = useState(getCurrentYearValue)
   const [startMonth, setStartMonth] = useState("")
   const [endYear, setEndYear] = useState(getCurrentYearValue)
   const [endMonth, setEndMonth] = useState("")
+  const [rangeInteracted, setRangeInteracted] = useState(false)
+  const [amount, setAmount] = useState("")
   const [paymentDate, setPaymentDate] = useState(getLocalDateInputValue)
   const [note, setNote] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+  const isEasyMode = mode === PAYMENT_MODES.EASY
   const coverageMonthCount = getCoverageMonthCount(startYear, startMonth, endYear, endMonth)
-  const isMonthRangeInvalid = coverageMonthCount < 1 || coverageMonthCount > 24
-  const currentYear = Number(getCurrentYearValue())
-  const calendarYears = [currentYear - 1, currentYear, currentYear + 1, currentYear + 2]
+  const isMonthRangeInvalid =
+    coverageMonthCount < 1 || coverageMonthCount > MAX_COVERAGE_MONTHS
+  // A range only counts as wrong once the admin touched it or tried to submit:
+  // a freshly opened form shows the prefilled range, never a red border.
+  const showRangeError = rangeInteracted && isMonthRangeInvalid
+  const hasAmount = Number(amount) > 0
+  const calendarYears = getCalendarYears(singleMonth.year, startYear, endYear)
 
   function resetForm() {
-    setAmount("")
+    setMode(PAYMENT_MODES.EASY)
+    setSingleMonth(getDefaultMonth(suggestedMonth))
     setStartYear(getCurrentYearValue())
     setStartMonth("")
     setEndYear(getCurrentYearValue())
     setEndMonth("")
+    setRangeInteracted(false)
+    setAmount("")
     setPaymentDate(getLocalDateInputValue())
     setNote("")
     setError(null)
@@ -161,22 +229,47 @@ export function RegisterMonthlyPaymentDialog({
     resetForm()
   }
 
+  /** Easy -> advanced: the single month becomes the first and last month. */
+  function showAdvancedMode() {
+    setStartYear(singleMonth.year)
+    setStartMonth(singleMonth.month)
+    setEndYear(singleMonth.year)
+    setEndMonth(singleMonth.month)
+    setRangeInteracted(false)
+    setError(null)
+    setMode(PAYMENT_MODES.ADVANCED)
+  }
+
+  /** Advanced -> easy: the first month of the range becomes the paid month. */
+  function showEasyMode() {
+    setSingleMonth((current) => ({
+      year: startYear || current.year,
+      month: startMonth || current.month,
+    }))
+    setError(null)
+    setMode(PAYMENT_MODES.EASY)
+  }
+
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
-    if (
-      !amount ||
-      !startYear ||
-      !startMonth ||
-      !endYear ||
-      !endMonth ||
-      isMonthRangeInvalid
-    ) {
-      return
-    }
+    if (!hasAmount) return
 
-    const periodStart = `${startYear}-${startMonth}-01`
-    const periodEnd = getPeriodEnd(endYear, endMonth)
+    let periodStart: string
+    let periodEnd: string
+
+    if (isEasyMode) {
+      if (!singleMonth.year || !singleMonth.month) return
+      periodStart = `${singleMonth.year}-${singleMonth.month}-01`
+      periodEnd = getPeriodEnd(singleMonth.year, singleMonth.month)
+    } else {
+      setRangeInteracted(true)
+      if (!startYear || !startMonth || !endYear || !endMonth || isMonthRangeInvalid) {
+        return
+      }
+      periodStart = `${startYear}-${startMonth}-01`
+      periodEnd = getPeriodEnd(endYear, endMonth)
+    }
 
     startTransition(async () => {
       const result = await registerMonthlyPayment({
@@ -218,6 +311,12 @@ export function RegisterMonthlyPaymentDialog({
       router.refresh()
     })
   }
+
+  const canSubmit = isEasyMode
+    ? hasAmount && Boolean(singleMonth.year && singleMonth.month)
+    : hasAmount &&
+      Boolean(startYear && startMonth && endYear && endMonth) &&
+      !isMonthRangeInvalid
 
   return (
     <Sheet open={isOpen} onOpenChange={handleOpenChange}>
@@ -262,64 +361,136 @@ export function RegisterMonthlyPaymentDialog({
               />
             </Field>
 
-            <div className="grid grid-cols-2 gap-3">
-              <Field>
-                <FieldLabel htmlFor="pay-start-year">
-                  {PAYMENT_MESSAGES.CALENDAR_YEAR_LABEL} inicial
-                </FieldLabel>
-                <Select value={startYear} onValueChange={(value) => setStartYear(value ?? "")}>
-                  <SelectTrigger id="pay-start-year" className="w-full"><SelectValue className="min-w-0" /></SelectTrigger>
-                  <SelectContent>{calendarYears.map((year) => <SelectItem key={year} value={String(year)}>{year}</SelectItem>)}</SelectContent>
-                </Select>
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="pay-first-month">{PAYMENT_MESSAGES.FIRST_MONTH_LABEL}</FieldLabel>
-                <Select value={startMonth} onValueChange={(value) => setStartMonth(value ?? "")}>
-                  <SelectTrigger id="pay-first-month" className="w-full" aria-invalid={isMonthRangeInvalid}>
-                    <span data-slot="select-value" className="min-w-0 flex-1 truncate text-left">
-                      {startMonth
-                        ? formatMonth(startMonth)
-                        : PAYMENT_MESSAGES.FIRST_MONTH_LABEL}
-                    </span>
-                  </SelectTrigger>
-                  <SelectContent>{MONTH_VALUES.map((month) => <SelectItem key={month} value={month}>{formatMonth(month)}</SelectItem>)}</SelectContent>
-                </Select>
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="pay-end-year">
-                  {PAYMENT_MESSAGES.CALENDAR_YEAR_LABEL} final
-                </FieldLabel>
-                <Select value={endYear} onValueChange={(value) => setEndYear(value ?? "")}>
-                  <SelectTrigger id="pay-end-year" className="w-full"><SelectValue className="min-w-0" /></SelectTrigger>
-                  <SelectContent>{calendarYears.map((year) => <SelectItem key={year} value={String(year)}>{year}</SelectItem>)}</SelectContent>
-                </Select>
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="pay-last-month">{PAYMENT_MESSAGES.LAST_MONTH_LABEL}</FieldLabel>
-                <Select value={endMonth} onValueChange={(value) => setEndMonth(value ?? "")}>
-                  <SelectTrigger id="pay-last-month" className="w-full" aria-invalid={isMonthRangeInvalid} aria-describedby="pay-month-range-error">
-                    <span data-slot="select-value" className="min-w-0 flex-1 truncate text-left">
-                      {endMonth
-                        ? formatMonth(endMonth)
-                        : PAYMENT_MESSAGES.LAST_MONTH_LABEL}
-                    </span>
-                  </SelectTrigger>
-                  <SelectContent>{MONTH_VALUES.map((month) => <SelectItem key={month} value={month}>{formatMonth(month)}</SelectItem>)}</SelectContent>
-                </Select>
-              </Field>
-            </div>
-            {coverageMonthCount > 0 && !isMonthRangeInvalid && (
-              <p className="text-sm text-muted-foreground" aria-live="polite">
-                {PAYMENT_MESSAGES.COVERAGE_MONTH_COUNT(coverageMonthCount)}
-              </p>
+            {isEasyMode ? (
+              <>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field>
+                    <FieldLabel htmlFor="pay-month">
+                      {PAYMENT_MESSAGES.PAYMENT_MONTH_LABEL}
+                    </FieldLabel>
+                    <Select
+                      value={singleMonth.month}
+                      onValueChange={(value) =>
+                        setSingleMonth((current) => ({
+                          ...current,
+                          month: value ?? "",
+                        }))
+                      }
+                    >
+                      <SelectTrigger id="pay-month" className="w-full">
+                        <span data-slot="select-value" className="min-w-0 flex-1 truncate text-left">
+                          {singleMonth.month
+                            ? formatMonth(singleMonth.month)
+                            : PAYMENT_MESSAGES.PAYMENT_MONTH_LABEL}
+                        </span>
+                      </SelectTrigger>
+                      <SelectContent>{MONTH_VALUES.map((month) => <SelectItem key={month} value={month}>{formatMonth(month)}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor="pay-month-year">
+                      {PAYMENT_MESSAGES.CALENDAR_YEAR_LABEL}
+                    </FieldLabel>
+                    <Select
+                      value={singleMonth.year}
+                      onValueChange={(value) =>
+                        setSingleMonth((current) => ({
+                          ...current,
+                          year: value ?? "",
+                        }))
+                      }
+                    >
+                      <SelectTrigger id="pay-month-year" className="w-full">
+                        <SelectValue className="min-w-0" />
+                      </SelectTrigger>
+                      <SelectContent>{calendarYears.map((year) => <SelectItem key={year} value={String(year)}>{year}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </Field>
+                </div>
+                <p className="text-sm text-muted-foreground" aria-live="polite">
+                  {PAYMENT_MESSAGES.COVERAGE_MONTH_COUNT(1)}
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field>
+                    <FieldLabel htmlFor="pay-start-year">
+                      {PAYMENT_MESSAGES.CALENDAR_YEAR_LABEL} inicial
+                    </FieldLabel>
+                    <Select value={startYear} onValueChange={(value) => setStartYear(value ?? "")}>
+                      <SelectTrigger id="pay-start-year" className="w-full"><SelectValue className="min-w-0" /></SelectTrigger>
+                      <SelectContent>{calendarYears.map((year) => <SelectItem key={year} value={String(year)}>{year}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor="pay-first-month">{PAYMENT_MESSAGES.FIRST_MONTH_LABEL}</FieldLabel>
+                    <Select value={startMonth} onValueChange={(value) => {
+                      setStartMonth(value ?? "")
+                      setRangeInteracted(true)
+                    }}>
+                      <SelectTrigger id="pay-first-month" className="w-full" aria-invalid={showRangeError || undefined}>
+                        <span data-slot="select-value" className="min-w-0 flex-1 truncate text-left">
+                          {startMonth
+                            ? formatMonth(startMonth)
+                            : PAYMENT_MESSAGES.FIRST_MONTH_LABEL}
+                        </span>
+                      </SelectTrigger>
+                      <SelectContent>{MONTH_VALUES.map((month) => <SelectItem key={month} value={month}>{formatMonth(month)}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor="pay-end-year">
+                      {PAYMENT_MESSAGES.CALENDAR_YEAR_LABEL} final
+                    </FieldLabel>
+                    <Select value={endYear} onValueChange={(value) => setEndYear(value ?? "")}>
+                      <SelectTrigger id="pay-end-year" className="w-full"><SelectValue className="min-w-0" /></SelectTrigger>
+                      <SelectContent>{calendarYears.map((year) => <SelectItem key={year} value={String(year)}>{year}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor="pay-last-month">{PAYMENT_MESSAGES.LAST_MONTH_LABEL}</FieldLabel>
+                    <Select value={endMonth} onValueChange={(value) => {
+                      setEndMonth(value ?? "")
+                      setRangeInteracted(true)
+                    }}>
+                      <SelectTrigger id="pay-last-month" className="w-full" aria-invalid={showRangeError || undefined} aria-describedby="pay-month-range-error">
+                        <span data-slot="select-value" className="min-w-0 flex-1 truncate text-left">
+                          {endMonth
+                            ? formatMonth(endMonth)
+                            : PAYMENT_MESSAGES.LAST_MONTH_LABEL}
+                        </span>
+                      </SelectTrigger>
+                      <SelectContent>{MONTH_VALUES.map((month) => <SelectItem key={month} value={month}>{formatMonth(month)}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </Field>
+                </div>
+                {coverageMonthCount > 0 && !isMonthRangeInvalid && (
+                  <p className="text-sm text-muted-foreground" aria-live="polite">
+                    {PAYMENT_MESSAGES.COVERAGE_MONTH_COUNT(coverageMonthCount)}
+                  </p>
+                )}
+                {showRangeError && (
+                  <FieldError id="pay-month-range-error">
+                    {coverageMonthCount < 1
+                      ? PAYMENT_MESSAGES.MONTH_RANGE_INVALID
+                      : PAYMENT_MESSAGES.PERIOD_MAX_24_MONTHS}
+                  </FieldError>
+                )}
+              </>
             )}
-            {isMonthRangeInvalid && startMonth && endMonth && (
-              <FieldError id="pay-month-range-error">
-                {coverageMonthCount < 1
-                  ? PAYMENT_MESSAGES.MONTH_RANGE_INVALID
-                  : PAYMENT_MESSAGES.PERIOD_MAX_24_MONTHS}
-              </FieldError>
-            )}
+
+            <Button
+              type="button"
+              variant="link"
+              size="sm"
+              className="h-auto self-start px-0"
+              onClick={isEasyMode ? showAdvancedMode : showEasyMode}
+            >
+              {isEasyMode
+                ? PAYMENT_MESSAGES.PAY_MULTIPLE_MONTHS_ACTION
+                : PAYMENT_MESSAGES.PAY_SINGLE_MONTH_ACTION}
+            </Button>
 
             <Field>
               <FieldLabel htmlFor="pay-date">
@@ -358,18 +529,7 @@ export function RegisterMonthlyPaymentDialog({
             >
               {COMMON_MESSAGES.CANCEL}
             </SheetClose>
-            <Button
-              type="submit"
-              disabled={
-                isPending ||
-                !amount ||
-                !startYear ||
-                !startMonth ||
-                !endYear ||
-                !endMonth ||
-                isMonthRangeInvalid
-              }
-            >
+            <Button type="submit" disabled={isPending || !canSubmit}>
               {isPending
                 ? PAYMENT_MESSAGES.SAVING
                 : suspended
