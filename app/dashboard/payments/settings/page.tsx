@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation"
 
 import { PaymentSettingsForm } from "@/components/payments/payment-settings-form"
+import { PaymentsSectionNav } from "@/components/payments/payments-section-nav"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { resolveBranchContext } from "@/lib/auth/branch-context"
 import { getBranchPaymentSettings } from "@/lib/domain/branches/actions"
@@ -48,6 +49,7 @@ export default async function PaymentSettingsPage({ searchParams }: PaymentSetti
 
   return (
     <main className="flex flex-col gap-6 p-4 md:p-6">
+      <PaymentsSectionNav branchId={branchResult.branchId} />
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">{PAYMENT_MESSAGES.SETTINGS_TITLE}</h1>
         <p className="text-sm text-muted-foreground">{PAYMENT_MESSAGES.SETTINGS_DESCRIPTION}</p>

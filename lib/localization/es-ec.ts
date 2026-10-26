@@ -1402,7 +1402,6 @@ export const PAYMENT_MESSAGES = {
   LOCKED_REASON: "Solo los administradores de la sucursal pueden modificar pagos.",
   ACTIONS_LABEL: "Acciones",
   EDIT_ACTION: "Corregir",
-  SETTINGS_LINK: "Configuración de pagos",
   SETTINGS_TITLE: "Configuración de pagos",
   SETTINGS_DESCRIPTION: "Defina el vencimiento mensual y el plazo de corrección de pagos para esta sucursal.",
   DUE_DAY_LABEL: "Día de vencimiento mensual",
@@ -1451,7 +1450,6 @@ export const PAYMENT_VALIDATION_MESSAGES = {
   PAGE_TITLE: "Validación mensual",
   PAGE_DESCRIPTION: (monthName: string) =>
     `Clasificación de las inscripciones activas correspondientes a ${monthName}.`,
-  BACK_LINK: "Volver a pagos",
   NOT_AUTHORIZED:
     "Solo los administradores de la sucursal pueden revisar y suspender inscripciones por falta de pago.",
   SERVICE_UNAVAILABLE: "No se pudo cargar la validación mensual.",
@@ -1543,6 +1541,14 @@ export const PAYMENT_CONSOLE_MESSAGES = {
   EMPTY_OVERDUE: "No hay inscripciones con pago pendiente.",
   EMPTY_ACTIVITY: "No hay pagos registrados en este período.",
   CURRENCY_CODE: "USD",
+} as const
+
+/** Payments sub-navigation labels shared by the three payments screens. */
+export const PAYMENT_SECTION_NAV_MESSAGES = {
+  LABEL: "Secciones de pagos",
+  SUMMARY: "Resumen",
+  VALIDATION: "Validar pagos",
+  SETTINGS: "Precios",
 } as const
 
 export const OVERDUE_MESSAGES = {

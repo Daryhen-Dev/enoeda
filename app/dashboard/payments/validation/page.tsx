@@ -1,9 +1,7 @@
-import Link from "next/link"
 import { redirect } from "next/navigation"
-import { ArrowLeftIcon } from "lucide-react"
 
-import { buildQuery } from "@/components/payments/monthly-payment-validation-format"
 import MonthlyPaymentValidationSection from "@/components/payments/monthly-payment-validation-section"
+import { PaymentsSectionNav } from "@/components/payments/payments-section-nav"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { resolveBranchContext } from "@/lib/auth/branch-context"
 import { PAYMENT_VALIDATION_MESSAGES } from "@/lib/localization/es-ec"
@@ -42,15 +40,7 @@ export default async function PaymentValidationPage({
 
   return (
     <main className="flex flex-col gap-6 p-4 md:p-6">
-      <div>
-        <Link
-          href={`/dashboard/payments?${buildQuery(branchResult.branchId)}`}
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-        >
-          <ArrowLeftIcon className="size-4" aria-hidden="true" />
-          {PAYMENT_VALIDATION_MESSAGES.BACK_LINK}
-        </Link>
-      </div>
+      <PaymentsSectionNav branchId={branchResult.branchId} />
 
       <MonthlyPaymentValidationSection
         branchId={branchResult.branchId}

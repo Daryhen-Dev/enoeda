@@ -1,15 +1,14 @@
 import type { ReactNode } from "react"
 
 import { redirect } from "next/navigation"
-import Link from "next/link"
-import { AlertCircleIcon, SettingsIcon, ShieldCheckIcon } from "lucide-react"
+import { AlertCircleIcon } from "lucide-react"
 
 import { ClassPriceConfigDialog } from "@/components/payments/class-price-config-dialog"
 import { DisciplineFilterTabs } from "@/components/payments/discipline-filter-tabs"
 import { OverdueStudentsList } from "@/components/payments/overdue-students-list"
+import { PaymentsSectionNav } from "@/components/payments/payments-section-nav"
 import { RecentPaymentActivityList } from "@/components/payments/recent-payment-activity-list"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { resolveBranchContext } from "@/lib/auth/branch-context"
 import {
@@ -24,8 +23,6 @@ import type { MonthlyPaymentSummary } from "@/lib/domain/payments/queries"
 import {
   OVERDUE_MESSAGES,
   PAYMENT_CONSOLE_MESSAGES,
-  PAYMENT_MESSAGES,
-  PAYMENT_VALIDATION_MESSAGES,
   USER_LOCALE,
 } from "@/lib/localization/es-ec"
 
@@ -142,47 +139,21 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
 
   return (
     <main className="flex flex-col gap-6 p-4 md:p-6">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {PAYMENT_CONSOLE_MESSAGES.HEADING}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {PAYMENT_CONSOLE_MESSAGES.DESCRIPTION}
-          </p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {PAYMENT_CONSOLE_MESSAGES.CURRENT_PERIOD}: {currentMonth}
-          </p>
-        </div>
-        {branchResult.canManage && (
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              nativeButton={false}
-              render={
-                <Link
-                  href={`/dashboard/payments/validation?branch=${branchResult.branchId}`}
-                />
-              }
-            >
-              <ShieldCheckIcon className="size-4" />
-              {PAYMENT_VALIDATION_MESSAGES.PAGE_TITLE}
-            </Button>
-            <Button
-              variant="outline"
-              nativeButton={false}
-              render={
-                <Link
-                  href={`/dashboard/payments/settings?branch=${branchResult.branchId}`}
-                />
-              }
-            >
-              <SettingsIcon className="size-4" />
-              {PAYMENT_MESSAGES.SETTINGS_LINK}
-            </Button>
-          </div>
-        )}
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          {PAYMENT_CONSOLE_MESSAGES.HEADING}
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          {PAYMENT_CONSOLE_MESSAGES.DESCRIPTION}
+        </p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {PAYMENT_CONSOLE_MESSAGES.CURRENT_PERIOD}: {currentMonth}
+        </p>
       </div>
+
+      {branchResult.canManage && (
+        <PaymentsSectionNav branchId={branchResult.branchId} />
+      )}
 
       <DisciplineFilterTabs
         branchId={branchResult.branchId}
