@@ -53,3 +53,9 @@ share one skeleton component instead of eleven copies.
 
 L4 (decision, S5): tabs are links between the three existing routes, not in-place tabs. URLs, deep links and
 the existing server actions stay untouched.
+
+### Slice boundary
+
+Commit 1 (`7280bbe`) carried 521 authored lines because it includes twelve 13-line loading files that
+share one skeleton; commit 2 (`15dd22e`) closed the recovery half at 242 lines. From T3 on, each task keeps
+its own commit under the ~400-line slice.
