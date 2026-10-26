@@ -61,7 +61,7 @@ export function StudentDetailHeader({
           size="icon-sm"
           nativeButton={false}
           render={
-            <Link href={backHref} aria-label="Back to students" />
+            <Link href={backHref} aria-label={STUDENT_DIRECTORY_MESSAGES.BACK_TO_LIST} />
           }
         >
           <ArrowLeftIcon />

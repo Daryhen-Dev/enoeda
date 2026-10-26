@@ -23,6 +23,11 @@ export function StudentSearchTrigger({ className }: { className?: string }) {
       )}
     >
       <SearchIcon className="size-4" aria-hidden="true" />
+      {/* A phone has no Ctrl+K, so the control must read as a search box, not
+          as an unlabeled magnifier. */}
+      <span className="lg:hidden">
+        {STUDENT_SEARCH_MESSAGES.TRIGGER_LABEL_SHORT}
+      </span>
       <span className="hidden lg:inline">
         {STUDENT_SEARCH_MESSAGES.TRIGGER_LABEL}
       </span>

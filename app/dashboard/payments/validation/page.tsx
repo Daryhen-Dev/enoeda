@@ -28,7 +28,7 @@ export default async function PaymentValidationPage({
   if (branchResult.type === "error" || !branchResult.canManage) {
     return (
       <main className="flex flex-col gap-6 p-4 md:p-6">
-        <Alert variant="destructive">
+        <Alert>
           <AlertTitle>{PAYMENT_VALIDATION_MESSAGES.PAGE_TITLE}</AlertTitle>
           <AlertDescription>
             {PAYMENT_VALIDATION_MESSAGES.NOT_AUTHORIZED}

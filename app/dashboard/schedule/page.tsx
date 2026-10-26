@@ -9,7 +9,10 @@ import { getAuthenticatedContext } from "@/lib/auth/identity-resolver";
 import { listClassSeries, listUpcomingOneTimeClasses } from "@/lib/domain/classes/actions";
 import { listDisciplines } from "@/lib/domain/disciplines/actions";
 import { getBranchDefaultTeacher, listBranchTeacherOptions } from "@/lib/domain/roles/actions";
-import { SCHEDULE_SERIES_MESSAGES } from "@/lib/localization/es-ec";
+import {
+  DASHBOARD_SHELL_MESSAGES,
+  SCHEDULE_SERIES_MESSAGES,
+} from "@/lib/localization/es-ec";
 
 interface SchedulePageProps {
   searchParams: Promise<{ branch?: string; [key: string]: string | undefined }>;
@@ -48,11 +51,11 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
   if (branchResult.type === "error") {
     return (
       <div className="flex flex-col gap-4 p-4 md:gap-6 md:p-6">
-        <Alert variant="destructive">
+        <Alert>
           <AlertCircleIcon />
           <AlertTitle>{SCHEDULE_SERIES_MESSAGES.PAGE_TITLE}</AlertTitle>
           <AlertDescription>
-            {SCHEDULE_SERIES_MESSAGES.NO_BRANCH_CONTEXT}
+            {DASHBOARD_SHELL_MESSAGES.ADMIN_ONLY_SECTION}
           </AlertDescription>
         </Alert>
       </div>

@@ -194,17 +194,17 @@ describe("StudentCard — mobile presentation of one student", () => {
     vi.restoreAllMocks();
   });
 
-  it("shows the name, status and disciplines stacked as one card", () => {
+  it("shows the name and one compact meta line instead of a label grid", () => {
     rendered = renderCard(
       makeStudent({ next_due_date: TODAY, discipline_name: "Karate" })
     );
 
     const text = rendered.container.textContent ?? "";
     expect(text).toContain("Ana Pérez");
-    expect(text).toContain(STUDENT_DIRECTORY_MESSAGES.STATUS);
-    expect(text).toContain(STUDENT_DIRECTORY_MESSAGES.ACTIVE_STATUS);
-    expect(text).toContain(STUDENT_DIRECTORY_MESSAGES.DISCIPLINES);
     expect(text).toContain("Karate");
+    // The active tab already says every card is active; the label grid is gone.
+    expect(text).not.toContain(STUDENT_DIRECTORY_MESSAGES.DISCIPLINES);
+    expect(text).not.toContain(STUDENT_DIRECTORY_MESSAGES.STATUS);
   });
 
   it("links the card header to the detail page keeping the branch", () => {
@@ -223,8 +223,8 @@ describe("StudentCard — mobile presentation of one student", () => {
     );
 
     const text = rendered.container.textContent ?? "";
-    expect(text).toContain(STUDENT_DIRECTORY_MESSAGES.MONTHLY_DUE_DATE);
     expect(text).toContain(STUDENT_DIRECTORY_MESSAGES.DUE_IN_DAYS(5));
+    expect(text).not.toContain(STUDENT_DIRECTORY_MESSAGES.MONTHLY_DUE_DATE);
   });
 
   it("says today when the nearest due date is today", () => {
