@@ -8,6 +8,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import {
+  STUDENT_DIRECTORY_MESSAGES,
   STUDENT_STATUS_STRIP_MESSAGES,
   formatCurrency,
 } from "@/lib/localization/es-ec";
@@ -17,9 +18,12 @@ import { StudentStatusStrip } from "./student-status-strip";
 const KARATE = "d1111111-1111-4111-8111-111111111111";
 const KICKBOXING = "d2222222-2222-4222-8222-222222222222";
 
+const TODAY = "2026-10-26";
+
 function render(props: Partial<Parameters<typeof StudentStatusStrip>[0]>) {
   return renderToStaticMarkup(
     <StudentStatusStrip
+      todayDateOnly={TODAY}
       enrollments={[
         { discipline_id: KARATE, discipline_name: "Karate", is_active: true, suspended_at: null },
         { discipline_id: KICKBOXING, discipline_name: "Kickboxing", is_active: true, suspended_at: null },
@@ -108,6 +112,46 @@ describe("StudentStatusStrip", () => {
     });
 
     expect(html).toContain(STUDENT_STATUS_STRIP_MESSAGES.SUSPENDED);
+  });
+
+  it("shows the nearest monthly due date with the directory wording", () => {
+    const html = render({
+      enrollments: [
+        { discipline_id: KARATE, discipline_name: "Karate", is_active: true, suspended_at: null, billing_mode: "monthly", next_due_date: "2026-11-05" },
+        { discipline_id: KICKBOXING, discipline_name: "Kickboxing", is_active: true, suspended_at: null, billing_mode: "monthly", next_due_date: "2026-10-31" },
+      ],
+    });
+
+    expect(html).toContain(STUDENT_STATUS_STRIP_MESSAGES.DUE_LABEL);
+    // Kickboxing (5 days) is nearer than Karate (10 days).
+    expect(html).toContain("Kickboxing");
+    expect(html).toContain(STUDENT_DIRECTORY_MESSAGES.DUE_IN_DAYS(5));
+  });
+
+  it("marks an overdue monthly payment in carmine", () => {
+    const html = render({
+      enrollments: [
+        { discipline_id: KARATE, discipline_name: "Karate", is_active: true, suspended_at: null, billing_mode: "monthly", next_due_date: "2026-10-20" },
+      ],
+    });
+
+    expect(html).toContain(STUDENT_DIRECTORY_MESSAGES.OVERDUE_BY_DAYS(6));
+    expect(html).toMatch(/text-destructive[^>]*>[^<]*<svg|text-destructive/);
+  });
+
+  it("says it is billed per class when no monthly enrollment exists", () => {
+    const html = render({
+      enrollments: [
+        { discipline_id: KARATE, discipline_name: "Karate", is_active: true, suspended_at: null, billing_mode: "per_class", next_due_date: null },
+      ],
+    });
+
+    expect(html).toContain(STUDENT_DIRECTORY_MESSAGES.PER_CLASS_DUE_DATE);
+  });
+
+  it("omits the due chip when the page did not load due dates", () => {
+    // Older callers pass enrollments without the optional field.
+    expect(render({})).not.toContain(STUDENT_STATUS_STRIP_MESSAGES.DUE_LABEL);
   });
 
   it("ignores enrollments that are no longer active", () => {

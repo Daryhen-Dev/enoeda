@@ -192,6 +192,7 @@ export default async function StudentDetailPage({
       />
 
       <StudentStatusStrip
+        todayDateOnly={todayDateOnly}
         enrollments={enrollments}
         attendanceStats={attendanceStats}
         progress={progressSummaryData}
