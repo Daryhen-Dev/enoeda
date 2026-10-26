@@ -74,7 +74,6 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
 
   // Staff entries already filtered by branch in query — include ALL for row actions
   const allAssignments = result.success ? result.data ?? [] : []
-  const teachers = allAssignments.filter((a) => a.role === "teacher")
 
   // Get current user ID for self-enable row action
   const currentUserId = identityResult.ok ? identityResult.ctx.userId : undefined
