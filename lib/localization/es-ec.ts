@@ -1402,7 +1402,6 @@ export const PAYMENT_MESSAGES = {
   LOCKED_REASON: "Solo los administradores de la sucursal pueden modificar pagos.",
   ACTIONS_LABEL: "Acciones",
   EDIT_ACTION: "Corregir",
-  SETTINGS_LINK: "Configuración de pagos",
   SETTINGS_TITLE: "Configuración de pagos",
   SETTINGS_DESCRIPTION: "Defina el vencimiento mensual y el plazo de corrección de pagos para esta sucursal.",
   DUE_DAY_LABEL: "Día de vencimiento mensual",
@@ -1451,7 +1450,6 @@ export const PAYMENT_VALIDATION_MESSAGES = {
   PAGE_TITLE: "Validación mensual",
   PAGE_DESCRIPTION: (monthName: string) =>
     `Clasificación de las inscripciones activas correspondientes a ${monthName}.`,
-  BACK_LINK: "Volver a pagos",
   NOT_AUTHORIZED:
     "Solo los administradores de la sucursal pueden revisar y suspender inscripciones por falta de pago.",
   SERVICE_UNAVAILABLE: "No se pudo cargar la validación mensual.",
