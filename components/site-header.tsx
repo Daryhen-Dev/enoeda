@@ -15,6 +15,7 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer"
 import { EnoedaMark } from "@/components/brand/enoeda-mark"
+import { StudentSearchTrigger } from "@/components/shell/student-search-trigger"
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { DASHBOARD_SHELL_MESSAGES } from "@/lib/localization/es-ec"
@@ -322,6 +323,8 @@ export function SiteHeader({
               <span className="truncate">{currentBranch.name}</span>
             </span>
           )}
+
+          <StudentSearchTrigger className="border-sidebar-border bg-transparent text-sidebar-foreground hover:text-sidebar-accent-foreground md:border-border md:bg-background md:text-muted-foreground md:hover:text-foreground" />
 
           <span className="truncate text-sm text-sidebar-foreground md:text-muted-foreground">
             {displayName}

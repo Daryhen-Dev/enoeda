@@ -12,7 +12,10 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { DASHBOARD_SHELL_MESSAGES } from "@/lib/localization/es-ec";
+import {
+  DASHBOARD_SHELL_MESSAGES,
+  STUDENT_SEARCH_MESSAGES,
+} from "@/lib/localization/es-ec";
 
 const BRANCH_ID = "bbbbbbbb-1111-2222-8333-444444444444";
 
@@ -121,6 +124,20 @@ describe("SiteHeader breadcrumb", () => {
     expect(rendered.container.querySelector("h1")?.textContent).toBe(
       DASHBOARD_SHELL_MESSAGES.PAYMENTS
     );
+  });
+
+  it("renders the student search control next to the branch switcher", () => {
+    navigation.pathname = "/dashboard";
+
+    rendered = render(
+      <SiteHeader displayName="Ana Pérez" branches={BRANCHES} />
+    );
+
+    const searchControl = rendered.container.querySelector(
+      `button[aria-label="${STUDENT_SEARCH_MESSAGES.TRIGGER_LABEL}"]`
+    );
+
+    expect(searchControl).not.toBeNull();
   });
 
   it("links back to the payments console from the settings screen", () => {
