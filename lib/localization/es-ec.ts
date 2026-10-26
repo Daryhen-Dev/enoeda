@@ -174,6 +174,26 @@ export const DASHBOARD_SHELL_MESSAGES = {
 } as const
 
 /**
+ * Global student search palette copy (Ctrl/Cmd+K). One input, one list, one
+ * keyboard contract shared by every dashboard route.
+ */
+export const STUDENT_SEARCH_MESSAGES = {
+  TRIGGER_LABEL: "Buscar estudiante",
+  DIALOG_TITLE: "Buscar estudiante",
+  DIALOG_DESCRIPTION:
+    "Escriba un nombre, apellido o cédula. También abre con Ctrl+K desde cualquier pantalla.",
+  INPUT_LABEL: "Buscar estudiante",
+  INPUT_PLACEHOLDER: "Nombre, apellido o cédula…",
+  MIN_QUERY_HINT: "Escriba al menos 2 letras para buscar.",
+  SEARCHING: "Buscando…",
+  NO_RESULTS: (query: string) => `Sin resultados para “${query}”.`,
+  SEARCH_ERROR: "No se pudo buscar. Inténtelo nuevamente.",
+  RESULTS_LABEL: "Resultados de búsqueda",
+  HINTS: "↑↓ para moverse · Enter para abrir · Esc para cerrar",
+  OPEN_RESULT_LABEL: (name: string) => `Abrir la ficha de ${name}`,
+} as const
+
+/**
  * Section feedback copy: loading placeholders, recoverable error screens and
  * the dashboard not-found screen. One vocabulary shared by every route.
  */

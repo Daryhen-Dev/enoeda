@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactNode } from "react"
 
 import { AppSidebar } from "@/components/app-sidebar"
+import { StudentSearchPalette } from "@/components/shell/student-search-palette"
 import { SiteHeader } from "@/components/site-header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { TooltipProvider } from "@/components/ui/tooltip"
@@ -48,6 +49,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
     <AppSidebar canManageProfile={canManageProfile} isAdmin={isAdmin} isTeacherOnly={isTeacherOnly} variant="sidebar" />
     <SidebarInset>
       <SiteHeader displayName={displayName} branches={headerBranches.branches} globalReadBranches={headerBranches.globalReadBranches} />
+      <StudentSearchPalette />
       <div className="flex flex-1 flex-col"><div className="@container/main flex flex-1 flex-col gap-2">{children}</div></div>
     </SidebarInset>
   </SidebarProvider></TooltipProvider>
