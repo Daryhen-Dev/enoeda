@@ -172,6 +172,24 @@ export const DASHBOARD_SHELL_MESSAGES = {
   PROFILE_NAME_UNAVAILABLE: "Perfil pendiente",
 } as const
 
+/**
+ * Section feedback copy: loading placeholders, recoverable error screens and
+ * the dashboard not-found screen. One vocabulary shared by every route.
+ */
+export const SECTION_FEEDBACK_MESSAGES = {
+  LOADING_SECTION: "Cargando la sección…",
+  LOADING_LABEL: (section: string) => `Cargando ${section}`,
+  ERROR_TITLE: "No pudimos cargar esta sección",
+  ERROR_DESCRIPTION:
+    "Hubo un problema al traer los datos. Puede reintentar sin cerrar la sesión.",
+  ERROR_RETRY: "Reintentar",
+  ERROR_HINT: "Si el problema continúa, avise al administrador del sistema.",
+  NOT_FOUND_TITLE: "No encontramos ese registro",
+  NOT_FOUND_DESCRIPTION:
+    "Puede que ya no exista en la sucursal activa o que el enlace esté vencido.",
+  NOT_FOUND_ACTION: "Volver a estudiantes",
+} as const
+
 export const SIDEBAR_ACCESSIBILITY_MESSAGES = {
   TOGGLE: "Alternar barra lateral",
   MOBILE_TITLE: "Barra lateral",
