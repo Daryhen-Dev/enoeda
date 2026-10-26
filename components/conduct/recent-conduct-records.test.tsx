@@ -7,8 +7,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   CONDUCT_MESSAGES,
   CONDUCT_QUICK_ENTRY_MESSAGES,
-  formatDate,
   formatCurrency,
+  formatDateOnlyValue,
 } from "@/lib/localization/es-ec";
 
 vi.mock("next/link", () => ({
@@ -116,7 +116,9 @@ describe("RecentConductRecords", () => {
       CONDUCT_MESSAGES.STATUS_PENDING
     );
     expect(document.body.textContent).toContain(
-      formatDate(new Date("2026-09-20T00:00:00.000Z"))
+      // The incident was on 20 sept; formatDate rendered the stored UTC
+      // midnight in the viewer timezone and showed 19 sept.
+      formatDateOnlyValue(new Date("2026-09-20T00:00:00.000Z"))
     );
     expect(document.body.textContent).toContain(
       "Llegó tarde repetidamente"

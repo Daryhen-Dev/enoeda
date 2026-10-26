@@ -7,7 +7,7 @@ import type { ConductRecord, ConductSummary } from "@/lib/domain/conduct"
 import {
   CONDUCT_MESSAGES,
   formatCurrency,
-  formatDate,
+  formatDateOnlyValue,
   formatDateTime,
 } from "@/lib/localization/es-ec"
 import { cn } from "@/lib/utils"
@@ -107,7 +107,7 @@ export function StudentConductPanel({
                 <div className="flex flex-col text-xs text-muted-foreground">
                   <span>
                     {CONDUCT_MESSAGES.INCIDENT_DATE_LABEL}:{" "}
-                    {formatDate(new Date(record.incident_date))}
+                    {formatDateOnlyValue(new Date(record.incident_date))}
                   </span>
                   {isFine && record.amount !== null && (
                     <span>

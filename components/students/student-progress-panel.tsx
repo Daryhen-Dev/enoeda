@@ -5,7 +5,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import type { ProgressRecord } from "@/lib/domain/progress/actions"
 import {
-  formatDate,
+  formatDateOnlyValue,
   formatNumber,
   PROGRESS_MESSAGES,
   STUDENT_DETAIL_MESSAGES,
@@ -62,7 +62,7 @@ export function StudentProgressPanel({
                   ({record.discipline_name})
                 </span>
                 <span className="text-muted-foreground">
-                  {formatDate(new Date(record.promoted_at))}
+                  {formatDateOnlyValue(new Date(record.promoted_at))}
                 </span>
                 {record.observations && (
                   <span className="truncate text-muted-foreground">

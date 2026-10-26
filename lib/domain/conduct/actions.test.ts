@@ -258,10 +258,32 @@ describe("createConductRecord — branch security", () => {
     const call = tx.student_conduct_records.create.mock.calls[0][0] as {
       data: { incident_date: Date };
     };
+    // Today's local calendar day, stored as that day's UTC midnight (the
+    // instant a Postgres `date` keeps), so read it back with UTC getters.
     const expected = new Date();
-    expect(call.data.incident_date.getFullYear()).toBe(expected.getFullYear());
-    expect(call.data.incident_date.getMonth()).toBe(expected.getMonth());
-    expect(call.data.incident_date.getDate()).toBe(expected.getDate());
+    expect(call.data.incident_date.getUTCFullYear()).toBe(expected.getFullYear());
+    expect(call.data.incident_date.getUTCMonth()).toBe(expected.getMonth());
+    expect(call.data.incident_date.getUTCDate()).toBe(expected.getDate());
+  });
+
+  it("stores the chosen incident day as UTC midnight in any server timezone", async () => {
+    const tx = buildMockTx();
+    setupWithAuth(ctxBranchA, tx);
+
+    await createConductRecord({
+      student_id: STUDENT_ID,
+      branch_id: BRANCH_A,
+      kind: "warning",
+      reason: "Interrumpió la clase",
+      incident_date: "2026-10-26",
+    });
+    const call = tx.student_conduct_records.create.mock.calls[0][0] as {
+      data: { incident_date: Date };
+    };
+
+    // Postgres keeps only the UTC calendar day of the instant. Local midnight
+    // ("2026-10-26T00:00:00") lands on 25 oct on any server east of UTC.
+    expect(call.data.incident_date.toISOString()).toBe("2026-10-26T00:00:00.000Z");
   });
 
   it("maps a concurrent trigger violation to a friendly conflict message", async () => {
