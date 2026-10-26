@@ -234,6 +234,28 @@ describe("StudentSearchPalette searching", () => {
     );
   });
 
+  it("shows each student once even if both queries return it", async () => {
+    rendered = renderPalette();
+    act(() => {
+      window.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "k", ctrlKey: true, bubbles: true })
+      );
+    });
+
+    act(() => {
+      typeInto(searchInput()!, "pe");
+    });
+    await flushSearch();
+
+    const options = paletteContent()?.querySelectorAll('[role="option"]') ?? [];
+    expect(options).toHaveLength(STUDENT_CATALOG.length);
+    expect(
+      [...options].filter((option) =>
+        option.textContent?.includes("Ana Pérez")
+      )
+    ).toHaveLength(1);
+  });
+
   it("says so in Spanish when nothing matches", async () => {
     searchReturns([]);
     rendered = renderPalette();

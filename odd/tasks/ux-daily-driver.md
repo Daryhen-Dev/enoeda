@@ -56,6 +56,23 @@ with the same confirmation and undo as the single-row path.
   cleared when the visible set changes.
 - T5 — DESIGN.md documents the command palette, row actions, selection bar and the undo affordance.
 
+### Visual check (ego-browser, 2026-10-26)
+
+Temporary preview route with synthetic data through the real components (deleted before the commit; the real
+dashboard needs Supabase credentials this session does not have), served by `next dev` on :3020:
+desktop 1440, mobile 390, the palette in its empty and results states, the row actions menu open, and the three
+class-block states. No horizontal overflow at 390 or 1440 and no console errors.
+
+Two findings, both fixed here:
+1. The palette merged the active and inactive queries without deduplicating: the same student rendered twice and
+   two rows shared one React key. The merge is now id-keyed (active wins) and a test pins it.
+2. "Desactivar" rendered in the row menu like any other item; it now uses the menu's destructive variant so the
+   carmine vocabulary from DESIGN.md holds inside menus too.
+
+Left as observations, not changed: the mobile card stacks four label/value rows (name, estado, disciplinas,
+vencimiento) which is tall for a 40-student directory, and the card header is the only "ver ficha" target with
+no chevron or underline, so it relies on the Actions menu for discoverability.
+
 ### Verification
 
 - `npx tsc --noEmit`: clean.
