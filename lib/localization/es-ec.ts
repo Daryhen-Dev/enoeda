@@ -170,6 +170,7 @@ export const DASHBOARD_SHELL_MESSAGES = {
   PAYMENT_VALIDATION: "Validación mensual",
   PROFILE: "Mi perfil",
   PROFILE_NAME_UNAVAILABLE: "Perfil pendiente",
+  BREADCRUMB_LABEL: "Ruta de navegación",
 } as const
 
 /**

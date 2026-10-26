@@ -6,10 +6,13 @@
  */
 import { describe, it, expect } from "vitest";
 import {
+  buildBreadcrumbHref,
   buildBranchSwitchUrl,
+  getBreadcrumbAncestors,
   getPageTitle,
   isProfileRoute,
 } from "./site-header";
+import { DASHBOARD_SHELL_MESSAGES } from "@/lib/localization/es-ec";
 
 const BRANCH_ID = "aaaaaaaa-1111-2222-3333-444444444444";
 
@@ -101,5 +104,42 @@ describe("SiteHeader profile route", () => {
     expect(isProfileRoute("/dashboard")).toBe(false);
     expect(isProfileRoute("/dashboard/students")).toBe(false);
     expect(isProfileRoute("/dashboard/profilex")).toBe(false);
+  });
+});
+
+describe("SiteHeader breadcrumb ancestors", () => {
+  it("links the parent section for a nested payments route", () => {
+    expect(getBreadcrumbAncestors("/dashboard/payments/validation")).toEqual([
+      {
+        label: DASHBOARD_SHELL_MESSAGES.PAYMENTS,
+        href: "/dashboard/payments",
+      },
+    ]);
+    expect(getBreadcrumbAncestors("/dashboard/payments/settings")).toEqual([
+      {
+        label: DASHBOARD_SHELL_MESSAGES.PAYMENTS,
+        href: "/dashboard/payments",
+      },
+    ]);
+  });
+
+  it("has no trail for top-level routes", () => {
+    expect(getBreadcrumbAncestors("/dashboard")).toEqual([]);
+    expect(getBreadcrumbAncestors("/dashboard/payments")).toEqual([]);
+    expect(getBreadcrumbAncestors("/dashboard/students")).toEqual([]);
+    expect(getBreadcrumbAncestors("/dashboard/calendar")).toEqual([]);
+  });
+
+  it("has no trail for a student detail, which carries its own back link", () => {
+    expect(getBreadcrumbAncestors("/dashboard/students/abc-123")).toEqual([]);
+  });
+
+  it("keeps the active branch when linking an ancestor", () => {
+    expect(
+      buildBreadcrumbHref("/dashboard/payments", "branch=b1&view=month")
+    ).toBe("/dashboard/payments?branch=b1&view=month");
+    expect(buildBreadcrumbHref("/dashboard/payments", "")).toBe(
+      "/dashboard/payments"
+    );
   });
 });
