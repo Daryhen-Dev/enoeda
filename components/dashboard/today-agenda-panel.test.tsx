@@ -201,6 +201,31 @@ describe("TodayAgendaPanel", () => {
     )
   })
 
+  it("gives the attendance trigger a thumb-sized tap target on a phone", () => {
+    rendered = renderPanel({
+      sessions: [
+        buildSession({
+          start_time: "08:00",
+          scheduled_class_id: "class-pending",
+          can_view_attendance: true,
+          can_take_attendance: true,
+        }),
+      ],
+    });
+
+    const withClassName = dialogSpy.mock.calls
+      .map((call) => call[0] as { triggerClassName?: string })
+      .filter((props) => typeof props.triggerClassName === "string");
+
+    // 44px on a phone, where this is the one action a teacher taps on the mat;
+    // the compact height stays on desktop.
+    expect(withClassName.length).toBeGreaterThan(0);
+    for (const props of withClassName) {
+      expect(props.triggerClassName).toContain("min-h-11");
+      expect(props.triggerClassName).toContain("sm:min-h-7");
+    }
+  });
+
   it("renders the attendance trigger only when can_view_attendance", () => {
     rendered = renderPanel({
       sessions: [

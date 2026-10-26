@@ -75,7 +75,9 @@ function AgendaRowStateCell({ session, branchId }: AgendaRowStateCellProps) {
               ? DASHBOARD_OVERVIEW_MESSAGES.VIEW_ATTENDANCE
               : undefined
           }
-          triggerClassName={`ml-auto sm:ml-0 ${buttonVariants({
+          // 44px on a phone: this is the one action a teacher taps standing at
+          // the mat with one hand. Desktop keeps the compact sm height.
+          triggerClassName={`ml-auto min-h-11 sm:ml-0 sm:min-h-7 ${buttonVariants({
             variant: session.state === "sealed" ? "ghost" : "default",
             size: "sm",
           })}`}

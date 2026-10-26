@@ -78,6 +78,7 @@ export function getPageTitle(pathname: string): string {
     ["/dashboard/payments/settings", DASHBOARD_SHELL_MESSAGES.PAYMENT_SETTINGS],
     ["/dashboard/payments", DASHBOARD_SHELL_MESSAGES.PAYMENTS],
     ["/dashboard/students", DASHBOARD_SHELL_MESSAGES.STUDENTS],
+    ["/dashboard/conduct", DASHBOARD_SHELL_MESSAGES.CONDUCT],
     ["/dashboard/staff", DASHBOARD_SHELL_MESSAGES.STAFF],
     ["/dashboard/schedule", DASHBOARD_SHELL_MESSAGES.CLASS_SCHEDULES],
     ["/dashboard/belts", DASHBOARD_SHELL_MESSAGES.BELTS],
