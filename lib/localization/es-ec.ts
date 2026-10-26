@@ -171,6 +171,7 @@ export const DASHBOARD_SHELL_MESSAGES = {
   PROFILE: "Mi perfil",
   PROFILE_NAME_UNAVAILABLE: "Perfil pendiente",
   BREADCRUMB_LABEL: "Ruta de navegación",
+  MOBILE_NAV_LABEL: "Navegación principal",
   ADMIN_ONLY_SECTION:
     "Esta sección la administra un administrador de la sucursal. Su cuenta no tiene ese permiso en esta sucursal.",
 } as const
