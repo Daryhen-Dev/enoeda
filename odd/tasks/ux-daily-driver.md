@@ -30,7 +30,7 @@ with the same confirmation and undo as the single-row path.
 ## Tasks
 
 - [x] T1 — Student search palette with shortcut and header control (S1), route: inline, commit: TBD
-- [ ] T2 — Students directory: row actions menu + mobile cards (S2), route: inline, commit: TBD
+- [x] T2 — Students directory: row actions menu + mobile cards (S2), route: delegated (gentle-ai-worker), commit: TBD
 - [ ] T3 — Calendar session block on semantic tokens and one status language (S3), route: delegated, commit: TBD
 - [ ] T4 — Undo for reversible actions + bulk deactivate (S4), route: inline, commit: TBD
 - [ ] T5 — Docs and close-out verification, route: inline, commit: TBD

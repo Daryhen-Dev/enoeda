@@ -329,6 +329,23 @@ export function StudentFormDialog({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- prefill is applied on open only
   }, [isOpen, isEditing])
 
+  // Controlled open in edit mode (e.g. the directory row actions menu): the
+  // parent flips `open` programmatically, so the student is loaded here
+  // instead of in the trigger handler. Deferred like the duplicate lookup so
+  // the effect body never sets state synchronously.
+  useEffect(() => {
+    if (!isControlled || !isOpen || !isEditing) {
+      return
+    }
+
+    const timer = window.setTimeout(() => {
+      void loadStudent()
+    }, 0)
+
+    return () => window.clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one load per open
+  }, [isControlled, isOpen, isEditing])
+
   async function handleSubmit(values: StudentFormValues) {
     if (isLoadingStudent) {
       return
@@ -391,7 +408,11 @@ export function StudentFormDialog({
       }
 
       form.reset(getDefaultValues())
-      setIsOpen(false)
+      if (isControlled) {
+        onOpenChange?.(false)
+      } else {
+        setIsOpen(false)
+      }
       router.refresh()
     } catch {
       setActionError(STUDENT_FORM_MESSAGES.SAVE_FAILURE)

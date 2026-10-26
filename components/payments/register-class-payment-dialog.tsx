@@ -31,6 +31,11 @@ interface RegisterClassPaymentDialogProps {
   branchId: string
   /** Accessible name for the trigger, e.g. one that names the discipline. */
   triggerAriaLabel?: string
+  /** Controlled open state; the built-in trigger keeps working when omitted. */
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+  /** Do not render the trigger button (the caller opens the sheet itself). */
+  hideTrigger?: boolean
 }
 
 function getLocalDateInputValue() {
@@ -45,9 +50,14 @@ export function RegisterClassPaymentDialog({
   studentDisciplineId,
   branchId,
   triggerAriaLabel,
+  open: controlledOpen,
+  onOpenChange,
+  hideTrigger = false,
 }: RegisterClassPaymentDialogProps) {
   const router = useRouter()
-  const [open, setOpen] = useState(false)
+  const [internalOpen, setInternalOpen] = useState(false)
+  const isControlled = controlledOpen !== undefined
+  const isOpen = isControlled ? (controlledOpen as boolean) : internalOpen
   const [classDate, setClassDate] = useState(getLocalDateInputValue)
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -55,6 +65,22 @@ export function RegisterClassPaymentDialog({
   function resetForm() {
     setClassDate(getLocalDateInputValue())
     setError(null)
+  }
+
+  function requestOpenChange(nextOpen: boolean) {
+    if (isControlled) {
+      onOpenChange?.(nextOpen)
+      return
+    }
+
+    setInternalOpen(nextOpen)
+  }
+
+  function handleOpenChange(nextOpen: boolean) {
+    if (isPending) return
+
+    requestOpenChange(nextOpen)
+    resetForm()
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -66,7 +92,7 @@ export function RegisterClassPaymentDialog({
         branch_id: branchId,
       })
       if (result.success) {
-        setOpen(false)
+        requestOpenChange(false)
         resetForm()
         toast.success(TOAST_MESSAGES.CLASS_PAYMENT_REGISTERED)
         router.refresh()
@@ -77,23 +103,17 @@ export function RegisterClassPaymentDialog({
   }
 
   return (
-    <Sheet
-      open={open}
-      onOpenChange={(nextOpen) => {
-        if (isPending) return
-
-        setOpen(nextOpen)
-        resetForm()
-      }}
-    >
-      <SheetTrigger
-        render={
-          <Button variant="outline" size="sm" aria-label={triggerAriaLabel} />
-        }
-      >
-        <BanknoteIcon className="size-4" />
-        {PAYMENT_MESSAGES.CHARGE_CLASS}
-      </SheetTrigger>
+    <Sheet open={isOpen} onOpenChange={handleOpenChange}>
+      {!hideTrigger && (
+        <SheetTrigger
+          render={
+            <Button variant="outline" size="sm" aria-label={triggerAriaLabel} />
+          }
+        >
+          <BanknoteIcon className="size-4" />
+          {PAYMENT_MESSAGES.CHARGE_CLASS}
+        </SheetTrigger>
+      )}
       <SheetContent side="right" size="content" showCloseButton={!isPending}>
         <SheetHeader>
           <SheetTitle>{PAYMENT_MESSAGES.REGISTER_CLASS_TITLE}</SheetTitle>

@@ -31,25 +31,44 @@ interface StudentActivateDialogProps {
   student: StudentActivateSummary
   branchId: string
   onActivated: () => void
+  /** Controlled open state; the built-in trigger keeps working when omitted. */
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+  /** Do not render the trigger button (the caller opens the dialog itself). */
+  hideTrigger?: boolean
 }
 
 export function StudentActivateDialog({
   student,
   branchId,
   onActivated,
+  open: controlledOpen,
+  onOpenChange,
+  hideTrigger = false,
 }: StudentActivateDialogProps) {
   const router = useRouter()
-  const [isOpen, setIsOpen] = useState(false)
+  const [internalOpen, setInternalOpen] = useState(false)
+  const isControlled = controlledOpen !== undefined
+  const isOpen = isControlled ? (controlledOpen as boolean) : internalOpen
   const [isActivating, setIsActivating] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
   const studentName = `${student.first_name} ${student.surname}`
+
+  function requestOpenChange(nextIsOpen: boolean) {
+    if (isControlled) {
+      onOpenChange?.(nextIsOpen)
+      return
+    }
+
+    setInternalOpen(nextIsOpen)
+  }
 
   function handleOpenChange(nextIsOpen: boolean) {
     if (isActivating) {
       return
     }
 
-    setIsOpen(nextIsOpen)
+    requestOpenChange(nextIsOpen)
     setActionError(null)
   }
 
@@ -65,7 +84,7 @@ export function StudentActivateDialog({
         return
       }
 
-      setIsOpen(false)
+      requestOpenChange(false)
       toast.success(STUDENT_LIFECYCLE_MESSAGES.ACTIVATION_SUCCESS)
       onActivated()
       router.refresh()
@@ -78,10 +97,12 @@ export function StudentActivateDialog({
 
   return (
     <AlertDialog open={isOpen} onOpenChange={handleOpenChange}>
-      <AlertDialogTrigger render={<Button size="sm" />}>
-        <CheckIcon aria-hidden="true" />
-        {STUDENT_LIFECYCLE_MESSAGES.ACTIVATE_TRIGGER}
-      </AlertDialogTrigger>
+      {!hideTrigger && (
+        <AlertDialogTrigger render={<Button size="sm" />}>
+          <CheckIcon aria-hidden="true" />
+          {STUDENT_LIFECYCLE_MESSAGES.ACTIVATE_TRIGGER}
+        </AlertDialogTrigger>
+      )}
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>

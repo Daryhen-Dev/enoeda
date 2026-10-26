@@ -30,24 +30,43 @@ interface StudentDeactivateSummary {
 interface StudentDeactivateDialogProps {
   student: StudentDeactivateSummary
   branchId: string
+  /** Controlled open state; the built-in trigger keeps working when omitted. */
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+  /** Do not render the trigger button (the caller opens the dialog itself). */
+  hideTrigger?: boolean
 }
 
 export function StudentDeactivateDialog({
   student,
   branchId,
+  open: controlledOpen,
+  onOpenChange,
+  hideTrigger = false,
 }: StudentDeactivateDialogProps) {
   const router = useRouter()
-  const [isOpen, setIsOpen] = useState(false)
+  const [internalOpen, setInternalOpen] = useState(false)
+  const isControlled = controlledOpen !== undefined
+  const isOpen = isControlled ? (controlledOpen as boolean) : internalOpen
   const [isDeactivating, setIsDeactivating] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
   const studentName = `${student.first_name} ${student.surname}`
+
+  function requestOpenChange(nextIsOpen: boolean) {
+    if (isControlled) {
+      onOpenChange?.(nextIsOpen)
+      return
+    }
+
+    setInternalOpen(nextIsOpen)
+  }
 
   function handleOpenChange(nextIsOpen: boolean) {
     if (isDeactivating) {
       return
     }
 
-    setIsOpen(nextIsOpen)
+    requestOpenChange(nextIsOpen)
     setActionError(null)
   }
 
@@ -63,7 +82,7 @@ export function StudentDeactivateDialog({
         return
       }
 
-      setIsOpen(false)
+      requestOpenChange(false)
       toast.success(TOAST_MESSAGES.STUDENT_DEACTIVATED)
       router.refresh()
     } catch {
@@ -75,10 +94,12 @@ export function StudentDeactivateDialog({
 
   return (
     <AlertDialog open={isOpen} onOpenChange={handleOpenChange}>
-      <AlertDialogTrigger render={<Button variant="destructive" size="sm" />}>
-        <PowerOffIcon aria-hidden="true" />
-        {STUDENT_LIFECYCLE_MESSAGES.DEACTIVATE_TRIGGER}
-      </AlertDialogTrigger>
+      {!hideTrigger && (
+        <AlertDialogTrigger render={<Button variant="destructive" size="sm" />}>
+          <PowerOffIcon aria-hidden="true" />
+          {STUDENT_LIFECYCLE_MESSAGES.DEACTIVATE_TRIGGER}
+        </AlertDialogTrigger>
+      )}
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>
