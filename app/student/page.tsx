@@ -8,13 +8,14 @@ import {
   getStudentIdentity,
 } from "@/lib/auth/student-identity-resolver";
 import {
+  CONDUCT_MESSAGES,
+  formatCurrency,
+  formatDate,
+  formatDateOnlyValue,
   PRODUCT_TERMS,
   PUBLIC_STUDENT_REGISTRATION_MESSAGES,
   STUDENT_ENROLLMENT_MESSAGES,
   STUDENT_MISSING_DATA_MESSAGES,
-  CONDUCT_MESSAGES,
-  formatCurrency,
-  formatDate,
 } from "@/lib/localization/es-ec";
 import {
   getOwnConductRecords,
@@ -69,7 +70,7 @@ function ConductRecordItem({ record }: { record: ConductRecord }) {
         <span>{conductKindLabel(record.kind)}</span>
         <span aria-hidden="true">·</span>
         <span>
-          {CONDUCT_MESSAGES.INCIDENT_DATE_LABEL}: {formatDate(record.incident_date)}
+          {CONDUCT_MESSAGES.INCIDENT_DATE_LABEL}: {formatDateOnlyValue(record.incident_date)}
         </span>
         {isFine && record.amount !== null ? (
           <>

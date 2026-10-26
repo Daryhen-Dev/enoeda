@@ -12,7 +12,7 @@ import {
 } from "@/components/payments/payment-history-actions"
 import type { ClassPaymentRecord, PaymentRecord } from "@/lib/domain/payments/actions"
 import {
-  formatDate,
+  formatDateOnlyValue,
   formatNumber,
   PAYMENT_MESSAGES,
   STUDENT_DETAIL_MESSAGES,
@@ -113,7 +113,7 @@ export function StudentPaymentHistory({
     {
       accessorKey: "date",
       header: PAYMENT_MESSAGES.PAYMENT_DATE_LABEL,
-      cell: ({ row }) => formatDate(row.original.date),
+      cell: ({ row }) => formatDateOnlyValue(row.original.date),
     },
     { accessorKey: "discipline_name", header: PAYMENT_MESSAGES.DISCIPLINE_LABEL },
     {

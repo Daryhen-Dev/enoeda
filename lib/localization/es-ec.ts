@@ -543,8 +543,26 @@ const DATE_TIME_FORMAT_OPTIONS = {
   timeStyle: "short",
 } as const satisfies Intl.DateTimeFormatOptions
 
+/** Formats a real instant (a timestamp) in the viewer's timezone. */
 export function formatDate(value: Date): string {
   return new Intl.DateTimeFormat(USER_LOCALE, DATE_FORMAT_OPTIONS).format(value)
+}
+
+/**
+ * Formats a date-only value (a Postgres `date` column) as the calendar day it
+ * stores, in every timezone.
+ *
+ * Prisma returns `date` columns as UTC midnight, and `formatDate` renders an
+ * instant in the viewer's timezone: in Ecuador (UTC-5) UTC midnight of the
+ * 26th is 19:00 of the 25th, so a payment of 26 oct showed as "25 oct". Read
+ * the UTC calendar day instead. Accepts the Date Prisma returns or the
+ * "YYYY-MM-DD" string date-only values travel as.
+ */
+export function formatDateOnlyValue(value: Date | string): string {
+  return new Intl.DateTimeFormat(USER_LOCALE, {
+    ...DATE_FORMAT_OPTIONS,
+    timeZone: "UTC",
+  }).format(typeof value === "string" ? new Date(`${value}T00:00:00.000Z`) : value)
 }
 
 export function formatDateTime(value: Date, timeZone?: string): string {

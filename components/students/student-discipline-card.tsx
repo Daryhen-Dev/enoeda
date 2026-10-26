@@ -40,12 +40,12 @@ import type { StudentProgressSummary } from "@/lib/domain/progress/actions"
 import {
   COMMON_MESSAGES,
   ENROLLMENT_MESSAGES,
+  formatDateOnlyValue,
+  formatNumber,
   PAYMENT_FOLLOW_UP_MESSAGES,
   PROGRESS_MESSAGES,
   STUDENT_DETAIL_MESSAGES,
   TOAST_MESSAGES,
-  formatDate,
-  formatNumber,
 } from "@/lib/localization/es-ec"
 
 /**
@@ -176,7 +176,7 @@ export function StudentDisciplineCard({
         </Badge>
         <span className="text-xs text-muted-foreground">
           {ENROLLMENT_MESSAGES.ENROLLED_LABEL}{" "}
-          {formatDate(new Date(enrollment.enrolled_at))}
+          {formatDateOnlyValue(new Date(enrollment.enrolled_at))}
         </span>
       </div>
 
@@ -237,7 +237,7 @@ export function StudentDisciplineCard({
 
         <span className="text-sm text-muted-foreground">
           {paidThrough
-            ? `${STUDENT_DETAIL_MESSAGES.PAID_THROUGH_LABEL} ${formatDate(paidThrough)}`
+            ? `${STUDENT_DETAIL_MESSAGES.PAID_THROUGH_LABEL} ${formatDateOnlyValue(paidThrough)}`
             : STUDENT_DETAIL_MESSAGES.NO_MONTHLY_PAYMENTS}
         </span>
       </div>

@@ -13,7 +13,7 @@ import {
   CONDUCT_MESSAGES,
   CONDUCT_QUICK_ENTRY_MESSAGES,
   formatCurrency,
-  formatDate,
+  formatDateOnlyValue,
 } from "@/lib/localization/es-ec"
 import { cn } from "@/lib/utils"
 
@@ -109,7 +109,7 @@ export function RecentConductRecords({
                 <div className="flex flex-col text-xs text-muted-foreground">
                   <span>
                     {CONDUCT_MESSAGES.INCIDENT_DATE_LABEL}:{" "}
-                    {formatDate(new Date(record.incident_date))}
+                    {formatDateOnlyValue(new Date(record.incident_date))}
                   </span>
                   {isFine && !isVoided && record.amount !== null && (
                     <span>

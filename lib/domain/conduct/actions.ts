@@ -1,5 +1,6 @@
 "use server";
 
+import { dateOnlyToUtcDate } from "@/lib/date";
 import { withAuthenticatedUser } from "@/lib/auth/server-context";
 import {
   assertCallerBranchContext,
@@ -193,7 +194,10 @@ export async function createConductRecord(
           student_id,
           kind,
           reason,
-          incident_date: new Date(incidentDate + "T00:00:00"),
+          // A Postgres `date` keeps the UTC calendar day of the instant, so
+          // build UTC midnight: local midnight shifts the day back on any
+          // server east of UTC.
+          incident_date: dateOnlyToUtcDate(incidentDate),
           amount,
           status:
             kind === CONDUCT_KINDS.FINE
@@ -747,7 +751,7 @@ export async function getOwnConductRecords(): Promise<
     student_id: row.student_id,
     kind: row.kind,
     reason: row.reason,
-    incident_date: new Date(row.incident_date + "T00:00:00"),
+    incident_date: dateOnlyToUtcDate(row.incident_date),
     amount: row.amount === null ? null : Number(row.amount),
     status: row.status,
     paid_at: row.paid_at === null ? null : new Date(row.paid_at),
