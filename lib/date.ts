@@ -102,6 +102,16 @@ export function formatDatabaseDateOnly(date: Date): string {
   ).padStart(2, "0")}`;
 }
 
+/**
+ * Today's calendar day — server-local, the same day `new Date()` reads — as
+ * the UTC-midnight instant that Postgres `date` columns store
+ * (see dateOnlyToUtcDate). Use it to compare a `date` value against "today"
+ * as an exact number of calendar days, whatever the server timezone.
+ */
+export function todayDateOnlyUtc(date: Date = new Date()): Date {
+  return dateOnlyToUtcDate(formatDateOnly(date));
+}
+
 export function getCurrentDateOnly(
   timeZone: EcuadorTimeZone,
   date: Date = new Date()

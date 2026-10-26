@@ -11,7 +11,7 @@
 
 import type { AuthenticatedContext } from "@/lib/auth/server-context";
 import type { TransactionClient } from "@/lib/prisma/client";
-import { parseDateOnly } from "@/lib/date";
+import { dateOnlyToUtcDate, formatDatabaseDateOnly } from "@/lib/date";
 
 /**
  * Convert JS Date.getDay() (0=Sun) to ISO day_of_week (0=Mon..6=Sun).
@@ -31,6 +31,12 @@ export interface AuthorizedAttendanceSession {
   status: typeof ATTENDANCE_SESSION_AUTHORIZATION.AUTHORIZED;
   branchId: string;
   disciplineId: string;
+  /**
+   * The session's calendar day as the UTC-midnight instant Postgres `date`
+   * columns store (see lib/date.ts), for BOTH class kinds. Callers write and
+   * filter `session_date` / `class_date` with it as is; never convert it back
+   * to a local midnight.
+   */
   sessionDate: Date;
   /** Recurring classes only: the owning monthly group (roster source). */
   seriesId: string | null;
@@ -67,7 +73,9 @@ export async function authorizeAttendanceSession(
   );
 
   if (input.scheduled_class_id) {
-    const sessionDate = parseDateOnly(input.session_date!);
+    // `session_date` goes to a Postgres `date` column: UTC midnight of the
+    // calendar day, whatever the server timezone.
+    const sessionDate = dateOnlyToUtcDate(input.session_date!);
     const scheduledClass = await tx.scheduled_classes.findUnique({
       where: { id: input.scheduled_class_id },
       select: {
@@ -81,7 +89,11 @@ export async function authorizeAttendanceSession(
     if (
       !scheduledClass ||
       scheduledClass.branch_id !== branchId ||
-      scheduledClass.day_of_week !== jsToIsoDayOfWeek(sessionDate.getDay())
+      // The weekday of a calendar day is timezone-independent: getUTCDay()
+      // on the UTC-midnight instant is the same weekday a local
+      // parseDateOnly(...).getDay() reads (S2: local calendar arithmetic,
+      // no local midnight value crossing into Prisma).
+      scheduledClass.day_of_week !== jsToIsoDayOfWeek(sessionDate.getUTCDay())
     ) {
       return { status: ATTENDANCE_SESSION_AUTHORIZATION.INVALID };
     }
@@ -121,8 +133,15 @@ export async function authorizeAttendanceSession(
     return { status: ATTENDANCE_SESSION_AUTHORIZATION.DENIED };
   }
 
-  const sessionDate = new Date(oneTimeClass.class_date);
-  sessionDate.setHours(0, 0, 0, 0);
+  // For a one-time class the date is fixed: Prisma returns `class_date` (a
+  // `date` column) as the UTC-midnight instant of the class day, which is
+  // exactly the value to write back. Re-normalised through the date-only
+  // helpers so any other time-of-day still lands on its own calendar day.
+  // (The previous `setHours(0,0,0,0)` moved it to LOCAL midnight, i.e. to the
+  // previous day on every server west of UTC.)
+  const sessionDate = dateOnlyToUtcDate(
+    formatDatabaseDateOnly(oneTimeClass.class_date)
+  );
 
   return {
     status: ATTENDANCE_SESSION_AUTHORIZATION.AUTHORIZED,

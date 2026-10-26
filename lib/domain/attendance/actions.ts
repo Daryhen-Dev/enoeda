@@ -8,7 +8,7 @@ import {
   assertCallerBranchContext,
   BRANCH_ASSERTION_MESSAGES,
 } from "@/lib/auth/branch-assertion";
-import { parseDateOnly } from "@/lib/date";
+import { dateOnlyToUtcDate, todayDateOnlyUtc } from "@/lib/date";
 import { ATTENDANCE_MESSAGES, COMMON_MESSAGES, PAYMENT_MESSAGES } from "@/lib/localization/es-ec";
 import { createClassPaymentForOccurrence } from "@/lib/domain/payments/class-payment";
 import {
@@ -242,9 +242,10 @@ export async function takeAttendance(
       }
     }
 
-    // Future date guard (applies to both kinds)
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // Future date guard (applies to both kinds). "Today" is the UTC-midnight
+    // instant of the server-local calendar day, so both sides are the same
+    // kind of value and the guard compares calendar days (S3).
+    const today = todayDateOnlyUtc();
     if (sessionDate > today) {
       return { count: -1, error: ATTENDANCE_MESSAGES.FUTURE_SESSION };
     }
@@ -309,11 +310,11 @@ export async function takeAttendance(
 
     const existingIds = new Set(existingRecords.map((r) => r.student_id));
 
-    // Step 9: Time window enforcement
-    const todayMidnight = new Date();
-    todayMidnight.setHours(0, 0, 0, 0);
-    const diffDays = Math.floor(
-      (todayMidnight.getTime() - sessionDate.getTime()) / 86400000
+    // Step 9: Time window enforcement. Both values are the UTC-midnight
+    // instant of their calendar day, so the difference is an exact number of
+    // days (no DST, no timezone shift).
+    const diffDays = Math.round(
+      (today.getTime() - sessionDate.getTime()) / 86400000
     );
 
     for (const record of records) {
@@ -641,7 +642,9 @@ export async function getPresentStudentsForSession(
     }
 
     if (scheduled_class_id) {
-      const sessionDate = parseDateOnly(parsed.data.session_date!);
+      // `session_date` is a Postgres `date` column: UTC midnight of the
+      // session's calendar day, whatever the server timezone.
+      const sessionDate = dateOnlyToUtcDate(parsed.data.session_date!);
       const scheduledClass = await tx.scheduled_classes.findUnique({
         where: { id: scheduled_class_id },
         select: { branch_id: true, day_of_week: true },
@@ -650,7 +653,9 @@ export async function getPresentStudentsForSession(
       if (
         !scheduledClass ||
         scheduledClass.branch_id !== branch_id ||
-        scheduledClass.day_of_week !== jsToIsoDayOfWeek(sessionDate.getDay())
+        // getUTCDay() on the UTC-midnight instant is the calendar weekday
+        // (S2: the weekday itself is timezone-independent).
+        scheduledClass.day_of_week !== jsToIsoDayOfWeek(sessionDate.getUTCDay())
       ) {
         return { kind: "invalid" } as const;
       }
@@ -939,15 +944,16 @@ export async function addPerClassStudentToSession(
           }
         }
 
-        // Future date guard
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        // Future date guard. Both sides are the UTC-midnight instant of their
+        // calendar day, so the guard compares calendar days (S3).
+        const today = todayDateOnlyUtc();
         if (sessionDate > today) {
           throw new Error(ATTENDANCE_MESSAGES.FUTURE_SESSION);
         }
 
-        // Capture window guard (this creates a NEW attendance record)
-        const diffDays = Math.floor(
+        // Capture window guard (this creates a NEW attendance record).
+        // Exact number of calendar days between the two UTC-midnight values.
+        const diffDays = Math.round(
           (today.getTime() - sessionDate.getTime()) / 86400000
         );
         if (diffDays > CAPTURE_WINDOW_DAYS) {
@@ -1099,8 +1105,9 @@ export async function getAttendanceStats(
     // Date range filter
     if (from || to) {
       const sessionDateFilter: Record<string, Date> = {};
-      if (from) sessionDateFilter.gte = new Date(from + "T00:00:00");
-      if (to) sessionDateFilter.lte = new Date(to + "T00:00:00");
+      // `session_date` is a Postgres `date`: bound it with UTC midnight.
+      if (from) sessionDateFilter.gte = dateOnlyToUtcDate(from);
+      if (to) sessionDateFilter.lte = dateOnlyToUtcDate(to);
       where.session_date = sessionDateFilter;
     }
 

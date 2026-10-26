@@ -10,7 +10,7 @@ import {
   authorizeBranchRead,
   BRANCH_READ_ACCESS,
 } from "@/lib/auth/branch-read-access";
-import { dateOnlyToUtcDate, formatDatabaseDateOnly, formatDateOnly, parseDateOnly } from "@/lib/date";
+import { dateOnlyToUtcDate, formatDatabaseDateOnly, formatDateOnly } from "@/lib/date";
 import { BRANCH_MESSAGES, COMMON_MESSAGES, PAYMENT_MESSAGES } from "@/lib/localization/es-ec";
 import {
   createClassPaymentForOccurrence,
@@ -256,8 +256,9 @@ export async function registerClassPayment(
         student_discipline_id: parsed.data.student_discipline_id,
         branch_id: parsed.data.branch_id,
         recorded_by: ctx.userId,
+        // `class_date` is a Postgres `date`: send UTC midnight, never local.
         class_date: parsed.data.class_date
-          ? parseDateOnly(parsed.data.class_date)
+          ? dateOnlyToUtcDate(parsed.data.class_date)
           : undefined,
         scheduled_class_id: parsed.data.scheduled_class_id ?? null,
         one_time_class_id: parsed.data.one_time_class_id ?? null,
@@ -625,7 +626,7 @@ export async function correctClassPayment(
 
     await tx.class_payments.update({
       where: { id: payment.id },
-      data: { amount: parsed.data.amount, class_date: parseDateOnly(parsed.data.class_date) },
+      data: { amount: parsed.data.amount, class_date: dateOnlyToUtcDate(parsed.data.class_date) },
       select: { id: true },
     });
     return { id: payment.id, error: null };

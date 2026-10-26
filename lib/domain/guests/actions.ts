@@ -8,7 +8,11 @@ import {
   assertCallerBranchContext,
   BRANCH_ASSERTION_MESSAGES,
 } from "@/lib/auth/branch-assertion";
-import { parseDateOnly } from "@/lib/date";
+import {
+  dateOnlyToUtcDate,
+  formatDatabaseDateOnly,
+  todayDateOnlyUtc,
+} from "@/lib/date";
 import {
   ATTENDANCE_MESSAGES,
   COMMON_MESSAGES,
@@ -78,7 +82,11 @@ function branchRoles(ctx: AuthenticatedContext, branchId: string) {
   };
 }
 
-/** Attendance-like where clause for the guest's occurrence (both kinds). */
+/**
+ * Attendance-like where clause for the guest's occurrence (both kinds).
+ * `session_date` is a Postgres `date` column, so the recurring clause carries
+ * the UTC-midnight instant of the calendar day.
+ */
 function occurrenceGuestWhere(input: {
   scheduled_class_id?: string;
   one_time_class_id?: string;
@@ -87,7 +95,7 @@ function occurrenceGuestWhere(input: {
   return input.scheduled_class_id
     ? {
         scheduled_class_id: input.scheduled_class_id,
-        session_date: parseDateOnly(input.session_date!),
+        session_date: dateOnlyToUtcDate(input.session_date!),
       }
     : { one_time_class_id: input.one_time_class_id! };
 }
@@ -146,8 +154,11 @@ export async function addGuestToSession(
         throw new Error(COMMON_MESSAGES.INSUFFICIENT_PERMISSIONS);
       }
 
+      // The session day as the UTC-midnight instant Postgres `date` columns
+      // store: from the input for recurring sessions, from the (already
+      // UTC-midnight) one-time class date otherwise.
       const sessionDate = parsed.data.scheduled_class_id
-        ? parseDateOnly(parsed.data.session_date!)
+        ? dateOnlyToUtcDate(parsed.data.session_date!)
         : attendanceSession.sessionDate;
 
       if (parsed.data.scheduled_class_id) {
@@ -166,15 +177,16 @@ export async function addGuestToSession(
         }
       }
 
-      // Future date guard
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      // Future date guard. "Today" is the UTC-midnight instant of the
+      // server-local calendar day, so the guard compares calendar days (S3).
+      const today = todayDateOnlyUtc();
       if (sessionDate > today) {
         throw new Error(ATTENDANCE_MESSAGES.FUTURE_SESSION);
       }
 
-      // Capture window guard (this creates a NEW guest)
-      const diffDays = Math.floor(
+      // Capture window guard (this creates a NEW guest): exact number of
+      // calendar days between two UTC-midnight values.
+      const diffDays = Math.round(
         (today.getTime() - sessionDate.getTime()) / 86400000
       );
       if (diffDays > CAPTURE_WINDOW_DAYS) {
@@ -316,10 +328,15 @@ export async function removeGuestFromSession(
           throw new Error(COMMON_MESSAGES.INSUFFICIENT_PERMISSIONS);
         }
         // Same capture window as attendance creation, measured from the
-        // session date (the class date for one-time classes).
-        const sessionDate = new Date(guest.session_date);
-        const diffDays = Math.floor(
-          (Date.now() - sessionDate.getTime()) / 86400000
+        // session date (the class date for one-time classes). `session_date`
+        // comes back from Prisma as the UTC-midnight instant of its calendar
+        // day; "today" is the same kind of value, so the difference is an
+        // exact number of calendar days (S3).
+        const sessionDate = dateOnlyToUtcDate(
+          formatDatabaseDateOnly(guest.session_date)
+        );
+        const diffDays = Math.round(
+          (todayDateOnlyUtc().getTime() - sessionDate.getTime()) / 86400000
         );
         if (diffDays > CAPTURE_WINDOW_DAYS) {
           throw new Error(GUEST_MESSAGES.REMOVE_WINDOW_EXCEEDED);

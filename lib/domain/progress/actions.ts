@@ -1,5 +1,6 @@
 "use server";
 
+import { dateOnlyToUtcDate } from "@/lib/date";
 import { withAuthenticatedUser } from "@/lib/auth/server-context";
 import {
   assertCallerBranchContext,
@@ -486,9 +487,8 @@ export async function promoteStudent(
           student_id,
           discipline_id,
           level_id,
-          promoted_at: promoted_at
-            ? new Date(promoted_at + "T00:00:00")
-            : undefined,
+          // `promoted_at` is a Postgres `date`: send UTC midnight, never local.
+          promoted_at: promoted_at ? dateOnlyToUtcDate(promoted_at) : undefined,
           observations: observations ?? null,
           created_by: ctx.userId,
         },

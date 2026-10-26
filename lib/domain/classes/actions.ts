@@ -9,13 +9,7 @@ import {
 } from "@/lib/auth/branch-read-access";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { assertClassInContext } from "@/lib/domain/classes/branch-guard";
-import {
-  dateOnlyToUtcDate,
-  formatDatabaseDateOnly,
-  formatDateOnly,
-  getCurrentDateOnly,
-  parseDateOnly,
-} from "@/lib/date";
+import { dateOnlyToUtcDate, formatDatabaseDateOnly, formatDateOnly, getCurrentDateOnly, parseDateOnly } from "@/lib/date";
 import {
   CLASS_MESSAGES,
   CLONE_MESSAGES,
@@ -1184,8 +1178,13 @@ export async function getSessionsForRange(
           branchRead.access === BRANCH_READ_ACCESS.GLOBAL_ADMIN_READ_ONLY;
       }
 
+      // Local calendar dates drive the day-by-day walk below (weekday, month
+      // membership). Prisma compares `date` columns, so its bounds are the
+      // UTC-midnight instants of the same days.
       const start = parseDateOnly(start_date);
       const end = parseDateOnly(end_date);
+      const startUtc = dateOnlyToUtcDate(start_date);
+      const endUtc = dateOnlyToUtcDate(end_date);
       // Load active AND inactive templates: past occurrences of deactivated
       // templates and inactive groups must stay visible (with attendance);
       // occurrences from today onward are hidden below. Occurrences only
@@ -1304,7 +1303,7 @@ export async function getSessionsForRange(
         ? await tx.class_sessions.findMany({
             where: {
               scheduled_class_id: { in: classIds },
-              session_date: { gte: start, lte: end },
+              session_date: { gte: startUtc, lte: endUtc },
             },
           })
         : [];
@@ -1343,10 +1342,10 @@ export async function getSessionsForRange(
       const oneTimeClasses = await tx.one_time_classes.findMany({
         where: {
           branch_id,
-          class_date: { gte: start, lte: end },
+          class_date: { gte: startUtc, lte: endUtc },
           OR: [
             { is_active: true },
-            { class_date: { lt: parseDateOnly(todayStr) } },
+            { class_date: { lt: dateOnlyToUtcDate(todayStr) } },
           ],
           ...(discipline_ids && discipline_ids.length > 0
             ? { discipline_id: { in: discipline_ids } }
@@ -1361,7 +1360,8 @@ export async function getSessionsForRange(
         const timeStr = formatTime(oneTimeClass.start_time);
         sessions.push({
           scheduled_class_id: oneTimeClass.id,
-          session_date: formatDateOnly(oneTimeClass.class_date),
+          // Prisma returns `class_date` as UTC midnight: read the UTC day.
+          session_date: formatDatabaseDateOnly(oneTimeClass.class_date),
           discipline_id: oneTimeClass.disciplines.id,
           discipline_name: oneTimeClass.disciplines.name,
           discipline_code: oneTimeClass.disciplines.code,
@@ -1450,7 +1450,7 @@ export async function getSessionsForRange(
             ? { one_time_class_id: session.scheduled_class_id }
             : {
                 scheduled_class_id: session.scheduled_class_id,
-                session_date: parseDateOnly(session.session_date),
+                session_date: dateOnlyToUtcDate(session.session_date),
               }
         );
         const attendanceRows = attendanceSessionFilters.length > 0
