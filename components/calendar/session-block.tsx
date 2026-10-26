@@ -32,6 +32,7 @@ import { SealMark } from "@/components/dashboard/seal-mark";
 import {
   clearSessionSubstitution,
   reinstateSession,
+  suspendSession,
   type SessionView,
 } from "@/lib/domain/classes/actions";
 import {
@@ -44,7 +45,9 @@ import {
   SUSPENSION_MESSAGES,
   TEACHER_ASSIGN_MESSAGES,
   TEACHER_CONFLICT_MESSAGES,
+  UNDO_MESSAGES,
 } from "@/lib/localization/es-ec";
+import { showUndoableAction } from "@/lib/notifications/undo-toast";
 import { cn } from "@/lib/utils";
 
 interface SessionBlockProps {
@@ -265,7 +268,35 @@ export function SessionBlock({
       });
 
       if (result.success) {
-        toast.success(SUSPENSION_MESSAGES.REINSTATED);
+        const previousCategory = session.suspension_category;
+        const previousReason = session.suspension_reason;
+
+        if (previousCategory) {
+          showUndoableAction({
+            message: SUSPENSION_MESSAGES.REINSTATED,
+            undoneMessage: UNDO_MESSAGES.CLASS_REINSTATED_UNDONE,
+            failedMessage: UNDO_MESSAGES.CLASS_UNDO_FAILED,
+            undo: async () => {
+              const undoResult = await suspendSession({
+                scheduled_class_id: session.scheduled_class_id,
+                session_date: session.session_date,
+                suspension_category: previousCategory as
+                  | "feriado"
+                  | "evento"
+                  | "emergencia"
+                  | "otro",
+                suspension_reason: previousReason ?? undefined,
+                branch_id: branchId,
+              });
+              if (undoResult.success) router.refresh();
+              return undoResult;
+            },
+          });
+        } else {
+          // Without the original category there is no faithful inverse; say so
+          // instead of guessing one.
+          toast.success(SUSPENSION_MESSAGES.REINSTATED);
+        }
         router.refresh();
       } else {
         toast.error(result.error ?? COMMON_MESSAGES.UNEXPECTED_ERROR);

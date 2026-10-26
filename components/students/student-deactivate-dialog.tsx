@@ -3,10 +3,17 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { AlertCircleIcon, LoaderCircleIcon, PowerOffIcon } from "lucide-react"
-import { toast } from "sonner"
 
-import { deactivateStudent } from "@/lib/domain/students/actions"
-import { STUDENT_LIFECYCLE_MESSAGES, TOAST_MESSAGES } from "@/lib/localization/es-ec"
+import {
+  deactivateStudent,
+  reactivateStudent,
+} from "@/lib/domain/students/actions"
+import {
+  STUDENT_LIFECYCLE_MESSAGES,
+  TOAST_MESSAGES,
+  UNDO_MESSAGES,
+} from "@/lib/localization/es-ec"
+import { showUndoableAction } from "@/lib/notifications/undo-toast"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import {
   AlertDialog,
@@ -83,7 +90,19 @@ export function StudentDeactivateDialog({
       }
 
       requestOpenChange(false)
-      toast.success(TOAST_MESSAGES.STUDENT_DEACTIVATED)
+      showUndoableAction({
+        message: TOAST_MESSAGES.STUDENT_DEACTIVATED,
+        undoneMessage: UNDO_MESSAGES.STUDENT_DEACTIVATED_UNDONE,
+        failedMessage: UNDO_MESSAGES.STUDENT_UNDO_FAILED,
+        undo: async () => {
+          const undoResult = await reactivateStudent({
+            id: student.id,
+            branch_id: branchId,
+          })
+          if (undoResult.success) router.refresh()
+          return undoResult
+        },
+      })
       router.refresh()
     } catch {
       setActionError(STUDENT_LIFECYCLE_MESSAGES.DEACTIVATE_FAILURE)

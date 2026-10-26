@@ -174,6 +174,22 @@ export const DASHBOARD_SHELL_MESSAGES = {
 } as const
 
 /**
+ * Undo copy for reversible administrative actions: the toast offers one tap
+ * back and then reports whether the inverse actually landed.
+ */
+export const UNDO_MESSAGES = {
+  UNDO_LABEL: "Deshacer",
+  STUDENT_DEACTIVATED_UNDONE: "El estudiante vuelve a estar activo.",
+  STUDENT_REACTIVATED_UNDONE: "El estudiante vuelve a estar inactivo.",
+  CLASS_SUSPENDED_UNDONE: "La clase vuelve a estar programada.",
+  CLASS_REINSTATED_UNDONE: "La clase vuelve a estar suspendida.",
+  STUDENT_UNDO_FAILED:
+    "No se pudo deshacer el cambio. Inténtelo desde la ficha del estudiante.",
+  CLASS_UNDO_FAILED:
+    "No se pudo deshacer el cambio. Inténtelo desde el calendario.",
+} as const
+
+/**
  * Global student search palette copy (Ctrl/Cmd+K). One input, one list, one
  * keyboard contract shared by every dashboard route.
  */
