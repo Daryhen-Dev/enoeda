@@ -193,6 +193,7 @@ export const STUDENT_STATUS_STRIP_MESSAGES = {
   ATTENDANCE: (percentage: number) => `${percentage}%`,
   NO_ATTENDANCE: "Sin registros de asistencia",
   LEVEL_LABEL: "Nivel",
+  DUE_LABEL: "Próximo pago",
   NO_ACTIVE_DISCIPLINES: "Sin disciplinas activas",
   SUSPENDED: "Suspendida por falta de pago",
 } as const
@@ -329,7 +330,7 @@ export const STUDENT_DIRECTORY_MESSAGES = {
   NO_PAYMENT_ENROLLMENTS: "Sin inscripciones activas para registrar pagos.",
   ADMINISTRATIVE_ACTIONS_LABEL: "Acciones administrativas",
   MONTHLY_DUE_DATE: "Vencimiento mensual",
-  NO_PAYMENTS_REGISTERED: "Sin pagos registrados.",
+  NO_PAYMENTS_REGISTERED: "Sin pagos registrados",
   PER_CLASS_DUE_DATE: "Por clase",
   DUE_IN_DAYS: (days: number) =>
     days === 1 ? "1 día restante" : `${days} días restantes`,

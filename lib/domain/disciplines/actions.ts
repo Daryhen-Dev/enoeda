@@ -1,5 +1,6 @@
 "use server";
 
+import { formatDatabaseDateOnly } from "@/lib/date";
 import { withAuthenticatedUser } from "@/lib/auth/server-context";
 import {
   assertCallerBranchContext,
@@ -55,6 +56,11 @@ export interface StudentDisciplineRecord {
   is_active: boolean;
   suspended_at: Date | null;
   billing_mode: "monthly" | "per_class";
+  /**
+   * Next monthly due date as "YYYY-MM-DD"; null for per-class or unpaid
+   * enrollments. Optional so existing fixtures and consumers stay valid.
+   */
+  next_due_date?: string | null;
 }
 
 export interface EnrollmentEvent {
@@ -177,6 +183,7 @@ export async function getStudentDisciplines(
           is_active: true,
           suspended_at: true,
           billing_mode: true,
+          next_due_date: true,
           disciplines: { select: { name: true } },
         },
         orderBy: { enrolled_at: "desc" },
@@ -198,6 +205,8 @@ export async function getStudentDisciplines(
       is_active: row.is_active,
       suspended_at: row.suspended_at,
       billing_mode: row.billing_mode === "per_class" ? "per_class" : "monthly",
+      next_due_date:
+        row.next_due_date === null ? null : formatDatabaseDateOnly(row.next_due_date),
     }));
 
     return { success: true, data: records };

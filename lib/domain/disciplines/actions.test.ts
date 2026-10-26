@@ -195,6 +195,51 @@ describe("getStudentDisciplines — branch security", () => {
     });
     expect(result.success).toBe(true);
   });
+
+  it("returns the next monthly due date as a date-only string", async () => {
+    const tx = buildMockTx();
+    tx.students.findUnique = vi.fn().mockResolvedValue({ branch_id: BRANCH_A });
+    tx.student_disciplines.findMany = vi.fn().mockResolvedValue([
+      {
+        id: "e1",
+        discipline_id: "d1",
+        enrolled_at: new Date("2026-09-01T00:00:00Z"),
+        is_active: true,
+        suspended_at: null,
+        billing_mode: "monthly",
+        // Prisma hands @db.Date columns back as UTC midnight.
+        next_due_date: new Date("2026-11-05T00:00:00Z"),
+        disciplines: { name: "Karate" },
+      },
+      {
+        id: "e2",
+        discipline_id: "d2",
+        enrolled_at: new Date("2026-09-01T00:00:00Z"),
+        is_active: true,
+        suspended_at: null,
+        billing_mode: "per_class",
+        next_due_date: null,
+        disciplines: { name: "Kickboxing" },
+      },
+    ]);
+    setupWithAuth(ctxBranchA, tx);
+
+    const result = await getStudentDisciplines({
+      student_id: STUDENT_ID,
+      branch_id: BRANCH_A,
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.data?.map((row) => row.next_due_date)).toEqual([
+      "2026-11-05",
+      null,
+    ]);
+    expect(tx.student_disciplines.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        select: expect.objectContaining({ next_due_date: true }),
+      })
+    );
+  });
 });
 
 // =============================================================================

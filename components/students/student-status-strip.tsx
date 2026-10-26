@@ -1,16 +1,31 @@
-import { AlertTriangleIcon, ReceiptTextIcon, TrendingUpIcon } from "lucide-react"
+import {
+  AlertTriangleIcon,
+  CalendarClockIcon,
+  ReceiptTextIcon,
+  TrendingUpIcon,
+} from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import {
+  getDueDateRemainingDays,
+  getDueDateStatus,
+  getNearestDueDiscipline,
+} from "@/lib/domain/students/due-date"
+import {
+  STUDENT_DIRECTORY_MESSAGES,
   STUDENT_STATUS_STRIP_MESSAGES,
   formatCurrency,
 } from "@/lib/localization/es-ec"
+import { cn } from "@/lib/utils"
 
 interface StripEnrollment {
   discipline_id: string
   discipline_name: string
   is_active: boolean
   suspended_at: Date | null
+  /** Optional so callers that do not load billing keep working unchanged. */
+  billing_mode?: "monthly" | "per_class"
+  next_due_date?: string | null
 }
 
 interface StripAttendance {
@@ -34,6 +49,8 @@ interface StripConduct {
 }
 
 interface StudentStatusStripProps {
+  /** Branch-timezone today (YYYY-MM-DD), so "vence en N días" matches the directory. */
+  todayDateOnly: string
   enrollments: StripEnrollment[]
   attendanceStats: StripAttendance[]
   progress: StripProgress[]
@@ -58,6 +75,7 @@ function averagePercentage(stats: StripAttendance[]): number | null {
  * tabs.
  */
 export function StudentStatusStrip({
+  todayDateOnly,
   enrollments,
   attendanceStats,
   progress,
@@ -70,6 +88,23 @@ export function StudentStatusStrip({
     (enrollment) => enrollment.suspended_at !== null
   )
   const attendance = averagePercentage(attendanceStats)
+  // The due chip only appears when the caller loaded billing for the enrollments.
+  const billingKnown = activeEnrollments.some(
+    (enrollment) => enrollment.billing_mode !== undefined
+  )
+  const billable = activeEnrollments
+    .filter((enrollment) => enrollment.billing_mode !== undefined)
+    .map((enrollment) => ({
+      ...enrollment,
+      billing_mode: enrollment.billing_mode as "monthly" | "per_class",
+      next_due_date: enrollment.next_due_date ?? null,
+    }))
+  const nearestDue = getNearestDueDiscipline(billable)
+  const hasMonthly = billable.some((entry) => entry.billing_mode === "monthly")
+  const dueRemaining =
+    nearestDue?.next_due_date != null
+      ? getDueDateRemainingDays(nearestDue.next_due_date, todayDateOnly)
+      : null
   const levels = progress.filter((entry) =>
     activeEnrollments.some(
       (enrollment) => enrollment.discipline_id === entry.discipline_id
@@ -113,6 +148,32 @@ export function StudentStatusStrip({
           <span className="text-sm">
             {STUDENT_STATUS_STRIP_MESSAGES.WARNINGS(conduct.warnings_count)}
           </span>
+        </div>
+      )}
+
+      {billingKnown && (
+        <div className="flex flex-col gap-0.5">
+          <span className={LABEL_CLASSES}>
+            {STUDENT_STATUS_STRIP_MESSAGES.DUE_LABEL}
+          </span>
+          {nearestDue?.next_due_date != null ? (
+            <span
+              className={cn(
+                "flex items-center gap-1.5 text-sm font-medium tabular-nums",
+                dueRemaining !== null && dueRemaining < 0 && "text-destructive"
+              )}
+            >
+              <CalendarClockIcon className="size-4" aria-hidden="true" />
+              {nearestDue.discipline_name} ·{" "}
+              {getDueDateStatus(nearestDue.next_due_date, todayDateOnly)}
+            </span>
+          ) : (
+            <span className="text-sm text-muted-foreground">
+              {hasMonthly
+                ? STUDENT_DIRECTORY_MESSAGES.NO_PAYMENTS_REGISTERED
+                : STUDENT_DIRECTORY_MESSAGES.PER_CLASS_DUE_DATE}
+            </span>
+          )}
         </div>
       )}
 

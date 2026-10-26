@@ -7,7 +7,6 @@ import { StudentRowActions } from "@/components/students/student-row-actions"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import type { EcuadorTimeZone } from "@/lib/domain/branches/schema"
-import type { ActiveStudentDiscipline } from "@/lib/domain/students/actions"
 import {
   getMissingStudentData,
   hasIncompleteStudentData,
@@ -17,7 +16,11 @@ import {
   type StudentMissingDataField,
   type StudentStatus,
 } from "@/lib/domain/students"
-import { getCalendarDayDifference, getCurrentDateOnly } from "@/lib/date"
+import { getCurrentDateOnly } from "@/lib/date"
+import {
+  getDueDateStatus,
+  getNearestDueDiscipline,
+} from "@/lib/domain/students/due-date"
 import {
   STUDENT_BULK_ACTIONS_MESSAGES,
   STUDENT_DIRECTORY_MESSAGES,
@@ -25,45 +28,9 @@ import {
   STUDENT_MISSING_DATA_MESSAGES,
 } from "@/lib/localization/es-ec"
 
-/** Nearest monthly enrollment that can go overdue; per-class ones never do. */
-export function getNearestDueDiscipline(
-  disciplines: ActiveStudentDiscipline[]
-): ActiveStudentDiscipline | undefined {
-  // Per-class enrollments have no due date; only monthly ones can be overdue.
-  return disciplines
-    .filter((discipline) => discipline.billing_mode === "monthly")
-    .reduce<ActiveStudentDiscipline | undefined>(
-      (nearestDiscipline, discipline) => {
-        if (discipline.next_due_date === null) return nearestDiscipline
-
-        if (
-          nearestDiscipline === undefined ||
-          nearestDiscipline.next_due_date === null ||
-          discipline.next_due_date < nearestDiscipline.next_due_date
-        ) {
-          return discipline
-        }
-
-        return nearestDiscipline
-      },
-      undefined,
-    )
-}
-
-/** Due-date wording shared by the table cell and the mobile card. */
-export function getDueDateStatus(dueDate: string, today: string): string {
-  const remainingDays = getCalendarDayDifference(today, dueDate)
-
-  if (remainingDays > 0) {
-    return STUDENT_DIRECTORY_MESSAGES.DUE_IN_DAYS(remainingDays)
-  }
-
-  if (remainingDays === 0) {
-    return STUDENT_DIRECTORY_MESSAGES.DUE_TODAY
-  }
-
-  return STUDENT_DIRECTORY_MESSAGES.OVERDUE_BY_DAYS(Math.abs(remainingDays))
-}
+// Re-exported so the table columns keep their import path; the rules live in a
+// neutral module that server components can call too.
+export { getDueDateStatus, getNearestDueDiscipline }
 
 /** Accessible name of the incomplete-data badge, listing the missing fields. */
 export function getIncompleteDataDescription(
