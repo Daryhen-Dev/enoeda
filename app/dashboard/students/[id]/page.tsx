@@ -19,6 +19,7 @@ import { listStudentConductRecords } from "@/lib/domain/conduct"
 import { getBranchPaymentSettings } from "@/lib/domain/branches/actions"
 import { StudentDisciplinePanel } from "@/components/students/student-discipline-panel"
 import { StudentDetailHeader } from "@/components/students/student-detail-header"
+import { StudentStatusStrip } from "@/components/students/student-status-strip"
 import { StudentHistoryTabs } from "@/components/students/student-history-tabs"
 import { StudentProgressPanel } from "@/components/students/student-progress-panel"
 import { StudentNotesPanel } from "@/components/students/student-notes-panel"
@@ -188,6 +189,13 @@ export default async function StudentDetailPage({
         student={student}
         backHref={`/dashboard/students?branch=${branchResult.branchId}`}
         todayDateOnly={todayDateOnly}
+      />
+
+      <StudentStatusStrip
+        enrollments={enrollments}
+        attendanceStats={attendanceStats}
+        progress={progressSummaryData}
+        conduct={conductData.summary}
       />
 
       <StudentDisciplinePanel

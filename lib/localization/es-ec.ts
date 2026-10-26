@@ -177,6 +177,27 @@ export const DASHBOARD_SHELL_MESSAGES = {
 } as const
 
 /**
+ * Student status strip: the four answers an admin or teacher needs before
+ * reading the whole file — account, conduct, attendance and level.
+ */
+export const STUDENT_STATUS_STRIP_MESSAGES = {
+  LABEL: "Estado del estudiante",
+  ACCOUNT_LABEL: "Cuenta",
+  CONDUCT_LABEL: "Conducta",
+  NO_FINES: "Sin multas pendientes",
+  FINES: (count: number) =>
+    count === 1 ? "1 multa pendiente" : `${count} multas pendientes`,
+  WARNINGS: (count: number) =>
+    count === 1 ? "1 llamado" : `${count} llamados`,
+  ATTENDANCE_LABEL: "Asistencia",
+  ATTENDANCE: (percentage: number) => `${percentage}%`,
+  NO_ATTENDANCE: "Sin registros de asistencia",
+  LEVEL_LABEL: "Nivel",
+  NO_ACTIVE_DISCIPLINES: "Sin disciplinas activas",
+  SUSPENDED: "Suspendida por falta de pago",
+} as const
+
+/**
  * Undo copy for reversible administrative actions: the toast offers one tap
  * back and then reports whether the inverse actually landed.
  */
