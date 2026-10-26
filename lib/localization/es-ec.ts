@@ -222,6 +222,9 @@ export const DASHBOARD_OVERVIEW_MESSAGES = {
   VALIDATION_LINK: "Ver validación mensual",
   VALIDATE_PAYMENTS: "Validar pagos",
   VIEW_ALL_IN_GROUP: (count: number) => `Ver los ${count}`,
+  QUICK_ACTIONS_TITLE: "Accesos rápidos",
+  QUICK_ACTION_CONDUCT: "Registrar multa o llamado",
+  QUICK_ACTION_STUDENTS: "Buscar estudiante",
   DAYS_OVERDUE_COUNT: (days: number) =>
     days === 1 ? "1 día de atraso" : `${days} días de atraso`,
 } as const

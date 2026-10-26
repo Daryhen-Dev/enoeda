@@ -3,13 +3,12 @@ import { Suspense } from "react"
 import { redirect } from "next/navigation"
 import { AlertCircleIcon } from "lucide-react"
 
+import { OverviewQuickActions } from "@/components/dashboard/overview-quick-actions"
 import { PaymentsActionPanelSection } from "@/components/dashboard/payments-action-panel"
 import { TodayAgendaPanel } from "@/components/dashboard/today-agenda-panel"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
-import { APP_ROLES } from "@/lib/auth/authorize"
 import { resolveBranchContext } from "@/lib/auth/branch-context"
-import { getAuthenticatedContext } from "@/lib/auth/identity-resolver"
 import { getCurrentDateOnly } from "@/lib/date"
 import { getSessionsForRange } from "@/lib/domain/classes/actions"
 import { buildTodayAgenda, formatOverviewDate } from "@/lib/domain/dashboard"
@@ -67,24 +66,6 @@ export default async function DashboardOverview({
   searchParams,
 }: DashboardOverviewProps) {
   const params = await searchParams
-  const identityResult = await getAuthenticatedContext()
-  const isTeacherOnly =
-    identityResult.ok &&
-    identityResult.ctx.roles.includes(APP_ROLES.TEACHER) &&
-    !identityResult.ctx.roles.includes(APP_ROLES.ADMIN)
-
-  if (isTeacherOnly) {
-    const redirectParams = new URLSearchParams()
-    for (const [key, value] of Object.entries(params)) {
-      if (value !== undefined) redirectParams.append(key, value)
-    }
-    const queryString = redirectParams.toString()
-    redirect(
-      queryString
-        ? `/dashboard/calendar?${queryString}`
-        : "/dashboard/calendar"
-    )
-  }
 
   // Page-level branch context resolution (never in layout)
   const branchResult = await resolveBranchContext(params.branch)
@@ -144,6 +125,10 @@ export default async function DashboardOverview({
           </p>
         )}
       </header>
+
+      {branchResult.canWriteConduct && (
+        <OverviewQuickActions branchId={branchResult.branchId} />
+      )}
 
       <div className="grid gap-4 xl:grid-cols-12 xl:gap-6">
         <div className={`min-w-0 ${branchResult.canManage ? "xl:col-span-7" : "xl:col-span-12"}`}>

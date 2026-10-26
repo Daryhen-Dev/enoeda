@@ -13,19 +13,26 @@ import { CalendarWeekView } from "@/components/calendar/calendar-week-view";
 import { ScheduledClassCreateDialog } from "@/components/classes/scheduled-class-create-dialog";
 import { OneTimeClassCreateDialog } from "@/components/classes/one-time-class-create-dialog";
 import { resolveBranchContext } from "@/lib/auth/branch-context";
+import { getAuthenticatedContext } from "@/lib/auth/identity-resolver";
+import { APP_ROLES } from "@/lib/auth/authorize";
+import { CALENDAR_VIEWS, resolveCalendarView } from "@/lib/calendar/calendar-view";
 import { CALENDAR_MESSAGES } from "@/lib/localization/es-ec";
 
-const CALENDAR_VIEWS = { DAY: "day", WEEK: "week", MONTH: "month" } as const;
-type CalendarView = (typeof CALENDAR_VIEWS)[keyof typeof CALENDAR_VIEWS];
 interface CalendarSearchParams { branch?: string; disciplines?: string; view?: string; date?: string; [key: string]: string | undefined; }
 interface CalendarPageProps { searchParams: Promise<CalendarSearchParams>; }
 
 export default async function CalendarPage({ searchParams }: CalendarPageProps) {
   const params = await searchParams;
+  const identityResult = await getAuthenticatedContext();
+  const isTeacherOnly =
+    identityResult.ok &&
+    identityResult.ctx.roles.includes(APP_ROLES.TEACHER) &&
+    !identityResult.ctx.roles.includes(APP_ROLES.ADMIN);
   const branchResult = await resolveBranchContext(params.branch, { allowGlobalAdminRead: true });
   if (branchResult.type === "error") return <div className="flex flex-1 flex-col gap-4 p-4"><Alert variant="destructive"><AlertCircleIcon /><AlertTitle>{CALENDAR_MESSAGES.PAGE_TITLE}</AlertTitle><AlertDescription>{CALENDAR_MESSAGES.NO_BRANCH_CONTEXT}</AlertDescription></Alert></div>;
   if (branchResult.type === "redirect") { const redirectParams = new URLSearchParams(); for (const [key, value] of Object.entries(params)) if (typeof value === "string") redirectParams.set(key, value); redirectParams.set("branch", branchResult.branchId); redirect(`/dashboard/calendar?${redirectParams.toString()}`); }
-  const view: CalendarView = params.view === CALENDAR_VIEWS.DAY ? CALENDAR_VIEWS.DAY : params.view === CALENDAR_VIEWS.WEEK ? CALENDAR_VIEWS.WEEK : CALENDAR_VIEWS.MONTH;
+  // Teacher-only users land on today's classes; admins keep the month overview.
+  const view = resolveCalendarView(params.view, { isTeacherOnly });
   const baseDate = params.date ? parseDateOnly(params.date) : new Date();
   let startDate: Date; let endDate: Date;
   if (view === CALENDAR_VIEWS.DAY) { startDate = new Date(baseDate); endDate = new Date(baseDate); }
