@@ -22,11 +22,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { suspendSession } from "@/lib/domain/classes/actions";
+import { reinstateSession, suspendSession } from "@/lib/domain/classes/actions";
 import {
   COMMON_MESSAGES,
   SUSPENSION_MESSAGES,
+  UNDO_MESSAGES,
 } from "@/lib/localization/es-ec";
+import { showUndoableAction } from "@/lib/notifications/undo-toast";
 
 interface SessionSuspendDialogProps {
   scheduledClassId: string;
@@ -76,7 +78,20 @@ export function SessionSuspendDialog({
       if (result.success) {
         setOpen(false);
         resetForm();
-        toast.success(SUSPENSION_MESSAGES.SUSPENDED);
+        showUndoableAction({
+          message: SUSPENSION_MESSAGES.SUSPENDED,
+          undoneMessage: UNDO_MESSAGES.CLASS_SUSPENDED_UNDONE,
+          failedMessage: UNDO_MESSAGES.CLASS_UNDO_FAILED,
+          undo: async () => {
+            const undoResult = await reinstateSession({
+              scheduled_class_id: scheduledClassId,
+              session_date: sessionDate,
+              branch_id: branchId,
+            });
+            if (undoResult.success) router.refresh();
+            return undoResult;
+          },
+        });
         router.refresh();
       } else {
         setError(result.error ?? COMMON_MESSAGES.UNEXPECTED_ERROR);

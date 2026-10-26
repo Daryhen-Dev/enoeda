@@ -2,7 +2,6 @@
 
 import { useId, useState } from "react"
 import { useRouter } from "next/navigation"
-import { toast } from "sonner"
 
 import type { ActiveBranchOption } from "@/components/students/student-form-dialog"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -26,8 +25,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { reactivateStudent } from "@/lib/domain/students"
-import { STUDENT_LIFECYCLE_MESSAGES, TOAST_MESSAGES } from "@/lib/localization/es-ec"
+import { deactivateStudent, reactivateStudent } from "@/lib/domain/students/actions"
+import {
+  STUDENT_LIFECYCLE_MESSAGES,
+  TOAST_MESSAGES,
+  UNDO_MESSAGES,
+} from "@/lib/localization/es-ec"
+import { showUndoableAction } from "@/lib/notifications/undo-toast"
 
 interface ReactivateStudentSummary {
   id: string
@@ -97,7 +101,16 @@ export function StudentReactivateDialog({
         return
       }
       requestOpenChange(false)
-      toast.success(TOAST_MESSAGES.STUDENT_REACTIVATED)
+      showUndoableAction({
+        message: TOAST_MESSAGES.STUDENT_REACTIVATED,
+        undoneMessage: UNDO_MESSAGES.STUDENT_REACTIVATED_UNDONE,
+        failedMessage: UNDO_MESSAGES.STUDENT_UNDO_FAILED,
+        undo: async () => {
+          const undoResult = await deactivateStudent(student.id, callerBranchId)
+          if (undoResult.success) router.refresh()
+          return undoResult
+        },
+      })
       router.refresh()
     } catch {
       setError(STUDENT_LIFECYCLE_MESSAGES.REACTIVATE_FAILURE)

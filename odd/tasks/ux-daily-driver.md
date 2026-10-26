@@ -32,7 +32,7 @@ with the same confirmation and undo as the single-row path.
 - [x] T1 — Student search palette with shortcut and header control (S1), route: inline, commit: TBD
 - [x] T2 — Students directory: row actions menu + mobile cards (S2), route: delegated (gentle-ai-worker), commit: TBD
 - [x] T3 — Calendar session block on semantic tokens and one status language (S3), route: delegated (gentle-ai-worker), commit: TBD
-- [ ] T4 — Undo for reversible actions + bulk deactivate (S4), route: inline, commit: TBD
+- [~] T4 — Undo for reversible actions + bulk deactivate (S4), route: inline + delegated, commit: TBD (undo half landed; bulk pending)
 - [ ] T5 — Docs and close-out verification, route: inline, commit: TBD
 
 ## Log
@@ -44,3 +44,9 @@ L2 (context): "1" refers to the Monday-only failing test, now tracked as issue #
 L3 (decision, S1): the palette lives in the dashboard layout and listens for a `enoeda:open-student-search`
 window event plus `Ctrl/Cmd+K`; the header only renders a plain control that dispatches the event, so the header
 never imports a server action and its existing tests keep their light mocking.
+
+L4 (decision, S4 undo): one shared `showUndoableAction` in `lib/notifications/undo-toast.ts` owns the 10 s toast
+with the "Deshacer" action and the outcome copy, and each caller passes the inverse server action. Wired to
+student deactivate ↔ reactivate and class suspend → reinstate. Undoing a reinstatement re-suspends with the
+session's own recorded category and reason; when the session has no recorded category there is no faithful
+inverse, so the block keeps the plain success toast instead of guessing one.
