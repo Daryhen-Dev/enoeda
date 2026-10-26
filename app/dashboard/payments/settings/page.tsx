@@ -5,7 +5,10 @@ import { PaymentsSectionNav } from "@/components/payments/payments-section-nav"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { resolveBranchContext } from "@/lib/auth/branch-context"
 import { getBranchPaymentSettings } from "@/lib/domain/branches/actions"
-import { PAYMENT_MESSAGES } from "@/lib/localization/es-ec"
+import {
+  DASHBOARD_SHELL_MESSAGES,
+  PAYMENT_MESSAGES,
+} from "@/lib/localization/es-ec"
 
 interface PaymentSettingsPageProps {
   searchParams: Promise<{ branch?: string; [key: string]: string | undefined }>
@@ -27,9 +30,11 @@ export default async function PaymentSettingsPage({ searchParams }: PaymentSetti
   if (branchResult.type === "error" || !branchResult.canManage) {
     return (
       <main className="flex flex-col gap-6 p-4 md:p-6">
-        <Alert variant="destructive">
+        <Alert>
           <AlertTitle>{PAYMENT_MESSAGES.SETTINGS_TITLE}</AlertTitle>
-          <AlertDescription>{PAYMENT_MESSAGES.CORRECTIONS_LOCKED}</AlertDescription>
+          <AlertDescription>
+            {DASHBOARD_SHELL_MESSAGES.ADMIN_ONLY_SECTION}
+          </AlertDescription>
         </Alert>
       </main>
     )

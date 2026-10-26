@@ -48,6 +48,19 @@ describe("StudentSearchTrigger", () => {
     );
   });
 
+  it("shows a visible label on a phone, not just a magnifier", () => {
+    const visibleLabels = [
+      ...container!.querySelectorAll("span, kbd"),
+    ].filter(
+      (node) =>
+        (node.textContent ?? "").includes("Buscar") &&
+        // `lg:hidden` is a different token: only a bare `hidden` hides always.
+        !node.classList.contains("hidden")
+    );
+
+    expect(visibleLabels.length).toBeGreaterThan(0);
+  });
+
   it("asks the palette to open when clicked", () => {
     const listener = vi.fn();
     window.addEventListener(OPEN_STUDENT_SEARCH_EVENT, listener);

@@ -171,6 +171,8 @@ export const DASHBOARD_SHELL_MESSAGES = {
   PROFILE: "Mi perfil",
   PROFILE_NAME_UNAVAILABLE: "Perfil pendiente",
   BREADCRUMB_LABEL: "Ruta de navegación",
+  ADMIN_ONLY_SECTION:
+    "Esta sección la administra un administrador de la sucursal. Su cuenta no tiene ese permiso en esta sucursal.",
 } as const
 
 /**
@@ -195,6 +197,7 @@ export const UNDO_MESSAGES = {
  */
 export const STUDENT_SEARCH_MESSAGES = {
   TRIGGER_LABEL: "Buscar estudiante",
+  TRIGGER_LABEL_SHORT: "Buscar",
   DIALOG_TITLE: "Buscar estudiante",
   DIALOG_DESCRIPTION:
     "Escriba un nombre, apellido o cédula. También abre con Ctrl+K desde cualquier pantalla.",
@@ -313,6 +316,7 @@ export const STUDENT_DIRECTORY_MESSAGES = {
   ACTIVE_STATUS: "Activo",
   INACTIVE_STATUS: "Inactivo",
   LOAD_MORE: "Cargar más",
+  BACK_TO_LIST: "Volver a la lista de estudiantes",
 } as const
 
 export const BRANCH_DIRECTORY_MESSAGES = {
@@ -522,6 +526,7 @@ export function formatCurrency(value: number): string {
 }
 
 export const OWNER_MESSAGES = {
+  BACK: "Volver",
   SHELL_TITLE: "Panel de propietario",
   CONTROL_PLANE: "Panel de control",
   OVERVIEW: "Resumen",

@@ -6,7 +6,7 @@ import { LevelFormDialog } from "@/components/levels/level-form-dialog"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { getDisciplineLevelCatalog } from "@/lib/domain/levels/actions"
-import { LEVEL_MESSAGES } from "@/lib/localization/es-ec"
+import { LEVEL_MESSAGES, OWNER_MESSAGES } from "@/lib/localization/es-ec"
 
 interface LevelsPageProps {
   params: Promise<{ id: string }>
@@ -26,7 +26,7 @@ export default async function OwnerDisciplineLevelsPage({
             nativeButton={false}
             variant="ghost"
             size="icon-sm"
-            render={<Link href="/owner/disciplines" aria-label="Back" />}
+            render={<Link href="/owner/disciplines" aria-label={OWNER_MESSAGES.BACK} />}
           >
             <ArrowLeftIcon />
           </Button>

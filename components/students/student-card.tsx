@@ -122,8 +122,24 @@ export function StudentCard({
   )
   const studentName = `${student.first_name} ${student.surname}`
 
+  const dueStatusText =
+    nearestDiscipline !== undefined && nearestDiscipline.next_due_date !== null
+      ? getDueDateStatus(nearestDiscipline.next_due_date, today)
+      : !hasMonthlyEnrollment && hasPerClassEnrollment
+        ? STUDENT_DIRECTORY_MESSAGES.PER_CLASS_DUE_DATE
+        : STUDENT_DIRECTORY_MESSAGES.NO_PAYMENTS_REGISTERED
+
+  const metaLine = [
+    student.active_discipline_names.length > 0
+      ? student.active_discipline_names.join(", ")
+      : STUDENT_DIRECTORY_MESSAGES.NO_ACTIVE_DISCIPLINES,
+    isActiveTab ? dueStatusText : null,
+  ]
+    .filter(Boolean)
+    .join(" · ")
+
   return (
-    <article className="flex flex-col gap-3 rounded-lg border bg-card p-3">
+    <article className="flex flex-col gap-2 rounded-lg border bg-card p-3">
       <div className="flex items-start justify-between gap-2">
         {canSelect && (
           <Checkbox
@@ -137,18 +153,9 @@ export function StudentCard({
         )}
         <Link
           href={`/dashboard/students/${student.id}?branch=${branchId}`}
-          className="flex min-w-0 flex-1 flex-col items-start gap-1"
+          className="min-w-0 flex-1 truncate text-sm font-medium"
         >
-          <span className="truncate text-sm font-medium">{studentName}</span>
-          {hasIncompleteStudentData(student) && (
-            <Badge
-              variant="secondary"
-              aria-label={incompleteDescription}
-              title={incompleteDescription}
-            >
-              {STUDENT_MISSING_DATA_MESSAGES.INCOMPLETE_BADGE}
-            </Badge>
-          )}
+          {studentName}
         </Link>
 
         <StudentRowActions
@@ -161,62 +168,33 @@ export function StudentCard({
         />
       </div>
 
-      <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
-        <dt className="text-muted-foreground">
-          {STUDENT_DIRECTORY_MESSAGES.STATUS}
-        </dt>
-        <dd>
-          {isActiveTab
-            ? STUDENT_DIRECTORY_MESSAGES.ACTIVE_STATUS
-            : STUDENT_DIRECTORY_MESSAGES.INACTIVE_STATUS}
-        </dd>
+      {(hasIncompleteStudentData(student) ||
+        !isActiveTab ||
+        student.activation_status === STUDENT_ACTIVATION_STATUS.PENDING) && (
+        <div className="flex flex-wrap items-center gap-1.5">
+          {!isActiveTab && (
+            <Badge variant="secondary">
+              {STUDENT_DIRECTORY_MESSAGES.INACTIVE_STATUS}
+            </Badge>
+          )}
+          {student.activation_status === STUDENT_ACTIVATION_STATUS.PENDING && (
+            <Badge variant="secondary">
+              {STUDENT_LIFECYCLE_MESSAGES.PENDING_ACTIVATION_STATUS}
+            </Badge>
+          )}
+          {hasIncompleteStudentData(student) && (
+            <Badge
+              variant="secondary"
+              aria-label={incompleteDescription}
+              title={incompleteDescription}
+            >
+              {STUDENT_MISSING_DATA_MESSAGES.INCOMPLETE_BADGE}
+            </Badge>
+          )}
+        </div>
+      )}
 
-        {student.activation_status === STUDENT_ACTIVATION_STATUS.PENDING && (
-          <>
-            <dt className="text-muted-foreground">
-              {STUDENT_LIFECYCLE_MESSAGES.ACTIVATION_STATUS_LABEL}
-            </dt>
-            <dd>{STUDENT_LIFECYCLE_MESSAGES.PENDING_ACTIVATION_STATUS}</dd>
-          </>
-        )}
-
-        <dt className="text-muted-foreground">
-          {STUDENT_DIRECTORY_MESSAGES.DISCIPLINES}
-        </dt>
-        <dd>
-          {student.active_discipline_names.length > 0
-            ? student.active_discipline_names.join(", ")
-            : STUDENT_DIRECTORY_MESSAGES.NO_ACTIVE_DISCIPLINES}
-        </dd>
-
-        {isActiveTab && (
-          <>
-            <dt className="text-muted-foreground">
-              {STUDENT_DIRECTORY_MESSAGES.MONTHLY_DUE_DATE}
-            </dt>
-            <dd className="flex flex-col gap-0.5">
-              {nearestDiscipline !== undefined &&
-              nearestDiscipline.next_due_date !== null ? (
-                <>
-                  <span className="font-medium">
-                    {nearestDiscipline.discipline_name}
-                  </span>
-                  <span className="text-muted-foreground">
-                    {getDueDateStatus(nearestDiscipline.next_due_date, today)}
-                  </span>
-                </>
-              ) : (
-                // A student enrolled only per class never has a due date.
-                <span className="text-muted-foreground">
-                  {!hasMonthlyEnrollment && hasPerClassEnrollment
-                    ? STUDENT_DIRECTORY_MESSAGES.PER_CLASS_DUE_DATE
-                    : STUDENT_DIRECTORY_MESSAGES.NO_PAYMENTS_REGISTERED}
-                </span>
-              )}
-            </dd>
-          </>
-        )}
-      </dl>
+      <p className="truncate text-xs text-muted-foreground">{metaLine}</p>
     </article>
   )
 }
