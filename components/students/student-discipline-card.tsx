@@ -48,6 +48,19 @@ import {
   formatNumber,
 } from "@/lib/localization/es-ec"
 
+/**
+ * First unpaid month ("YYYY-MM") of the enrollment, taken from its due date.
+ * Null, missing or malformed dates suggest nothing; the form then defaults to
+ * the current month.
+ */
+function getSuggestedPaymentMonth(
+  nextDueDate: string | null | undefined
+): string | undefined {
+  if (!nextDueDate) return undefined
+
+  return nextDueDate.slice(0, 7)
+}
+
 export interface DisciplineAttendanceStats {
   present: number
   total: number
@@ -89,6 +102,9 @@ export function StudentDisciplineCard({
   const [isPending, startTransition] = useTransition()
   const disciplineName = enrollment.discipline_name
   const isPerClass = enrollment.billing_mode === "per_class"
+  const suggestedPaymentMonth = getSuggestedPaymentMonth(
+    enrollment.next_due_date
+  )
 
   function handleSuspend() {
     startTransition(async () => {
@@ -238,6 +254,7 @@ export function StudentDisciplineCard({
                   triggerAriaLabel={STUDENT_DETAIL_MESSAGES.MONTHLY_PAYMENT_ARIA(
                     disciplineName
                   )}
+                  suggestedMonth={suggestedPaymentMonth}
                 />
               )}
               <RegisterClassPaymentDialog
@@ -355,6 +372,7 @@ export function StudentDisciplineCard({
                   triggerAriaLabel={PAYMENT_FOLLOW_UP_MESSAGES.PAY_SUSPENDED_ARIA(
                     disciplineName
                   )}
+                  suggestedMonth={suggestedPaymentMonth}
                   suspended
                 />
               )}
