@@ -23,14 +23,14 @@ export function OverviewQuickActions({ branchId }: OverviewQuickActionsProps) {
     >
       <Link
         href={`/dashboard/conduct?${branchQuery}`}
-        className={`${buttonVariants({ variant: "outline" })} min-h-11 sm:min-h-9`}
+        className={`${buttonVariants({ variant: "outline" })} min-h-11 w-full justify-start sm:min-h-9 sm:w-auto`}
       >
         <GavelIcon className="size-4" aria-hidden="true" />
         {DASHBOARD_OVERVIEW_MESSAGES.QUICK_ACTION_CONDUCT}
       </Link>
       <Link
         href={`/dashboard/students?${branchQuery}`}
-        className={`${buttonVariants({ variant: "outline" })} min-h-11 sm:min-h-9`}
+        className={`${buttonVariants({ variant: "outline" })} min-h-11 w-full justify-start sm:min-h-9 sm:w-auto`}
       >
         <UserSearchIcon className="size-4" aria-hidden="true" />
         {DASHBOARD_OVERVIEW_MESSAGES.QUICK_ACTION_STUDENTS}

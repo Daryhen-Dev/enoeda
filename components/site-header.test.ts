@@ -12,6 +12,7 @@ import {
   getPageTitle,
   isProfileRoute,
 } from "./site-header";
+import { navigationItems } from "./app-sidebar";
 import { DASHBOARD_SHELL_MESSAGES } from "@/lib/localization/es-ec";
 
 const BRANCH_ID = "aaaaaaaa-1111-2222-3333-444444444444";
@@ -104,6 +105,17 @@ describe("SiteHeader profile route", () => {
     expect(isProfileRoute("/dashboard")).toBe(false);
     expect(isProfileRoute("/dashboard/students")).toBe(false);
     expect(isProfileRoute("/dashboard/profilex")).toBe(false);
+  });
+});
+
+describe("SiteHeader titles cover the sidebar", () => {
+  it("gives every sidebar section its own header title", () => {
+    // A section without an entry silently falls back to "Resumen", which is how
+    // Conducta shipped with the overview title in the header.
+    for (const item of navigationItems) {
+      if (item.url === "/dashboard") continue;
+      expect(getPageTitle(item.url)).not.toBe(DASHBOARD_SHELL_MESSAGES.OVERVIEW);
+    }
   });
 });
 
