@@ -4,7 +4,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-import { formatDateOnly, parseDateOnly } from "@/lib/date";
+import { dateOnlyToUtcDate, formatDateOnly } from "@/lib/date";
 
 vi.mock("server-only", () => ({}));
 const mockQueryRaw = vi.fn();
@@ -84,7 +84,8 @@ function makeOneTimeClass(opts: {
   return {
     id: opts.id ?? ONE_TIME_CLASS,
     branch_id: BRANCH,
-    class_date: parseDateOnly(opts.classDate),
+    // Prisma hands a `date` column back as UTC midnight, never local midnight.
+    class_date: dateOnlyToUtcDate(opts.classDate),
     start_time: new Date("1970-01-01T10:00:00"),
     teacher_id: null,
     is_active: opts.isActive,
@@ -346,8 +347,8 @@ describe("getSessionsForRange resolver integration", () => {
       (clause) => clause.class_date !== undefined
     )?.class_date?.lt;
     expect(pastGate).toBeDefined();
-    // Same server-local midnight the recurring gate derives from.
-    expect(pastGate!.getTime()).toBe(parseDateOnly(formatDateOnly(new Date())).getTime());
+    // Today's calendar day as the UTC-midnight instant a `date` column compares.
+    expect(pastGate!.toISOString()).toBe(`${formatDateOnly(new Date())}T00:00:00.000Z`);
   });
 
   it("returns an inactive one-time class with a past date", async () => {

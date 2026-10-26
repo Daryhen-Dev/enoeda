@@ -245,12 +245,12 @@ describe("addGuestToSession — guards", () => {
         }),
       })
     );
-    const [y, m, d] = sessionDate.split("-").map(Number);
+    // `session_date` is a Postgres `date` column: the value crossing into
+    // Prisma is the UTC-midnight instant of the chosen calendar day, so the
+    // assertion pins the instant instead of local date parts.
     const sessionDateArg = tx.class_guests.create.mock.calls[0][0].data
       .session_date as Date;
-    expect(sessionDateArg.getFullYear()).toBe(y);
-    expect(sessionDateArg.getMonth()).toBe(m - 1);
-    expect(sessionDateArg.getDate()).toBe(d);
+    expect(sessionDateArg.toISOString()).toBe(`${sessionDate}T00:00:00.000Z`);
   });
 
   it("uses the class date as session_date for one-time classes", async () => {
@@ -279,7 +279,11 @@ describe("addGuestToSession — guards", () => {
     );
     const sessionDateArg = tx.class_guests.create.mock.calls[0][0].data
       .session_date as Date;
-    expect(sessionDateArg.getDate()).toBe(yesterday.getDate());
+    // The class day is the UTC calendar day Prisma returns for `class_date`,
+    // written back as its UTC-midnight instant (never a local midnight).
+    expect(sessionDateArg.toISOString()).toBe(
+      `${yesterday.toISOString().slice(0, 10)}T00:00:00.000Z`
+    );
   });
 
   it("rejects a teacher of another session", async () => {

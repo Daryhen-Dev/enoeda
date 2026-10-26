@@ -233,6 +233,28 @@ describe("promoteStudent — branch security", () => {
     });
     expect(result.success).toBe(true);
   });
+
+  it("stores the chosen promotion day as UTC midnight", async () => {
+    const tx = buildMockTx();
+    tx.students.findUnique = vi.fn().mockResolvedValue({ branch_id: BRANCH_A });
+    setupWithAuth(ctxBranchA, tx);
+
+    const result = await promoteStudent({
+      student_id: STUDENT_ID,
+      discipline_id: DISCIPLINE_ID,
+      level_id: LEVEL_ID,
+      branch_id: BRANCH_A,
+      promoted_at: "2026-10-26",
+    });
+
+    expect(result.success).toBe(true);
+    // `promoted_at` is a Postgres `date`: it keeps the UTC calendar day, so
+    // local midnight would store the previous day on a server east of UTC.
+    const data = tx.student_progress.create.mock.calls[0][0].data as {
+      promoted_at: Date;
+    };
+    expect(data.promoted_at.toISOString()).toBe("2026-10-26T00:00:00.000Z");
+  });
 });
 
 // =============================================================================
