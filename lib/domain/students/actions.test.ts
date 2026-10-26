@@ -53,7 +53,10 @@ const mockCtx = {
 describe("createStudent", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockWithAuthenticatedUser.mockImplementation(async (fn: Function) => {
+    mockWithAuthenticatedUser.mockImplementation(
+      async (
+        fn: (tx: unknown, ctx: unknown) => Promise<unknown>
+      ) => {
       const tx = {
         students: { create: mockCreate },
         branches: { findUnique: mockFindUnique },

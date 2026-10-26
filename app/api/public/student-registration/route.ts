@@ -39,7 +39,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     return response(REGISTRATION_UNAVAILABLE, 400);
   }
 
-  const { altcha: _altcha, ...registrationInput } = rawInput;
+  const { altcha: _ignoredAltcha, ...registrationInput } = rawInput;
   const parsed = publicStudentRegistrationSchema.safeParse(registrationInput);
   if (!parsed.success) {
     return response(parsed.error.issues[0]?.message ?? REGISTRATION_UNAVAILABLE, 400);
