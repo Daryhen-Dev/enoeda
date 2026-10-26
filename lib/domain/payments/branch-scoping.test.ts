@@ -211,9 +211,12 @@ describe("registerMonthlyPayment — branch context and period contract", () => 
         student_discipline_id: ENROLLMENT_ID,
         amount: 50,
         months_covered: 2,
-        period_start: "2025-01-31",
-        period_end: "2025-03-01",
-        payment_date: "2025-01-15",
+        // Postgres `date` columns: Prisma needs the UTC-midnight instant. The
+        // raw "YYYY-MM-DD" string this test used to expect is rejected at
+        // runtime with "Expected ISO-8601 DateTime".
+        period_start: new Date("2025-01-31T00:00:00.000Z"),
+        period_end: new Date("2025-03-01T00:00:00.000Z"),
+        payment_date: new Date("2025-01-15T00:00:00.000Z"),
         recorded_by: "u1",
         note: null,
       },
