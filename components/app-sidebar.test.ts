@@ -85,6 +85,22 @@ describe("navigationItems — Conducta entry", () => {
     );
   });
 
+  it("keeps the Hoy overview visible for teacher-only users", () => {
+    const visible = getVisibleNavigationItems({
+      isAdmin: false,
+      canManageProfile: true,
+      isTeacherOnly: true,
+    });
+
+    expect(visible.some((item) => item.url === "/dashboard")).toBe(true);
+    expect(visible.some((item) => item.url === "/dashboard/payments")).toBe(
+      false
+    );
+    expect(visible.some((item) => item.url === "/dashboard/schedule")).toBe(
+      false
+    );
+  });
+
   it("keeps Conducta visible for admins", () => {
     const visible = getVisibleNavigationItems({
       isAdmin: true,
