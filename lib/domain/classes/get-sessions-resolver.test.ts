@@ -127,6 +127,30 @@ function pastMondayDateStr(): string {
   return formatDateOnly(d);
 }
 
+/**
+ * The template's occurrences for a window: its weekday inside the window that
+ * also falls inside the group month. Computed independently so the expectation
+ * never depends on which day the suite runs (#208: the previous version assumed
+ * a future Monday always exists, which is false when today IS Monday).
+ */
+function expectedOccurrences(
+  startDate: string,
+  endDate: string,
+  periodMonth: string
+): string[] {
+  const dates: string[] = [];
+  const cursor = new Date(`${startDate}T00:00:00`);
+  const limit = new Date(`${endDate}T23:59:59`);
+  // day_of_week 0 is Monday in this schema.
+  while (cursor.getDay() !== 1) cursor.setDate(cursor.getDate() + 1);
+  while (cursor <= limit) {
+    const date = formatDateOnly(cursor);
+    if (date.startsWith(periodMonth)) dates.push(date);
+    cursor.setDate(cursor.getDate() + 7);
+  }
+  return dates;
+}
+
 describe("getSessionsForRange resolver integration", () => {
   beforeEach(() => { vi.clearAllMocks(); mockTx.class_sessions.findMany.mockResolvedValue([]); mockTx.one_time_classes.findMany.mockResolvedValue([]); });
 
@@ -226,11 +250,10 @@ describe("getSessionsForRange resolver integration", () => {
     ).toBe(true);
   });
 
-  it("keeps active template occurrences from today onward unchanged", async () => {
+  it("keeps every active template occurrence inside the window and its group month", async () => {
     mockFindMany.mockResolvedValue([makeClass(T_A, true)]);
     mockQueryRaw.mockResolvedValue([]);
     setupAuth();
-    const todayStr = formatDateOnly(new Date());
     const start = new Date();
     start.setDate(start.getDate() - 10);
     const end = new Date();
@@ -242,10 +265,37 @@ describe("getSessionsForRange resolver integration", () => {
     });
     expect(r.success).toBe(true);
     const classSessions = r.data!.filter((s) => s.scheduled_class_id === CLASS);
-    // Any 10-day window after today always contains the next Monday.
-    expect(
-      classSessions.some((s) => s.session_date > todayStr)
-    ).toBe(true);
+    // An active template yields its weekday occurrences inside the window that
+    // also fall inside its group month, whatever today is.
+    expect(classSessions.map((s) => s.session_date)).toEqual(
+      expectedOccurrences(formatDateOnly(start), formatDateOnly(end), currentMonth())
+    );
+  });
+
+  it("resolves the same occurrences no matter which weekday the suite runs", async () => {
+    mockFindMany.mockResolvedValue([makeClass(T_A, true)]);
+    mockQueryRaw.mockResolvedValue([]);
+
+    async function resolveOn(day: Date): Promise<string[]> {
+      vi.useFakeTimers();
+      vi.setSystemTime(day);
+      setupAuth();
+      const r = await getSessionsForRange({
+        branch_id: BRANCH,
+        start_date: "2026-10-20",
+        end_date: "2026-11-09",
+      });
+      vi.useRealTimers();
+      expect(r.success).toBe(true);
+      return r.data!.filter((s) => s.scheduled_class_id === CLASS).map((s) => s.session_date);
+    }
+
+    // Monday is the case that used to fail; Wednesday proves the clock is irrelevant.
+    const monday = await resolveOn(new Date(2026, 9, 26, 12, 0, 0));
+    const wednesday = await resolveOn(new Date(2026, 9, 28, 12, 0, 0));
+
+    expect(monday).toEqual(wednesday);
+    expect(monday).toEqual(["2026-10-26"]);
   });
 
   it("keeps attendance overlay intact for past inactive occurrences", async () => {
