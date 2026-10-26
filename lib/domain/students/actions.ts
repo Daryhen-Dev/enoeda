@@ -7,12 +7,13 @@ import {
   assertCallerBranchContext,
   BRANCH_ASSERTION_MESSAGES,
 } from "@/lib/auth/branch-assertion";
-import { COMMON_MESSAGES, STUDENT_MESSAGES } from "@/lib/localization/es-ec";
+import { COMMON_MESSAGES, STUDENT_BULK_ACTIONS_MESSAGES, STUDENT_MESSAGES } from "@/lib/localization/es-ec";
 import {
   STUDENT_ACTIVATION_STATUS,
   STUDENT_DUPLICATE_NAME_LIMIT,
   STUDENT_STATUS,
   studentActivationStatusSchema,
+  studentBulkDeactivateSchema,
   studentCreateSchema,
   studentDuplicateNameSchema,
   studentIdSchema,
@@ -20,6 +21,7 @@ import {
   studentReactivateSchema,
   studentUpdateSchema,
   type StudentActivationStatus,
+  type StudentBulkDeactivateInput,
   type StudentCreateInput,
   type StudentDuplicateNameInput,
   type StudentListInput,
@@ -83,6 +85,14 @@ interface StudentMutationOutcome {
   id: string | null;
   error: string | null;
 }
+
+interface BulkDeactivateOutcome {
+  deactivated: number;
+  error: string | null;
+}
+
+const BULK_DEACTIVATE_COUNT_MISMATCH =
+  "student bulk deactivation count mismatch";
 
 export interface StudentProfile {
   id: string;
@@ -763,6 +773,97 @@ export async function deactivateStudent(
   return { success: true, data: { id: result.data.id } };
 }
 
+
+/**
+ * Deactivate several students of one branch in a single action (S4).
+ *
+ * All-or-nothing: the whole selection is read and validated inside the same
+ * transaction that runs the one update statement, so a single missing or
+ * already-inactive student rejects the batch and changes nothing. It reuses
+ * the single-student guard (`assertCallerBranchContext` inside
+ * `withAuthenticatedUser`) and only flips `is_active` for the selected rows.
+ */
+export async function deactivateStudents(
+  input: StudentBulkDeactivateInput
+): Promise<ActionResult<{ deactivated: number }>> {
+  const parsed = studentBulkDeactivateSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message };
+  }
+
+  // Deduplicate so a repeated id can neither inflate the count nor make the
+  // batch read as partially missing.
+  const selectedIds = [...new Set(parsed.data.student_ids)];
+  const branchId = parsed.data.branch_id;
+
+  const result = await withAuthenticatedUser(
+    async (tx, ctx) => {
+      // Assert caller has active assignment for this branch
+      const branchError = assertCallerBranchContext(ctx, branchId);
+      if (branchError) {
+        return {
+          deactivated: 0,
+          error: branchError,
+        } satisfies BulkDeactivateOutcome;
+      }
+
+      const students = await tx.students.findMany({
+        where: { id: { in: selectedIds }, branch_id: branchId },
+        select: { id: true, first_name: true, surname: true, is_active: true },
+      });
+
+      if (students.length !== selectedIds.length) {
+        return {
+          deactivated: 0,
+          error: STUDENT_BULK_ACTIONS_MESSAGES.MISSING_SELECTION,
+        } satisfies BulkDeactivateOutcome;
+      }
+
+      const inactiveNames = students
+        .filter((student) => !student.is_active)
+        .map((student) => `${student.first_name} ${student.surname}`);
+
+      if (inactiveNames.length > 0) {
+        return {
+          deactivated: 0,
+          error: STUDENT_BULK_ACTIONS_MESSAGES.INACTIVE_SELECTION(
+            inactiveNames.join(", ")
+          ),
+        } satisfies BulkDeactivateOutcome;
+      }
+
+      const updated = await tx.students.updateMany({
+        where: { id: { in: selectedIds }, branch_id: branchId, is_active: true },
+        data: { is_active: false },
+      });
+
+      if (updated.count !== selectedIds.length) {
+        // Throwing rolls the transaction back; the mapper below turns this
+        // race into user-facing copy.
+        throw new Error(BULK_DEACTIVATE_COUNT_MISMATCH);
+      }
+
+      return {
+        deactivated: updated.count,
+        error: null,
+      } satisfies BulkDeactivateOutcome;
+    },
+    {
+      mapTransactionError: (error) =>
+        error instanceof Error &&
+        error.message === BULK_DEACTIVATE_COUNT_MISMATCH
+          ? STUDENT_BULK_ACTIONS_MESSAGES.STALE_SELECTION
+          : undefined,
+    }
+  );
+
+  if (!result.success) return result;
+  if (result.data.error !== null) {
+    return { success: false, error: result.data.error };
+  }
+
+  return { success: true, data: { deactivated: result.data.deactivated } };
+}
 
 export async function reactivateStudent(
   input: StudentReactivateInput,

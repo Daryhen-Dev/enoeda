@@ -10,6 +10,7 @@ import {
 } from "@/components/students/student-card"
 import { StudentRowActions } from "@/components/students/student-row-actions"
 import { Badge } from "@/components/ui/badge"
+import { Checkbox } from "@/components/ui/checkbox"
 import type { EcuadorTimeZone } from "@/lib/domain/branches/schema"
 import { getCurrentDateOnly } from "@/lib/date"
 import {
@@ -21,16 +22,27 @@ import {
   type StudentStatus,
 } from "@/lib/domain/students"
 import {
+  STUDENT_BULK_ACTIONS_MESSAGES,
   STUDENT_DIRECTORY_MESSAGES,
   STUDENT_LIFECYCLE_MESSAGES,
   STUDENT_MISSING_DATA_MESSAGES,
 } from "@/lib/localization/es-ec"
+
+/** Selection state of the directory, supplied only when bulk actions apply. */
+export interface StudentSelectionControls {
+  selectedIds: ReadonlySet<string>
+  isAllSelected: boolean
+  isPartiallySelected: boolean
+  onToggleRow: (studentId: string, selected: boolean) => void
+  onToggleAll: (selected: boolean) => void
+}
 
 interface StudentColumnsOptions {
   branchId: string
   branches: ActiveBranchOption[]
   status: StudentStatus
   canManage: boolean
+  selection?: StudentSelectionControls
   onActivated: () => void
   timeZone: EcuadorTimeZone
 }
@@ -59,6 +71,7 @@ export function getStudentColumns({
   branches,
   status,
   canManage,
+  selection,
   onActivated,
   timeZone,
 }: StudentColumnsOptions): ColumnDef<TableFeatures, StudentListItem>[] {
@@ -66,6 +79,37 @@ export function getStudentColumns({
   const today = getCurrentDateOnly(timeZone)
 
   return [
+    ...(selection === undefined
+      ? []
+      : [
+          {
+            id: "select",
+            // Header selects or clears the page the table is showing.
+            header: () => (
+              <Checkbox
+                aria-label={STUDENT_BULK_ACTIONS_MESSAGES.SELECT_ALL_LABEL}
+                checked={selection.isAllSelected}
+                indeterminate={selection.isPartiallySelected}
+                onCheckedChange={(checked) => selection.onToggleAll(checked)}
+              />
+            ),
+            cell: ({ row }: { row: { original: StudentListItem } }) => {
+              const student = row.original
+
+              return (
+                <Checkbox
+                  aria-label={STUDENT_BULK_ACTIONS_MESSAGES.SELECT_ROW_LABEL(
+                    `${student.first_name} ${student.surname}`
+                  )}
+                  checked={selection.selectedIds.has(student.id)}
+                  onCheckedChange={(checked) =>
+                    selection.onToggleRow(student.id, checked)
+                  }
+                />
+              )
+            },
+          },
+        ]),
     {
       id: "actions",
       header: STUDENT_DIRECTORY_MESSAGES.ACTIONS,

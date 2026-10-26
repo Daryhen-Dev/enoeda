@@ -14,6 +14,7 @@ import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
+  STUDENT_BULK_ACTIONS_MESSAGES,
   STUDENT_DIRECTORY_MESSAGES,
   STUDENT_LIFECYCLE_MESSAGES,
   STUDENT_MISSING_DATA_MESSAGES,
@@ -139,7 +140,12 @@ interface Rendered {
 
 function renderCard(
   student: ReturnType<typeof makeStudent>,
-  options: { status?: "active" | "inactive"; canManage?: boolean } = {}
+  options: {
+    status?: "active" | "inactive";
+    canManage?: boolean;
+    /** Mirrors the directory, which always passes selection state to the card. */
+    withSelection?: boolean;
+  } = {}
 ): Rendered {
   const container = document.createElement("div");
   document.body.append(container);
@@ -153,6 +159,8 @@ function renderCard(
         branches={BRANCHES}
         status={options.status ?? "active"}
         canManage={options.canManage ?? true}
+        selected={false}
+        onSelectedChange={options.withSelection === false ? undefined : vi.fn()}
         onActivated={vi.fn()}
         timeZone={TIME_ZONE}
       />
@@ -271,10 +279,36 @@ describe("StudentCard — mobile presentation of one student", () => {
   it("keeps every action in the Acciones menu of the card", () => {
     rendered = renderCard(makeStudent({ next_due_date: TODAY }));
 
-    const trigger = rendered.container.querySelector("button");
-    expect(trigger?.getAttribute("aria-label")).toBe(
-      STUDENT_ROW_ACTIONS_MESSAGES.TRIGGER_ARIA("Ana Pérez")
+    const trigger = rendered.container.querySelector(
+      `button[aria-label="${STUDENT_ROW_ACTIONS_MESSAGES.TRIGGER_ARIA("Ana Pérez")}"]`
     );
+    expect(trigger).not.toBeNull();
+  });
+
+  it("offers a selection checkbox to a manager on the active tab", () => {
+    rendered = renderCard(makeStudent({ next_due_date: TODAY }));
+
+    const checkbox = rendered.container.querySelector('[role="checkbox"]');
+    expect(checkbox?.getAttribute("aria-label")).toBe(
+      STUDENT_BULK_ACTIONS_MESSAGES.SELECT_ROW_LABEL("Ana Pérez")
+    );
+    expect(checkbox?.getAttribute("aria-checked")).toBe("false");
+  });
+
+  it("hides the selection checkbox from a caller who cannot manage the branch", () => {
+    rendered = renderCard(makeStudent({ next_due_date: TODAY }), {
+      canManage: false,
+    });
+
+    expect(rendered.container.querySelector('[role="checkbox"]')).toBeNull();
+  });
+
+  it("hides the selection checkbox in the history tab", () => {
+    rendered = renderCard(makeStudent({ next_due_date: TODAY }), {
+      status: "inactive",
+    });
+
+    expect(rendered.container.querySelector('[role="checkbox"]')).toBeNull();
   });
 
   it("shows the inactive status and no due date in the history tab", () => {

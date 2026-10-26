@@ -3,7 +3,9 @@
 import { useEffect, useId, useRef, useState, useTransition } from "react"
 
 import { getStudentColumns } from "@/components/students/student-columns"
+import { BulkDeactivateDialog } from "@/components/students/bulk-deactivate-dialog"
 import { StudentCard } from "@/components/students/student-card"
+import { StudentSelectionBar } from "@/components/students/student-selection"
 import {
   StudentFormDialog,
   type ActiveBranchOption,
@@ -92,6 +94,10 @@ export function StudentList({
     inactiveInitialError ?? null,
   )
   const [isPending, startTransition] = useTransition()
+  const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(
+    () => new Set(),
+  )
+  const [isBulkDeactivateOpen, setIsBulkDeactivateOpen] = useState(false)
   const requestSequence = useRef(0)
   const skipInitialLoad = useRef(true)
 
@@ -99,19 +105,68 @@ export function StudentList({
   const items = isActiveTab ? activeItems : inactiveItems
   const nextCursor = isActiveTab ? activeNextCursor : inactiveNextCursor
   const error = isActiveTab ? activeError : inactiveError
+  // Bulk deactivation needs both the permission and the active tab, and it can
+  // only ever touch rows the list is showing: a row hidden by a tab or filter
+  // change drops out of the selection instead of being deactivated unseen.
+  const canSelect = canManage && isActiveTab
+  const selectedStudents = canSelect
+    ? items.filter((student) => selectedIds.has(student.id))
+    : []
+  const isAllSelected =
+    items.length > 0 && selectedStudents.length === items.length
+  const isPartiallySelected = selectedStudents.length > 0 && !isAllSelected
+  const selectionControls = canSelect
+    ? {
+        selectedIds,
+        isAllSelected,
+        isPartiallySelected,
+        onToggleRow: toggleStudentSelection,
+        onToggleAll: togglePageSelection,
+      }
+    : undefined
   const selectedDisciplineName =
     disciplines.find((discipline) => discipline.id === disciplineId)?.name ??
     STUDENT_DIRECTORY_MESSAGES.ALL_DISCIPLINES
   // getStudentColumns only stores onActivated for an interaction handler.
-  // eslint-disable-next-line react-hooks/refs
   const columns = getStudentColumns({
     branchId,
     branches,
     status: selectedTab,
     canManage,
+    selection: selectionControls,
     onActivated: reloadActiveStudents,
     timeZone,
   })
+
+  function toggleStudentSelection(studentId: string, selected: boolean) {
+    setSelectedIds((previousSelection) => {
+      const nextSelection = new Set(previousSelection)
+
+      if (selected) {
+        nextSelection.add(studentId)
+      } else {
+        nextSelection.delete(studentId)
+      }
+
+      return nextSelection
+    })
+  }
+
+  function togglePageSelection(selected: boolean) {
+    setSelectedIds(
+      selected ? new Set(items.map((student) => student.id)) : new Set(),
+    )
+  }
+
+  function clearSelection() {
+    setIsBulkDeactivateOpen(false)
+    setSelectedIds(new Set())
+  }
+
+  function handleBulkDeactivated() {
+    clearSelection()
+    reloadActiveStudents()
+  }
 
   function resetPage(status: StudentStatus) {
     if (status === STUDENT_STATUS.ACTIVE) {
@@ -278,12 +333,15 @@ export function StudentList({
   function handleSearchChange(value: string) {
     requestSequence.current += 1
     resetAllPages()
+    // A different query is a different set of rows: drop the selection.
+    setSelectedIds(new Set())
     setSearchQuery(value)
   }
 
   function handleDisciplineChange(value: string | null) {
     requestSequence.current += 1
     resetAllPages()
+    setSelectedIds(new Set())
     setDisciplineId(value === ALL_DISCIPLINES_VALUE ? undefined : value ?? undefined)
   }
 
@@ -296,6 +354,8 @@ export function StudentList({
 
     requestSequence.current += 1
     resetPage(value)
+    // Switching tabs hides the selected rows, so the selection cannot survive.
+    clearSelection()
     setSelectedTab(value)
   }
 
@@ -396,6 +456,20 @@ export function StudentList({
             </p>
           )}
 
+          <StudentSelectionBar
+            count={selectedStudents.length}
+            onClear={clearSelection}
+            onRequestDeactivate={() => setIsBulkDeactivateOpen(true)}
+          />
+
+          <BulkDeactivateDialog
+            students={selectedStudents}
+            branchId={branchId}
+            open={isBulkDeactivateOpen}
+            onOpenChange={setIsBulkDeactivateOpen}
+            onDeactivated={handleBulkDeactivated}
+          />
+
           {!error && (
             <>
               {/* Below `md` the directory is a stack of cards, never a wide table. */}
@@ -409,6 +483,10 @@ export function StudentList({
                       branches={branches}
                       status={selectedTab}
                       canManage={canManage}
+                      selected={selectedIds.has(student.id)}
+                      onSelectedChange={(selected) =>
+                        toggleStudentSelection(student.id, selected)
+                      }
                       onActivated={reloadActiveStudents}
                       timeZone={timeZone}
                     />

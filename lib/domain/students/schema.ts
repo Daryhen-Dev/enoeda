@@ -1,4 +1,8 @@
-import { STUDENT_DIRECTORY_MESSAGES, STUDENT_MESSAGES } from "@/lib/localization/es-ec";
+import {
+  STUDENT_BULK_ACTIONS_MESSAGES,
+  STUDENT_DIRECTORY_MESSAGES,
+  STUDENT_MESSAGES,
+} from "@/lib/localization/es-ec";
 import { z } from "zod";
 
 /**
@@ -167,6 +171,30 @@ export const studentReactivateSchema = z
   .strict();
 
 /**
+ * Upper bound of one bulk deactivation: keeps the confirmation readable and
+ * the single update statement small.
+ */
+export const STUDENT_BULK_DEACTIVATE_LIMIT = 50;
+
+/**
+ * Bulk deactivation of directory rows (S4). The caller sends the whole
+ * selection at once so the server can validate it as one all-or-nothing batch.
+ */
+export const studentBulkDeactivateSchema = z
+  .object({
+    student_ids: z
+      .array(studentIdSchema)
+      .min(1, { error: STUDENT_BULK_ACTIONS_MESSAGES.SELECTION_REQUIRED })
+      .max(STUDENT_BULK_DEACTIVATE_LIMIT, {
+        error: STUDENT_BULK_ACTIONS_MESSAGES.SELECTION_LIMIT(
+          STUDENT_BULK_DEACTIVATE_LIMIT
+        ),
+      }),
+    branch_id: z.uuid({ error: STUDENT_MESSAGES.INVALID_BRANCH_ID }),
+  })
+  .strict();
+
+/**
  * Duplicate-name warning lookup (create flow): same first name AND surname
  * within one branch. Names are normalized like the stored value (trim,
  * collapse inner whitespace); case-insensitivity is delegated to Prisma
@@ -229,5 +257,8 @@ export const studentUpdateSchema = z
 
 export type StudentCreateInput = z.input<typeof studentCreateSchema>;
 export type StudentListInput = z.infer<typeof studentListSchema>;
+export type StudentBulkDeactivateInput = z.infer<
+  typeof studentBulkDeactivateSchema
+>;
 export type StudentReactivateInput = z.infer<typeof studentReactivateSchema>;
 export type StudentUpdateInput = z.input<typeof studentUpdateSchema>;
