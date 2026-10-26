@@ -1545,6 +1545,14 @@ export const PAYMENT_CONSOLE_MESSAGES = {
   CURRENCY_CODE: "USD",
 } as const
 
+/** Payments sub-navigation labels shared by the three payments screens. */
+export const PAYMENT_SECTION_NAV_MESSAGES = {
+  LABEL: "Secciones de pagos",
+  SUMMARY: "Resumen",
+  VALIDATION: "Validar pagos",
+  SETTINGS: "Precios",
+} as const
+
 export const OVERDUE_MESSAGES = {
   NO_BRANCH_CONTEXT: "No tiene una sucursal activa asignada. Contacte al administrador.",
   CARD_TITLE: "Pagos en espera",
