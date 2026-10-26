@@ -1,8 +1,9 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
-import { BuildingIcon, ChevronDownIcon, CheckIcon } from "lucide-react"
+import { BuildingIcon, ChevronDownIcon, ChevronRightIcon, CheckIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -93,6 +94,52 @@ export function getPageTitle(pathname: string): string {
   return DASHBOARD_SHELL_MESSAGES.OVERVIEW
 }
 
+export interface BreadcrumbEntry {
+  label: string
+  href: string
+}
+
+/**
+ * Parent sections shown above the page title. Only routes whose parent is not
+ * already implied by the sidebar entry list one; a student detail keeps its own
+ * back link instead of repeating "Estudiantes" twice.
+ */
+const NESTED_ANCESTORS: ReadonlyArray<
+  readonly [string, ReadonlyArray<BreadcrumbEntry>]
+> = [
+  [
+    "/dashboard/payments/validation",
+    [{ label: DASHBOARD_SHELL_MESSAGES.PAYMENTS, href: "/dashboard/payments" }],
+  ],
+  [
+    "/dashboard/payments/settings",
+    [{ label: DASHBOARD_SHELL_MESSAGES.PAYMENTS, href: "/dashboard/payments" }],
+  ],
+]
+
+/**
+ * Ancestor trail for the current route, outermost first. Empty for top-level
+ * routes, which show only their section name.
+ * Pure function — extracted for testability.
+ */
+export function getBreadcrumbAncestors(pathname: string): BreadcrumbEntry[] {
+  const match = NESTED_ANCESTORS.find(([route]) => route === pathname)
+  return match ? [...match[1]] : []
+}
+
+/**
+ * Builds an ancestor link that keeps the current query string, so the active
+ * branch (and any filter) survives the jump.
+ * Pure function — extracted for testability.
+ */
+export function buildBreadcrumbHref(
+  href: string,
+  existingParams: string
+): string {
+  if (existingParams.length === 0) return href
+  return `${href}${href.includes("?") ? "&" : "?"}${existingParams}`
+}
+
 export function SiteHeader({
   displayName,
   branches,
@@ -126,6 +173,7 @@ export function SiteHeader({
   const mode = getSwitcherMode(availableBranches)
   const showBranchSwitcher = !isProfileRoute(pathname)
   const pageTitle = getPageTitle(pathname)
+  const breadcrumbAncestors = getBreadcrumbAncestors(pathname)
 
   return (
     <header className="flex min-h-(--header-height) shrink-0 items-center gap-2 border-b bg-sidebar border-sidebar-border text-sidebar-foreground py-2 transition-[width,height] ease-linear sm:h-(--header-height) sm:py-0 md:border-border md:bg-background md:text-foreground group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
@@ -138,9 +186,40 @@ export function SiteHeader({
           />
           {/* Below md the header is the ink top bar; the emblem fronts it. */}
           <EnoedaMark className="size-6 shrink-0 md:hidden" />
-          <h1 className="truncate text-lg font-semibold tracking-[-0.01em] text-sidebar-accent-foreground sm:text-xl md:text-foreground">
-            {pageTitle}
-          </h1>
+          <div className="flex min-w-0 flex-col justify-center">
+            {breadcrumbAncestors.length > 0 && (
+              <nav
+                aria-label={DASHBOARD_SHELL_MESSAGES.BREADCRUMB_LABEL}
+                className="hidden min-w-0 md:block"
+              >
+                <ol className="flex min-w-0 items-center gap-1 text-xs text-muted-foreground">
+                  {breadcrumbAncestors.map((entry) => (
+                    <li
+                      key={entry.href}
+                      className="flex min-w-0 items-center gap-1"
+                    >
+                      <Link
+                        href={buildBreadcrumbHref(
+                          entry.href,
+                          searchParams.toString()
+                        )}
+                        className="truncate underline-offset-4 hover:text-foreground hover:underline"
+                      >
+                        {entry.label}
+                      </Link>
+                      <ChevronRightIcon
+                        className="size-3 shrink-0"
+                        aria-hidden="true"
+                      />
+                    </li>
+                  ))}
+                </ol>
+              </nav>
+            )}
+            <h1 className="truncate text-lg font-semibold tracking-[-0.01em] text-sidebar-accent-foreground sm:text-xl md:text-foreground">
+              {pageTitle}
+            </h1>
+          </div>
         </div>
 
         <div className="flex min-w-0 flex-wrap items-center gap-1 sm:ml-auto sm:gap-2">

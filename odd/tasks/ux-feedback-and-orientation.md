@@ -23,9 +23,9 @@ stay hidden from them.
 S3 — The calendar opens in `day` view for a teacher-only user and in `month` view for an admin when no `view`
 query parameter is present. An explicit `?view=` always wins for both.
 
-S4 — The header shows the current location as a breadcrumb trail for nested routes
-(`Resumen › Pagos › Validación mensual`), keeping the branch switcher, branch label and user name untouched.
-Top-level routes render the section name without a trail.
+S4 — The header shows where the user is on nested routes: the parent section renders as a breadcrumb link
+before the page title (`Pagos › Validación mensual`), keeping the active branch in the link. Top-level routes
+keep the bare section title, and a student detail keeps its own back link instead of repeating "Estudiantes".
 
 S5 — Payments exposes one visible sub-navigation from each of its three screens — Resumen, Validar, Precios —
 preserving the active branch in every tab link and marking the current tab as the active one.
