@@ -10,7 +10,7 @@ import {
   authorizeBranchRead,
   BRANCH_READ_ACCESS,
 } from "@/lib/auth/branch-read-access";
-import { formatDatabaseDateOnly, formatDateOnly, parseDateOnly } from "@/lib/date";
+import { dateOnlyToUtcDate, formatDatabaseDateOnly, formatDateOnly, parseDateOnly } from "@/lib/date";
 import { BRANCH_MESSAGES, COMMON_MESSAGES, PAYMENT_MESSAGES } from "@/lib/localization/es-ec";
 import {
   createClassPaymentForOccurrence,
@@ -180,8 +180,8 @@ export async function registerMonthlyPayment(
       const overlap = await tx.payments.findFirst({
         where: {
           student_discipline_id: enrollment.id,
-          period_start: { lt: parsed.data.period_end },
-          period_end: { gt: parsed.data.period_start },
+          period_start: { lt: dateOnlyToUtcDate(parsed.data.period_end) },
+          period_end: { gt: dateOnlyToUtcDate(parsed.data.period_start) },
         },
         select: { id: true },
       });
@@ -194,9 +194,9 @@ export async function registerMonthlyPayment(
           student_discipline_id: enrollment.id,
           amount: parsed.data.amount,
           months_covered: deriveMonthsCovered(parsed.data.period_start, parsed.data.period_end),
-          period_start: parsed.data.period_start,
-          period_end: parsed.data.period_end,
-          payment_date: parsed.data.payment_date ?? formatDateOnly(new Date()),
+          period_start: dateOnlyToUtcDate(parsed.data.period_start),
+          period_end: dateOnlyToUtcDate(parsed.data.period_end),
+          payment_date: dateOnlyToUtcDate(parsed.data.payment_date ?? formatDateOnly(new Date())),
           recorded_by: ctx.userId,
           note: parsed.data.note ?? null,
         },
@@ -558,8 +558,8 @@ export async function correctMonthlyPayment(
       where: {
         student_discipline_id: payment.student_discipline_id,
         id: { not: payment.id },
-        period_start: { lt: parsed.data.period_end },
-        period_end: { gt: parsed.data.period_start },
+        period_start: { lt: dateOnlyToUtcDate(parsed.data.period_end) },
+        period_end: { gt: dateOnlyToUtcDate(parsed.data.period_start) },
       },
       select: { id: true },
     });
@@ -570,9 +570,9 @@ export async function correctMonthlyPayment(
       data: {
         amount: parsed.data.amount,
         months_covered: deriveMonthsCovered(parsed.data.period_start, parsed.data.period_end),
-        period_start: parsed.data.period_start,
-        period_end: parsed.data.period_end,
-        payment_date: parsed.data.payment_date ?? formatDateOnly(new Date()),
+        period_start: dateOnlyToUtcDate(parsed.data.period_start),
+        period_end: dateOnlyToUtcDate(parsed.data.period_end),
+        payment_date: dateOnlyToUtcDate(parsed.data.payment_date ?? formatDateOnly(new Date())),
         note: parsed.data.note ?? null,
       },
       select: { id: true },
