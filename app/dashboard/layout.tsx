@@ -50,7 +50,11 @@ export default async function DashboardLayout({ children }: { children: ReactNod
     <AppSidebar canManageProfile={canManageProfile} isAdmin={isAdmin} isTeacherOnly={isTeacherOnly} variant="sidebar" />
     <SidebarInset>
       <SiteHeader displayName={displayName} branches={headerBranches.branches} globalReadBranches={headerBranches.globalReadBranches} />
-      <StudentSearchPalette />
+      <StudentSearchPalette
+        isAdmin={isAdmin}
+        canManageProfile={canManageProfile}
+        isTeacherOnly={isTeacherOnly}
+      />
       {/* pb-16 clears the phone bottom bar (safe-area included) so the last row
           of any list is never hidden behind it. */}
       <div className="flex flex-1 flex-col pb-16 md:pb-0"><div className="@container/main flex flex-1 flex-col gap-2">{children}</div></div>
