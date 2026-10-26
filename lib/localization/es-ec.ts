@@ -678,9 +678,6 @@ export const CALENDAR_MESSAGES = {
   TEACHER_DISPLAY_NAME: (name: string) => `Profesor: ${name}`,
   TEACHER_PROFILE_UNAVAILABLE: "Perfil de profesor no disponible",
   SUSPENDED_BADGE: "Suspendida",
-  COMPACT_STATUS_SUSPENDED: "Suspendida",
-  COMPACT_STATUS_COMPLETED: "Realizada",
-  COMPACT_STATUS_SCHEDULED: "Programada",
   SUBSTITUTE: "Sustituto",
   ATTENDANCE_RECORDED: (presentCount: number) =>
     `Asistencia registrada · ${presentCount} presentes`,

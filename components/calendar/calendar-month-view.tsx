@@ -154,8 +154,8 @@ export function CalendarMonthView({
               >
                 <span>{day.getDate()}</span>
                 <span className="flex h-1.5 items-center gap-0.5" aria-hidden="true">
-                  {hasScheduled && <span className="size-1 rounded-full bg-amber-500" />}
-                  {hasCompleted && <span className="size-1 rounded-full bg-emerald-600" />}
+                  {hasScheduled && <span className="size-1 rounded-full bg-muted-foreground" />}
+                  {hasCompleted && <span className="size-1 rounded-full bg-seal" />}
                   {hasSuspended && <span className="size-1 rounded-full bg-destructive" />}
                 </span>
               </button>

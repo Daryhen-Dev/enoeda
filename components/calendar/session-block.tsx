@@ -26,21 +26,26 @@ import {
   RosterEditorSheet,
   type RosterEditorTarget,
 } from "@/components/rosters/roster-editor-sheet";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { SealMark } from "@/components/dashboard/seal-mark";
 import {
   clearSessionSubstitution,
   reinstateSession,
   type SessionView,
 } from "@/lib/domain/classes/actions";
 import {
+  ATTENDANCE_FORM_MESSAGES,
   CALENDAR_MESSAGES,
   COMMON_MESSAGES,
+  DASHBOARD_OVERVIEW_MESSAGES,
   ONE_TIME_CLASS_MESSAGES,
   ROSTER_EDITOR_MESSAGES,
   SUSPENSION_MESSAGES,
   TEACHER_ASSIGN_MESSAGES,
   TEACHER_CONFLICT_MESSAGES,
 } from "@/lib/localization/es-ec";
+import { cn } from "@/lib/utils";
 
 interface SessionBlockProps {
   session: SessionView;
@@ -50,33 +55,11 @@ interface SessionBlockProps {
   branchId?: string;
 }
 
-interface DisciplineColors {
-  bg: string;
-  text: string;
-  border: string;
-}
-
-function getDisciplineColors(code: string): DisciplineColors {
-  switch (code) {
-    case "karate":
-      return { bg: "bg-blue-100", text: "text-blue-800", border: "border-blue-300" };
-    case "kickboxing":
-      return { bg: "bg-amber-50", text: "text-amber-950", border: "border-amber-200" };
-    default:
-      return { bg: "bg-gray-100", text: "text-gray-800", border: "border-gray-300" };
-  }
-}
-
-// Session cards keep a light discipline tint in both themes, so action
-// buttons use explicit light-surface colors and pin their dark: variants to
-// the same values (Button's outline variant adds dark: backgrounds of its own).
-const ACTION_BUTTON_BASE =
-  "inline-flex h-8 w-full items-center justify-center gap-1 rounded-full border px-2 text-sm font-medium whitespace-nowrap shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50";
-// Single filled action per card.
-const PRIMARY_ACTION_CLASSES = `${ACTION_BUTTON_BASE} border-sky-700 bg-sky-700 text-white hover:bg-sky-800 hover:text-white focus-visible:ring-sky-900/40 dark:border-sky-700 dark:bg-sky-700 dark:hover:bg-sky-800`;
-const NEUTRAL_ACTION_CLASSES = `${ACTION_BUTTON_BASE} border-slate-300 bg-white/80 text-slate-800 hover:bg-white hover:text-slate-950 focus-visible:ring-slate-500/40 dark:border-slate-300 dark:bg-white/80 dark:text-slate-800 dark:hover:bg-white`;
-const DANGER_ACTION_CLASSES = `${ACTION_BUTTON_BASE} border-red-300 bg-white/80 text-red-700 hover:bg-red-50 hover:text-red-800 focus-visible:ring-red-600/40 dark:border-red-300 dark:bg-white/80 dark:text-red-700 dark:hover:bg-red-50`;
-const RESTORE_ACTION_CLASSES = `${ACTION_BUTTON_BASE} border-emerald-300 bg-white/80 text-emerald-800 hover:bg-emerald-50 hover:text-emerald-900 focus-visible:ring-emerald-600/40 dark:border-emerald-300 dark:bg-white/80 dark:text-emerald-800 dark:hover:bg-emerald-50`;
+// Action buttons come from the shared `buttonVariants`: one filled primary
+// action per card ("Tomar asistencia"), outline for the neutral ones, and
+// outline plus carmine text for the destructive ones (DESIGN.md forbids
+// solid destructive fills). The block authors no palette utility and no
+// `dark:` variant of its own — the single light theme is the only theme.
 
 /**
  * Group month label for recurring sessions, e.g. "octubre de 2026" —
@@ -218,14 +201,15 @@ export function SessionBlock({
   const [isPending, startTransition] = useTransition();
   const [isSessionInfoOpen, setIsSessionInfoOpen] = useState(false);
   const [rosterTarget, setRosterTarget] = useState<RosterEditorTarget | null>(null);
-  const colors = getDisciplineColors(session.discipline_code);
   const isSuspended = session.status === "suspended";
   const hasNoTeacher = !session.teacher_id;
   const isSubstitute = session.is_substitute;
   const isOneTime = session.is_one_time;
   const canViewAttendance = session.can_view_attendance === true;
-  const hasAttendanceRecords =
-    canViewAttendance && (session.attendance?.record_count ?? 0) > 0;
+  // Ledger state, derived exactly like the dashboard agenda so the block,
+  // the agenda and the ledger panels name the same three states.
+  const isSealed = !isSuspended && (session.attendance?.record_count ?? 0) > 0;
+  const hasAttendanceRecords = canViewAttendance && isSealed;
   const teacherLabel = hasNoTeacher
     ? CALENDAR_MESSAGES.NO_TEACHER
     : session.effective_teacher_name
@@ -291,26 +275,33 @@ export function SessionBlock({
 
   const baseClasses = compact
     ? "rounded px-1.5 py-1 text-sm leading-4"
-    : `rounded border text-sm ${colors.bg} ${colors.text}`;
+    : "rounded border text-sm";
   const suspendedClasses = isSuspended ? "line-through opacity-70" : "";
-  const noTeacherClasses = hasNoTeacher
-    ? "border-dashed border-amber-500"
-    : colors.border;
+  // Scheduled and attended work sits on the paper card; suspended work
+  // prints in retired grey (the Print-Grey Rule), never on a color tint.
+  // A missing teacher is an actionable problem, so its rule turns carmine.
+  const cardStateClasses = compact
+    ? isSuspended
+      ? "bg-muted text-muted-foreground"
+      : "bg-card text-foreground"
+    : isSuspended
+      ? "border-border bg-muted text-muted-foreground"
+      : hasNoTeacher
+        ? "border-dashed border-destructive bg-card text-foreground"
+        : "border-border bg-card text-foreground";
+  // One status vocabulary, shared with the agenda and the ledger panels:
+  // seal for recorded attendance, the agenda's pending pill for open work,
+  // the retired word for suspensions.
   const compactStatus = isSuspended
-    ? CALENDAR_MESSAGES.COMPACT_STATUS_SUSPENDED
-    : hasAttendanceRecords
-      ? CALENDAR_MESSAGES.COMPACT_STATUS_COMPLETED
-      : CALENDAR_MESSAGES.COMPACT_STATUS_SCHEDULED;
-  const compactStateClasses = isSuspended
-    ? "bg-destructive/10 text-destructive dark:bg-destructive/20 dark:text-red-200"
-    : hasAttendanceRecords
-      ? "bg-emerald-50 text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-100"
-      : "bg-amber-50 text-amber-950 dark:bg-amber-950/50 dark:text-amber-100";
+    ? CALENDAR_MESSAGES.SUSPENDED_BADGE
+    : isSealed
+      ? ATTENDANCE_FORM_MESSAGES.SEAL_LABEL
+      : DASHBOARD_OVERVIEW_MESSAGES.ATTENDANCE_PENDING;
   const compactStatusBadgeClasses = isSuspended
-    ? "bg-destructive/15 text-destructive dark:bg-destructive/25 dark:text-red-100"
-    : hasAttendanceRecords
-      ? "bg-emerald-200/70 text-emerald-950 dark:bg-emerald-900/70 dark:text-emerald-100"
-      : "bg-amber-200/70 text-amber-950 dark:bg-amber-900/70 dark:text-amber-100";
+    ? "border border-border bg-muted text-muted-foreground"
+    : isSealed
+      ? "border border-seal/40 bg-seal/5 text-foreground"
+      : "border border-border text-foreground";
   const compactTitle = [
     `${session.discipline_name} ${session.start_time}–${session.end_time}`,
     compactStatus,
@@ -327,7 +318,7 @@ export function SessionBlock({
     return (
       <>
         <div
-          className={`${baseClasses} ${compactStateClasses} flex flex-col items-start gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring`}
+          className={`${baseClasses} ${cardStateClasses} flex flex-col items-start gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring`}
           title={compactTitle}
           tabIndex={0}
           role="group"
@@ -338,21 +329,23 @@ export function SessionBlock({
         >
           <span className="font-medium">{session.start_time}</span>
           <span className="w-full truncate">{session.discipline_name}</span>
-          <span className={`rounded px-1 text-xs font-medium ${compactStatusBadgeClasses}`}>
+          <span
+            className={`rounded px-1 text-xs font-medium ${compactStatusBadgeClasses}`}
+          >
             {compactStatus}
           </span>
           {isSubstitute && (
-            <span className="rounded bg-purple-200 px-0.5 text-xs">
+            <Badge variant="secondary">
               {CALENDAR_MESSAGES.SUBSTITUTE.slice(0, 3)}
-            </span>
+            </Badge>
           )}
           {isOneTime && (
-            <span className="rounded bg-sky-200 px-0.5 text-xs">
+            <Badge variant="outline">
               {ONE_TIME_CLASS_MESSAGES.ONE_TIME_BADGE}
-            </span>
+            </Badge>
           )}
-          {hasAttendanceRecords && !isSuspended && (
-            <span className="rounded bg-emerald-200/70 px-1 text-sm font-medium text-emerald-950 dark:bg-emerald-900/70 dark:text-emerald-100">
+          {hasAttendanceRecords && (
+            <span className="rounded border border-seal/40 bg-seal/5 px-1 text-sm font-medium text-seal tabular-nums">
               {CALENDAR_MESSAGES.ATTENDANCE_PRESENT_COUNT(
                 session.attendance?.present_count ?? 0
               )}
@@ -374,7 +367,7 @@ export function SessionBlock({
   return (
     <>
       <div
-        className={`${baseClasses} ${suspendedClasses} ${noTeacherClasses} flex min-h-32 flex-col gap-2 px-3 py-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring`}
+        className={`${baseClasses} ${suspendedClasses} ${cardStateClasses} flex min-h-32 flex-col gap-2 px-3 py-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring`}
         tabIndex={0}
         role="group"
         aria-label={sessionInfoLabel}
@@ -386,16 +379,21 @@ export function SessionBlock({
           <span className="font-medium">
             {session.start_time}–{session.end_time}
           </span>
+          {isSuspended && (
+            <span className="rounded border border-border px-1 text-xs font-medium">
+              {CALENDAR_MESSAGES.SUSPENDED_BADGE}
+            </span>
+          )}
           {isSuspended && session.suspension_category && (
-            <span className="rounded bg-amber-200 px-1 text-xs font-medium">
+            <span className="rounded border border-border px-1 text-xs font-medium">
               {session.suspension_category}
             </span>
           )}
         </div>
         <div className="flex flex-col items-start gap-1">
-          <span>{session.discipline_name}</span>
+          <span className="text-sm font-medium">{session.discipline_name}</span>
           {!isOneTime && session.series_name && (
-            <span className="text-xs text-slate-700 dark:text-slate-700">
+            <span className="text-xs text-muted-foreground">
               {session.series_name}
               {session.period_month
                 ? ` · ${formatGroupMonth(session.period_month)}`
@@ -403,33 +401,41 @@ export function SessionBlock({
             </span>
           )}
           {isSubstitute && (
-            <span className="rounded bg-purple-200 px-1 text-xs">
-              <UserIcon className="mr-0.5 inline size-3" />
+            <Badge variant="secondary">
+              <UserIcon data-icon="inline-start" />
               {CALENDAR_MESSAGES.SUBSTITUTE}
-            </span>
+            </Badge>
           )}
           {isOneTime && (
-            <span className="rounded bg-sky-200 px-1 text-xs">
+            <Badge variant="outline">
               {ONE_TIME_CLASS_MESSAGES.ONE_TIME_BADGE}
-            </span>
+            </Badge>
           )}
         </div>
         <div
-          className={`flex items-center gap-1 text-sm ${
-            hasNoTeacher
-              ? "text-amber-700"
-              : "font-medium text-slate-950 dark:text-slate-950"
-          }`}
+          className={cn(
+            "flex items-center gap-1 text-sm",
+            hasNoTeacher ? "text-destructive" : "font-medium text-foreground"
+          )}
         >
           {hasNoTeacher ? <AlertTriangleIcon className="size-3" /> : <UserIcon className="size-3" />}
           <span>{teacherLabel}</span>
         </div>
         {canViewAttendance && !isSuspended && (
-          <div className="rounded bg-white/70 px-2 py-1 text-sm font-medium text-slate-900 shadow-sm dark:bg-slate-950/80 dark:text-slate-100">
-            {CALENDAR_MESSAGES.ATTENDANCE_PRESENT_COUNT(
-              session.attendance?.present_count ?? 0
-            )}
-          </div>
+          isSealed ? (
+            <div className="flex items-center gap-2 rounded-md border border-seal/40 bg-seal/5 px-2 py-1">
+              <SealMark />
+              <span className="text-sm font-medium text-seal tabular-nums">
+                {CALENDAR_MESSAGES.ATTENDANCE_PRESENT_COUNT(
+                  session.attendance?.present_count ?? 0
+                )}
+              </span>
+            </div>
+          ) : (
+            <span className="inline-flex w-fit items-center rounded-4xl border border-border px-2 text-xs font-medium text-foreground">
+              {DASHBOARD_OVERVIEW_MESSAGES.ATTENDANCE_PENDING}
+            </span>
+          )
         )}
         <div className="mt-1 flex flex-col items-stretch gap-2">
           {isOneTime ? (
@@ -440,14 +446,13 @@ export function SessionBlock({
                   sessionDate={session.session_date}
                   branchId={branchId ?? ""}
                   disabled={isSuspended || !branchId || !session.can_take_attendance}
-                  triggerClassName={PRIMARY_ACTION_CLASSES}
+                  triggerClassName={buttonVariants({ variant: "default", size: "sm" })}
                 />
               )}
               {canManage && branchId && (
                 <Button
                   variant="outline"
                   size="sm"
-                  className={NEUTRAL_ACTION_CLASSES}
                   onClick={() =>
                     setRosterTarget({
                       kind: "one_time",
@@ -464,7 +469,7 @@ export function SessionBlock({
                   branchId={branchId}
                   teachers={teachers}
                   currentTeacherId={session.teacher_id}
-                  triggerClassName={NEUTRAL_ACTION_CLASSES}
+                  triggerClassName={buttonVariants({ variant: "outline", size: "sm" })}
                   trigger={
                     <>
                       <UserPenIcon data-icon="inline-start" />
@@ -484,14 +489,13 @@ export function SessionBlock({
                   sessionDate={session.session_date}
                   branchId={branchId ?? ""}
                   disabled={isSuspended || !branchId || !session.can_take_attendance}
-                  triggerClassName={PRIMARY_ACTION_CLASSES}
+                  triggerClassName={buttonVariants({ variant: "default", size: "sm" })}
                 />
               )}
               {canManage && branchId && seriesRosterTarget && (
                 <Button
                   variant="outline"
                   size="sm"
-                  className={NEUTRAL_ACTION_CLASSES}
                   onClick={() => setRosterTarget(seriesRosterTarget)}
                 >
                   {ROSTER_EDITOR_MESSAGES.ROSTER_SERIES_ACTION}
@@ -510,7 +514,10 @@ export function SessionBlock({
                           {SUSPENSION_MESSAGES.SUSPEND_TITLE}
                         </>
                       }
-                      triggerClassName={DANGER_ACTION_CLASSES}
+                      triggerClassName={cn(
+                        buttonVariants({ variant: "outline", size: "sm" }),
+                        "text-destructive"
+                      )}
                     />
                   ) : isSuspended ? (
                     <Button
@@ -518,7 +525,6 @@ export function SessionBlock({
                       size="sm"
                       disabled={isPending}
                       onClick={handleReinstate}
-                      className={RESTORE_ACTION_CLASSES}
                     >
                       {isPending
                         ? COMMON_MESSAGES.LOADING
@@ -536,14 +542,17 @@ export function SessionBlock({
                         ? TEACHER_CONFLICT_MESSAGES.ASSIGN_ACTION
                         : TEACHER_CONFLICT_MESSAGES.CHANGE_ACTION
                     }
-                    triggerClassName={NEUTRAL_ACTION_CLASSES}
+                    triggerClassName={buttonVariants({ variant: "outline", size: "sm" })}
                   />
                   {isSubstitute && (
                     <ClearSubstitutionAction
                       scheduledClassId={session.scheduled_class_id}
                       sessionDate={session.session_date}
                       branchId={branchId}
-                      triggerClassName={RESTORE_ACTION_CLASSES}
+                      triggerClassName={buttonVariants({
+                        variant: "outline",
+                        size: "sm",
+                      })}
                     />
                   )}
                   <RemoveRecurringClassDialog
@@ -551,7 +560,10 @@ export function SessionBlock({
                     branchId={branchId}
                     disciplineName={session.discipline_name}
                     startTime={session.start_time}
-                    triggerClassName={DANGER_ACTION_CLASSES}
+                    triggerClassName={cn(
+                      buttonVariants({ variant: "outline", size: "sm" }),
+                      "text-destructive"
+                    )}
                   />
                 </>
               )}
