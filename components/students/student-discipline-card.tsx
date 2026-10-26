@@ -40,11 +40,12 @@ import type { StudentProgressSummary } from "@/lib/domain/progress/actions"
 import {
   COMMON_MESSAGES,
   ENROLLMENT_MESSAGES,
-  formatDate,
-  formatNumber,
+  PAYMENT_FOLLOW_UP_MESSAGES,
   PROGRESS_MESSAGES,
   STUDENT_DETAIL_MESSAGES,
   TOAST_MESSAGES,
+  formatDate,
+  formatNumber,
 } from "@/lib/localization/es-ec"
 
 export interface DisciplineAttendanceStats {
@@ -342,15 +343,31 @@ export function StudentDisciplineCard({
               />
             </>
           ) : (
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={isPending}
-              onClick={handleReactivate}
-              aria-label={`${ENROLLMENT_MESSAGES.REACTIVATE_ACTION}: ${disciplineName}`}
-            >
-              {ENROLLMENT_MESSAGES.REACTIVATE_ACTION}
-            </Button>
+            <>
+              {/* A monthly enrollment is suspended for non-payment, so the
+                  natural next step is to collect and reactivate in one go.
+                  Plain reactivation stays available for every other case. */}
+              {!isPerClass && (
+                <RegisterMonthlyPaymentDialog
+                  studentDisciplineId={enrollment.id}
+                  branchId={branchId}
+                  triggerVariant="default"
+                  triggerAriaLabel={PAYMENT_FOLLOW_UP_MESSAGES.PAY_SUSPENDED_ARIA(
+                    disciplineName
+                  )}
+                  suspended
+                />
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={isPending}
+                onClick={handleReactivate}
+                aria-label={`${ENROLLMENT_MESSAGES.REACTIVATE_ACTION}: ${disciplineName}`}
+              >
+                {ENROLLMENT_MESSAGES.REACTIVATE_ACTION}
+              </Button>
+            </>
           )}
         </div>
       )}

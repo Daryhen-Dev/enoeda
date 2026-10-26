@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   ENROLLMENT_MESSAGES,
+  PAYMENT_FOLLOW_UP_MESSAGES,
   PROGRESS_MESSAGES,
   STUDENT_DETAIL_MESSAGES,
 } from "@/lib/localization/es-ec";
@@ -190,6 +191,37 @@ describe("StudentDisciplineCard", () => {
       "Registrar pago mensual"
     );
     expect(rendered.container.textContent).not.toContain(
+      ENROLLMENT_MESSAGES.REACTIVATE_ACTION
+    );
+  });
+
+  it("offers to pay and reactivate a suspended monthly enrollment", () => {
+    rendered = renderCard({
+      enrollment: { ...ACTIVE_ENROLLMENT, is_active: false },
+      canManage: true,
+    });
+
+    expect(
+      queryButtonByAriaLabel(
+        rendered.container,
+        PAYMENT_FOLLOW_UP_MESSAGES.PAY_SUSPENDED_ARIA(DISCIPLINE_NAME)
+      )?.textContent
+    ).toContain(PAYMENT_FOLLOW_UP_MESSAGES.PAY_AND_REACTIVATE);
+  });
+
+  it("keeps a plain reactivate for a suspended per-class enrollment", () => {
+    rendered = renderCard({
+      enrollment: { ...ACTIVE_ENROLLMENT, is_active: false, billing_mode: "per_class" },
+      canManage: true,
+    });
+
+    expect(
+      queryButtonByAriaLabel(
+        rendered.container,
+        PAYMENT_FOLLOW_UP_MESSAGES.PAY_SUSPENDED_ARIA(DISCIPLINE_NAME)
+      )
+    ).toBeNull();
+    expect(rendered.container.textContent).toContain(
       ENROLLMENT_MESSAGES.REACTIVATE_ACTION
     );
   });

@@ -64,7 +64,6 @@ export const TOAST_MESSAGES = {
   NOTE_CREATED: "Nota creada correctamente.",
   NOTE_COMPLETED: "Nota completada.",
   NOTE_REOPENED: "Nota reabierta.",
-  MONTHLY_PAYMENT_REGISTERED: "Pago mensual registrado correctamente.",
   CLASS_PAYMENT_REGISTERED: "Pago por clase registrado correctamente.",
   CLASS_PRICE_UPDATED: "Precio por clase actualizado.",
   PAYMENT_SETTINGS_UPDATED: "Configuración de pagos actualizada correctamente.",
@@ -174,6 +173,23 @@ export const DASHBOARD_SHELL_MESSAGES = {
   MOBILE_NAV_LABEL: "Navegación principal",
   ADMIN_ONLY_SECTION:
     "Esta sección la administra un administrador de la sucursal. Su cuenta no tiene ese permiso en esta sucursal.",
+} as const
+
+/**
+ * Follow-up after a monthly payment: name the new due date, and say plainly
+ * when a suspended enrollment came back or still needs a hand.
+ */
+export const PAYMENT_FOLLOW_UP_MESSAGES = {
+  PAID: "Pago mensual registrado.",
+  PAID_AND_REACTIVATED: "Pago registrado e inscripción reactivada.",
+  PAID_NOT_REACTIVATED:
+    "Pago registrado, pero la inscripción sigue suspendida.",
+  NEXT_DUE: (date: string) => `Próximo vencimiento: ${date}.`,
+  REACTIVATE_MANUALLY:
+    "Reactívela desde la ficha del estudiante con el botón Reactivar.",
+  PAY_AND_REACTIVATE: "Registrar pago y reactivar",
+  PAY_SUSPENDED_ARIA: (discipline: string) =>
+    `Registrar pago y reactivar ${discipline}`,
 } as const
 
 /**

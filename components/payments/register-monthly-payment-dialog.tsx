@@ -26,11 +26,13 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
+import { followUpMonthlyPayment } from "@/components/payments/monthly-payment-follow-up"
+import { reactivateEnrollment } from "@/lib/domain/disciplines/actions"
 import { registerMonthlyPayment } from "@/lib/domain/payments/actions"
 import {
   COMMON_MESSAGES,
+  PAYMENT_FOLLOW_UP_MESSAGES,
   PAYMENT_MESSAGES,
-  TOAST_MESSAGES,
   USER_LOCALE,
 } from "@/lib/localization/es-ec"
 
@@ -61,6 +63,11 @@ interface RegisterMonthlyPaymentDialogProps {
   onOpenChange?: (open: boolean) => void
   /** Do not render the trigger button (the caller opens the sheet itself). */
   hideTrigger?: boolean
+  /**
+   * The enrollment is suspended for non-payment: the same submit pays and
+   * reactivates it, and the trigger names both steps.
+   */
+  suspended?: boolean
 }
 
 function getLocalDateInputValue() {
@@ -107,6 +114,7 @@ export function RegisterMonthlyPaymentDialog({
   open: controlledOpen,
   onOpenChange,
   hideTrigger = false,
+  suspended = false,
 }: RegisterMonthlyPaymentDialogProps) {
   const router = useRouter()
   const [internalOpen, setInternalOpen] = useState(false)
@@ -180,14 +188,34 @@ export function RegisterMonthlyPaymentDialog({
         note: note || undefined,
         branch_id: branchId,
       })
-      if (result.success) {
-        requestOpenChange(false)
-        resetForm()
-        toast.success(TOAST_MESSAGES.MONTHLY_PAYMENT_REGISTERED)
-        router.refresh()
-      } else {
+      if (!result.success) {
+        // Nothing was charged: keep the form open so the admin can fix it.
         setError(result.error ?? COMMON_MESSAGES.UNEXPECTED_ERROR)
+        return
       }
+
+      // The payment is committed from here on. Close the form before any
+      // follow-up so a failed reactivation can never invite a second charge.
+      requestOpenChange(false)
+      resetForm()
+
+      const outcome = await followUpMonthlyPayment({
+        nextDueDate: result.data.next_due_date,
+        reactivate: suspended
+          ? () =>
+              reactivateEnrollment({
+                student_discipline_id: studentDisciplineId,
+                branch_id: branchId,
+              })
+          : undefined,
+      })
+
+      if (outcome.tone === "success") {
+        toast.success(outcome.title, { description: outcome.description })
+      } else {
+        toast.warning(outcome.title, { description: outcome.description })
+      }
+      router.refresh()
     })
   }
 
@@ -204,7 +232,9 @@ export function RegisterMonthlyPaymentDialog({
           }
         >
           <PlusIcon className="size-4" />
-          {PAYMENT_MESSAGES.REGISTER_MONTHLY_TITLE}
+          {suspended
+            ? PAYMENT_FOLLOW_UP_MESSAGES.PAY_AND_REACTIVATE
+            : PAYMENT_MESSAGES.REGISTER_MONTHLY_TITLE}
         </SheetTrigger>
       )}
       <SheetContent side="right" size="content" showCloseButton={!isPending}>
@@ -342,7 +372,9 @@ export function RegisterMonthlyPaymentDialog({
             >
               {isPending
                 ? PAYMENT_MESSAGES.SAVING
-                : PAYMENT_MESSAGES.REGISTER_ACTION}
+                : suspended
+                  ? PAYMENT_FOLLOW_UP_MESSAGES.PAY_AND_REACTIVATE
+                  : PAYMENT_MESSAGES.REGISTER_ACTION}
             </Button>
           </SheetFooter>
         </form>
