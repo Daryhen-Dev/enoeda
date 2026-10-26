@@ -199,12 +199,13 @@ export const UNDO_MESSAGES = {
 export const STUDENT_SEARCH_MESSAGES = {
   TRIGGER_LABEL: "Buscar estudiante",
   TRIGGER_LABEL_SHORT: "Buscar",
-  DIALOG_TITLE: "Buscar estudiante",
+  DIALOG_TITLE: "Buscar o ir a",
   DIALOG_DESCRIPTION:
-    "Escriba un nombre, apellido o cédula. También abre con Ctrl+K desde cualquier pantalla.",
+    "Escriba un nombre, apellido o cédula para buscar estudiantes, o elija una sección. También abre con Ctrl+K desde cualquier pantalla.",
   INPUT_LABEL: "Buscar estudiante",
   INPUT_PLACEHOLDER: "Nombre, apellido o cédula…",
-  MIN_QUERY_HINT: "Escriba al menos 2 letras para buscar.",
+  MIN_QUERY_HINT: "Escriba al menos 2 letras para buscar estudiantes.",
+  SECTION_META: "Ir a",
   SEARCHING: "Buscando…",
   NO_RESULTS: (query: string) => `Sin resultados para “${query}”.`,
   SEARCH_ERROR: "No se pudo buscar. Inténtelo nuevamente.",

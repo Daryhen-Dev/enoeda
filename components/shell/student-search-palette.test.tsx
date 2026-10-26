@@ -75,12 +75,14 @@ function searchReturns(items: ReturnType<typeof makeStudent>[]) {
   });
 }
 
-function renderPalette(): Rendered {
+function renderPalette(
+  props: { isAdmin?: boolean; canManageProfile?: boolean; isTeacherOnly?: boolean } = {}
+): Rendered {
   const container = document.createElement("div");
   document.body.append(container);
   const root = createRoot(container);
   act(() => {
-    root.render(<StudentSearchPalette />);
+    root.render(<StudentSearchPalette {...props} />);
   });
   return {
     container,
@@ -297,6 +299,85 @@ describe("StudentSearchPalette searching", () => {
       STUDENT_SEARCH_MESSAGES.SEARCH_ERROR
     );
     expect(mocks.push).not.toHaveBeenCalled();
+  });
+});
+
+describe("StudentSearchPalette destinations", () => {
+  async function openEmpty(props: Parameters<typeof renderPalette>[0] = {}) {
+    rendered = renderPalette(props);
+    act(() => {
+      window.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "k", ctrlKey: true, bubbles: true })
+      );
+    });
+  }
+
+  it("lists the destinations before anything is typed", async () => {
+    await openEmpty({ canManageProfile: true });
+
+    const options = paletteContent()?.querySelectorAll('[role="option"]') ?? [];
+    const labels = [...options].map((option) => option.textContent?.trim());
+
+    expect(labels.some((label) => label?.includes("Calendario"))).toBe(true);
+    expect(labels.some((label) => label?.includes("Estudiantes"))).toBe(true);
+    expect(mocks.listStudents).not.toHaveBeenCalled();
+  });
+
+  it("narrows the destinations as the query matches a section", async () => {
+    await openEmpty({ isAdmin: true, canManageProfile: true });
+
+    act(() => {
+      typeInto(searchInput()!, "perso");
+    });
+
+    const options = paletteContent()?.querySelectorAll('[role="option"]') ?? [];
+    expect(options).toHaveLength(1);
+    expect(options[0].textContent).toContain("Personal");
+  });
+
+  it("opens the highlighted section on Enter, keeping the branch", async () => {
+    await openEmpty({ isAdmin: true, canManageProfile: true });
+
+    act(() => {
+      typeInto(searchInput()!, "perso");
+    });
+    pressKey("Enter", searchInput()!);
+
+    expect(mocks.push).toHaveBeenCalledWith(
+      `/dashboard/staff?branch=${BRANCH_ID}`
+    );
+    expect(paletteContent()).toBeNull();
+  });
+
+  it("hides admin-only destinations from a teacher-only caller", async () => {
+    await openEmpty({ isAdmin: false, canManageProfile: true, isTeacherOnly: true });
+
+    const options = paletteContent()?.querySelectorAll('[role="option"]') ?? [];
+    const text = [...options].map((option) => option.textContent ?? "").join(" ");
+
+    expect(text).not.toContain("Personal");
+    expect(text).not.toContain("Pagos");
+    expect(text).toContain("Conducta");
+  });
+
+  it("lists students after the matching destinations when there is a query", async () => {
+    await openEmpty({ canManageProfile: true });
+
+    act(() => {
+      typeInto(searchInput()!, "pe");
+    });
+    await flushSearch();
+
+    const options = [...(paletteContent()?.querySelectorAll('[role="option"]') ?? [])];
+    // Destinations that match "pe" (Mi perfil) come first, then the students.
+    expect(options.length).toBeGreaterThan(STUDENT_CATALOG.length);
+    expect(options[0].textContent).toContain("Mi perfil");
+    expect(
+      options.slice(-STUDENT_CATALOG.length).map((option) => option.textContent)
+    ).toEqual([
+      expect.stringContaining("Ana Pérez"),
+      expect.stringContaining("Bruno Díaz"),
+    ]);
   });
 });
 

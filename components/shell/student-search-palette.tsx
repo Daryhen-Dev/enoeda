@@ -2,10 +2,16 @@
 
 import { useEffect, useId, useRef, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { SearchIcon, UserRoundIcon } from "lucide-react"
+import { SearchIcon } from "lucide-react"
 
+import { navigationItems } from "@/components/app-sidebar"
+import {
+  buildSectionEntries,
+  buildStudentEntries,
+  filterSectionEntries,
+  type PaletteEntry,
+} from "@/components/shell/palette-entries"
 import { OPEN_STUDENT_SEARCH_EVENT } from "@/components/shell/student-search-event"
-
 import {
   Dialog,
   DialogContent,
@@ -19,10 +25,7 @@ import {
   STUDENT_STATUS,
   type StudentListItem,
 } from "@/lib/domain/students"
-import {
-  STUDENT_DIRECTORY_MESSAGES,
-  STUDENT_SEARCH_MESSAGES,
-} from "@/lib/localization/es-ec"
+import { STUDENT_SEARCH_MESSAGES } from "@/lib/localization/es-ec"
 import { cn } from "@/lib/utils"
 
 export const STUDENT_SEARCH_DEBOUNCE_MS = 250
@@ -30,24 +33,32 @@ export const STUDENT_SEARCH_MIN_QUERY_LENGTH = 2
 export const STUDENT_SEARCH_MAX_RESULTS = 8
 const RESULTS_PER_STATUS = STUDENT_SEARCH_MAX_RESULTS / 2
 
-interface PaletteResult {
+interface PaletteStudentRow {
   student: StudentListItem
   isActive: boolean
 }
 
 type SearchStatus = "idle" | "loading" | "done" | "error"
 
-function fullName(student: StudentListItem): string {
-  return `${student.first_name} ${student.surname}`
+interface StudentSearchPaletteProps {
+  /** Sidebar visibility flags, so the palette offers exactly the rail's sections. */
+  isAdmin?: boolean
+  canManageProfile?: boolean
+  isTeacherOnly?: boolean
 }
 
 /**
- * Global student search (S1). Lives in the dashboard layout so it survives every
- * navigation; opens from Ctrl/Cmd+K or from the header control, searches the
- * active branch's students by name or cédula, and never navigates on a failed
- * search.
+ * Global search and jump (S1 + navigation). Lives in the dashboard layout so it
+ * survives every navigation; opens from Ctrl/Cmd+K or from the header control.
+ * With an empty field it lists the destinations the caller can reach, so the
+ * shortcut is useful before you know what to type; typing searches the active
+ * branch's students by name or cédula. A failed search never navigates.
  */
-export function StudentSearchPalette() {
+export function StudentSearchPalette({
+  isAdmin,
+  canManageProfile,
+  isTeacherOnly,
+}: StudentSearchPaletteProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const branchId = searchParams.get("branch")
@@ -64,7 +75,7 @@ export function StudentSearchPalette() {
    */
   const [search, setSearch] = useState<{
     query: string
-    results: PaletteResult[]
+    rows: PaletteStudentRow[]
     status: "done" | "error"
   } | null>(null)
 
@@ -98,8 +109,7 @@ export function StudentSearchPalette() {
   const isQuerySearchable =
     trimmedQuery.length >= STUDENT_SEARCH_MIN_QUERY_LENGTH
   const currentSearch = search?.query === trimmedQuery ? search : null
-  const results = currentSearch?.results ?? []
-  const status: SearchStatus = !isQuerySearchable
+  const searchStatus: SearchStatus = !isQuerySearchable
     ? "idle"
     : (currentSearch?.status ?? "loading")
 
@@ -139,7 +149,7 @@ export function StudentSearchPalette() {
         if (cancelled) return
 
         if (!active.success || !inactive.success) {
-          setSearch({ query: trimmedQuery, results: [], status: "error" })
+          setSearch({ query: trimmedQuery, rows: [], status: "error" })
           return
         }
 
@@ -147,7 +157,7 @@ export function StudentSearchPalette() {
         // that appears in both must never render twice (or collide on its key):
         // the active row wins because it is merged first.
         const seen = new Set<string>()
-        const merged: PaletteResult[] = []
+        const rows: PaletteStudentRow[] = []
 
         for (const [items, isActive] of [
           [active.data?.items ?? [], true],
@@ -156,19 +166,15 @@ export function StudentSearchPalette() {
           for (const student of items) {
             if (seen.has(student.id)) continue
             seen.add(student.id)
-            merged.push({ student, isActive })
+            rows.push({ student, isActive })
           }
         }
 
-        setSearch({
-          query: trimmedQuery,
-          results: merged.slice(0, STUDENT_SEARCH_MAX_RESULTS),
-          status: "done",
-        })
+        setSearch({ query: trimmedQuery, rows, status: "done" })
         setHighlighted(0)
       } catch {
         if (cancelled) return
-        setSearch({ query: trimmedQuery, results: [], status: "error" })
+        setSearch({ query: trimmedQuery, rows: [], status: "error" })
       }
     }, STUDENT_SEARCH_DEBOUNCE_MS)
 
@@ -178,20 +184,30 @@ export function StudentSearchPalette() {
     }
   }, [open, branchId, isQuerySearchable, trimmedQuery])
 
-  function openStudent(result: PaletteResult) {
-    const targetBranch = branchId ?? result.student.branch_id
+  const sections = filterSectionEntries(
+    buildSectionEntries(navigationItems, branchId, {
+      isAdmin,
+      canManageProfile,
+      isTeacherOnly,
+    }),
+    trimmedQuery
+  )
+  const students = isQuerySearchable
+    ? buildStudentEntries(currentSearch?.rows ?? [], branchId)
+    : []
+  const entries: PaletteEntry[] = [...sections, ...students]
+
+  function openEntry(entry: PaletteEntry) {
     resetSearch()
     setOpen(false)
-    router.push(
-      `/dashboard/students/${result.student.id}?branch=${encodeURIComponent(targetBranch)}`
-    )
+    router.push(entry.href)
   }
 
   function handleInputKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
     if (event.key === "ArrowDown") {
       event.preventDefault()
       setHighlighted((current) =>
-        Math.min(current + 1, Math.max(results.length - 1, 0))
+        Math.min(current + 1, Math.max(entries.length - 1, 0))
       )
       return
     }
@@ -203,17 +219,17 @@ export function StudentSearchPalette() {
     }
 
     if (event.key === "Enter") {
-      const selected = results[highlighted]
+      const selected = entries[highlighted]
       if (selected === undefined) return
       event.preventDefault()
-      openStudent(selected)
+      openEntry(selected)
     }
   }
 
   const showMinQueryHint = !isQuerySearchable
-  const showNoResults = status === "done" && results.length === 0
+  const showNoResults = entries.length === 0 && trimmedQuery.length > 0
   const activeOptionId =
-    results.length > 0 ? `${listId}-option-${highlighted}` : undefined
+    entries.length > 0 ? `${listId}-option-${highlighted}` : undefined
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -243,7 +259,7 @@ export function StudentSearchPalette() {
               placeholder={STUDENT_SEARCH_MESSAGES.INPUT_PLACEHOLDER}
               autoComplete="off"
               role="combobox"
-              aria-expanded={results.length > 0}
+              aria-expanded={entries.length > 0}
               aria-controls={listId}
               aria-activedescendant={activeOptionId}
               aria-autocomplete="list"
@@ -252,23 +268,11 @@ export function StudentSearchPalette() {
           </div>
 
           <p role="status" aria-live="polite" className="sr-only">
-            {status === "loading" ? STUDENT_SEARCH_MESSAGES.SEARCHING : ""}
+            {searchStatus === "loading" ? STUDENT_SEARCH_MESSAGES.SEARCHING : ""}
           </p>
 
           <div className="min-h-24">
-            {showMinQueryHint && (
-              <p className="px-1 py-3 text-sm text-muted-foreground">
-                {STUDENT_SEARCH_MESSAGES.MIN_QUERY_HINT}
-              </p>
-            )}
-
-            {status === "loading" && (
-              <p className="px-1 py-3 text-sm text-muted-foreground">
-                {STUDENT_SEARCH_MESSAGES.SEARCHING}
-              </p>
-            )}
-
-            {status === "error" && (
+            {searchStatus === "error" && (
               <p role="alert" className="px-1 py-3 text-sm text-destructive">
                 {STUDENT_SEARCH_MESSAGES.SEARCH_ERROR}
               </p>
@@ -280,52 +284,64 @@ export function StudentSearchPalette() {
               </p>
             )}
 
-            {results.length > 0 && (
+            {entries.length > 0 && (
               <ul
                 id={listId}
                 role="listbox"
                 aria-label={STUDENT_SEARCH_MESSAGES.RESULTS_LABEL}
                 className="flex flex-col"
               >
-                {results.map((result, index) => (
-                  <li
-                    key={result.student.id}
-                    id={`${listId}-option-${index}`}
-                    role="option"
-                    aria-selected={index === highlighted}
-                    aria-label={STUDENT_SEARCH_MESSAGES.OPEN_RESULT_LABEL(
-                      fullName(result.student)
-                    )}
-                    className={cn(
-                      "flex cursor-pointer items-center gap-3 rounded-md px-2 py-2",
-                      index === highlighted && "bg-muted"
-                    )}
-                    onMouseEnter={() => setHighlighted(index)}
-                    onClick={() => openStudent(result)}
-                  >
-                    <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
-                      <UserRoundIcon className="size-4" aria-hidden="true" />
-                    </span>
-                    <span className="flex min-w-0 flex-1 flex-col">
-                      <span className="truncate text-sm font-medium">
-                        {fullName(result.student)}
+                {entries.map((entry, index) => {
+                  const Icon = entry.icon
+
+                  return (
+                    <li
+                      key={`${entry.kind}-${entry.id}`}
+                      id={`${listId}-option-${index}`}
+                      role="option"
+                      aria-selected={index === highlighted}
+                      aria-label={STUDENT_SEARCH_MESSAGES.OPEN_RESULT_LABEL(
+                        entry.label
+                      )}
+                      className={cn(
+                        "flex cursor-pointer items-center gap-3 rounded-md px-2 py-2",
+                        index === highlighted && "bg-muted"
+                      )}
+                      onMouseEnter={() => setHighlighted(index)}
+                      onClick={() => openEntry(entry)}
+                    >
+                      <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                        <Icon className="size-4" aria-hidden="true" />
                       </span>
-                      <span className="truncate text-xs text-muted-foreground">
-                        {result.student.active_discipline_names.length > 0
-                          ? result.student.active_discipline_names.join(", ")
-                          : STUDENT_DIRECTORY_MESSAGES.NO_ACTIVE_DISCIPLINES}
-                        {result.student.national_id &&
-                          ` · ${result.student.national_id}`}
+                      <span className="flex min-w-0 flex-1 flex-col">
+                        <span className="truncate text-sm font-medium">
+                          {entry.label}
+                        </span>
+                        <span className="truncate text-xs text-muted-foreground">
+                          {entry.meta}
+                        </span>
                       </span>
-                    </span>
-                    <span className="shrink-0 text-xs text-muted-foreground">
-                      {result.isActive
-                        ? STUDENT_DIRECTORY_MESSAGES.ACTIVE_STATUS
-                        : STUDENT_DIRECTORY_MESSAGES.INACTIVE_STATUS}
-                    </span>
-                  </li>
-                ))}
+                      {entry.kind === "student" && (
+                        <span className="shrink-0 text-xs text-muted-foreground">
+                          {entry.badge}
+                        </span>
+                      )}
+                    </li>
+                  )
+                })}
               </ul>
+            )}
+
+            {showMinQueryHint && (
+              <p className="px-1 py-3 text-sm text-muted-foreground">
+                {STUDENT_SEARCH_MESSAGES.MIN_QUERY_HINT}
+              </p>
+            )}
+
+            {searchStatus === "loading" && (
+              <p className="px-1 py-3 text-sm text-muted-foreground">
+                {STUDENT_SEARCH_MESSAGES.SEARCHING}
+              </p>
             )}
           </div>
         </div>
