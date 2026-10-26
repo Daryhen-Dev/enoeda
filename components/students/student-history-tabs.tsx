@@ -68,8 +68,12 @@ export function StudentHistoryTabs({
 
   return (
     <Tabs defaultValue={defaultTab}>
-      <div className="w-full overflow-x-auto">
-        <TabsList className="max-w-full">
+      {/* Five tabs with counters overflow a phone. The list takes its natural
+          width from the left edge (w-max + justify-start) so the container can
+          scroll the whole strip; a centred, capped list spilled off the left
+          side where no scroll could reach the first tab. */}
+      <div className="w-full overflow-x-auto pb-1">
+        <TabsList className="w-max justify-start">
           <TabsTrigger value="notes">{tabLabel(STUDENT_DETAIL_MESSAGES.TAB_NOTES, noteCount)}</TabsTrigger>
           <TabsTrigger value="conduct">{tabLabel(CONDUCT_MESSAGES.TAB_CONDUCT, conductCount)}</TabsTrigger>
           <TabsTrigger value="payments">{tabLabel(STUDENT_DETAIL_MESSAGES.TAB_PAYMENTS, paymentCount)}</TabsTrigger>
