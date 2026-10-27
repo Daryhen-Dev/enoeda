@@ -13,3 +13,7 @@ export function getMarketingWhatsAppUrl(message: string) {
 export const MARKETING_WHATSAPP_URL = getMarketingWhatsAppUrl(
   "Hola, quiero conocer las clases de Karate y Kickboxing de ENOEDA Dojo."
 )
+
+export const MARKETING_WHATSAPP_KARATE_URL = getMarketingWhatsAppUrl(
+  "Hola, quiero conocer las clases de Karate de ENOEDA Dojo."
+)

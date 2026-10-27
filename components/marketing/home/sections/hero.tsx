@@ -1,7 +1,11 @@
 import Image from "next/image"
 
 import heroImage from "@/assets/enoeda-hero.png"
-import { MARKETING_WHATSAPP_URL } from "@/components/marketing/shared/contact"
+import Link from "next/link"
+
+import {
+  MARKETING_WHATSAPP_KARATE_URL,
+} from "@/components/marketing/shared/contact"
 import styles from "@/components/marketing/marketing.module.css"
 
 export function MarketingHero() {
@@ -43,12 +47,20 @@ export function MarketingHero() {
             Club formativo especializado de Karate y Kickboxing. Acuerdo Ministerial 143 · Filial
             AFEK 035 · Concentración Deportiva de Pichincha.
           </p>
-          <a
-            className={`${styles.hardShadow} mt-8 inline-flex min-h-11 items-center border-2 border-marketing-surface bg-marketing-accent px-6 py-4 font-marketing-display text-2xl tracking-[0.04em] text-marketing-foreground transition-transform hover:-translate-x-1 hover:-translate-y-1 focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-marketing-foreground motion-reduce:transition-none motion-reduce:hover:translate-x-0 motion-reduce:hover:translate-y-0`}
-            href={MARKETING_WHATSAPP_URL}
-          >
-            ESCRIBIR POR WHATSAPP
-          </a>
+          <div className="mt-8 flex flex-col gap-4 sm:flex-row">
+            <a
+              className={`${styles.hardShadow} inline-flex min-h-11 items-center justify-center border-2 border-marketing-surface bg-marketing-accent px-6 py-4 font-marketing-display text-2xl tracking-[0.04em] text-marketing-foreground transition-transform hover:-translate-x-1 hover:-translate-y-1 focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-marketing-foreground motion-reduce:transition-none motion-reduce:hover:translate-x-0 motion-reduce:hover:translate-y-0`}
+              href={MARKETING_WHATSAPP_KARATE_URL}
+            >
+              ENTRENAR KARATE
+            </a>
+            <Link
+              className={`inline-flex min-h-11 items-center justify-center border-2 border-marketing-foreground px-6 py-4 font-marketing-display text-2xl tracking-[0.04em] text-marketing-foreground transition-transform hover:-translate-x-1 hover:-translate-y-1 focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-marketing-foreground motion-reduce:transition-none motion-reduce:hover:translate-x-0 motion-reduce:hover:translate-y-0`}
+              href="/kickboxing"
+            >
+              ENTRENAR KICKBOXING
+            </Link>
+          </div>
         </div>
       </div>
     </section>
