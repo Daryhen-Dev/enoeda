@@ -26,7 +26,7 @@ export function MarketingHero() {
       <div aria-hidden="true" className={`pointer-events-none absolute inset-0 ${styles.heroImageOverlay}`} />
 
       <div className="relative z-10 mx-auto grid max-w-360 grid-cols-1 gap-10 lg:grid-cols-12 lg:items-end lg:gap-8">
-        <div className="relative lg:col-span-8">
+        <div className="relative lg:col-span-7">
           <p
             className={`mb-6 font-marketing-body text-sm font-bold uppercase tracking-[0.18em] ${styles.heroTriangleLabel}`}
           >
@@ -42,20 +42,20 @@ export function MarketingHero() {
           </h1>
         </div>
 
-        <div className="relative border-l-2 border-marketing-foreground pl-5 lg:col-span-4 lg:mb-4 lg:pl-8">
+        <div className="relative border-l-2 border-marketing-foreground pl-5 lg:col-span-5 lg:mb-4 lg:pl-8">
           <p className="max-w-72 font-marketing-body text-sm font-bold uppercase leading-5 tracking-[0.1em] text-marketing-foreground">
             Club formativo especializado de Karate y Kickboxing. Acuerdo Ministerial 143 · Filial
             AFEK 035 · Concentración Deportiva de Pichincha.
           </p>
           <div className="mt-8 flex flex-col gap-4 sm:flex-row">
             <a
-              className={`${styles.hardShadow} inline-flex min-h-11 items-center justify-center border-2 border-marketing-surface bg-marketing-accent px-6 py-4 font-marketing-display text-2xl tracking-[0.04em] text-marketing-foreground transition-transform hover:-translate-x-1 hover:-translate-y-1 focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-marketing-foreground motion-reduce:transition-none motion-reduce:hover:translate-x-0 motion-reduce:hover:translate-y-0`}
+              className={`${styles.hardShadow} inline-flex min-h-11 flex-1 items-center justify-center border-2 border-marketing-surface bg-marketing-accent px-6 py-4 font-marketing-display text-2xl tracking-[0.04em] text-marketing-foreground transition-transform hover:-translate-x-1 hover:-translate-y-1 focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-marketing-foreground motion-reduce:transition-none motion-reduce:hover:translate-x-0 motion-reduce:hover:translate-y-0`}
               href={MARKETING_WHATSAPP_KARATE_URL}
             >
               ENTRENAR KARATE
             </a>
             <Link
-              className={`inline-flex min-h-11 items-center justify-center border-2 border-marketing-foreground px-6 py-4 font-marketing-display text-2xl tracking-[0.04em] text-marketing-foreground transition-transform hover:-translate-x-1 hover:-translate-y-1 focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-marketing-foreground motion-reduce:transition-none motion-reduce:hover:translate-x-0 motion-reduce:hover:translate-y-0`}
+              className={`inline-flex min-h-11 flex-1 items-center justify-center border-2 border-marketing-foreground px-6 py-4 font-marketing-display text-2xl tracking-[0.04em] text-marketing-foreground transition-transform hover:-translate-x-1 hover:-translate-y-1 focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-marketing-foreground motion-reduce:transition-none motion-reduce:hover:translate-x-0 motion-reduce:hover:translate-y-0`}
               href="/kickboxing"
             >
               ENTRENAR KICKBOXING
