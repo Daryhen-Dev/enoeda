@@ -6,6 +6,7 @@ import { MarketingHistory } from "@/components/marketing/home/sections/history"
 import { MarketingJourney } from "@/components/marketing/home/sections/journey"
 import { MarketingLocations } from "@/components/marketing/home/sections/locations"
 import { MarketingMasters } from "@/components/marketing/home/sections/masters"
+import { MarketingPaths } from "@/components/marketing/home/sections/paths"
 
 export const metadata: Metadata = {
   title: "ENOEDA Dojo | Karate y Kickboxing",
@@ -17,6 +18,7 @@ export default function Home() {
   return (
     <main>
       <MarketingHero />
+      <MarketingPaths />
       <MarketingDojoStories />
       <MarketingJourney />
       <MarketingHistory />

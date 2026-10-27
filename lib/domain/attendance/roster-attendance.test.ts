@@ -13,6 +13,7 @@
  *   price (no writes), duplicate payment mapping, monthly student rejected,
  *   teacher of another session rejected
  */
+import { dateOnlyToUtcDate } from "@/lib/date";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
@@ -204,11 +205,13 @@ function authorizeScheduled(tx: MockTx, sessionDate: string) {
 }
 
 /** Authorize a one-time-class session with its fixed teacher. */
-function authorizeOneTime(tx: MockTx) {
+function authorizeOneTime(tx: MockTx, classDay = recentSessionDate()) {
   tx.one_time_classes.findUnique.mockResolvedValue({
     branch_id: BRANCH_A,
     discipline_id: DISCIPLINE_ID,
-    class_date: new Date(),
+    // A `date` column comes back from Prisma as UTC midnight, never as
+    // "now" with a time-of-day: that mock made the future guard see tomorrow.
+    class_date: dateOnlyToUtcDate(classDay),
     teacher_id: USER_ID,
   });
   tx.class_sessions.findUnique.mockResolvedValue(null);

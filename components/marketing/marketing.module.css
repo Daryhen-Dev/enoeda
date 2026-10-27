@@ -212,3 +212,133 @@
     transition: none;
   }
 }
+
+/* ===== Paths: the home directory (two disciplines + the rest of the dojo) ===== */
+
+.pathsDisciplines {
+  display: grid;
+  margin-top: 4rem;
+  gap: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .pathsDisciplines {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.pathsCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-height: 11rem;
+  border: 2px solid var(--marketing-foreground);
+  padding: 1.5rem;
+  background-color: var(--marketing-surface);
+  color: var(--marketing-foreground);
+  text-decoration: none;
+  transition: transform 150ms ease, box-shadow 150ms ease;
+}
+
+.pathsCard:hover,
+.pathsCard:focus-visible {
+  transform: translate(-4px, -4px);
+  box-shadow: 8px 8px 0 var(--marketing-accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pathsCard:hover,
+  .pathsCard:focus-visible {
+    transform: none;
+  }
+}
+
+.pathsCardTitle {
+  font-family: var(--font-bebas-neue);
+  font-size: clamp(2rem, 3vw, 2.75rem);
+  line-height: 0.9;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.pathsCardDescription {
+  font-family: var(--font-archivo-narrow);
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+.pathsCardArrow {
+  margin-top: auto;
+  align-self: flex-end;
+  font-family: var(--font-bebas-neue);
+  font-size: 2rem;
+  line-height: 1;
+  color: var(--marketing-accent);
+  transition: transform 150ms ease;
+}
+
+.pathsCard:hover .pathsCardArrow,
+.pathsCard:focus-visible .pathsCardArrow {
+  transform: translateX(6px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pathsCard:hover .pathsCardArrow,
+  .pathsCard:focus-visible .pathsCardArrow {
+    transform: none;
+  }
+}
+
+.pathsIndexLabel {
+  margin-top: 4rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--marketing-menu-border);
+}
+
+.pathsIndex {
+  display: grid;
+  margin: 1rem 0 0;
+  border-top: 2px solid var(--marketing-foreground);
+  padding: 0;
+  list-style: none;
+}
+
+.pathsIndexItem {
+  border-bottom: 2px solid var(--marketing-foreground);
+}
+
+.pathsIndexItem .pathsCard {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem 1.5rem;
+  min-height: 0;
+  border: none;
+  padding: 1.25rem 0;
+  transition: color 150ms ease;
+}
+
+.pathsIndexItem .pathsCard:hover,
+.pathsIndexItem .pathsCard:focus-visible {
+  transform: none;
+  box-shadow: none;
+  color: var(--marketing-accent);
+}
+
+.pathsIndexItem .pathsCardTitle {
+  font-size: 1.75rem;
+}
+
+.pathsIndexItem .pathsCardDescription {
+  font-size: 0.9375rem;
+  color: var(--marketing-menu-border);
+}
+
+.pathsIndexItem .pathsCardArrow {
+  margin-top: 0;
+  margin-left: auto;
+  font-size: 1.5rem;
+}
