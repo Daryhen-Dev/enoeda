@@ -68,6 +68,8 @@ export function StudentRowActions({
   const isActiveTab = status === STUDENT_STATUS.ACTIVE
   const studentName = `${student.first_name} ${student.surname}`
   const detailHref = `/dashboard/students/${student.id}?branch=${branchId}`
+  const conductHref = `${detailHref}&tab=conducta`
+  const notesHref = `${detailHref}&tab=notas`
 
   function closeAction() {
     setAction(null)
@@ -93,6 +95,14 @@ export function StudentRowActions({
           <DropdownMenuGroup>
             <DropdownMenuItem render={<Link href={detailHref} />}>
               {STUDENT_ROW_ACTIONS_MESSAGES.VIEW_DETAIL}
+            </DropdownMenuItem>
+            {/* The history tabs live on the detail page; these two links open
+                them directly, so conduct and notes are one tap from the row. */}
+            <DropdownMenuItem render={<Link href={conductHref} />}>
+              {STUDENT_ROW_ACTIONS_MESSAGES.VIEW_CONDUCT}
+            </DropdownMenuItem>
+            <DropdownMenuItem render={<Link href={notesHref} />}>
+              {STUDENT_ROW_ACTIONS_MESSAGES.VIEW_NOTES}
             </DropdownMenuItem>
 
             {isActiveTab &&

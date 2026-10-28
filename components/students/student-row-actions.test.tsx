@@ -204,7 +204,10 @@ vi.mock("@/components/ui/dropdown-menu", async () => {
   };
 });
 
+import type { StudentListItem } from "@/lib/domain/students";
+
 import { StudentActivateDialog } from "./student-activate-dialog";
+import { getStudentColumns } from "./student-columns";
 import { StudentDeactivateDialog } from "./student-deactivate-dialog";
 import { StudentReactivateDialog } from "./student-reactivate-dialog";
 import { StudentRowActions } from "./student-row-actions";
@@ -368,6 +371,51 @@ async function selectItem(label: string) {
   await act(async () => {});
 }
 
+/**
+ * Renders the Acciones cell exactly as the directory table mounts it, so the
+ * assertions cover the row usage and not only the standalone component.
+ */
+function renderTableRowActions(student: ReturnType<typeof makeStudent>) {
+  const columns = getStudentColumns({
+    branchId: BRANCH_ID,
+    branches: BRANCHES,
+    status: "active",
+    canManage: true,
+    onActivated: vi.fn(),
+    timeZone: "America/Guayaquil",
+  });
+  const actionsColumn = columns.find((column) => column.id === "actions");
+  expect(actionsColumn).toBeDefined();
+
+  const renderCell = actionsColumn!.cell as unknown as (cellContext: {
+    row: { original: StudentListItem };
+  }) => ReactNode;
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+
+  act(() => {
+    root.render(<>{renderCell({ row: { original: student } })}</>);
+  });
+
+  return {
+    container,
+    unmount() {
+      act(() => {
+        root.unmount();
+      });
+      container.remove();
+    },
+  };
+}
+
+function hrefOf(label: string): string | null | undefined {
+  const item = queryMenuItem(label);
+  const link = item?.querySelector("a") ?? item?.closest("a");
+
+  return link?.getAttribute("href");
+}
+
 function queryDialogContent(): HTMLElement | null {
   return document.querySelector<HTMLElement>(
     '[data-slot="alert-dialog-content"]'
@@ -431,6 +479,8 @@ describe("StudentRowActions — one Acciones menu per row", () => {
 
     expect(queryMenuLabels()).toEqual([
       STUDENT_ROW_ACTIONS_MESSAGES.VIEW_DETAIL,
+      STUDENT_ROW_ACTIONS_MESSAGES.VIEW_CONDUCT,
+      STUDENT_ROW_ACTIONS_MESSAGES.VIEW_NOTES,
       STUDENT_ROW_ACTIONS_MESSAGES.MONTHLY_PAYMENT("Karate"),
       STUDENT_ROW_ACTIONS_MESSAGES.CLASS_PAYMENT("Karate"),
       STUDENT_ROW_ACTIONS_MESSAGES.CLASS_PAYMENT("Ajedrez"),
@@ -456,6 +506,34 @@ describe("StudentRowActions — one Acciones menu per row", () => {
     );
   });
 
+  it("links each history tab straight from the table row", async () => {
+    rendered = renderTableRowActions(ANA);
+
+    openMenu(rendered.container);
+
+    // The branch survives, and the tab names the destination history section.
+    expect(hrefOf(STUDENT_ROW_ACTIONS_MESSAGES.VIEW_CONDUCT)).toBe(
+      `/dashboard/students/${ANA_ID}?branch=${BRANCH_ID}&tab=conducta`
+    );
+    expect(hrefOf(STUDENT_ROW_ACTIONS_MESSAGES.VIEW_NOTES)).toBe(
+      `/dashboard/students/${ANA_ID}?branch=${BRANCH_ID}&tab=notas`
+    );
+  });
+
+  it("keeps the two history links above the administrative actions", async () => {
+    rendered = renderRowActions(ANA);
+
+    openMenu(rendered.container);
+    const labels = queryMenuLabels();
+
+    expect(labels.indexOf(STUDENT_ROW_ACTIONS_MESSAGES.VIEW_CONDUCT)).toBe(
+      labels.indexOf(STUDENT_ROW_ACTIONS_MESSAGES.VIEW_DETAIL) + 1
+    );
+    expect(labels.indexOf(STUDENT_ROW_ACTIONS_MESSAGES.VIEW_NOTES)).toBe(
+      labels.indexOf(STUDENT_ROW_ACTIONS_MESSAGES.VIEW_DETAIL) + 2
+    );
+  });
+
   it("offers Activar instead of Desactivar while the record is pending", async () => {
     rendered = renderRowActions(BRUNO);
 
@@ -475,6 +553,8 @@ describe("StudentRowActions — one Acciones menu per row", () => {
 
     expect(queryMenuLabels()).toEqual([
       STUDENT_ROW_ACTIONS_MESSAGES.VIEW_DETAIL,
+      STUDENT_ROW_ACTIONS_MESSAGES.VIEW_CONDUCT,
+      STUDENT_ROW_ACTIONS_MESSAGES.VIEW_NOTES,
       STUDENT_ROW_ACTIONS_MESSAGES.REACTIVATE,
     ]);
   });
@@ -486,6 +566,8 @@ describe("StudentRowActions — one Acciones menu per row", () => {
 
     expect(queryMenuLabels()).toEqual([
       STUDENT_ROW_ACTIONS_MESSAGES.VIEW_DETAIL,
+      STUDENT_ROW_ACTIONS_MESSAGES.VIEW_CONDUCT,
+      STUDENT_ROW_ACTIONS_MESSAGES.VIEW_NOTES,
       STUDENT_ROW_ACTIONS_MESSAGES.EDIT,
     ]);
   });
@@ -497,6 +579,8 @@ describe("StudentRowActions — one Acciones menu per row", () => {
 
     expect(queryMenuLabels()).toEqual([
       STUDENT_ROW_ACTIONS_MESSAGES.VIEW_DETAIL,
+      STUDENT_ROW_ACTIONS_MESSAGES.VIEW_CONDUCT,
+      STUDENT_ROW_ACTIONS_MESSAGES.VIEW_NOTES,
       STUDENT_ROW_ACTIONS_MESSAGES.CLASS_PAYMENT("Karate"),
       STUDENT_ROW_ACTIONS_MESSAGES.CLASS_PAYMENT("Ajedrez"),
       STUDENT_ROW_ACTIONS_MESSAGES.EDIT,
