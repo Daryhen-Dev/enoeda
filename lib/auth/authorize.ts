@@ -63,6 +63,7 @@ export const PUBLIC_PATHS = [
   "/",
   "/el-camino",
   "/kickboxing",
+  "/legado",
   "/login",
   "/auth",
   "/api/auth",

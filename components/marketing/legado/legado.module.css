@@ -1,0 +1,29 @@
+.legadoMain {
+  background-color: var(--marketing-surface);
+}
+
+.timelineRow {
+  display: grid;
+  grid-template-columns: 7.5rem minmax(0, 1fr);
+  gap: 1rem;
+  align-items: baseline;
+  padding: 1.25rem 0;
+}
+
+.timelineYear {
+  color: var(--marketing-accent);
+  font-family: var(--font-bebas-neue);
+  font-size: 1.75rem;
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+
+@media (max-width: 480px) {
+  .timelineRow {
+    grid-template-columns: 5.5rem minmax(0, 1fr);
+  }
+
+  .timelineYear {
+    font-size: 1.375rem;
+  }
+}

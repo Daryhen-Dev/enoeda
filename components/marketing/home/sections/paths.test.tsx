@@ -106,11 +106,11 @@ describe("MarketingPaths — destinations", () => {
     )
   })
 
-  it("points Legado at the history section until its page ships", () => {
+  it("points Legado at its own page", () => {
     render()
     expect(
       anchorByTitle("Legado del Sensei Keinosuke Enoeda").getAttribute("href")
-    ).toBe("/#dojo")
+    ).toBe("/legado")
   })
 
   it("points the team at the masters section", () => {
