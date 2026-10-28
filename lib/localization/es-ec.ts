@@ -449,6 +449,10 @@ export const STUDENT_LIFECYCLE_MESSAGES = {
 export const STUDENT_ROW_ACTIONS_MESSAGES = {
   TRIGGER_ARIA: (studentName: string) => `Acciones de ${studentName}`,
   VIEW_DETAIL: "Ver ficha",
+  // Direct links into the detail page history tabs, named after the tab they
+  // open (Conducta / Bitácora).
+  VIEW_CONDUCT: "Ver conducta",
+  VIEW_NOTES: "Ver notas",
   MONTHLY_PAYMENT: (disciplineName: string) =>
     `Pago mensual · ${disciplineName}`,
   CLASS_PAYMENT: (disciplineName: string) =>

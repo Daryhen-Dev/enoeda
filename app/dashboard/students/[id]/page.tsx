@@ -21,6 +21,10 @@ import { StudentDisciplinePanel } from "@/components/students/student-discipline
 import { StudentDetailHeader } from "@/components/students/student-detail-header"
 import { StudentStatusStrip } from "@/components/students/student-status-strip"
 import { StudentHistoryTabs } from "@/components/students/student-history-tabs"
+import {
+  resolveStudentHistoryTab,
+  type StudentHistoryTab,
+} from "@/lib/domain/students/history-tabs"
 import { StudentProgressPanel } from "@/components/students/student-progress-panel"
 import { StudentNotesPanel } from "@/components/students/student-notes-panel"
 import { StudentConductPanel } from "@/components/students/student-conduct-panel"
@@ -35,7 +39,11 @@ import {
 
 interface StudentDetailPageProps {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ branch?: string; [key: string]: string | undefined }>
+  searchParams: Promise<{
+    branch?: string
+    tab?: string
+    [key: string]: string | undefined
+  }>
 }
 
 export default async function StudentDetailPage({
@@ -180,7 +188,13 @@ export default async function StudentDetailPage({
     activeDisciplineLevels.map((item) => [item.disciplineId, item.levels])
   )
 
-  const historyDefaultTab = canManage ? "payments" : "notes"
+  // ?tab= lets the directory link straight into one history tab; an unknown
+  // or missing value keeps the default for this caller's permissions.
+  const callerDefaultTab: StudentHistoryTab = canManage ? "payments" : "notes"
+  const historyDefaultTab = resolveStudentHistoryTab(
+    search.tab,
+    callerDefaultTab
+  )
   const todayDateOnly = getCurrentDateOnly(branchResult.timeZone)
 
   return (

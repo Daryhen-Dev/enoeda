@@ -15,19 +15,25 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
+import { STUDENT_DETAIL_MESSAGES } from "@/lib/localization/es-ec";
+
+import {
+  resolveStudentHistoryTab,
+  type StudentHistoryTab,
+} from "@/lib/domain/students/history-tabs";
 import { StudentHistoryTabs } from "./student-history-tabs";
 
 let container: HTMLDivElement | null = null;
 let root: ReturnType<typeof createRoot> | null = null;
 
-function render() {
+function render(defaultTab: StudentHistoryTab = "notes") {
   container = document.createElement("div");
   document.body.append(container);
   root = createRoot(container);
   act(() => {
     root!.render(
       <StudentHistoryTabs
-        defaultTab="notes"
+        defaultTab={defaultTab}
         noteCount={0}
         conductCount={0}
         paymentCount={0}
@@ -92,5 +98,94 @@ describe("StudentHistoryTabs on a narrow screen", () => {
     expect(container!.querySelectorAll('[data-slot="tabs-trigger"]')).toHaveLength(
       5
     );
+  });
+});
+
+/** Marker slot text for each tab, so "the right content is visible" is direct. */
+const TAB_CONTENT: Record<StudentHistoryTab, string> = {
+  notes: "notas",
+  conduct: "conducta",
+  payments: "pagos",
+  progress: "progreso",
+  enrollments: STUDENT_DETAIL_MESSAGES.ENROLLMENTS_EMPTY,
+};
+
+function visiblePanelText(): string {
+  return [...container!.querySelectorAll('[data-slot="tabs-content"]')]
+    .map((panel) => panel.textContent ?? "")
+    .join(" ");
+}
+
+describe("StudentHistoryTabs — default tab", () => {
+  beforeEach(() => {
+    (
+      globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }
+    ).IS_REACT_ACT_ENVIRONMENT = true;
+  });
+
+  afterEach(() => {
+    if (root) act(() => root!.unmount());
+    container?.remove();
+    container = null;
+    root = null;
+  });
+
+  it.each(Object.keys(TAB_CONTENT) as StudentHistoryTab[])(
+    "opens on %s and shows that content",
+    (tab) => {
+      render(tab);
+
+      expect(visiblePanelText()).toContain(TAB_CONTENT[tab]);
+
+      for (const other of Object.keys(TAB_CONTENT) as StudentHistoryTab[]) {
+        if (other === tab) continue;
+        expect(visiblePanelText()).not.toContain(TAB_CONTENT[other]);
+      }
+    }
+  );
+
+  it("marks exactly one tab as the active one", () => {
+    render("conduct");
+
+    const triggers = [
+      ...container!.querySelectorAll<HTMLElement>('[data-slot="tabs-trigger"]'),
+    ];
+    expect(
+      triggers.filter(
+        (trigger) =>
+          trigger.getAttribute("aria-selected") === "true" ||
+          "active" in trigger.dataset
+      )
+    ).toHaveLength(1);
+  });
+});
+
+describe("resolveStudentHistoryTab — page ?tab= mapping", () => {
+  it.each(["notes", "conduct", "payments", "progress", "enrollments"])(
+    "keeps the %s deep link",
+    (value) => {
+      expect(resolveStudentHistoryTab(value, "payments")).toBe(value);
+    }
+  );
+
+  it.each([
+    ["conducta", "conduct"],
+    ["notas", "notes"],
+    ["pagos", "payments"],
+    ["progreso", "progress"],
+    ["inscripciones", "enrollments"],
+  ])("accepts the Spanish slug %s", (value, tab) => {
+    expect(resolveStudentHistoryTab(value, "payments")).toBe(tab);
+  });
+
+  it("falls back to the caller default for an unknown, empty or missing value", () => {
+    expect(resolveStudentHistoryTab("conducta-invalida", "payments")).toBe(
+      "payments"
+    );
+    expect(resolveStudentHistoryTab("conducta-invalida", "notes")).toBe(
+      "notes"
+    );
+    expect(resolveStudentHistoryTab("", "notes")).toBe("notes");
+    expect(resolveStudentHistoryTab(undefined, "notes")).toBe("notes");
   });
 });

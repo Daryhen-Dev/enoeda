@@ -7,13 +7,12 @@ import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { EnrollmentHistory } from "@/components/students/enrollment-history"
 import type { EnrollmentEvent } from "@/lib/domain/disciplines/actions"
+import type { StudentHistoryTab } from "@/lib/domain/students/history-tabs"
 import {
   CONDUCT_MESSAGES,
   formatNumber,
   STUDENT_DETAIL_MESSAGES,
 } from "@/lib/localization/es-ec"
-
-export type StudentHistoryTab = "notes" | "payments"
 
 const VISIBLE_EVENT_COUNT = 10
 
