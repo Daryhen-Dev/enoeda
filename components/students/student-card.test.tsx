@@ -102,6 +102,8 @@ function shiftDateOnly(dateOnly: string, days: number): string {
 
 const TODAY = getCurrentDateOnly(TIME_ZONE);
 
+const BLACK_BELT_COLOR = "#7c3aed";
+
 function makeStudent(overrides: {
   activation_status?: "active" | "pending";
   national_id?: string | null;
@@ -109,8 +111,14 @@ function makeStudent(overrides: {
   next_due_date?: string | null;
   billing_mode?: "monthly" | "per_class";
   discipline_name?: string;
+  level_name?: string | null;
+  level_color?: string | null;
 }) {
   const billingMode = overrides.billing_mode ?? "monthly";
+  const levelName =
+    overrides.level_name === undefined ? "Cinturón negro" : overrides.level_name;
+  const levelColor =
+    overrides.level_color === undefined ? BLACK_BELT_COLOR : overrides.level_color;
 
   return {
     id: STUDENT_ID,
@@ -128,9 +136,18 @@ function makeStudent(overrides: {
         discipline_name: overrides.discipline_name ?? "Karate",
         next_due_date: overrides.next_due_date ?? null,
         billing_mode: billingMode,
+        level_name: levelName,
+        level_color: levelColor,
       },
     ],
   };
+}
+
+/** Browser-normalized inline color, so #7c3aed and rgb(...) compare equal. */
+function normalizedColor(color: string): string {
+  const probe = document.createElement("div");
+  probe.style.backgroundColor = color;
+  return probe.style.backgroundColor;
 }
 
 interface Rendered {
@@ -274,6 +291,49 @@ describe("StudentCard — mobile presentation of one student", () => {
     expect(rendered.container.textContent).toContain(
       STUDENT_LIFECYCLE_MESSAGES.PENDING_ACTIVATION_STATUS
     );
+  });
+
+  it("says nothing about activation once the record is activated", () => {
+    rendered = renderCard(makeStudent({ next_due_date: TODAY }));
+
+    const text = rendered.container.textContent ?? "";
+    expect(text).not.toContain(
+      STUDENT_LIFECYCLE_MESSAGES.PENDING_ACTIVATION_STATUS
+    );
+    expect(text).not.toContain(
+      STUDENT_LIFECYCLE_MESSAGES.ACTIVE_ACTIVATION_STATUS
+    );
+  });
+
+  it("shows the belt swatch of the active discipline next to the name", () => {
+    rendered = renderCard(makeStudent({ next_due_date: TODAY }));
+
+    const swatch = rendered.container.querySelector('[role="img"]');
+    expect(swatch).not.toBeNull();
+    const strip = swatch?.querySelector<HTMLElement>(
+      '[class*="border-border"]'
+    );
+    expect(strip).not.toBeNull();
+    expect(strip?.style.backgroundColor).toBe(
+      normalizedColor(BLACK_BELT_COLOR)
+    );
+
+    const label = swatch?.getAttribute("aria-label") ?? "";
+    expect(label).toContain("Cinturón negro");
+    expect(label).toContain("Karate");
+  });
+
+  it("shows no swatch when the discipline has no recorded level", () => {
+    rendered = renderCard(
+      makeStudent({
+        next_due_date: TODAY,
+        level_name: null,
+        level_color: null,
+      })
+    );
+
+    expect(rendered.container.querySelector('[role="img"]')).toBeNull();
+    expect(rendered.container.textContent).toContain("Ana Pérez");
   });
 
   it("keeps every action in the Acciones menu of the card", () => {

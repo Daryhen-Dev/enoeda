@@ -117,6 +117,8 @@ function makeStudent(id: string, firstName: string, surname: string) {
         discipline_name: "Karate",
         next_due_date: null,
         billing_mode: "monthly" as const,
+        level_name: null,
+        level_color: null,
       },
     ],
   };
