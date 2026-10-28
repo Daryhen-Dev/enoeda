@@ -158,6 +158,27 @@ export const listRecentBranchConductRecordsSchema = z
   })
   .strict();
 
+/**
+ * Branch records with an optional single-student filter (the Conducta page
+ * list). Same bounds as the recent-records list.
+ */
+export const listBranchConductRecordsSchema = z
+  .object({
+    branch_id: z.uuid({ error: CONDUCT_MESSAGES.BRANCH_REQUIRED }),
+    student_id: z
+      .uuid({ error: CONDUCT_MESSAGES.INVALID_STUDENT_ID })
+      .optional(),
+    limit: z
+      .number({ error: CONDUCT_MESSAGES.RECENT_LIMIT_INVALID })
+      .int({ error: CONDUCT_MESSAGES.RECENT_LIMIT_INVALID })
+      .min(1, { error: CONDUCT_MESSAGES.RECENT_LIMIT_INVALID })
+      .max(RECENT_CONDUCT_LIMITS.MAX, {
+        error: CONDUCT_MESSAGES.RECENT_LIMIT_INVALID,
+      })
+      .default(RECENT_CONDUCT_LIMITS.DEFAULT),
+  })
+  .strict();
+
 export type CreateConductRecordInput = z.infer<typeof createConductRecordSchema>;
 export type ConductRecordActionInput = z.infer<typeof conductRecordActionSchema>;
 export type VoidConductRecordInput = z.infer<typeof voidConductRecordSchema>;
@@ -167,4 +188,7 @@ export type SearchConductStudentsInput = z.infer<
 >;
 export type ListRecentBranchConductRecordsInput = z.input<
   typeof listRecentBranchConductRecordsSchema
+>;
+export type ListBranchConductRecordsInput = z.input<
+  typeof listBranchConductRecordsSchema
 >;

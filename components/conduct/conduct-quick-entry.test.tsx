@@ -56,13 +56,20 @@ vi.mock("sonner", () => ({
   toast: { success: mocks.toastSuccess },
 }));
 vi.mock("next/link", () => ({
+  // Forward every prop (including ref) the way the real Link does: Base UI
+  // inspects the rendered element to warn about button semantics.
   default: ({
     href,
     children,
+    ...rest
   }: {
     href: string;
     children?: ReactNode;
-  }) => <a href={href}>{children}</a>,
+  } & Record<string, unknown>) => (
+    <a href={href} {...(rest as Record<string, never>)}>
+      {children}
+    </a>
+  ),
 }));
 
 import { ConductQuickEntry, summarizeConductCounters } from "./conduct-quick-entry";
@@ -294,6 +301,8 @@ describe("ConductQuickEntry", () => {
   });
 
   it("picks a student with the keyboard and shows the selected card", async () => {
+    // The Base UI button warning is a console error, so capture it.
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
     rendered = renderEntry();
     await searchAndWait("qui", [STUDENT_BETO]);
 
@@ -328,6 +337,14 @@ describe("ConductQuickEntry", () => {
     expect(profileLink?.textContent).toContain(
       CONDUCT_QUICK_ENTRY_MESSAGES.VIEW_PROFILE
     );
+    // Navigating to the profile stays a plain link: wrapping it in a Base UI
+    // Button forces button semantics on an anchor and logs a console error.
+    expect(
+      consoleError.mock.calls.filter((call) =>
+        String(call[0] ?? "").includes("expected a native <button>")
+      )
+    ).toEqual([]);
+    consoleError.mockRestore();
     expect(
       [...document.querySelectorAll("button")].some((button) =>
         button.textContent?.includes(CONDUCT_QUICK_ENTRY_MESSAGES.CHANGE_STUDENT)

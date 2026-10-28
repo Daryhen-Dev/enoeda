@@ -12,6 +12,7 @@ import type { RecentConductRecord } from "@/lib/domain/conduct"
 import {
   CONDUCT_MESSAGES,
   CONDUCT_QUICK_ENTRY_MESSAGES,
+  CONDUCT_RECORDS_MESSAGES,
   formatCurrency,
   formatDateOnlyValue,
 } from "@/lib/localization/es-ec"
@@ -20,38 +21,52 @@ import { cn } from "@/lib/utils"
 export type RecentConductRecordView = RecentConductRecord
 
 interface RecentConductRecordsProps {
-  /** Newest first, as returned by listRecentBranchConductRecords. */
+  /** Newest first, as returned by listBranchConductRecords. */
   records: RecentConductRecordView[]
   branchId: string
-  /** Set when the initial page load of the records failed. */
+  /** Set when loading the records shown failed. */
   initialError?: string
+  /** Section heading; defaults to "Últimos registros". */
+  title?: string
+  /** Empty-state title; defaults to the branch-level message. */
+  emptyTitle?: string
+  /** Renders a loading line instead of the empty state while fetching. */
+  loading?: boolean
 }
 
 /**
- * Branch-level "Últimos registros" list of the quick-entry page. Read-only:
- * per-record actions (mark paid, void) live on the student detail page.
- * Voided records render muted with their void reason.
+ * Branch-level records list of the Conducta page. Read-only: per-record
+ * actions (mark paid, void) live on the student detail page. Voided records
+ * render muted with their void reason. The heading and the empty-state title
+ * are overridable so a list narrowed to one student can name that student.
  */
 export function RecentConductRecords({
   records,
   branchId,
   initialError,
+  title,
+  emptyTitle,
+  loading = false,
 }: RecentConductRecordsProps) {
+  const heading = title ?? CONDUCT_QUICK_ENTRY_MESSAGES.RECENT_TITLE
+
   return (
     <section className="flex w-full flex-col gap-3">
-      <h2 className="text-sm font-medium text-muted-foreground">
-        {CONDUCT_QUICK_ENTRY_MESSAGES.RECENT_TITLE}
-      </h2>
+      <h2 className="text-sm font-medium text-muted-foreground">{heading}</h2>
 
       {initialError ? (
         <p role="alert" className="text-sm text-destructive">
           {initialError}
         </p>
+      ) : loading ? (
+        <p role="status" className="text-sm text-muted-foreground">
+          {CONDUCT_RECORDS_MESSAGES.STUDENT_RECORDS_LOADING}
+        </p>
       ) : records.length === 0 ? (
         <Empty className="border">
           <EmptyHeader>
             <EmptyTitle>
-              {CONDUCT_QUICK_ENTRY_MESSAGES.RECENT_EMPTY}
+              {emptyTitle ?? CONDUCT_QUICK_ENTRY_MESSAGES.RECENT_EMPTY}
             </EmptyTitle>
             <EmptyDescription>
               {CONDUCT_MESSAGES.REGISTER_ACTION}
@@ -60,7 +75,7 @@ export function RecentConductRecords({
         </Empty>
       ) : (
         <ul
-          aria-label={CONDUCT_QUICK_ENTRY_MESSAGES.RECENT_LIST_ARIA_LABEL}
+          aria-label={title ?? CONDUCT_QUICK_ENTRY_MESSAGES.RECENT_LIST_ARIA_LABEL}
           className="grid w-full grid-cols-1 gap-3 min-[480px]:grid-cols-2"
         >
           {records.map((record) => {
