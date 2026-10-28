@@ -4,6 +4,10 @@ import Link from "next/link"
 
 import type { ActiveBranchOption } from "@/components/students/student-form-dialog"
 import { StudentRowActions } from "@/components/students/student-row-actions"
+import {
+  StudentBeltSwatches,
+  StudentPendingActivationBadge,
+} from "@/components/students/student-name-meta"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import type { EcuadorTimeZone } from "@/lib/domain/branches/schema"
@@ -24,7 +28,6 @@ import {
 import {
   STUDENT_BULK_ACTIONS_MESSAGES,
   STUDENT_DIRECTORY_MESSAGES,
-  STUDENT_LIFECYCLE_MESSAGES,
   STUDENT_MISSING_DATA_MESSAGES,
 } from "@/lib/localization/es-ec"
 
@@ -80,6 +83,9 @@ export function StudentCard({
   const today = getCurrentDateOnly(timeZone)
   const missingFields = getMissingStudentData(student)
   const incompleteDescription = getIncompleteDataDescription(missingFields)
+  const isPending =
+    student.activation_status === STUDENT_ACTIVATION_STATUS.PENDING
+  const isIncomplete = hasIncompleteStudentData(student)
   const nearestDiscipline = getNearestDueDiscipline(student.active_disciplines)
   const hasMonthlyEnrollment = student.active_disciplines.some(
     (discipline) => discipline.billing_mode === "monthly"
@@ -118,6 +124,9 @@ export function StudentCard({
             className="mt-0.5"
           />
         )}
+        {/* Same belt swatches as the table row: the card tells the same story.
+            Kept outside the link so its accessible name stays the name. */}
+        <StudentBeltSwatches student={student} />
         <Link
           href={`/dashboard/students/${student.id}?branch=${branchId}`}
           className="min-w-0 flex-1 truncate text-sm font-medium"
@@ -135,21 +144,15 @@ export function StudentCard({
         />
       </div>
 
-      {(hasIncompleteStudentData(student) ||
-        !isActiveTab ||
-        student.activation_status === STUDENT_ACTIVATION_STATUS.PENDING) && (
+      {(!isActiveTab || isPending || isIncomplete) && (
         <div className="flex flex-wrap items-center gap-1.5">
           {!isActiveTab && (
             <Badge variant="secondary">
               {STUDENT_DIRECTORY_MESSAGES.INACTIVE_STATUS}
             </Badge>
           )}
-          {student.activation_status === STUDENT_ACTIVATION_STATUS.PENDING && (
-            <Badge variant="secondary">
-              {STUDENT_LIFECYCLE_MESSAGES.PENDING_ACTIVATION_STATUS}
-            </Badge>
-          )}
-          {hasIncompleteStudentData(student) && (
+          <StudentPendingActivationBadge student={student} />
+          {isIncomplete && (
             <Badge
               variant="secondary"
               aria-label={incompleteDescription}

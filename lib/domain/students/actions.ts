@@ -111,6 +111,8 @@ export interface ActiveStudentDiscipline {
   discipline_name: string;
   next_due_date: string | null;
   billing_mode: "monthly" | "per_class";
+  level_name: string | null;
+  level_color: string | null;
 }
 
 export interface StudentListItem {
@@ -180,7 +182,7 @@ export async function listStudents(
           }),
     };
 
-    return tx.students.findMany({
+    const students = await tx.students.findMany({
       take: listInput.page_size + 1,
       where,
       orderBy: [
@@ -201,6 +203,7 @@ export async function listStudents(
           where: { is_active: true },
           select: {
             id: true,
+            discipline_id: true,
             next_due_date: true,
             billing_mode: true,
             disciplines: { select: { name: true } },
@@ -211,6 +214,35 @@ export async function listStudents(
         ? {}
         : { cursor: { id: listInput.cursor }, skip: 1 }),
     });
+
+    // Current belt of every discipline on the page, in ONE grouped query:
+    // `distinct` becomes Postgres `DISTINCT ON (student_id, discipline_id)`, and
+    // the ordering leaves the latest promotion of each pair first. Scoped to
+    // the ids this page already returned, so it never reads another branch and
+    // never costs a query per student.
+    const pageStudentIds = students
+      .slice(0, listInput.page_size)
+      .map((student) => student.id);
+    const pageProgress =
+      pageStudentIds.length === 0
+        ? []
+        : await tx.student_progress.findMany({
+            where: { student_id: { in: pageStudentIds } },
+            distinct: ["student_id", "discipline_id"],
+            orderBy: [
+              { student_id: "asc" },
+              { discipline_id: "asc" },
+              { promoted_at: "desc" },
+              { created_at: "desc" },
+            ],
+            select: {
+              student_id: true,
+              discipline_id: true,
+              discipline_levels: { select: { name: true, color: true } },
+            },
+          });
+
+    return { students, pageProgress };
   });
 
   if (!result.success) return result;
@@ -221,10 +253,23 @@ export async function listStudents(
   }
 
   const rows = result.data as Exclude<typeof result.data, { __branchError: string }>;
-  const hasExtraItem = rows.length > listInput.page_size;
+  const hasExtraItem = rows.students.length > listInput.page_size;
   const items: StudentListItem[] = [];
 
-  for (const student of rows.slice(0, listInput.page_size)) {
+  // Keyed by student+discipline so a discipline never borrows the belt of
+  // another discipline, and a student never borrows another student's belt.
+  const levelByStudentDiscipline = new Map<
+    string,
+    { name: string; color: string | null }
+  >();
+  for (const progress of rows.pageProgress) {
+    levelByStudentDiscipline.set(
+      `${progress.student_id}:${progress.discipline_id}`,
+      progress.discipline_levels
+    );
+  }
+
+  for (const student of rows.students.slice(0, listInput.page_size)) {
     const activationStatus = studentActivationStatusSchema.safeParse(
       student.activation_status
     );
@@ -233,18 +278,26 @@ export async function listStudents(
     }
 
     const activeDisciplines = student.student_disciplines
-      .map((studentDiscipline) => ({
-        id: studentDiscipline.id,
-        discipline_name: studentDiscipline.disciplines.name,
-        next_due_date:
-          studentDiscipline.next_due_date === null
-            ? null
-            : formatDatabaseDateOnly(studentDiscipline.next_due_date),
-        billing_mode:
-          studentDiscipline.billing_mode === "per_class"
-            ? ("per_class" as const)
-            : ("monthly" as const),
-      }))
+      .map((studentDiscipline) => {
+        const currentLevel = levelByStudentDiscipline.get(
+          `${student.id}:${studentDiscipline.discipline_id}`
+        );
+
+        return {
+          id: studentDiscipline.id,
+          discipline_name: studentDiscipline.disciplines.name,
+          next_due_date:
+            studentDiscipline.next_due_date === null
+              ? null
+              : formatDatabaseDateOnly(studentDiscipline.next_due_date),
+          billing_mode:
+            studentDiscipline.billing_mode === "per_class"
+              ? ("per_class" as const)
+              : ("monthly" as const),
+          level_name: currentLevel?.name ?? null,
+          level_color: currentLevel?.color ?? null,
+        };
+      })
       .sort((firstDiscipline, secondDiscipline) =>
         firstDiscipline.discipline_name.localeCompare(
           secondDiscipline.discipline_name

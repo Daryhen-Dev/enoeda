@@ -1383,7 +1383,7 @@ export const CONDUCT_MESSAGES = {
 export const CONDUCT_QUICK_ENTRY_MESSAGES = {
   PAGE_TITLE: "Conducta",
   PAGE_DESCRIPTION:
-    "Busque un estudiante y registre una multa o un llamado de atención en segundos.",
+    "Consulte los registros de conducta de la sucursal, filtre por estudiante y registre multas o llamados de atención.",
   SEARCH_LABEL: "Buscar estudiante",
   SEARCH_PLACEHOLDER: "Nombre, apellido o cédula…",
   SEARCH_LOADING: "Buscando estudiantes…",
@@ -1401,6 +1401,24 @@ export const CONDUCT_QUICK_ENTRY_MESSAGES = {
   RECENT_LOAD_FAILURE: "No se pudieron cargar los últimos registros.",
   RECENT_LIST_ARIA_LABEL: "Últimos registros de conducta de la sucursal",
   LOAD_FAILURE_TITLE: "No se pudo cargar la página de conducta.",
+} as const
+
+/**
+ * Conducta page records list: the single "Alumno" filter and the states of a
+ * list narrowed to one student. The search status lines reuse
+ * CONDUCT_QUICK_ENTRY_MESSAGES so both searches speak the same words.
+ */
+export const CONDUCT_RECORDS_MESSAGES = {
+  FILTER_LABEL: "Filtrar los registros por estudiante",
+  FILTER_ACTIVE: (name: string) => `Filtrando por: ${name}`,
+  FILTER_CLEAR: "Quitar filtro",
+  STUDENT_RECORDS_TITLE: (name: string) => `Registros de ${name}`,
+  STUDENT_RECORDS_EMPTY:
+    "Este estudiante no tiene multas ni llamados de atención registrados.",
+  STUDENT_RECORDS_LOADING: "Cargando los registros del estudiante…",
+  STUDENT_RECORDS_LOAD_FAILURE:
+    "No se pudieron cargar los registros del estudiante.",
+  REGISTER_TRIGGER: "Registrar",
 } as const
 
 export const SESSION_INFO_MESSAGES = {

@@ -7,7 +7,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
@@ -41,6 +41,8 @@ interface ConductQuickEntryProps {
   branchId: string
   /** Branch-timezone today (YYYY-MM-DD); default and max for the incident date. */
   todayDateOnly: string
+  /** Called after a record is registered (e.g. to close a hosting sheet). */
+  onSuccess?: () => void
 }
 
 /**
@@ -78,6 +80,7 @@ function fullName(student: { first_name: string; surname: string }): string {
 export function ConductQuickEntry({
   branchId,
   todayDateOnly,
+  onSuccess,
 }: ConductQuickEntryProps) {
   const router = useRouter()
   const [searchInput, setSearchInput] = useState("")
@@ -229,6 +232,7 @@ export function ConductQuickEntry({
       router.refresh()
       // Immediately ready for the next student.
       focusSearchInput()
+      onSuccess?.()
     } else {
       setSubmitError(result.error ?? COMMON_MESSAGES.UNEXPECTED_ERROR)
     }
@@ -349,17 +353,12 @@ export function ConductQuickEntry({
               )}
             </div>
             <div className="flex shrink-0 gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                render={
-                  <Link
-                    href={`/dashboard/students/${selectedStudent.id}?branch=${branchId}`}
-                  />
-                }
+              <Link
+                href={`/dashboard/students/${selectedStudent.id}?branch=${branchId}`}
+                className={buttonVariants({ variant: "outline", size: "sm" })}
               >
                 {CONDUCT_QUICK_ENTRY_MESSAGES.VIEW_PROFILE}
-              </Button>
+              </Link>
               <Button variant="ghost" size="sm" onClick={handleChangeStudent}>
                 {CONDUCT_QUICK_ENTRY_MESSAGES.CHANGE_STUDENT}
               </Button>

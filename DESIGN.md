@@ -252,6 +252,14 @@ Small, precise radii anchored at **6px** (`--radius: 0.375rem`), derived down fo
 - **Mobile rows:** below `md` a record is a stacked card (`bg-card`, hairline border, name over muted meta), not a table. The card header is the one-tap target for the record's page; the menu carries the rest.
 - **Selection bar:** while a selection exists, one hairline bar above the list states the count and offers the batch action plus "Limpiar selección"; the batch confirmation names the records (first three, then "y N más"). Selection exists only for a manager on the active tab and is cleared whenever the visible set changes.
 
+- **Belt identity:** the students directory (table row and mobile card) leads each record with the same hairline belt swatch the attendance ledger uses — one per active discipline with a recorded level, never an empty hairline, with the level name and its discipline exposed to assistive tech. A student is recognized by belt color without spending a column on it.
+- **No status echo:** the directory table never repeats state it already shows elsewhere. The active/history tab is `is_active`, so there is no "Estado" column; `activation_status` appears only as a "Pendiente de activación" badge while the record is still pending, and an activated record prints nothing.
+
+### Filtered records list
+- **Records lead, actions follow:** a records page (Conducta) opens with the list, never with a form. One `Registrar` button sits at the heading's trailing edge and opens a side sheet hosting the create flow; a successful registration closes the sheet so the refreshed list is immediately visible.
+- **One filter, named after the person:** when the only useful filter is the student, the filter is one labelled search at the head of the list, with the same debounce, keyboard contract and status lines as every other student picker. Picking someone retitles the list after them ("Registros de …") and one visible **Quitar filtro** control returns to the branch's latest records. No filter chips, no date range, no second search box, and the search never doubles as the create form's step 1.
+- **Read-only rows:** this list carries no per-row actions. The row links to the student and the record's actions (mark paid, void) stay on the student detail page, so filtering can never be mistaken for editing.
+
 ### Undo
 - A reversible administrative action (deactivate/reactivate a student, suspend/reinstate a class) confirms itself with a toast that carries a **Deshacer** action for ten seconds. The undo calls the inverse action and reports whether it actually landed; it never silently claims success. Irreversible work keeps the explicit "no se puede deshacer" confirmation instead.
 

@@ -2,8 +2,8 @@ import { redirect } from "next/navigation"
 import { AlertCircleIcon } from "lucide-react"
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { ConductQuickEntry } from "@/components/conduct/conduct-quick-entry"
-import { RecentConductRecords } from "@/components/conduct/recent-conduct-records"
+import { ConductRecordsBrowser } from "@/components/conduct/conduct-records-browser"
+import { ConductRegisterSheet } from "@/components/conduct/conduct-register-sheet"
 import { listRecentBranchConductRecords } from "@/lib/domain/conduct"
 import { resolveBranchContext } from "@/lib/auth/branch-context"
 import { getCurrentDateOnly } from "@/lib/date"
@@ -61,22 +61,29 @@ export default async function ConductPage({ searchParams }: ConductPageProps) {
 
   return (
     <main className="flex flex-col gap-4 p-4 md:gap-6 md:p-6">
-      <header className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold">
-          {CONDUCT_QUICK_ENTRY_MESSAGES.PAGE_TITLE}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          {CONDUCT_QUICK_ENTRY_MESSAGES.PAGE_DESCRIPTION}
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-semibold">
+            {CONDUCT_QUICK_ENTRY_MESSAGES.PAGE_TITLE}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {CONDUCT_QUICK_ENTRY_MESSAGES.PAGE_DESCRIPTION}
+          </p>
+        </div>
+        {canWriteConduct && (
+          <ConductRegisterSheet
+            branchId={branchId}
+            todayDateOnly={todayDateOnly}
+          />
+        )}
       </header>
 
-      {canWriteConduct && (
-        <ConductQuickEntry branchId={branchId} todayDateOnly={todayDateOnly} />
-      )}
-
-      <RecentConductRecords
-        records={records}
+      <ConductRecordsBrowser
+        // A branch switch must reset the client filter: keeping a student
+        // selected from another branch only yields a denied read.
+        key={branchId}
         branchId={branchId}
+        initialRecords={records}
         initialError={recentError}
       />
     </main>

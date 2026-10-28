@@ -23,6 +23,7 @@ import type { SessionGuestRow } from "@/lib/domain/guests/actions"
 import { registerClassPayment } from "@/lib/domain/payments/actions"
 import { AttendanceSeal } from "@/components/attendance/attendance-seal"
 import { GuestsSection } from "@/components/attendance/guests-section"
+import { BeltChip } from "@/components/belts/belt-chip"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -87,36 +88,6 @@ function occurrencePayload(scheduledClassId?: string, oneTimeClassId?: string) {
   return scheduledClassId
     ? { scheduled_class_id: scheduledClassId }
     : { one_time_class_id: oneTimeClassId! }
-}
-
-/**
- * Belt "obi" strip: a small swatch always carrying a hairline border (so very
- * light belts like white stay visible on paper) and filled with the level
- * color whenever one exists. Rendering is deterministic on server and client
- * — no `CSS.supports` branching, which caused hydration mismatches and
- * uncolored swatches in server-rendered trees; browsers ignore invalid color
- * values, leaving the bordered hairline swatch. The level name travels via
- * `title` and visually-hidden text; no level means no text at all.
- */
-function BeltChip({
-  levelName,
-  levelColor,
-}: {
-  levelName: string | null
-  levelColor: string | null
-}) {
-  const hasColor = typeof levelColor === "string" && levelColor.length > 0
-  return (
-    <>
-      <span
-        title={levelName ?? undefined}
-        aria-hidden={levelName ? undefined : true}
-        className="h-5.5 w-2.5 shrink-0 rounded-full border border-border"
-        style={hasColor ? { backgroundColor: levelColor } : undefined}
-      />
-      {levelName && <span className="sr-only">{levelName}</span>}
-    </>
-  )
 }
 
 export function AttendanceSheet({

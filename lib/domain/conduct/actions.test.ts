@@ -114,6 +114,7 @@ let listStudentConductRecords: typeof import("./actions").listStudentConductReco
 let getOwnConductRecords: typeof import("./actions").getOwnConductRecords;
 let searchConductStudents: typeof import("./actions").searchConductStudents;
 let listRecentBranchConductRecords: typeof import("./actions").listRecentBranchConductRecords;
+let listBranchConductRecords: typeof import("./actions").listBranchConductRecords;
 
 beforeEach(async () => {
   vi.resetModules();
@@ -132,6 +133,7 @@ beforeEach(async () => {
   getOwnConductRecords = mod.getOwnConductRecords;
   searchConductStudents = mod.searchConductStudents;
   listRecentBranchConductRecords = mod.listRecentBranchConductRecords;
+  listBranchConductRecords = mod.listBranchConductRecords;
 });
 
 function setupWithAuth(
@@ -1019,6 +1021,200 @@ describe("listRecentBranchConductRecords — branch security and shape", () => {
     });
     expect(records[0]?.amount).toBe(12.5);
     // Voided records are included, flagged as such.
+    expect(records[1]?.voided_at).not.toBeNull();
+    expect(records[1]?.void_reason).toBe("duplicado");
+  });
+});
+
+// =============================================================================
+// listBranchConductRecords (filtered records list)
+// =============================================================================
+
+describe("listBranchConductRecords — branch scoping and student filter", () => {
+  function buildRow(overrides: Record<string, unknown> = {}) {
+    return {
+      id: "r1",
+      student_id: STUDENT_ID,
+      kind: "fine",
+      reason: "Daño al equipo",
+      incident_date: new Date("2026-09-01"),
+      amount: "12.50",
+      status: "pending",
+      paid_at: null,
+      paid_by: null,
+      voided_at: null,
+      voided_by: null,
+      void_reason: null,
+      created_by: USER_ID,
+      created_at: new Date("2026-09-02T10:00:00Z"),
+      updated_at: new Date("2026-09-02T10:00:00Z"),
+      students: { id: STUDENT_ID, first_name: "Ana", surname: "Pérez" },
+      ...overrides,
+    };
+  }
+
+  it("rejects an out-of-bounds limit", async () => {
+    setupWithAuth(ctxBranchA);
+    const result = await listBranchConductRecords({
+      branch_id: BRANCH_A,
+      limit: 26,
+    });
+    expect(result.success).toBe(false);
+    expect(result.error).toBe(CONDUCT_MESSAGES.RECENT_LIMIT_INVALID);
+  });
+
+  it("rejects when caller has no assignment", async () => {
+    setupWithAuth(ctxNoAssignment);
+    const result = await listBranchConductRecords({ branch_id: BRANCH_A });
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("asignación");
+  });
+
+  it("rejects an owner without a branch assignment", async () => {
+    setupWithAuth(ctxOwnerNoAssignment);
+    const result = await listBranchConductRecords({ branch_id: BRANCH_A });
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("asignación");
+  });
+
+  it("rejects a filtered read before touching the student lookup when unassigned", async () => {
+    // Pins the guard order: the branch check must precede the student read, not
+    // just the records query.
+    const tx = buildMockTx();
+    setupWithAuth(ctxNoAssignment, tx);
+    const result = await listBranchConductRecords({
+      branch_id: BRANCH_A,
+      student_id: STUDENT_ID,
+    });
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("asignación");
+    expect(tx.students.findUnique).not.toHaveBeenCalled();
+    expect(tx.student_conduct_records.findMany).not.toHaveBeenCalled();
+  });
+
+  it("scopes to the branch, orders by incident date then creation and takes 10 by default", async () => {    const tx = buildMockTx();
+    setupWithAuth(ctxBranchA, tx);
+
+    await listBranchConductRecords({ branch_id: BRANCH_A });
+    expect(tx.student_conduct_records.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { students: { branch_id: BRANCH_A } },
+        orderBy: [
+          { incident_date: "desc" },
+          { created_at: "desc" },
+          { id: "desc" },
+        ],
+        take: 10,
+      })
+    );
+  });
+
+  it("caps the limit at 25 and accepts 1", async () => {
+    const tx = buildMockTx();
+    setupWithAuth(ctxBranchA, tx);
+
+    await listBranchConductRecords({ branch_id: BRANCH_A, limit: 25 });
+    expect(tx.student_conduct_records.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ take: 25 })
+    );
+
+    await listBranchConductRecords({ branch_id: BRANCH_A, limit: 1 });
+    expect(tx.student_conduct_records.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ take: 1 })
+    );
+  });
+
+  it("rejects a student of another branch without querying records", async () => {
+    const tx = buildMockTx();
+    tx.students.findUnique = vi.fn().mockResolvedValue({ branch_id: BRANCH_B });
+    setupWithAuth(ctxBranchA, tx);
+
+    const result = await listBranchConductRecords({
+      branch_id: BRANCH_A,
+      student_id: STUDENT_ID,
+    });
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("otra sucursal");
+    expect(tx.student_conduct_records.findMany).not.toHaveBeenCalled();
+  });
+
+  it("rejects an unknown student", async () => {
+    const tx = buildMockTx();
+    tx.students.findUnique = vi.fn().mockResolvedValue(null);
+    setupWithAuth(ctxBranchA, tx);
+
+    const result = await listBranchConductRecords({
+      branch_id: BRANCH_A,
+      student_id: STUDENT_ID,
+    });
+    expect(result.success).toBe(false);
+    expect(tx.student_conduct_records.findMany).not.toHaveBeenCalled();
+  });
+
+  it("keeps the branch scope and adds the student filter", async () => {
+    const tx = buildMockTx();
+    setupWithAuth(ctxBranchA, tx);
+
+    await listBranchConductRecords({
+      branch_id: BRANCH_A,
+      student_id: STUDENT_ID,
+    });
+    expect(tx.student_conduct_records.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          student_id: STUDENT_ID,
+          students: { branch_id: BRANCH_A },
+        },
+      })
+    );
+  });
+
+  it("returns only the filtered student's rows, voided included", async () => {
+    const tx = buildMockTx();
+    const rows = [
+      buildRow({ id: "r1" }),
+      buildRow({
+        id: "r2",
+        student_id: STUDENT_ID_2,
+        kind: "warning",
+        amount: null,
+        students: { id: STUDENT_ID_2, first_name: "Luis", surname: "Gómez" },
+      }),
+      buildRow({
+        id: "r3",
+        voided_at: new Date("2026-09-05T09:00:00Z"),
+        voided_by: USER_ID,
+        void_reason: "duplicado",
+      }),
+    ];
+    // Filter like the database would, so the assertion is about behavior.
+    tx.student_conduct_records.findMany = vi
+      .fn()
+      .mockImplementation(
+        async (args: { where: { student_id?: string } } = { where: {} }) =>
+          args.where.student_id === undefined
+            ? rows
+            : rows.filter((row) => row.student_id === args.where.student_id)
+      );
+    setupWithAuth(ctxBranchA, tx);
+
+    const result = await listBranchConductRecords({
+      branch_id: BRANCH_A,
+      student_id: STUDENT_ID,
+    });
+    expect(result.success).toBe(true);
+    const records = result.data?.records ?? [];
+    expect(records.map((record) => record.id)).toEqual(["r1", "r3"]);
+    expect(records.every((record) => record.student_id === STUDENT_ID)).toBe(
+      true
+    );
+    expect(records[0]?.student).toEqual({
+      id: STUDENT_ID,
+      first_name: "Ana",
+      surname: "Pérez",
+    });
+    expect(records[0]?.amount).toBe(12.5);
+    // Voided records stay in the staff list, flagged as such.
     expect(records[1]?.voided_at).not.toBeNull();
     expect(records[1]?.void_reason).toBe("duplicado");
   });

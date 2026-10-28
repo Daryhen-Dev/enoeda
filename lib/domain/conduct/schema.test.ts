@@ -5,6 +5,7 @@ import {
   voidConductRecordSchema,
   searchConductStudentsSchema,
   listRecentBranchConductRecordsSchema,
+  listBranchConductRecordsSchema,
   RECENT_CONDUCT_LIMITS,
   CONDUCT_KINDS,
   CONDUCT_STATUSES,
@@ -265,6 +266,94 @@ describe("searchConductStudentsSchema", () => {
       branch_id: BRANCH_ID,
       query: "Ana",
       limit: 5,
+    });
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("listBranchConductRecordsSchema", () => {
+  it("defaults the limit to 10 when omitted", () => {
+    const parsed = listBranchConductRecordsSchema.parse({
+      branch_id: BRANCH_ID,
+    });
+    expect(parsed.limit).toBe(10);
+    expect(parsed.limit).toBe(RECENT_CONDUCT_LIMITS.DEFAULT);
+  });
+
+  it("accepts an omitted student filter", () => {
+    const parsed = listBranchConductRecordsSchema.parse({
+      branch_id: BRANCH_ID,
+      limit: 5,
+    });
+    expect(parsed.student_id).toBeUndefined();
+  });
+
+  it("accepts a student filter and limits 1 and 25", () => {
+    expect(
+      listBranchConductRecordsSchema.parse({
+        branch_id: BRANCH_ID,
+        student_id: STUDENT_ID,
+        limit: 1,
+      })
+    ).toMatchObject({ student_id: STUDENT_ID, limit: 1 });
+    expect(
+      listBranchConductRecordsSchema.parse({
+        branch_id: BRANCH_ID,
+        limit: RECENT_CONDUCT_LIMITS.MAX,
+      }).limit
+    ).toBe(25);
+  });
+
+  it("rejects out-of-bounds and non-integer limits", () => {
+    for (const limit of [0, 26, 10.5]) {
+      const result = listBranchConductRecordsSchema.safeParse({
+        branch_id: BRANCH_ID,
+        limit,
+      });
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues[0].message).toBe(
+          CONDUCT_MESSAGES.RECENT_LIMIT_INVALID
+        );
+      }
+    }
+  });
+
+  it("rejects a non-numeric limit", () => {
+    const result = listBranchConductRecordsSchema.safeParse({
+      branch_id: BRANCH_ID,
+      limit: "10",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects a missing branch_id", () => {
+    const result = listBranchConductRecordsSchema.safeParse({ limit: 5 });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].message).toBe(
+        CONDUCT_MESSAGES.BRANCH_REQUIRED
+      );
+    }
+  });
+
+  it("rejects a malformed student_id", () => {
+    const result = listBranchConductRecordsSchema.safeParse({
+      branch_id: BRANCH_ID,
+      student_id: "not-a-uuid",
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].message).toBe(
+        CONDUCT_MESSAGES.INVALID_STUDENT_ID
+      );
+    }
+  });
+
+  it("rejects unknown extra keys", () => {
+    const result = listBranchConductRecordsSchema.safeParse({
+      branch_id: BRANCH_ID,
+      kind: CONDUCT_KINDS.FINE,
     });
     expect(result.success).toBe(false);
   });

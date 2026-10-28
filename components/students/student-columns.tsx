@@ -9,6 +9,10 @@ import {
   getNearestDueDiscipline,
 } from "@/components/students/student-card"
 import { StudentRowActions } from "@/components/students/student-row-actions"
+import {
+  StudentBeltSwatches,
+  StudentPendingActivationBadge,
+} from "@/components/students/student-name-meta"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import type { EcuadorTimeZone } from "@/lib/domain/branches/schema"
@@ -24,7 +28,6 @@ import {
 import {
   STUDENT_BULK_ACTIONS_MESSAGES,
   STUDENT_DIRECTORY_MESSAGES,
-  STUDENT_LIFECYCLE_MESSAGES,
   STUDENT_MISSING_DATA_MESSAGES,
 } from "@/lib/localization/es-ec"
 
@@ -47,20 +50,33 @@ interface StudentColumnsOptions {
   timeZone: EcuadorTimeZone
 }
 
-function StudentNameCell({ student }: { student: StudentListItem }) {
+export function StudentNameCell({ student }: { student: StudentListItem }) {
   const missingFields = getMissingStudentData(student)
+  const isPending =
+    student.activation_status === STUDENT_ACTIVATION_STATUS.PENDING
+  const isIncomplete = hasIncompleteStudentData(student)
 
   return (
     <div className="flex min-w-32 flex-col items-start gap-1">
-      <span>{student.first_name}</span>
-      {hasIncompleteStudentData(student) && (
-        <Badge
-          variant="secondary"
-          aria-label={getIncompleteDataDescription(missingFields)}
-          title={getIncompleteDataDescription(missingFields)}
-        >
-          {STUDENT_MISSING_DATA_MESSAGES.INCOMPLETE_BADGE}
-        </Badge>
+      {/* The belt leads the name, like the attendance ledger: same swatch, so
+          a row never needs an extra column to show it. */}
+      <span className="flex min-w-0 items-center gap-1.5">
+        <StudentBeltSwatches student={student} />
+        <span>{student.first_name}</span>
+      </span>
+      {(isIncomplete || isPending) && (
+        <span className="flex flex-wrap items-center gap-1">
+          {isPending && <StudentPendingActivationBadge student={student} />}
+          {isIncomplete && (
+            <Badge
+              variant="secondary"
+              aria-label={getIncompleteDataDescription(missingFields)}
+              title={getIncompleteDataDescription(missingFields)}
+            >
+              {STUDENT_MISSING_DATA_MESSAGES.INCOMPLETE_BADGE}
+            </Badge>
+          )}
+        </span>
       )}
     </div>
   )
@@ -193,21 +209,5 @@ export function getStudentColumns({
           },
         ]
       : []),
-    {
-      accessorKey: "activation_status",
-      header: STUDENT_LIFECYCLE_MESSAGES.ACTIVATION_STATUS_LABEL,
-      cell: ({ row }) =>
-        row.original.activation_status === STUDENT_ACTIVATION_STATUS.PENDING
-          ? STUDENT_LIFECYCLE_MESSAGES.PENDING_ACTIVATION_STATUS
-          : STUDENT_LIFECYCLE_MESSAGES.ACTIVE_ACTIVATION_STATUS,
-    },
-    {
-      id: "status",
-      header: STUDENT_DIRECTORY_MESSAGES.STATUS,
-      cell: () =>
-        isActive
-          ? STUDENT_DIRECTORY_MESSAGES.ACTIVE_STATUS
-          : STUDENT_DIRECTORY_MESSAGES.INACTIVE_STATUS,
-    },
   ]
 }

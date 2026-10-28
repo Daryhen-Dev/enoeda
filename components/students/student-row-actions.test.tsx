@@ -221,6 +221,8 @@ function makeStudent(overrides: {
     discipline_name: string;
     next_due_date: string | null;
     billing_mode: "monthly" | "per_class";
+    level_name?: string | null;
+    level_color?: string | null;
   }[];
 }) {
   const activeDisciplines = overrides.active_disciplines ?? [];
@@ -237,7 +239,11 @@ function makeStudent(overrides: {
     active_discipline_names: activeDisciplines.map(
       (discipline) => discipline.discipline_name
     ),
-    active_disciplines: activeDisciplines,
+    active_disciplines: activeDisciplines.map((discipline) => ({
+      level_name: null,
+      level_color: null,
+      ...discipline,
+    })),
   };
 }
 

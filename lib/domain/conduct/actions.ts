@@ -20,6 +20,7 @@ import {
   conductQuerySchema,
   searchConductStudentsSchema,
   listRecentBranchConductRecordsSchema,
+  listBranchConductRecordsSchema,
   CONDUCT_KINDS,
   CONDUCT_STATUSES,
   type CreateConductRecordInput,
@@ -28,6 +29,7 @@ import {
   type ConductQueryInput,
   type SearchConductStudentsInput,
   type ListRecentBranchConductRecordsInput,
+  type ListBranchConductRecordsInput,
 } from "./schema";
 
 export interface ActionResult<T = unknown> {
@@ -644,6 +646,119 @@ export async function listRecentBranchConductRecords(
           },
         },
         orderBy: { created_at: "desc" },
+        take: limit,
+      });
+    });
+
+    if (!result.success) return result;
+
+    if ("__branchError" in result.data) {
+      return {
+        success: false,
+        error: (result.data as { __branchError: string }).__branchError,
+      };
+    }
+
+    const rows = result.data as Exclude<
+      typeof result.data,
+      { __branchError: string }
+    >;
+    const records: RecentConductRecord[] = rows.map((row) => ({
+      id: row.id,
+      student_id: row.student_id,
+      student: {
+        id: row.students.id,
+        first_name: row.students.first_name,
+        surname: row.students.surname,
+      },
+      kind: row.kind,
+      reason: row.reason,
+      incident_date: row.incident_date,
+      amount: row.amount === null ? null : Number(row.amount),
+      status: row.status,
+      paid_at: row.paid_at,
+      paid_by: row.paid_by,
+      voided_at: row.voided_at,
+      voided_by: row.voided_by,
+      void_reason: row.void_reason,
+      created_by: row.created_by,
+      created_at: row.created_at,
+      updated_at: row.updated_at,
+    }));
+
+    return { success: true, data: { records } };
+  } catch {
+    return { success: false, error: COMMON_MESSAGES.UNEXPECTED_ERROR };
+  }
+}
+
+/**
+ * Conduct records of the branch's students for the Conducta page list, newest
+ * incident first. An optional student_id narrows the list to one student; the
+ * student must belong to the branch (cross-branch access is rejected). Voided
+ * records are included (the list renders them muted) and each row carries a
+ * minimal student object for display. Amounts are returned as numbers.
+ * Requires branch context (admin/teacher).
+ */
+export async function listBranchConductRecords(
+  input: ListBranchConductRecordsInput
+): Promise<ActionResult<{ records: RecentConductRecord[] }>> {
+  const parsed = listBranchConductRecordsSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message };
+  }
+
+  const { branch_id, student_id, limit } = parsed.data;
+
+  try {
+    const result = await withAuthenticatedUser(async (tx, ctx) => {
+      const branchError = assertCallerBranchContext(ctx, branch_id);
+      if (branchError) {
+        return { __branchError: branchError } as const;
+      }
+
+      if (student_id) {
+        const student = await tx.students.findUnique({
+          where: { id: student_id },
+          select: { branch_id: true },
+        });
+        if (!student || student.branch_id !== branch_id) {
+          return {
+            __branchError: BRANCH_ASSERTION_MESSAGES.CROSS_BRANCH_DENIED,
+          } as const;
+        }
+      }
+
+      return tx.student_conduct_records.findMany({
+        where: {
+          ...(student_id ? { student_id } : {}),
+          students: { branch_id },
+        },
+        select: {
+          id: true,
+          student_id: true,
+          kind: true,
+          reason: true,
+          incident_date: true,
+          amount: true,
+          status: true,
+          paid_at: true,
+          paid_by: true,
+          voided_at: true,
+          voided_by: true,
+          void_reason: true,
+          created_by: true,
+          created_at: true,
+          updated_at: true,
+          students: {
+            select: { id: true, first_name: true, surname: true },
+          },
+        },
+        orderBy: [
+          { incident_date: "desc" },
+          { created_at: "desc" },
+          { id: "desc" },
+        ],
         take: limit,
       });
     });
