@@ -38,7 +38,7 @@ const DOJO_INDEX: Array<PathEntry> = [
   {
     title: "Legado del Sensei Keinosuke Enoeda",
     description: "Biografía, trayectoria, filosofía y legado histórico.",
-    href: "/#dojo",
+    href: "/legado",
     internal: true,
   },
   {
