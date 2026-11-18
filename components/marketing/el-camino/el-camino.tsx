@@ -10,26 +10,33 @@ export function MarketingElCamino() {
     <main className={styles.elCaminoMain}>
       <article className={styles.elCaminoArticle}>
         <header className={styles.elCaminoHeader}>
-          <Image
-            alt=""
-            aria-hidden="true"
-            className={styles.elCaminoSeal}
-            height={600}
-            priority
-            src={enoedaLogoImage}
-            width={600}
-          />
-          <h1 className={styles.elCaminoTitle}>
-            MÁS QUE UN DOJO,
-            <br />
-            UNA FAMILIA QUE CRECE CONTIGO.
-          </h1>
-          <p className={styles.elCaminoIntro}>
-            Entrar a nuestro dojo es dar el primer paso hacia una transformación
-            que va más allá del aprendizaje de Karate y Kickboxing: disciplina,
-            respeto, perseverancia y superación personal. Cada entrenamiento es
-            una oportunidad para descubrir de lo que eres capaz.
-          </p>
+          <div className={styles.elCaminoHeaderGrid}>
+            <div className={styles.elCaminoSealBlock}>
+              <Image
+                alt=""
+                aria-hidden="true"
+                className={styles.elCaminoSeal}
+                height={600}
+                priority
+                src={enoedaLogoImage}
+                width={600}
+              />
+            </div>
+            <div className={styles.elCaminoHeaderText}>
+              <h1 className={styles.elCaminoTitle}>
+                MÁS QUE UN DOJO,
+                <br />
+                UNA FAMILIA QUE CRECE CONTIGO.
+              </h1>
+              <p className={styles.elCaminoIntro}>
+                Entrar a nuestro dojo es dar el primer paso hacia una
+                transformación que va más allá del aprendizaje de Karate y
+                Kickboxing: disciplina, respeto, perseverancia y superación
+                personal. Cada entrenamiento es una oportunidad para descubrir
+                de lo que eres capaz.
+              </p>
+            </div>
+          </div>
         </header>
 
         <section className={styles.elCaminoSection}>

@@ -14,12 +14,21 @@
   padding-bottom: 3rem;
 }
 
-/* The seal opens the page: big enough to read as a stamp, not as a badge. */
+/* The seal opens the page on mobile and owns the empty right half on desktop. */
+.elCaminoHeaderGrid {
+  display: grid;
+  gap: 2.5rem;
+}
+
+.elCaminoSealBlock {
+  display: flex;
+  justify-content: flex-start;
+}
+
 .elCaminoSeal {
   display: block;
   width: clamp(8rem, 16vw, 11rem);
   height: auto;
-  margin-bottom: 1.5rem;
 }
 
 .elCaminoTitle {
@@ -138,6 +147,29 @@
 @media (min-width: 1024px) {
   .elCaminoMain {
     padding: 8.5rem 4rem 7rem;
+  }
+
+  /* Seal in the right margin, headline and intro holding the left: the header
+     stops being a left column with half the screen empty. */
+  .elCaminoHeaderGrid {
+    grid-template-areas: "text seal";
+    grid-template-columns: minmax(0, 7fr) minmax(0, 4fr);
+    align-items: start;
+    gap: 3.5rem;
+  }
+
+  .elCaminoHeaderText {
+    grid-area: text;
+  }
+
+  .elCaminoSealBlock {
+    grid-area: seal;
+    justify-content: flex-end;
+  }
+
+  .elCaminoSeal {
+    width: 100%;
+    max-width: 22rem;
   }
 
   .elCaminoSection {
