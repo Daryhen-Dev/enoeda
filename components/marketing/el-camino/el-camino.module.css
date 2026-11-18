@@ -14,14 +14,22 @@
   padding-bottom: 3rem;
 }
 
+/* The seal opens the page: big enough to read as a stamp, not as a badge. */
+.elCaminoSeal {
+  display: block;
+  width: clamp(8rem, 16vw, 11rem);
+  height: auto;
+  margin-bottom: 1.5rem;
+}
+
 .elCaminoTitle {
-  max-width: 12ch;
+  max-width: 20ch;
   margin: 0;
   color: var(--marketing-foreground);
   font-family: var(--font-bebas-neue);
-  font-size: clamp(3.75rem, 11vw, 7.5rem);
+  font-size: clamp(3rem, 6.5vw, 5.5rem);
   letter-spacing: -0.03em;
-  line-height: 0.78;
+  line-height: 0.82;
 }
 
 .elCaminoIntro {
@@ -67,6 +75,16 @@
 
 .elCaminoExit {
   padding-top: 2.75rem;
+}
+
+.elCaminoExitLine {
+  max-width: 43rem;
+  margin: 0 0 1.5rem;
+  color: var(--marketing-foreground);
+  font-family: var(--font-archivo-narrow);
+  font-size: clamp(1.125rem, 2vw, 1.5rem);
+  font-weight: 500;
+  line-height: 1.45;
 }
 
 .elCaminoExitLink {
@@ -119,7 +137,7 @@
 
 @media (min-width: 1024px) {
   .elCaminoMain {
-    padding: 10rem 4rem 7rem;
+    padding: 8.5rem 4rem 7rem;
   }
 
   .elCaminoSection {
