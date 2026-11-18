@@ -1,9 +1,11 @@
 // @vitest-environment jsdom
 
 /**
- * MarketingLegado — the Sensei Keinosuke Enoeda biography page (step 2 of the
- * dojo's roadmap). Content was validated by the dojo; the tests pin the
- * section structure, the key facts and the closing actions.
+ * MarketingLegado — the Sensei Keinosuke Enoeda biography page.
+ *
+ * The page is deliberately short: who he was, why he was "the Tiger", what he
+ * did, his philosophy and his death. These tests pin that shape and the facts
+ * the copy can never lose.
  */
 
 import type { ComponentProps } from "react"
@@ -59,34 +61,54 @@ describe("MarketingLegado — structure", () => {
     expect(text).toContain("Nuestro dojo lleva su nombre.")
   })
 
-  it("renders the six narrative sections with their headings", () => {
+  it("answers the five questions the page exists for", () => {
     render()
     const headings = [
-      "EL JUDO LO LLEVÓ AL KARATE.",
-      "FUNAKOSHI. NAKAYAMA. KASE.",
-      "LIVERPOOL, 1965.",
-      "UN MAESTRO DE CULTURA POP.",
+      "DE KYUSHU AL TATAMI.",
+      "POR QUÉ LO LLAMABAN TORA.",
+      "LLEVÓ EL SHOTOKAN A EUROPA.",
       "EL TALENTO SIN PRÁCTICA DIARIA NO SIGNIFICA NADA.",
-      "SU CAMINO SIGUE EN MARCHA.",
+      "MURIÓ EL 29 DE MARZO.",
     ]
     for (const heading of headings) {
-      expect(
-        rendered!.container.querySelector(`h2`)?.textContent ?? headings.join()
-      )
       expect(rendered!.container.textContent).toContain(heading)
     }
+    expect(rendered!.container.querySelectorAll("section")).toHaveLength(headings.length + 2)
   })
 
-  it("keeps the key facts of the trajectory", () => {
+  it("keeps the nickname explained, not just displayed", () => {
     render()
     const text = rendered!.container.textContent ?? ""
 
-    expect(text).toContain("1963")
-    expect(text).toContain("Campeón de Japón de la JKA")
+    expect(text).toContain("Nakayama")
+    expect(text).toContain("Tora")
+  })
+
+  it("keeps the facts of the trajectory", () => {
+    render()
+    const text = rendered!.container.textContent ?? ""
+
+    expect(text).toContain("4 de julio de 1935")
+    expect(text).toContain("Campeón de Japón")
     expect(text).toContain("1965")
     expect(text).toContain("Red Triangle Dojo")
-    expect(text).toContain("2003")
-    expect(text).toContain("9º dan")
+    expect(text).toContain("9º Dan")
+  })
+
+  it("states when he died without inventing a cause", () => {
+    render()
+    const text = rendered!.container.textContent ?? ""
+
+    expect(text).toContain("29 de marzo de 2003")
+    expect(text).toContain("67 años")
+    expect(text.toLowerCase()).not.toContain("cáncer")
+  })
+
+  it("drops the separate timeline so the page stays short", () => {
+    render()
+
+    expect(rendered!.container.querySelector("#legado-timeline")).toBeNull()
+    expect(rendered!.container.textContent).not.toContain("UNA VIDA, DÍA POR DÍA.")
   })
 })
 
@@ -97,17 +119,17 @@ describe("MarketingLegado — closing actions", () => {
 
     expect(text).toContain("ENTRENA")
     expect(text).toContain("EN SU NOMBRE.")
-    const whatsapp = [
-      ...rendered!.container.querySelectorAll("a"),
-    ].find((a) => a.getAttribute("href") === MARKETING_WHATSAPP_URL)
+    const whatsapp = [...rendered!.container.querySelectorAll("a")].find(
+      (anchor) => anchor.getAttribute("href") === MARKETING_WHATSAPP_URL
+    )
     expect(whatsapp?.textContent).toContain("ESCRIBIR POR WHATSAPP")
   })
 
   it("links the visitor to the locations section", () => {
     render()
-    const sedes = [
-      ...rendered!.container.querySelectorAll("a"),
-    ].find((a) => a.getAttribute("href") === "/#sedes")
+    const sedes = [...rendered!.container.querySelectorAll("a")].find(
+      (anchor) => anchor.getAttribute("href") === "/#sedes"
+    )
     expect(sedes?.textContent).toContain("CONOCER LAS SEDES")
   })
 })
