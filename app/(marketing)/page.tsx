@@ -3,7 +3,6 @@ import type { Metadata } from "next"
 import { MarketingDojoStories } from "@/components/marketing/home/sections/dojo-stories"
 import { MarketingHero } from "@/components/marketing/home/sections/hero"
 import { MarketingHistory } from "@/components/marketing/home/sections/history"
-import { MarketingJourney } from "@/components/marketing/home/sections/journey"
 import { MarketingLocations } from "@/components/marketing/home/sections/locations"
 import { MarketingMasters } from "@/components/marketing/home/sections/masters"
 import { MarketingPaths } from "@/components/marketing/home/sections/paths"
@@ -20,7 +19,6 @@ export default function Home() {
       <MarketingHero />
       <MarketingPaths />
       <MarketingDojoStories />
-      <MarketingJourney />
       <MarketingHistory />
       <MarketingMasters />
       <MarketingLocations />
