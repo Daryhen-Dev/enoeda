@@ -18,11 +18,23 @@ import { MARKETING_WHATSAPP_URL } from "@/components/marketing/shared/contact"
 import { MarketingPaths } from "./paths"
 
 type LinkProps = ComponentProps<"a"> & { href: string }
+type ImageProps = ComponentProps<"img"> & { src: string | { src: string } }
 
 interface Rendered {
   container: HTMLElement
   unmount(): void
 }
+
+vi.mock("next/image", () => ({
+  default: ({ alt, className, src }: ImageProps) => {
+    const resolved = typeof src === "string" ? src : src.src
+
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img alt={alt} className={className} data-image-src={resolved} src={resolved} />
+    )
+  },
+}))
 
 vi.mock("next/link", () => ({
   // Render next/link as a plain anchor so hrefs stay queryable.
@@ -80,6 +92,15 @@ describe("MarketingPaths — the six entries (verbatim copy)", () => {
       expect(text).toContain(title)
       expect(text).toContain(description)
     }
+  })
+
+  it("opens the directory with the dojo seal, decorative because the header names the dojo", () => {
+    render()
+    const images = Array.from(rendered!.container.querySelectorAll("img"))
+
+    expect(images).toHaveLength(1)
+    expect(images[0].getAttribute("alt")).toBe("")
+    expect(images[0].getAttribute("src")).toContain("enoeda-logo")
   })
 
   it("is announced as one section with its own heading", () => {

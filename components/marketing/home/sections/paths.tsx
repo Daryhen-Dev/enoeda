@@ -1,4 +1,7 @@
+import Image from "next/image"
 import Link from "next/link"
+
+import enoedaLogoImage from "@/assets/enoeda-logo.webp"
 
 import {
   MARKETING_WHATSAPP_URL,
@@ -100,10 +103,22 @@ export function MarketingPaths() {
             <br />
             UN MISMO DOJO.
           </h2>
-          <p className="max-w-md font-marketing-body text-base leading-6 text-marketing-foreground lg:col-span-4 lg:mb-1">
-            Elige tu disciplina y conoce todo lo que ENOEDA Dojo tiene para ti: su historia, su
-            gente y sus sedes.
-          </p>
+          <div className="lg:col-span-4">
+            <div className="flex lg:justify-end">
+              <Image
+                alt=""
+                aria-hidden="true"
+                className="h-auto w-[clamp(9rem,15vw,13.5rem)]"
+                height={600}
+                src={enoedaLogoImage}
+                width={600}
+              />
+            </div>
+            <p className="mt-6 max-w-md font-marketing-body text-base leading-6 text-marketing-foreground lg:ml-auto lg:text-right">
+              Elige tu disciplina y conoce todo lo que ENOEDA Dojo tiene para ti: su historia, su
+              gente y sus sedes.
+            </p>
+          </div>
         </div>
 
         <div className={styles.pathsDisciplines}>
