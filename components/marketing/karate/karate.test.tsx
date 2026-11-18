@@ -147,27 +147,27 @@ describe("MarketingKarate", () => {
     })
   })
 
-  it("sends every WhatsApp call to action to the karate message", () => {
+  it("keeps a single WhatsApp call to action, on the hero, with the karate message", () => {
     renderedKarate = renderKarate()
     const whatsappLinks = Array.from(renderedKarate.container.querySelectorAll("a")).filter(
       (link) => (link.getAttribute("href") ?? "").startsWith("https://wa.me/"),
     )
 
-    expect(whatsappLinks.length).toBeGreaterThanOrEqual(2)
-    whatsappLinks.forEach((link) => {
-      expect(link.getAttribute("href")).toBe(MARKETING_WHATSAPP_KARATE_URL)
-    })
-
-    expect(linkByText(renderedKarate.container, "QUIERO ENTRENAR").getAttribute("href")).toBe(
-      MARKETING_WHATSAPP_KARATE_URL,
-    )
+    expect(whatsappLinks).toHaveLength(1)
+    expect(whatsappLinks[0].getAttribute("href")).toBe(MARKETING_WHATSAPP_KARATE_URL)
+    expect(whatsappLinks[0].textContent).toBe("QUIERO ENTRENAR")
   })
 
-  it("sends visitors to the sedes list instead of hardcoding branches", () => {
+  it("closes on the sedes list instead of repeating the footer WhatsApp", () => {
     renderedKarate = renderKarate()
-    const sedesLink = linkByText(renderedKarate.container, "VER SEDES Y HORARIOS")
+    const band = renderedKarate.container.querySelector("#karate-cierre-heading")!.closest("section")!
+    const bandWhatsApp = Array.from(band.querySelectorAll("a")).filter((link) =>
+      (link.getAttribute("href") ?? "").startsWith("https://wa.me/"),
+    )
 
-    expect(sedesLink.getAttribute("href")).toBe("/#sedes")
+    expect(bandWhatsApp).toHaveLength(0)
+    expect((band.textContent ?? "").toUpperCase()).not.toContain("WHATSAPP")
+    expect(linkByText(band, "VER SEDES Y HORARIOS").getAttribute("href")).toBe("/#sedes")
   })
 
   it("uses only karate media, never the kickboxing page assets", () => {

@@ -274,14 +274,11 @@ export function MarketingKarate() {
             </div>
             <div className="lg:col-span-4 lg:mb-2">
               <p className={`max-w-md ${BODY_TEXT_CLASSES}`}>
-                Escríbenos y te decimos día, hora y sede según tu edad y tu nivel. Para empezar
-                sólo necesitas ropa cómoda.
+                Cada sede tiene sus propios horarios y sus grupos por edad y nivel. Encuentra la
+                tuya y ven a mirar una clase antes de decidirte.
               </p>
               <div className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-4">
-                <a className={HERO_CTA_CLASSES} href={MARKETING_WHATSAPP_KARATE_URL}>
-                  ESCRIBIR POR WHATSAPP
-                </a>
-                <Link className={karateStyles.editorialLink} href="/#sedes">
+                <Link className={HERO_CTA_CLASSES} href="/#sedes">
                   VER SEDES Y HORARIOS
                 </Link>
               </div>
