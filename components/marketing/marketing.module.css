@@ -43,30 +43,6 @@
   scroll-margin-top: 5rem;
 }
 
-.journeyList {
-  display: grid;
-  margin: 3rem 0 0;
-  border-top: 2px solid var(--marketing-foreground);
-  padding: 0;
-  list-style: none;
-}
-
-.journeyStep {
-  display: grid;
-  grid-template-columns: 3.5rem minmax(0, 1fr);
-  gap: 1rem;
-  align-items: start;
-  border-bottom: 2px solid var(--marketing-foreground);
-  padding: 1.5rem 0;
-}
-
-.journeyIndex {
-  color: var(--marketing-accent);
-  font-family: var(--font-bebas-neue);
-  font-size: 2rem;
-  line-height: 0.85;
-}
-
 .locationsSection {
   background-color: var(--marketing-muted);
 }
@@ -136,17 +112,6 @@
 
 .locationScheduleEntry {
   min-width: 0;
-}
-
-@media (min-width: 640px) {
-  .journeyStep {
-    grid-template-columns: 5.5rem minmax(0, 1fr);
-    padding: 2rem 0;
-  }
-
-  .journeyIndex {
-    font-size: 3rem;
-  }
 }
 
 @media (min-width: 1024px) {

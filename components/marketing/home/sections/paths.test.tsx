@@ -4,9 +4,8 @@
  * MarketingPaths — the home directory (S1-S3 of odd/tasks/home-paths.md).
  *
  * The six entries are the dojo's own brief, verbatim. The two disciplines are
- * the primary pair; the other four form the secondary index. Destinations are
- * today's: pages that do not exist yet (legado, karate-do) point at their
- * current stand-ins until their own pages ship.
+ * the primary pair; the other four form the secondary index. Both disciplines
+ * now open their own page; only the general WhatsApp entries stay external.
  */
 
 import type { ComponentProps } from "react"
@@ -14,7 +13,7 @@ import { act } from "react"
 import { createRoot } from "react-dom/client"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
-import { MARKETING_WHATSAPP_KARATE_URL, MARKETING_WHATSAPP_URL } from "@/components/marketing/shared/contact"
+import { MARKETING_WHATSAPP_URL } from "@/components/marketing/shared/contact"
 
 import { MarketingPaths } from "./paths"
 
@@ -99,11 +98,9 @@ describe("MarketingPaths — destinations", () => {
     expect(anchorByTitle("Kickboxing").getAttribute("href")).toBe("/kickboxing")
   })
 
-  it("sends Karate-do to the karate WhatsApp while its page does not exist", () => {
+  it("sends Karate-do to its page", () => {
     render()
-    expect(anchorByTitle("Karate-do").getAttribute("href")).toBe(
-      MARKETING_WHATSAPP_KARATE_URL
-    )
+    expect(anchorByTitle("Karate-do").getAttribute("href")).toBe("/karate")
   })
 
   it("points Legado at its own page", () => {
@@ -136,7 +133,8 @@ describe("MarketingPaths — destinations", () => {
 
   it("opens WhatsApp links in a new tab and keeps internal ones in-app", () => {
     render()
-    expect(anchorByTitle("Karate-do").getAttribute("target")).toBe("_blank")
+    expect(anchorByTitle("Eventos y contacto").getAttribute("target")).toBe("_blank")
+    expect(anchorByTitle("Karate-do").getAttribute("target")).toBeNull()
     expect(anchorByTitle("Kickboxing").getAttribute("target")).toBeNull()
   })
 })
