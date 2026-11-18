@@ -274,7 +274,10 @@ describe("getSessionsForRange resolver integration", () => {
   });
 
   it("resolves the same occurrences no matter which weekday the suite runs", async () => {
-    mockFindMany.mockResolvedValue([makeClass(T_A, true)]);
+    // The series month is pinned: without it makeClass takes the real current
+    // month, and once the calendar left October the occurrences moved to
+    // November even though the test fakes the clock in October.
+    mockFindMany.mockResolvedValue([makeClass(T_A, true, { periodMonth: "2026-10", isActive: true })]);
     mockQueryRaw.mockResolvedValue([]);
 
     async function resolveOn(day: Date): Promise<string[]> {
