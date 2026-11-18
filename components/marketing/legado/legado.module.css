@@ -1,3 +1,65 @@
 .legadoMain {
   background-color: var(--marketing-surface);
 }
+
+/* Portrait plate: an accent block offset behind the framed photo, the same
+   device the discipline pages use for their hero image. */
+.heroPortrait {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  padding: 0 0 1.25rem 1.25rem;
+}
+
+.heroPortrait::before {
+  position: absolute;
+  z-index: 0;
+  bottom: 0;
+  left: 0;
+  width: calc(100% - 1.25rem);
+  height: calc(100% - 1.25rem);
+  background-color: var(--marketing-accent);
+  content: "";
+  pointer-events: none;
+}
+
+.heroPortraitFrame {
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+  border: 0.875rem solid var(--marketing-foreground);
+  background-color: var(--marketing-surface);
+  box-shadow: 0.875rem 1.125rem 2.25rem color-mix(in srgb, var(--marketing-foreground) 20%, transparent);
+}
+
+.heroPortraitImage {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  object-position: center 20%;
+}
+
+@media (min-width: 1024px) {
+  /* Cap the plate so the name strip stays on the first screen next to it. */
+  .heroPortrait {
+    max-width: 26rem;
+    margin-left: auto;
+  }
+}
+
+@media (min-width: 640px) {
+  .heroPortrait {
+    padding: 0 0 1.5rem 1.5rem;
+  }
+
+  .heroPortrait::before {
+    width: calc(100% - 1.5rem);
+    height: calc(100% - 1.5rem);
+  }
+
+  .heroPortraitFrame {
+    border-width: 1rem;
+    box-shadow: 1.25rem 1.625rem 3.25rem color-mix(in srgb, var(--marketing-foreground) 22%, transparent);
+  }
+}
