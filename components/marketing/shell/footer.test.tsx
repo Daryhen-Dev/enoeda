@@ -162,3 +162,20 @@ describe("MarketingFooter partner sections", () => {
     })
   })
 })
+
+describe("MarketingFooter — brand emblem", () => {
+  it("marks the seal as decorative because the header already announces the name", () => {
+    const renderedFooter = renderFooter()
+    try {
+      const emblems = Array.from(renderedFooter.container.querySelectorAll("img")).filter(
+        (image) => (image.getAttribute("alt") ?? "").trim() === "",
+      )
+
+      // The seal draws "ENOEDA DOJO" inside its artwork, so announcing it again
+      // would make a screen reader say the name twice on every page.
+      expect(emblems.length).toBeGreaterThanOrEqual(1)
+    } finally {
+      renderedFooter.unmount()
+    }
+  })
+})

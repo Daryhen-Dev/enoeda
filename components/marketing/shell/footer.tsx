@@ -15,7 +15,9 @@ import {
   MARKETING_COLLABORATORS_INTRO,
   type MarketingPartner,
 } from "@/components/marketing/shared/collaborators"
+
 import styles from "@/components/marketing/marketing.module.css"
+import enoedaLogoImage from "@/assets/enoeda-logo.webp"
 
 const FOOTER_SOCIAL_LINKS = [
   {
@@ -103,13 +105,6 @@ function PartnerSection({ heading, headingId, intro, partners }: PartnerSectionP
 export function MarketingFooter() {
   return (
     <footer className="relative isolate overflow-hidden rounded-b-[1.75rem] border-t-2 border-marketing-menu-border bg-marketing-surface px-5 py-12 sm:px-8 sm:py-16 lg:px-16 lg:py-20">
-      <span
-        aria-hidden="true"
-        className="pointer-events-none absolute -bottom-10 -right-2 font-marketing-display text-[clamp(6rem,17vw,15rem)] leading-none tracking-[0.02em] text-marketing-muted opacity-60"
-      >
-        ENOEDA
-      </span>
-
       <div className="relative z-10 mx-auto grid max-w-360 gap-14 lg:grid-cols-12 lg:gap-8">
         <div className="lg:col-span-7">
           <p className="max-w-3xl font-marketing-display text-[clamp(4.25rem,8vw,7.5rem)] leading-[0.78] tracking-[-0.025em] text-marketing-menu-foreground">
@@ -186,9 +181,19 @@ export function MarketingFooter() {
         </div>
       </div>
 
-      <div className="relative z-10 mx-auto mt-16 flex max-w-360 flex-col gap-2 border-t-2 border-marketing-foreground/30 pt-5 font-marketing-body text-xs font-bold uppercase tracking-[0.1em] text-marketing-menu-border sm:mt-20 sm:flex-row sm:items-center sm:justify-between">
+      <div className="relative z-10 mx-auto mt-16 flex max-w-360 flex-col gap-5 border-t-2 border-marketing-foreground/30 pt-5 font-marketing-body text-xs font-bold uppercase tracking-[0.1em] text-marketing-menu-border sm:mt-20 sm:flex-row sm:items-center sm:justify-between">
         <span>© 2026 ENOEDA DOJO</span>
-        <span>KARATE · KICKBOXING · DISCIPLINA</span>
+        <div className="flex items-center gap-4">
+          <span>KARATE · KICKBOXING · DISCIPLINA</span>
+          <Image
+            alt=""
+            aria-hidden="true"
+            className="h-12 w-12 shrink-0"
+            height={600}
+            src={enoedaLogoImage}
+            width={600}
+          />
+        </div>
       </div>
     </footer>
   )

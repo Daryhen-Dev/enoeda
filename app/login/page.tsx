@@ -1,3 +1,6 @@
+import Image from "next/image"
+
+import enoedaLogoImage from "@/assets/enoeda-logo.webp"
 import { LoginForm } from "@/components/auth/login-form"
 import { getSafeRedirect } from "@/lib/auth/redirect"
 import { AUTH_MESSAGES } from "@/lib/localization/es-ec"
@@ -15,6 +18,13 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   return (
     <main className="flex min-h-screen items-center justify-center bg-muted/40 px-4 py-12">
       <section className="w-full max-w-md rounded-lg border bg-card p-6 shadow-sm">
+        <Image
+          alt="ENOEDA Dojo"
+          className="mb-5 size-20"
+          height={600}
+          src={enoedaLogoImage}
+          width={600}
+        />
         <div className="space-y-2">
           <h1 className="text-2xl font-semibold tracking-tight">
             {AUTH_MESSAGES.LOGIN_TITLE}
