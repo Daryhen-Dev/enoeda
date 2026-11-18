@@ -10,8 +10,6 @@ import { act } from "react"
 import { createRoot } from "react-dom/client"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
-import { MARKETING_WHATSAPP_KARATE_URL } from "@/components/marketing/shared/contact"
-
 type LinkProps = ComponentProps<"a"> & { href: string }
 
 vi.mock("next/link", () => ({
@@ -64,11 +62,9 @@ afterEach(() => {
 })
 
 describe("MarketingHero — two discipline paths", () => {
-  it("offers ENTRENAR KARATE through the karate WhatsApp", () => {
+  it("offers ENTRENAR KARATE through its page", () => {
     render()
-    expect(anchorByText("ENTRENAR KARATE").getAttribute("href")).toBe(
-      MARKETING_WHATSAPP_KARATE_URL
-    )
+    expect(anchorByText("ENTRENAR KARATE").getAttribute("href")).toBe("/karate")
   })
 
   it("offers ENTRENAR KICKBOXING through its page", () => {

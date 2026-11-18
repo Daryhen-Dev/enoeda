@@ -1,7 +1,6 @@
 import Link from "next/link"
 
 import {
-  MARKETING_WHATSAPP_KARATE_URL,
   MARKETING_WHATSAPP_URL,
 } from "@/components/marketing/shared/contact"
 import styles from "@/components/marketing/marketing.module.css"
@@ -23,8 +22,8 @@ const DISCIPLINES: Array<PathEntry> = [
   {
     title: "Karate-do",
     description: "Kihon, kata, kumite, grados y competición.",
-    href: MARKETING_WHATSAPP_KARATE_URL,
-    internal: false,
+    href: "/karate",
+    internal: true,
   },
   {
     title: "Kickboxing",
