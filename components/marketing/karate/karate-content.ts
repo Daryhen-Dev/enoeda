@@ -14,7 +14,7 @@ export const KARATE_HERO_IMAGE = {
 
 export const KARATE_VIDEO = {
   caption: "Demostración de karate ENOEDA en la calle",
-  label: "Video de la demostración de karate de ENOEDA Dojo en la calle",
+  label: "Video de la demostración de karate de ENOEDA Dojo en Carapungo",
   poster: "/media/karate/demostracion.webp",
   src: "/media/karate/demostracion.mp4",
 } as const
